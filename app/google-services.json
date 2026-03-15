@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "280378087598",
+    "project_id": "meduminderv-1",
+    "storage_bucket": "meduminderv-1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:280378087598:android:7b3de949da7c30ca59753f",
+        "android_client_info": {
+          "package_name": "com.example.meduminderv1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAskujR0eUxmtbCKwmsEb5rDxdYV8kDmbQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
