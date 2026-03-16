@@ -12,6 +12,7 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
+        <item name="materialButtonStyle">@style/Widget.AppCompat.Button</item>
     </style>
     
     <style name="Theme.App.SplashScreen" parent="Theme.SplashScreen">

@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">MedUMinder v1</string>
+    <string name="sign_up_here"><u>Sign Up here!</u></string>
+
 </resources>
