@@ -22,6 +22,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.meduminderv1.Login.LoginActivity;
 import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.R;
 
@@ -203,7 +204,7 @@ public class SplashActivity extends AppCompatActivity {
         reveal.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
-                Intent intent = new Intent(SplashActivity.this, MainActivity.class);
+                Intent intent = new Intent(SplashActivity.this, LoginActivity.class);
                 startActivity(intent);
                 overridePendingTransition(0, 0);
             }
