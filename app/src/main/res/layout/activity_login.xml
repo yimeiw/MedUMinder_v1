@@ -183,7 +183,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/sign_up"
+        android:id="@+id/dont_have_acc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -192,16 +192,17 @@
         android:layout_marginTop="15dp"
         >
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Don’t have an accout yet?"
-        android:fontFamily="@font/inter_18pt_medium"
-        android:textColor="@color/secondary"
-        android:paddingEnd="5dp"
-        />
-
         <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Don’t have an accout yet?"
+            android:fontFamily="@font/inter_18pt_medium"
+            android:textColor="@color/secondary"
+            android:paddingEnd="5dp"
+            />
+
+        <Button
+            android:id="@+id/sign_up"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/sign_up_here"
@@ -209,6 +210,9 @@
             android:textColor="@color/text_selector"
             android:clickable="true"
             android:focusable="true"
+            android:background="@android:color/transparent"
+            android:backgroundTint="@null"
+            android:textAllCaps="false"
             />
     </LinearLayout>
 
