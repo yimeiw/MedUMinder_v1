@@ -1,6 +1,8 @@
 package com.example.meduminderv1.SignUp;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Button;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -12,6 +14,8 @@ import com.example.meduminderv1.R;
 
 public class SignUpActivity extends AppCompatActivity {
 
+    Button signUpContinue;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -21,6 +25,13 @@ public class SignUpActivity extends AppCompatActivity {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
+        });
+
+        signUpContinue = findViewById(R.id.continue_signup_button);
+
+        signUpContinue.setOnClickListener(view -> {
+            Intent intent = new Intent(this, SignUpSequelActivity.class);
+            startActivity(intent);
         });
     }
 }
