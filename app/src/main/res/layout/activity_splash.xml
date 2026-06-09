@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Splash.SplashActivity"
+    android:orientation="vertical"
+    >
+
+    <TextView
+        android:id="@+id/med"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Med"
+        android:textColor="@color/secondary"
+        android:fontFamily="@font/inter_28pt_black"
+        android:textSize="40sp"
+        android:layout_marginStart="90dp"
+        />
+
+    <TextView
+        android:id="@+id/minder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Minder"
+        android:textColor="@color/primary"
+        android:fontFamily="@font/inter_28pt_black"
+        android:textSize="40sp"
+        android:layout_marginStart="205dp"
+        />
+
+
+    <ImageView
+        android:id="@+id/letter_u"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/letter_u"
+        />
+
+    <ImageView
+        android:id="@+id/medicine_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:minHeight="238dp"
+        android:src="@drawable/medicine_icon" />
+
+
+    <View
+        android:id="@+id/circle"
+        android:layout_width="500dp"
+        android:layout_height="400dp"
+        android:layout_centerInParent="true"
+        android:background="@drawable/circle"
+        />
+
+    <View
+        android:id="@+id/overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/primary"
+        android:visibility="invisible"/>
+
+
+</RelativeLayout>
