@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MedUMinder v1</string>
+    <string name="app_name">MedUMinder</string>
     <string name="sign_up_here"><u>Sign Up here!</u></string>
     <string name="title_activity_login">LoginActivity</string>
     <string name="prompt_email">Email</string>
