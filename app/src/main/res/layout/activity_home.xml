@@ -31,8 +31,23 @@
                     android:layout_width="160dp"
                     android:layout_height="wrap_content"
                     android:layout_alignTop="@+id/capsule"
-                    android:layout_centerHorizontal="true"
+                    android:layout_gravity="start"
                     />
+
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="end">
+
+                    <ImageButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/ic_notif"
+                        android:background="@null"
+                        android:layout_gravity="center"/>
+
+                </LinearLayout>
 
             </LinearLayout>
 
