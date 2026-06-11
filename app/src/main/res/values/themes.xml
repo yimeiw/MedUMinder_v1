@@ -14,7 +14,7 @@
         <!-- Customize your theme here. -->
         <item name="materialButtonStyle">@style/Widget.AppCompat.Button</item>
     </style>
-    
+
     <style name="Theme.App.SplashScreen" parent="Theme.SplashScreen">
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/medicine_icon</item>
     </style>
