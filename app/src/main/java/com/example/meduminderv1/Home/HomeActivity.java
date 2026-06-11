@@ -1,5 +1,6 @@
 package com.example.meduminderv1.Home;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
 
@@ -9,7 +10,10 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.meduminderv1.ProfileActivity;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.ScheduleActivity;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -34,5 +38,38 @@ public class HomeActivity extends AppCompatActivity {
             String name = user.getDisplayName();
             tvGreeting.setText("Halo, " + name + "!");
         }
+
+        BottomNavigationView bottomNav =
+                findViewById(R.id.bottomNav);
+
+        bottomNav.setOnItemSelectedListener(item -> {
+
+            if(item.getItemId() == R.id.nav_home){
+                return true;
+            }
+
+            if(item.getItemId() == R.id.nav_schedule){
+                startActivity(
+                        new Intent(this, ScheduleActivity.class)
+                );
+                return true;
+            }
+
+            if(item.getItemId() == R.id.nav_log){
+                startActivity(
+                        new Intent(this, LogActivity.class)
+                );
+                return true;
+            }
+
+            if (item.getItemId() == R.id.nav_profile) {
+                startActivity(
+                        new Intent(this, ProfileActivity.class)
+                );
+                return true;
+            }
+
+            return false;
+        });
     }
 }
