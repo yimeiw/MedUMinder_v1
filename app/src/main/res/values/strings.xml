@@ -10,6 +10,8 @@
     <string name="invalid_username">Not a valid username</string>
     <string name="invalid_password">Password must be >5 characters</string>
     <string name="login_failed">"Login failed"</string>
+    <string name="login_success">"Login success"</string>
+    <string name="greetings_consumer">"Jangan lupa untuk minum obat Anda!"</string>
 
     <string-array name="role_array">
         <item>Consumer</item>
