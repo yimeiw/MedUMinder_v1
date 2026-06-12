@@ -2,7 +2,11 @@ package com.example.meduminderv1.SignUp;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -11,10 +15,13 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.meduminderv1.R;
+import com.hbb20.CountryCodePicker;
 
 public class SignUpActivity extends AppCompatActivity {
 
-    Button signUpContinue;
+    Button signUp;
+    CountryCodePicker ccp;
+    EditText phoneInput;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,11 +34,21 @@ public class SignUpActivity extends AppCompatActivity {
             return insets;
         });
 
-        signUpContinue = findViewById(R.id.continue_signup_button);
+        signUp = findViewById(R.id.signup_button);
 
-        signUpContinue.setOnClickListener(view -> {
-            Intent intent = new Intent(this, SignUpSequelActivity.class);
-            startActivity(intent);
-        });
+        ccp = findViewById(R.id.picker_country);
+        phoneInput = findViewById(R.id.phone_input);
+
+        ccp.registerCarrierNumberEditText(phoneInput);
+
+
+        signUp.setOnClickListener(view -> {
+                    if (ccp.isValidFullNumber()) {
+                        String fullNumber = ccp.getFullNumberWithPlus();
+                    } else {
+                        Toast.makeText(this, "Nomor Tidak Valid", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
     }
 }
