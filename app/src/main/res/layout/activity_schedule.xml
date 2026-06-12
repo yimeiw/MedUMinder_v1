@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ScheduleActivity"
-    android:background="@color/bckg">
+    android:background="?attr/colorPrimary">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -32,7 +32,8 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/tvSchedulePage"
                 android:text="Schedule"
-                android:fontFamily="@font/inter_24pt_bold"
+                android:textStyle="bold"
+                android:textColor="@color/black"
                 android:textSize="24sp"
                 android:layout_weight="1"
                 android:gravity="center"/>
@@ -73,7 +74,6 @@
                 android:id="@+id/btnMedicine"
                 android:backgroundTint="@color/white"
                 app:strokeWidth="1dp"
-                app:strokeColor="@color/black"
                 app:cornerRadius="15dp"
                 android:textAllCaps="false"/>
 
@@ -85,7 +85,6 @@
                 android:id="@+id/btnAppointment"
                 android:backgroundTint="@color/white"
                 app:strokeWidth="1dp"
-                app:strokeColor="@color/black"
                 app:cornerRadius="15dp"
                 android:textAllCaps="false"/>
 
