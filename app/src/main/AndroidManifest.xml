@@ -51,7 +51,7 @@ xmlns:tools="http://schemas.android.com/tools">
         android:name=".ScheduleActivity"
         android:exported="false" />
     <activity
-        android:name=".LogActivity"
+        android:name=".Log.LogActivity"
         android:exported="false" />
 </application>
 
