@@ -1,4 +1,4 @@
-package com.example.meduminderv1;
+package com.example.meduminderv1.Log;
 
 import android.os.Bundle;
 
@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.example.meduminderv1.R;
 
 public class LogActivity extends AppCompatActivity {
 
