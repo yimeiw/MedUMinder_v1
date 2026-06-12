@@ -2,17 +2,16 @@
     <!-- Base application theme. -->
     <style name="Theme.MedUMinderV1" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/bckg</item>
-        <item name="colorPrimaryVariant">@color/bckg</item>
-        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimary">@color/bckg</item> <!--warna utama app-->
+        <item name="colorPrimaryVariant">@color/pink</item>
+        <item name="colorOnPrimary">@color/black</item> <!--warna teks/icon utama app-->
         <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/green</item>
+        <item name="colorSecondary">@color/green</item> <!--warna aksen-->
         <item name="colorSecondaryVariant">@color/green</item>
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
-        <item name="materialButtonStyle">@style/Widget.AppCompat.Button</item>
     </style>
 
     <style name="Theme.App.SplashScreen" parent="Theme.SplashScreen">
