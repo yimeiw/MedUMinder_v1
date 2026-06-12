@@ -15,7 +15,7 @@
         android:layout_margin="20dp"
         android:id="@+id/headerSection">
 
-        <Button
+        <ImageButton
             android:layout_width="30dp"
             android:layout_height="26dp"
             android:background="@drawable/ic_back"
@@ -34,7 +34,7 @@
             android:gravity="center"
             android:textColor="@color/black"/>
 
-        <Button
+        <ImageButton
             android:layout_width="30dp"
             android:layout_height="26dp"
             android:background="@drawable/ic_logout"
