@@ -31,7 +31,7 @@ public class HomeActivity extends AppCompatActivity {
     TextView tvGreeting;
     FirebaseAuth mAuth;
     FirebaseFirestore db;
-    ImageButton btnNotif;
+    ImageButton btnNotif, btnProfile;
     LinearLayout addMed, addAppoint, addDoc;
     BottomNavigationView bottomNav;
 
@@ -48,6 +48,7 @@ public class HomeActivity extends AppCompatActivity {
 
         tvGreeting = findViewById(R.id.greeting);
         btnNotif = findViewById(R.id.btnNotif);
+        btnProfile = findViewById(R.id.btnProfile);
         addMed = findViewById(R.id.layoutAddMed);
         addAppoint = findViewById(R.id.layoutAddAppoint);
         addDoc = findViewById(R.id.layoutDoc);
@@ -65,6 +66,10 @@ public class HomeActivity extends AppCompatActivity {
         btnNotif.setOnClickListener(v -> {
             btnNotif.setImageResource(R.drawable.ic_notif_hover);
             startActivity(new Intent(this, NotificationActivity.class));
+        });
+        btnProfile.setOnClickListener(v -> {
+            btnProfile.setImageResource(R.drawable.ic_profile_hover);
+            startActivity(new Intent(this, ProfileActivity.class));
         });
         addMed.setOnClickListener(v -> {
             startActivity(new Intent(this, MedicineReminder.class));
@@ -116,13 +121,6 @@ public class HomeActivity extends AppCompatActivity {
             if(item.getItemId() == R.id.nav_log){
                 startActivity(
                         new Intent(this, LogActivity.class)
-                );
-                return true;
-            }
-
-            if (item.getItemId() == R.id.nav_profile) {
-                startActivity(
-                        new Intent(this, ProfileActivity.class)
                 );
                 return true;
             }
