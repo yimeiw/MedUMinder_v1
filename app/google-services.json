@@ -12,7 +12,12 @@
           "package_name": "com.example.meduminderv1"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "280378087598-1igm6pkd94i1escim3gfoiti1c8r0vpt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAskujR0eUxmtbCKwmsEb5rDxdYV8kDmbQ"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "280378087598-1igm6pkd94i1escim3gfoiti1c8r0vpt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

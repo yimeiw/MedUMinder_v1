@@ -43,9 +43,19 @@
                     android:gravity="end">
 
                     <ImageButton
+                        android:id="@+id/btnNotif"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:src="@drawable/ic_notif"
+                        android:background="@null"
+                        android:layout_gravity="center"
+                        android:paddingRight="20dp"/>
+
+                    <ImageButton
+                        android:id="@+id/btnProfile"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/ic_profile"
                         android:background="@null"
                         android:layout_gravity="center"/>
 
@@ -56,18 +66,20 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Halo"
+                android:text=" "
                 android:fontFamily="@font/inter_18pt_semibold"
                 android:id="@+id/greeting"
                 android:textSize="18sp"
                 android:layout_marginTop="10dp"
+                android:textColor="@color/black"
                 />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/greetings_consumer"
-                android:textSize="14sp"/>
+                android:textSize="14sp"
+                android:textColor="@color/black"/>
 
             <View
                 android:layout_width="match_parent"
@@ -86,6 +98,8 @@
                 android:layout_gravity="fill_horizontal">
 
                 <LinearLayout
+                    android:id="@+id/layoutAddMed"
+                    android:clickable="true"
                     android:layout_width="0dp"
                     android:layout_height="120dp"
                     android:layout_columnWeight="1"
@@ -105,11 +119,14 @@
                         android:layout_marginTop="8dp"
                         android:text="Tambah Pengingat"
                         android:textAlignment="center"
+                        android:textColor="@color/black"
                         android:fontFamily="@font/inter_18pt_semibold"/>
 
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/layoutAddAppoint"
+                    android:clickable="true"
                     android:layout_width="0dp"
                     android:layout_height="120dp"
                     android:layout_columnWeight="1"
@@ -129,18 +146,21 @@
                         android:layout_marginTop="8dp"
                         android:fontFamily="@font/inter_18pt_semibold"
                         android:text="Tambah Appointment"
+                        android:textColor="@color/black"
                         android:textAlignment="center" />
 
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/layoutDoc"
                     android:layout_width="0dp"
                     android:layout_height="120dp"
                     android:layout_columnWeight="1"
                     android:layout_margin="8dp"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:background="@drawable/border">
+                    android:background="@drawable/border"
+                    android:clickable="true">
 
                     <ImageView
                         android:layout_width="40dp"
@@ -153,6 +173,7 @@
                         android:layout_marginTop="8dp"
                         android:text="Dokumen Kesehatan"
                         android:textAlignment="center"
+                        android:textColor="@color/black"
                         android:fontFamily="@font/inter_18pt_semibold"/>
 
                 </LinearLayout>
@@ -265,15 +286,16 @@
 
                 </LinearLayout>
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:id="@+id/btnKonfirmasi"
                     android:text="Sudah Dikonsumsi"
                     android:background="@drawable/border"
+                    app:backgroundTint="@null"
                     android:textAllCaps="false"
+                    android:textSize="14sp"
                     android:textColor="@color/black"
-                    android:textStyle="bold"
                     android:paddingHorizontal="12dp"
                     android:layout_margin="10dp"/>
 
@@ -321,7 +343,9 @@
 <!--            list jadwal-->
             <androidx.recyclerview.widget.RecyclerView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:paddingVertical="20dp"
+                android:paddingHorizontal="20dp">
 
             </androidx.recyclerview.widget.RecyclerView>
 
@@ -336,8 +360,9 @@
         android:layout_alignParentBottom="true"
         android:background="@color/white"
         app:itemIconSize="28dp"
+        app:itemIconTint="@color/nav_item"
         app:itemTextColor="@android:color/transparent"
         app:labelVisibilityMode="unlabeled"
-        app:menu="@menu/bottom_nav"/>
+        app:menu="@menu/bottom_nav" />
 
 </RelativeLayout>
