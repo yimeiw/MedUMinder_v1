@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ScheduleActivity"
+    tools:context=".Schedule.ScheduleActivity"
     android:background="@color/bckg">
 
     <LinearLayout
@@ -19,12 +19,13 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <Button
+            <ImageButton
                 android:layout_width="30dp"
                 android:layout_height="26dp"
                 android:background="@drawable/ic_add_med"
                 android:id="@+id/btnAddReminder"
                 android:layout_gravity="center"
+                android:backgroundTint="@color/hover_pressed"
                 />
 
             <TextView
@@ -32,21 +33,85 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/tvSchedulePage"
                 android:text="Schedule"
-                android:fontFamily="@font/inter_24pt_bold"
+                android:textStyle="bold"
+                android:textColor="@color/black"
                 android:textSize="24sp"
                 android:layout_weight="1"
                 android:gravity="center"/>
 
-            <Button
+            <ImageButton
                 android:layout_width="30dp"
                 android:layout_height="26dp"
                 android:background="@drawable/ic_add_appoint"
                 android:id="@+id/btnAddAppoint"
                 android:layout_gravity="center"
+                android:backgroundTint="@color/hover_pressed"
                 />
 
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="20dp"
+            android:background="@drawable/border">
+
+            <CalendarView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@null"/>
+
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:singleSelection="true"
+            app:selectionRequired="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Medicine"
+                android:id="@+id/btnMedicine"
+                android:backgroundTint="@color/white"
+                app:strokeWidth="1dp"
+                app:cornerRadius="15dp"
+                android:textAllCaps="false"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Appointment"
+                android:id="@+id/btnAppointment"
+                android:backgroundTint="@color/white"
+                app:strokeWidth="1dp"
+                app:cornerRadius="15dp"
+                android:textAllCaps="false"/>
+
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="20dp">
+
+        </androidx.recyclerview.widget.RecyclerView>
+
     </LinearLayout>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@color/white"
+        app:itemIconSize="28dp"
+        app:itemIconTint="@color/nav_item"
+        app:itemTextColor="@android:color/transparent"
+        app:labelVisibilityMode="unlabeled"
+        app:menu="@menu/bottom_nav" />
 
 </RelativeLayout>

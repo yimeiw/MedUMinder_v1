@@ -138,6 +138,7 @@
             android:paddingStart="20dp"
             android:textColorHint="@color/placeholder"
             android:textColor="@color/white"
+            android:inputType="textPassword"
             android:textSize="12sp"
             />
     </LinearLayout>
@@ -198,7 +199,7 @@
     </LinearLayout>
 
 <!--    Button sign up-->
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/signup_button"
         android:text="SignUp"
         android:textColor="@color/white"
@@ -208,7 +209,8 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="30dp"
         android:background="@drawable/button_selector"
-        android:backgroundTint="@null"
+        android:fontFamily="@font/inter_18pt_medium"
+        app:backgroundTint="@color/black"
         android:textAllCaps="false"
         />
 
@@ -250,7 +252,7 @@
     </LinearLayout>
 
 <!--    Google auth-->
-    <Button
+    <ImageButton
         android:id="@+id/google_provider"
         android:layout_width="40dp"
         android:layout_height="40dp"
@@ -275,20 +277,24 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Don’t have an accout yet?"
+            android:text="Already have an account?"
             android:fontFamily="@font/inter_18pt_medium"
             android:textColor="@color/black"
             android:paddingEnd="5dp"
             />
 
-        <TextView
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/login_here"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/sign_up_here"
+            android:text="@string/login_here"
             android:fontFamily="@font/inter_18pt_medium"
             android:textColor="@color/black"
             android:clickable="true"
             android:focusable="true"
+            android:background="@android:color/transparent"
+            android:backgroundTint="@null"
+            android:textAllCaps="false"
             />
     </LinearLayout>
 
