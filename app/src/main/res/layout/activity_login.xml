@@ -60,6 +60,7 @@
             />
 
         <EditText
+            android:id="@+id/email_input"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/edittext_border"
@@ -94,6 +95,7 @@
 
 
         <EditText
+            android:id="@+id/password_input"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/edittext_border"
@@ -106,7 +108,7 @@
             />
     </LinearLayout>
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/login_button"
         android:text="Login"
         android:textColor="@color/white"
@@ -116,7 +118,8 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="30dp"
         android:background="@drawable/button_selector"
-        android:backgroundTint="@null"
+        android:fontFamily="@font/inter_18pt_medium"
+        app:backgroundTint="@color/black"
         android:textAllCaps="false"
         />
 
@@ -166,7 +169,7 @@
         android:layout_marginTop="30dp"
         >
 
-        <Button
+        <ImageButton
             android:id="@+id/google_provider"
             android:layout_width="40dp"
             android:layout_height="40dp"
@@ -176,7 +179,7 @@
             android:focusable="true"
             />
 
-        <Button
+        <ImageButton
             android:id="@+id/phone_provider"
             android:layout_width="40dp"
             android:layout_height="40dp"
@@ -202,10 +205,9 @@
             android:text="Don’t have an accout yet?"
             android:fontFamily="@font/inter_18pt_medium"
             android:textColor="@color/black"
-            android:paddingEnd="5dp"
             />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/sign_up"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

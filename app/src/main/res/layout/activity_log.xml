@@ -7,7 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".Log.LogActivity"
-    android:background="?attr/colorPrimary">
+    android:background="@color/bckg">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -25,6 +25,7 @@
                 android:layout_height="26dp"
                 android:background="@drawable/ic_back"
                 android:id="@+id/btnBack"
+                android:tint="@color/hover_pressed"
                 />
 
             <Spinner
@@ -91,5 +92,17 @@
             android:id="@+id/rvLogs"/>
 
     </LinearLayout>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@color/white"
+        app:itemIconSize="28dp"
+        app:itemIconTint="@color/nav_item"
+        app:itemTextColor="@android:color/transparent"
+        app:labelVisibilityMode="unlabeled"
+        app:menu="@menu/bottom_nav" />
 
   </RelativeLayout>
