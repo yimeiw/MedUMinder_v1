@@ -1,53 +1,55 @@
-package com.example.meduminderv1.Log;
+package com.example.meduminderv1.Schedule;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageButton;
-import android.widget.Spinner;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.meduminderv1.Home.HomeActivity;
+import com.example.meduminderv1.Log.LogActivity;
 import com.example.meduminderv1.Profile.ProfileActivity;
 import com.example.meduminderv1.R;
-import com.example.meduminderv1.Schedule.ScheduleActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import java.util.List;
+public class ScheduleActivity extends AppCompatActivity {
 
-public class LogActivity extends AppCompatActivity {
-
-    private Spinner spinnerType;
-    private RecyclerView rv;
-    private LogAdapter adapter;
-    private List<LogItem> logs;
-    ImageButton btnBack;
+    ImageButton btnAddReminder, btnAddAppoint;
     BottomNavigationView bottomNav;
-    private String[] logTypes = {
-            "Medication",
-            "Appointment"
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_log);
+        setContentView(R.layout.activity_schedule);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
 
         bottomNav = findViewById(R.id.bottomNav);
-        bottomNav.setSelectedItemId(R.id.nav_log);
+        bottomNav.setSelectedItemId(R.id.nav_schedule);
 
         setupBottomNav();
 
-        btnBack = findViewById(R.id.btnBack);
+        btnAddReminder = findViewById(R.id.btnAddReminder);
+        btnAddAppoint = findViewById(R.id.btnAddAppoint);
 
-        btnBack.setOnClickListener(v -> {
-            getOnBackPressedDispatcher().onBackPressed();
+        btnAddReminder.setOnClickListener(v -> {
+            startActivity(
+                    new Intent(this, MedicineReminder.class)
+            );
+        });
+
+        btnAddAppoint.setOnClickListener(v -> {
+            startActivity(
+                    new Intent(this, AppointmentReminder.class)
+            );
         });
     }
 
@@ -63,13 +65,13 @@ public class LogActivity extends AppCompatActivity {
             }
 
             if(item.getItemId() == R.id.nav_schedule){
-                startActivity(
-                        new Intent(this, ScheduleActivity.class)
-                );
                 return true;
             }
 
             if(item.getItemId() == R.id.nav_log){
+                startActivity(
+                        new Intent(this, LogActivity.class)
+                );
                 return true;
             }
 

@@ -5,8 +5,8 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ScheduleActivity"
-    android:background="?attr/colorPrimary">
+    tools:context=".Schedule.ScheduleActivity"
+    android:background="@color/bckg">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -25,6 +25,7 @@
                 android:background="@drawable/ic_add_med"
                 android:id="@+id/btnAddReminder"
                 android:layout_gravity="center"
+                android:backgroundTint="@color/hover_pressed"
                 />
 
             <TextView
@@ -44,6 +45,7 @@
                 android:background="@drawable/ic_add_appoint"
                 android:id="@+id/btnAddAppoint"
                 android:layout_gravity="center"
+                android:backgroundTint="@color/hover_pressed"
                 />
 
         </LinearLayout>
@@ -51,12 +53,13 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/border"
-            android:layout_marginVertical="20dp">
+            android:layout_marginVertical="20dp"
+            android:background="@drawable/border">
 
             <CalendarView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                android:background="@null"/>
 
         </LinearLayout>
 
@@ -98,5 +101,17 @@
         </androidx.recyclerview.widget.RecyclerView>
 
     </LinearLayout>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@color/white"
+        app:itemIconSize="28dp"
+        app:itemIconTint="@color/nav_item"
+        app:itemTextColor="@android:color/transparent"
+        app:labelVisibilityMode="unlabeled"
+        app:menu="@menu/bottom_nav" />
 
 </RelativeLayout>
