@@ -75,13 +75,6 @@ public class ScheduleActivity extends AppCompatActivity {
                 return true;
             }
 
-            if (item.getItemId() == R.id.nav_profile) {
-                startActivity(
-                        new Intent(this, ProfileActivity.class)
-                );
-                return true;
-            }
-
             return false;
         });
     }
