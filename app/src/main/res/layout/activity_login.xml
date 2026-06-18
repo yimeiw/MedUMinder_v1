@@ -183,7 +183,7 @@
             android:id="@+id/phone_provider"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:background="@drawable/phone_selector"
+            android:background="@drawable/phone_default"
             android:layout_gravity="center"
             android:focusable="true"
             />
