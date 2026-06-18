@@ -1,4 +1,4 @@
-package com.example.meduminderv1.Log;
+package com.example.meduminderv1.Model;
 
 public class LogItem {
 

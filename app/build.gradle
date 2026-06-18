@@ -41,6 +41,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-firestore'
     implementation 'com.google.firebase:firebase-auth'
     implementation 'com.google.firebase:firebase-analytics'
+    implementation "androidx.navigation:navigation-fragment-ktx:2.9.8"
+    implementation "androidx.navigation:navigation-ui-ktx:2.9.8"
     implementation "androidx.core:core-splashscreen:1.0.0"
 
     implementation libs.appcompat
@@ -57,6 +59,8 @@ dependencies {
     implementation libs.ui.graphics
     implementation libs.ui.tooling.preview
     implementation libs.material3
+    implementation libs.navigation.fragment.ktx
+    implementation libs.navigation.ui.ktx
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core

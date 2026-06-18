@@ -4,7 +4,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bckg">
+    >
 
     <View
         android:id="@+id/circle"
@@ -23,7 +23,8 @@
         android:textSize="40sp"
         android:fontFamily="@font/inter_28pt_black"
         android:layout_centerInParent="true"
-        android:alpha="0"/>
+        android:alpha="0"
+        android:background="@android:color/transparent"/>
 
     <TextView
         android:id="@+id/minder"
@@ -34,7 +35,8 @@
         android:textSize="40sp"
         android:fontFamily="@font/inter_28pt_black"
         android:layout_centerInParent="true"
-        android:alpha="0"/>
+        android:alpha="0"
+        android:background="@android:color/transparent"/>
 
     <ImageView
         android:id="@+id/letter_u"
@@ -42,13 +44,15 @@
         android:layout_height="48dp"
         android:layout_centerInParent="true"
         android:src="@drawable/letter_u"
-        android:alpha="0"/>
+        android:alpha="0"
+        android:background="@android:color/transparent"/>
 
     <ImageView
         android:id="@+id/medicine_icon"
         android:layout_width="42dp"
         android:layout_height="42dp"
-        android:src="@drawable/medicine_icon"/>
+        android:src="@drawable/medicine_icon"
+        android:background="@android:color/transparent"/>
 
     <View
         android:id="@+id/overlay"
