@@ -256,7 +256,7 @@
         android:id="@+id/google_provider"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:background="@drawable/google_selector"
+        android:background="@drawable/google_default"
         android:layout_below="@id/separator"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="10dp"
