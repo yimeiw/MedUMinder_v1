@@ -145,6 +145,13 @@ public class SignUpActivity extends AppCompatActivity {
         user.put("updated_at", FieldValue.serverTimestamp());
         user.put("deleted_at", FieldValue.serverTimestamp());
 
+        Map<String, Object> notificationPreferences = new HashMap<>();
+        notificationPreferences.put("sound", "default");
+        notificationPreferences.put("snooze_duration_minutes", 5);
+        notificationPreferences.put("repeat_until_confirmed", true);
+
+        user.put("notification_preferences", notificationPreferences);
+
         db.collection("users").document(uid).set(user).addOnSuccessListener(unused -> {
             Toast.makeText(SignUpActivity.this, "Registrasi berhasil", Toast.LENGTH_SHORT).show();
             startActivity(new Intent(SignUpActivity.this, HomeActivity.class));
