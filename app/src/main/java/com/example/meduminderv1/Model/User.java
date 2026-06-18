@@ -1,4 +1,4 @@
-package com.example.meduminderv1.User;
+package com.example.meduminderv1.Model;
 
 public class User {
     private String auth_uid;

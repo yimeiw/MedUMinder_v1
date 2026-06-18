@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/homeFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".Home.HomeActivity"
-    android:background="@color/bckg">
+    tools:context=".Home.HomeFragment"
+    >
 
     <ScrollView
         android:layout_width="match_parent"
@@ -20,7 +20,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-<!--            Logo & Icon Notif-->
+            <!--            Logo & Icon Notif-->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -62,7 +62,7 @@
                 </LinearLayout>
 
             </LinearLayout>
-<!--greetings-->
+            <!--greetings-->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -89,7 +89,7 @@
                 android:layout_marginVertical="20dp"
                 />
 
-<!--            shortcut-->
+            <!--            shortcut-->
             <GridLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -111,7 +111,9 @@
                     <ImageView
                         android:layout_width="40dp"
                         android:layout_height="40dp"
-                        android:src="@drawable/ic_add_med"/>
+                        android:src="@drawable/ic_add_med"
+                        android:background="@android:color/transparent"
+                        />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -120,7 +122,8 @@
                         android:text="Tambah Pengingat"
                         android:textAlignment="center"
                         android:textColor="@color/black"
-                        android:fontFamily="@font/inter_18pt_semibold"/>
+                        android:fontFamily="@font/inter_18pt_semibold"
+                        android:background="@android:color/transparent"/>
 
                 </LinearLayout>
 
@@ -138,7 +141,8 @@
                     <ImageView
                         android:layout_width="40dp"
                         android:layout_height="40dp"
-                        android:src="@drawable/ic_add_appoint"/>
+                        android:src="@drawable/ic_add_appoint"
+                        android:background="@android:color/transparent"/>
 
                     <TextView
                         android:layout_width="100dp"
@@ -147,7 +151,8 @@
                         android:fontFamily="@font/inter_18pt_semibold"
                         android:text="Tambah Appointment"
                         android:textColor="@color/black"
-                        android:textAlignment="center" />
+                        android:textAlignment="center"
+                        android:background="@android:color/transparent"/>
 
                 </LinearLayout>
 
@@ -165,7 +170,8 @@
                     <ImageView
                         android:layout_width="40dp"
                         android:layout_height="40dp"
-                        android:src="@drawable/ic_doc"/>
+                        android:src="@drawable/ic_doc"
+                        android:background="@android:color/transparent"/>
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -174,7 +180,8 @@
                         android:text="Dokumen Kesehatan"
                         android:textAlignment="center"
                         android:textColor="@color/black"
-                        android:fontFamily="@font/inter_18pt_semibold"/>
+                        android:fontFamily="@font/inter_18pt_semibold"
+                        android:background="@android:color/transparent"/>
 
                 </LinearLayout>
             </GridLayout>
@@ -187,7 +194,7 @@
                 android:layout_marginVertical="20dp"
                 />
 
-<!--            card jadwal skrg-->
+            <!--            card jadwal skrg-->
             <LinearLayout
                 android:id="@+id/card_now"
                 android:layout_width="match_parent"
@@ -204,7 +211,8 @@
                     android:textSize="14sp"
                     android:textColor="@color/white"
                     android:paddingHorizontal="12dp"
-                    android:paddingTop="10dp"/>
+                    android:paddingTop="10dp"
+                    android:background="@android:color/transparent"/>
 
                 <TextView
                     android:layout_width="match_parent"
@@ -215,9 +223,10 @@
                     android:text="Nama Obat/Appointment"
                     android:textColor="@color/white"
                     android:paddingHorizontal="12dp"
-                    android:paddingVertical="5dp"/>
+                    android:paddingVertical="5dp"
+                    android:background="@android:color/transparent"/>
 
-<!--                hari, tgl-->
+                <!--                hari, tgl-->
                 <LinearLayout
                     android:id="@+id/timeCard"
                     android:layout_width="match_parent"
@@ -225,14 +234,16 @@
                     android:orientation="horizontal"
                     android:paddingHorizontal="12dp"
                     android:paddingTop="6dp"
-                    android:paddingBottom="10dp">
+                    android:paddingBottom="10dp"
+                    android:background="@android:color/transparent">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Hari ini"
                         android:textColor="@color/white"
-                        android:gravity="center"/>
+                        android:gravity="center"
+                        android:background="@android:color/transparent"/>
 
                     <View
                         android:layout_width="5dp"
@@ -257,7 +268,8 @@
                         android:id="@+id/tvTime"
                         android:text="00:00"
                         android:textColor="@color/white"
-                        android:layout_gravity="center"/>
+                        android:layout_gravity="center"
+                        android:background="@android:color/transparent"/>
 
                 </LinearLayout>
 
@@ -266,7 +278,8 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:paddingHorizontal="12dp"
-                    android:paddingBottom="10dp">
+                    android:paddingBottom="10dp"
+                    android:background="@android:color/transparent">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -274,7 +287,8 @@
                         android:id="@+id/tvStokObat"
                         android:text="Stok Obat: "
                         android:textSize="12sp"
-                        android:textColor="@color/white"/>
+                        android:textColor="@color/white"
+                        android:background="@android:color/transparent"/>
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -282,7 +296,8 @@
                         android:id="@+id/tvTotalStok"
                         android:text="10"
                         android:textSize="12sp"
-                        android:textColor="@color/white"/>
+                        android:textColor="@color/white"
+                        android:background="@android:color/transparent"/>
 
                 </LinearLayout>
 
@@ -340,7 +355,7 @@
 
             </LinearLayout>
 
-<!--            list jadwal-->
+            <!--            list jadwal-->
             <androidx.recyclerview.widget.RecyclerView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -352,17 +367,5 @@
         </LinearLayout>
 
     </ScrollView>
-
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNav"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:background="@color/white"
-        app:itemIconSize="28dp"
-        app:itemIconTint="@color/nav_item"
-        app:itemTextColor="@android:color/transparent"
-        app:labelVisibilityMode="unlabeled"
-        app:menu="@menu/bottom_nav" />
 
 </RelativeLayout>

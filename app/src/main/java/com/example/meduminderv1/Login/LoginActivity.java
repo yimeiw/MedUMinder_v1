@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -13,7 +12,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.meduminderv1.Home.HomeActivity;
+import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.SignUp.SignUpActivity;
 import com.google.firebase.auth.FirebaseAuth;
@@ -99,7 +98,7 @@ public class LoginActivity extends AppCompatActivity {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
         if (currentUser != null){
-            startActivity(new Intent(this, HomeActivity.class));
+            startActivity(new Intent(this, MainActivity.class));
             finish();
         }
     }
