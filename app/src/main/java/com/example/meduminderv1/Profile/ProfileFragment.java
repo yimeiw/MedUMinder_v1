@@ -1,24 +1,22 @@
 package com.example.meduminderv1.Profile;
 
 import android.app.AlertDialog;
-import android.content.Intent;
 import android.os.Bundle;
+
+import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
+
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-
-import com.example.meduminderv1.Home.CaregiverActivity;
-import com.example.meduminderv1.Home.HomeActivity;
 import com.example.meduminderv1.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-public class ProfileActivity extends AppCompatActivity {
+public class ProfileFragment extends Fragment {
 
     ImageButton btnBack;
     FirebaseAuth mAuth;
@@ -28,20 +26,16 @@ public class ProfileActivity extends AppCompatActivity {
     TextView curr_role, name_input, email_input;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_profile);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
-        btnBack = findViewById(R.id.btnBack);
+        btnBack = view.findViewById(R.id.btnBack);
 
         btnBack.setOnClickListener(v -> {
-            getOnBackPressedDispatcher().onBackPressed();
+            NavHostFragment.findNavController(ProfileFragment.this)
+                    .navigateUp();
         });
 
         mAuth = FirebaseAuth.getInstance();
@@ -49,20 +43,21 @@ public class ProfileActivity extends AppCompatActivity {
 
         loadUserRole();
 
-        curr_role = findViewById(R.id.curr_role);
-        name_input = findViewById(R.id.name_input);
-        email_input = findViewById(R.id.email_input);
+        curr_role = view.findViewById(R.id.curr_role);
+        name_input = view.findViewById(R.id.name_input);
+        email_input = view.findViewById(R.id.email_input);
 
         curr_role.setOnClickListener(v -> {
             showRoleDialog();
         });
 
+        return view;
     }
 
     private void showRoleDialog() {
         String[] roles ={"Consumer","Caregiver"};
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle("Pilih Role");
         builder.setItems(roles, (dialog, which) -> {
             if (which == 0){
@@ -76,10 +71,12 @@ public class ProfileActivity extends AppCompatActivity {
 
     private void selectCaregiver() {
         if (!caregiverEnabled){
-            startActivity(new Intent(this, ActivateCaregiverActivity.class));
+            NavHostFragment.findNavController(this)
+                    .navigate(R.id.activateCaregiverFragment);
             return;
         } if (currentRole.equals("caregiver")){
-            startActivity(new Intent(this, CaregiverActivity.class));
+            NavHostFragment.findNavController(this)
+                    .navigate(R.id.caregiverHomeFragment);
             return;
         }
         updateRole("caregiver");
@@ -89,9 +86,11 @@ public class ProfileActivity extends AppCompatActivity {
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         db.collection("users").document(uid).update("current_role", role).addOnSuccessListener(unused ->{
             if (role.equals("consumer")){
-                startActivity(new Intent(this, HomeActivity.class));
+                NavHostFragment.findNavController(this)
+                        .navigate(R.id.homeFragment);
             } else {
-                startActivity(new Intent(this, CaregiverActivity.class));
+                NavHostFragment.findNavController(this)
+                        .navigate(R.id.caregiverHomeFragment);
             }
         });
     }

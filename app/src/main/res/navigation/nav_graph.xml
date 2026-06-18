@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment"
+    >
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.meduminderv1.Home.HomeFragment"
+        android:label="Home"
+        />
+
+    <fragment
+        android:id="@+id/logFragment"
+        android:name="com.example.meduminderv1.Log.LogFragment"
+        android:label="Log"
+        />
+
+    <fragment
+        android:id="@+id/scheduleFragment"
+        android:name="com.example.meduminderv1.Schedule.ScheduleFragment"
+        android:label="Schedule"
+        />
+
+    <fragment
+        android:id="@+id/notificationFragment"
+        android:name="com.example.meduminderv1.Notification.NotificationFragment"
+        android:label="Notification"
+        />
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.example.meduminderv1.Profile.ProfileFragment"
+        android:label="Profile"
+        />
+
+    <fragment
+        android:id="@+id/documentFragment"
+        android:name="com.example.meduminderv1.HealthDocument.DocumentFragment"
+        android:label="Document"
+        />
+
+    <fragment
+        android:id="@+id/caregiverHomeFragment"
+        android:name="com.example.meduminderv1.Caregiver.CaregiverHomeFragment"
+        android:label="Caregiver Home"
+        />
+
+    <fragment
+        android:id="@+id/activateCaregiverFragment"
+        android:name="com.example.meduminderv1.Caregiver.ActivateCaregiverFragment"
+        android:label="Activate Caregiver"
+        />
+
+    <fragment
+        android:id="@+id/medicineReminderFragment"
+        android:name="com.example.meduminderv1.Schedule.MedicineReminderFragment"
+        android:label="Medicine Reminder"
+        />
+
+    <fragment
+        android:id="@+id/appointmentReminderFragment"
+        android:name="com.example.meduminderv1.Schedule.AppointmentReminderFragment"
+        android:label="Appointment Reminder"
+        />
+
+</navigation>
