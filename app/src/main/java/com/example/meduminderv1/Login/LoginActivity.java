@@ -80,7 +80,7 @@ public class LoginActivity extends AppCompatActivity {
                 String name = documentSnapshot.getString("name");
                 String email = documentSnapshot.getString("email");
 
-                Intent intent = new Intent(LoginActivity.this, HomeFragment.class);
+                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                 intent.putExtra("name", name);
                 intent.putExtra("email", email);
                 startActivity(intent);
