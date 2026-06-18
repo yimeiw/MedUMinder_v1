@@ -12,6 +12,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.meduminderv1.Home.HomeFragment;
 import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.SignUp.SignUpActivity;
@@ -79,7 +80,7 @@ public class LoginActivity extends AppCompatActivity {
                 String name = documentSnapshot.getString("name");
                 String email = documentSnapshot.getString("email");
 
-                Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
+                Intent intent = new Intent(LoginActivity.this, HomeFragment.class);
                 intent.putExtra("name", name);
                 intent.putExtra("email", email);
                 startActivity(intent);

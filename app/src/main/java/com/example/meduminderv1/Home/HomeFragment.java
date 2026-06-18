@@ -53,6 +53,18 @@ public class HomeFragment extends Fragment {
             NavHostFragment.findNavController(this)
                     .navigate(R.id.profileFragment);
         });
+        addMed.setOnClickListener(v -> {
+            NavHostFragment.findNavController(this)
+                    .navigate(R.id.medicineReminderFragment);
+        });
+        addAppoint.setOnClickListener(v -> {
+            NavHostFragment.findNavController(this)
+                    .navigate(R.id.appointmentReminderFragment);
+        });
+        addDoc.setOnClickListener(v -> {
+            NavHostFragment.findNavController(this)
+                    .navigate(R.id.documentFragment);
+        });
 
         return view;
     }

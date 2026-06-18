@@ -15,6 +15,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.meduminderv1.Home.HomeFragment;
 import com.example.meduminderv1.Login.LoginActivity;
 import com.example.meduminderv1.R;
 import com.google.firebase.auth.FirebaseAuth;
@@ -150,7 +151,7 @@ public class SignUpActivity extends AppCompatActivity {
 
         db.collection("users").document(uid).set(user).addOnSuccessListener(unused -> {
             Toast.makeText(SignUpActivity.this, "Registrasi berhasil", Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(SignUpActivity.this, HomeActivity.class));
+            startActivity(new Intent(SignUpActivity.this, HomeFragment.class));
         }).addOnFailureListener(e -> {
             Log.e(
                     "FIRESTORE_ERROR",

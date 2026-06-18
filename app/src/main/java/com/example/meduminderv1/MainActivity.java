@@ -2,6 +2,7 @@ package com.example.meduminderv1;
 
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.FrameLayout;
 
 import androidx.activity.EdgeToEdge;
@@ -49,5 +50,18 @@ public class MainActivity extends AppCompatActivity {
                 bottomNav,
                 navController
         );
+
+        navController.addOnDestinationChangedListener(
+                (navController1, navDestination, bundle) -> {
+                    if (navDestination.getId() == R.id.notificationFragment
+                            || navDestination.getId() == R.id.profileFragment
+                            || navDestination.getId() == R.id.appointmentReminderFragment
+                            || navDestination.getId() == R.id.medicineReminderFragment
+                            || navDestination.getId() == R.id.documentFragment) {
+                        bottomNav.setVisibility(View.GONE);
+                    } else {
+                        bottomNav.setVisibility(View.VISIBLE);
+                    }
+                });
     }
 }
