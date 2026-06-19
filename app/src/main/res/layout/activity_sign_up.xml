@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
-    android:background="@color/black"
+    android:background="?attr/colorOnSurface"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".SignUp.SignUpActivity">
@@ -31,7 +31,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Welcome! Please Login Here"
-        android:textColor="@color/black"
+        android:textColor="?attr/colorOnSurface"
         android:layout_below="@id/logo"
         android:layout_marginTop="10dp"
         android:layout_centerHorizontal="true"
@@ -53,7 +53,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Name"
-            android:textColor="@color/black"
+            android:textColor="?attr/colorOnSurface"
             android:fontFamily="@font/inter_18pt_semibold"
             android:layout_marginStart="15dp"
             android:layout_marginBottom="5dp"
@@ -67,7 +67,7 @@
             android:hint="Enter your full name"
             android:paddingStart="20dp"
             android:textColorHint="@color/placeholder"
-            android:textColor="@color/white"
+            android:textColor="?attr/colorPrimary"
             android:textSize="12sp"
             />
 
@@ -88,7 +88,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Email"
-            android:textColor="@color/black"
+            android:textColor="?attr/colorOnSurface"
             android:fontFamily="@font/inter_18pt_semibold"
             android:layout_marginStart="15dp"
             android:layout_marginBottom="5dp"
@@ -102,7 +102,7 @@
             android:hint="Enter your email"
             android:paddingStart="20dp"
             android:textColorHint="@color/placeholder"
-            android:textColor="@color/white"
+            android:textColor="?attr/colorPrimary"
             android:textSize="12sp"
             />
 
@@ -123,7 +123,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Password"
-            android:textColor="@color/black"
+            android:textColor="?attr/colorOnSurface"
             android:fontFamily="@font/inter_18pt_semibold"
             android:layout_marginStart="15dp"
             android:layout_marginBottom="5dp"
@@ -137,7 +137,7 @@
             android:hint="Enter your password"
             android:paddingStart="20dp"
             android:textColorHint="@color/placeholder"
-            android:textColor="@color/white"
+            android:textColor="?attr/colorPrimary"
             android:inputType="textPassword"
             android:textSize="12sp"
             />
@@ -158,7 +158,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Phone Number"
-            android:textColor="@color/black"
+            android:textColor="?attr/colorOnSurface"
             android:fontFamily="@font/inter_18pt_semibold"
             android:layout_marginStart="15dp"
             android:layout_marginBottom="5dp"
@@ -179,7 +179,7 @@
                 app:ccp_defaultNameCode="ID"
                 app:ccp_showFlag="false"
                 app:ccp_showNameCode="false"
-                app:ccp_contentColor="@color/white"
+                app:ccp_contentColor="?attr/colorPrimary"
                 app:ccp_textSize="15sp"
                 />
 
@@ -190,7 +190,7 @@
                 android:background="@null"
                 android:hint="Input your phone number"
                 android:textColorHint="@color/placeholder"
-                android:textColor="@color/white"
+                android:textColor="?attr/colorPrimary"
                 android:textSize="12sp"
                 />
 
@@ -202,7 +202,7 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/signup_button"
         android:text="SignUp"
-        android:textColor="@color/white"
+        android:textColor="?attr/colorPrimary"
         android:layout_width="100dp"
         android:layout_height="40dp"
         android:layout_below="@id/phone_section"
@@ -210,7 +210,7 @@
         android:layout_marginTop="30dp"
         android:background="@drawable/button_selector"
         android:fontFamily="@font/inter_18pt_medium"
-        app:backgroundTint="@color/black"
+        app:backgroundTint="?attr/colorOnSurface"
         android:textAllCaps="false"
         />
 
@@ -228,7 +228,7 @@
         <View
             android:layout_width="84dp"
             android:layout_height="1dp"
-            android:background="@color/black"
+            android:background="?attr/colorOnSurface"
             android:layout_gravity="center"
             />
 
@@ -238,7 +238,7 @@
             android:text="Or Sign Up with"
             android:layout_gravity="center"
             android:paddingHorizontal="20dp"
-            android:textColor="@color/black"
+            android:textColor="?attr/colorOnSurface"
             android:fontFamily="@font/inter_18pt_medium"
             android:textSize="12sp"
             />
@@ -246,7 +246,7 @@
         <View
             android:layout_width="84dp"
             android:layout_height="1dp"
-            android:background="@color/black"
+            android:background="?attr/colorOnSurface"
             android:layout_gravity="center"
             />
     </LinearLayout>
@@ -279,7 +279,7 @@
             android:layout_height="wrap_content"
             android:text="Already have an account?"
             android:fontFamily="@font/inter_18pt_medium"
-            android:textColor="@color/black"
+            android:textColor="?attr/colorOnSurface"
             android:paddingEnd="5dp"
             />
 
@@ -289,7 +289,7 @@
             android:layout_height="wrap_content"
             android:text="@string/login_here"
             android:fontFamily="@font/inter_18pt_medium"
-            android:textColor="@color/black"
+            android:textColor="?attr/colorOnSurface"
             android:clickable="true"
             android:focusable="true"
             android:background="@android:color/transparent"

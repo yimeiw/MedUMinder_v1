@@ -8,6 +8,7 @@ import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.graphics.Path;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -23,11 +24,22 @@ import com.example.meduminderv1.R;
 public class SplashActivity extends AppCompatActivity {
 
     private boolean revealStarted = false;
+    boolean isSkip = false;
+    AnimatorSet currentAnimator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+
+        View rootView = findViewById(android.R.id.content);
+        rootView.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN){
+                skipSplash();
+                return true;
+            }
+            return false;
+        } );
 
         ImageView pill = findViewById(R.id.medicine_icon);
         ImageView letterU = findViewById(R.id.letter_u);
@@ -75,13 +87,9 @@ public class SplashActivity extends AppCompatActivity {
 
             rotatePill.setDuration(1600);
 
-            AnimatorSet pillAnim =
-                    new AnimatorSet();
+            AnimatorSet pillAnim = new AnimatorSet();
 
-            pillAnim.playTogether(
-                    movePill,
-                    rotatePill
-            );
+            pillAnim.playTogether(movePill, rotatePill);
 
             ObjectAnimator scaleX =
                     ObjectAnimator.ofFloat(
@@ -101,13 +109,9 @@ public class SplashActivity extends AppCompatActivity {
                             1f
                     );
 
-            AnimatorSet bounce =
-                    new AnimatorSet();
+            AnimatorSet bounce = new AnimatorSet();
 
-            bounce.playTogether(
-                    scaleX,
-                    scaleY
-            );
+            bounce.playTogether(scaleX, scaleY);
 
             bounce.setDuration(180);
 
@@ -137,14 +141,9 @@ public class SplashActivity extends AppCompatActivity {
                             1f
                     );
 
-            AnimatorSet uAnim =
-                    new AnimatorSet();
+            AnimatorSet uAnim = new AnimatorSet();
 
-            uAnim.playTogether(
-                    fadeU,
-                    scaleUX,
-                    scaleUY
-            );
+            uAnim.playTogether(fadeU, scaleUX, scaleUY);
 
             uAnim.setDuration(250);
 
@@ -166,13 +165,9 @@ public class SplashActivity extends AppCompatActivity {
                             -150f
                     );
 
-            AnimatorSet medAnim =
-                    new AnimatorSet();
+            AnimatorSet medAnim = new AnimatorSet();
 
-            medAnim.playTogether(
-                    medFade,
-                    medSlide
-            );
+            medAnim.playTogether(medFade, medSlide);
 
             medAnim.setDuration(350);
 
@@ -194,19 +189,14 @@ public class SplashActivity extends AppCompatActivity {
                             210f
                     );
 
-            AnimatorSet minderAnim =
-                    new AnimatorSet();
+            AnimatorSet minderAnim = new AnimatorSet();
 
-            minderAnim.playTogether(
-                    minderFade,
-                    minderSlide
-            );
+            minderAnim.playTogether(minderFade, minderSlide);
 
             minderAnim.setDuration(350);
 
             //pause sedetik di logo
-            ValueAnimator pause =
-                    ValueAnimator.ofInt(0,1);
+            ValueAnimator pause = ValueAnimator.ofInt(0,1);
 
             pause.setDuration(1000);
 
@@ -240,8 +230,7 @@ public class SplashActivity extends AppCompatActivity {
                             1f
                     );
 
-            AnimatorSet circleAnim =
-                    new AnimatorSet();
+            AnimatorSet circleAnim = new AnimatorSet();
 
             circleAnim.playTogether(
                     circleX,
@@ -251,8 +240,8 @@ public class SplashActivity extends AppCompatActivity {
 
             circleAnim.setDuration(500);
 
-            AnimatorSet finalSet =
-                    new AnimatorSet();
+            currentAnimator = new AnimatorSet();
+            AnimatorSet finalSet = currentAnimator;
 
             finalSet.playSequentially(
                     pillAnim,
@@ -281,58 +270,47 @@ public class SplashActivity extends AppCompatActivity {
         });
     }
 
-    private void triggerReveal(
-            View circle,
-            View overlay) {
+    private void skipSplash() {
+        if (isSkip) return;
+        isSkip = true;
 
-        if(revealStarted) return;
+        //stop animasi yg lg jalan
+        if (currentAnimator != null){
+            currentAnimator.cancel();
+        }
+
+        //lgsng ke login
+        startActivity(new Intent(this, LoginActivity.class));
+        finish();
+    }
+
+    private void triggerReveal(View circle, View overlay) {
+
+        if(revealStarted || isSkip) return;
 
         revealStarted = true;
 
-        int cx =
-                (int)(circle.getX()
-                        + circle.getWidth()/2f);
+        int cx = (int)(circle.getX() + circle.getWidth()/2f);
 
-        int cy =
-                (int)(circle.getY()
-                        + circle.getHeight()/2f);
+        int cy = (int)(circle.getY() + circle.getHeight()/2f);
 
-        float radius =
-                (float)Math.hypot(
-                        overlay.getWidth(),
-                        overlay.getHeight()
-                );
+        float radius = (float)Math.hypot(overlay.getWidth(), overlay.getHeight());
 
         overlay.setVisibility(View.VISIBLE);
 
-        Animator reveal =
-                ViewAnimationUtils.createCircularReveal(
-                        overlay,
-                        cx,
-                        cy,
-                        0f,
-                        radius
-                );
+        Animator reveal = ViewAnimationUtils.createCircularReveal(overlay, cx, cy, 0f, radius);
 
         reveal.setDuration(500);
 
         reveal.start();
 
-        reveal.addListener(
-                new AnimatorListenerAdapter() {
+        reveal.addListener(new AnimatorListenerAdapter() {
                     @Override
-                    public void onAnimationEnd(
-                            Animator animation) {
-
-                        startActivity(
-                                new Intent(
-                                        SplashActivity.this,
-                                        LoginActivity.class
-                                )
-                        );
-
+                    public void onAnimationEnd(Animator animation) {
+                        if (isSkip) return;
+                        startActivity(new Intent(SplashActivity.this, LoginActivity.class));
                         finish();
                     }
-                });
+        });
     }
 }

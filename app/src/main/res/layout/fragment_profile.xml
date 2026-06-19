@@ -31,7 +31,7 @@
             android:textSize="24sp"
             android:layout_weight="1"
             android:gravity="center"
-            android:textColor="@color/black"
+            android:textColor="?attr/colorOnSurface"
             />
 
         <ImageButton
@@ -83,7 +83,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text=" "
-                        android:textColor="@color/black"
+                        android:textColor="?attr/colorOnSurface"
                         android:textSize="18sp"/>
 
                     <TextView
@@ -91,7 +91,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text=" "
-                        android:textColor="@color/black"
+                        android:textColor="?attr/colorOnSurface"
                         android:textSize="14sp"/>
 
                 </LinearLayout>
@@ -101,12 +101,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Consumer"
-                    android:background="@drawable/border_hugcontent"
-                    android:backgroundTint="@color/green"
+                    android:background="@drawable/border_wp"
+                    android:backgroundTint="?attr/colorTertiary"
                     android:paddingVertical="6dp"
                     android:paddingHorizontal="24dp"
                     android:textSize="12sp"
-                    android:textColor="@color/black"
+                    android:textColor="?attr/colorOnSurface"
                     android:layout_margin="5dp"/>
 
             </LinearLayout>
@@ -122,7 +122,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:background="@drawable/border"
-                    android:backgroundTint="@color/black"
+                    android:backgroundTint="?attr/colorOnSurface"
                     android:paddingVertical="14dp"
                     android:paddingHorizontal="24dp">
 
@@ -131,7 +131,7 @@
                         android:layout_height="wrap_content"
                         android:text="Tingkat Kepatuhan"
                         android:textSize="24dp"
-                        android:textColor="@color/white"
+                        android:textColor="?attr/colorPrimary"
                         android:textStyle="bold"/>
 
                     <TextView
@@ -140,7 +140,7 @@
                         android:text="90%"
                         android:textStyle="bold"
                         android:textSize="24dp"
-                        android:textColor="@color/green"
+                        android:textColor="?attr/colorTertiary"
                         android:fontFamily="@font/inter_24pt_semibold"/>
 
                     <TextView
@@ -148,7 +148,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/desc_kepatuhan_tinggi"
                         android:textSize="14dp"
-                        android:textColor="@color/white"/>
+                        android:textColor="?attr/colorPrimary"/>
 
                     <com.google.android.material.button.MaterialButton
                         android:layout_width="wrap_content"
@@ -157,6 +157,7 @@
                         android:text="Lihat Selengkapnya"
                         android:textStyle="bold"
                         android:background="@drawable/border"
+                        android:textColor="?attr/colorOnSurface"
                         app:backgroundTint="@null"
                         android:textAllCaps="false"
                         android:layout_marginVertical="10dp"/>
@@ -174,7 +175,7 @@
                 android:textSize="16sp"
                 android:layout_marginTop="20dp"
                 android:layout_marginBottom="10dp"
-                android:textColor="@color/black"/>
+                />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -186,7 +187,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:background="@drawable/border_hugcontent"
+                    android:background="@drawable/border_wp"
                     android:layout_marginVertical="5dp">
 
                     <ImageView
@@ -203,7 +204,7 @@
                         android:layout_marginStart="10dp"
                         android:layout_weight="1"
                         android:layout_gravity="center"
-                        android:textColor="@color/black"
+
                         android:fontFamily="@font/inter_24pt_bold"/>
 
                     <ImageView
@@ -219,7 +220,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:background="@drawable/border_hugcontent"
+                    android:background="@drawable/border_wp"
                     android:layout_marginVertical="5dp">
 
                     <ImageView
@@ -234,7 +235,7 @@
                         android:text="Invite Caregiver"
                         android:layout_weight="1"
                         android:layout_gravity="center"
-                        android:textColor="@color/black"
+
                         android:fontFamily="@font/inter_24pt_bold"/>
 
                     <ImageView
@@ -250,7 +251,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:background="@drawable/border_hugcontent"
+                    android:background="@drawable/border_wp"
                     android:layout_marginVertical="5dp">
 
                     <ImageView
@@ -265,7 +266,7 @@
                         android:text="List Caregiver"
                         android:layout_weight="1"
                         android:layout_gravity="center"
-                        android:textColor="@color/black"
+
                         android:fontFamily="@font/inter_24pt_bold"/>
 
                     <ImageView
@@ -280,22 +281,22 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:background="@drawable/border_hugcontent"
+                    android:background="@drawable/border_wp"
                     android:layout_marginVertical="5dp">
 
                     <ImageView
                         android:layout_width="40dp"
                         android:layout_height="40dp"
-                        android:src="@drawable/ic_people"
+                        android:src="@drawable/ic_activate"
                         android:layout_margin="8dp"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Aktivasi Caregiver"
+
                         android:layout_weight="1"
                         android:layout_gravity="center"
-                        android:textColor="@color/black"
                         android:fontFamily="@font/inter_24pt_bold"/>
 
                     <ImageView
@@ -311,7 +312,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:background="@drawable/border_hugcontent"
+                    android:background="@drawable/border_wp"
                     android:layout_marginVertical="5dp">
 
                     <ImageView
@@ -326,7 +327,7 @@
                         android:text="Edit Profile"
                         android:layout_weight="1"
                         android:layout_gravity="center"
-                        android:textColor="@color/black"
+
                         android:fontFamily="@font/inter_24pt_bold"/>
 
                     <ImageView
@@ -342,7 +343,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:background="@drawable/border_hugcontent"
+                    android:background="@drawable/border_wp"
                     android:layout_marginVertical="5dp">
 
                     <ImageView
@@ -358,7 +359,7 @@
                         android:layout_weight="1"
                         android:layout_marginStart="3dp"
                         android:layout_gravity="center"
-                        android:textColor="@color/black"
+
                         android:fontFamily="@font/inter_24pt_bold"/>
 
                     <ImageView
@@ -374,7 +375,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:background="@drawable/border_hugcontent"
+                    android:background="@drawable/border_wp"
                     android:layout_marginVertical="5dp">
 
                     <ImageView
@@ -389,14 +390,14 @@
                         android:text="Tampilan"
                         android:layout_weight="1"
                         android:layout_gravity="center"
-                        android:textColor="@color/black"
+
                         android:fontFamily="@font/inter_24pt_bold"/>
 
                     <RelativeLayout
                         android:id="@+id/themeSwitch"
                         android:layout_width="90dp"
                         android:layout_height="match_parent"
-                        android:background="@drawable/toogle_switch"
+                        android:background="@drawable/border"
                         android:padding="6dp"
                         android:layout_margin="5dp">
 
@@ -408,11 +409,11 @@
 
                             <ImageView
                                 android:id="@+id/iconToggle"
-                                android:layout_width="30dp"
+                                android:layout_width="35dp"
                                 android:layout_height="match_parent"
                                 android:src="@drawable/ic_sun"
                                 android:scaleType="centerInside"
-                                android:background="@drawable/toogle_switch"/>
+                                android:background="@drawable/border_hugcontent_nopadding"/>
 
                         </FrameLayout>
 

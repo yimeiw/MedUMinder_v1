@@ -43,13 +43,18 @@ public class HomeFragment extends Fragment {
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
+        btnNotif.setImageDrawable(requireContext().getDrawable(R.drawable.ic_notif));
+        btnProfile.setImageDrawable(requireContext().getDrawable(R.drawable.ic_profile));
+
         checkCurrentUser();
 
         btnNotif.setOnClickListener(v -> {
+            btnNotif.setImageDrawable(requireContext().getDrawable(R.drawable.ic_notif_hover));
             NavHostFragment.findNavController(this)
                     .navigate(R.id.notificationFragment);
         });
         btnProfile.setOnClickListener(v -> {
+            btnProfile.setImageDrawable(requireContext().getDrawable(R.drawable.ic_profile_hover));
             NavHostFragment.findNavController(this)
                     .navigate(R.id.profileFragment);
         });
