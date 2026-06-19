@@ -64,6 +64,7 @@
                 android:hint="Masukkan nama Appointment Anda"
                 android:textColorHint="@color/placeholder"
                 android:paddingHorizontal="25dp"
+                android:paddingVertical="16dp"
                 android:textSize="12sp"
                 android:textColor="?attr/colorOnSurface"/>
         </LinearLayout>
@@ -90,6 +91,7 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/border"
                 android:paddingHorizontal="25dp"
+                android:paddingVertical="16dp"
                 android:textSize="12sp"
                 android:textColor="?attr/colorOnSurface"
                 android:hint="Masukkan lokasi Appointment Anda"
