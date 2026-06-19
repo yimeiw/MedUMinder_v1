@@ -84,6 +84,29 @@
         </LinearLayout>
 
     </HorizontalScrollView>
+
+    <TextView
+        android:id="@+id/initial_state_medicine"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Belum ada riwayat konsumsi."
+        android:textColor="@color/black"
+        android:gravity="center_horizontal"
+        android:textSize="16sp"
+        android:layout_marginTop="20dp"
+        />
+
+    <TextView
+        android:id="@+id/initial_state_appoint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Belum ada riwayat jadwal temu."
+        android:textColor="@color/black"
+        android:gravity="center_horizontal"
+        android:textSize="16sp"
+        android:layout_marginTop="20dp"
+        />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvLogs"
         android:layout_weight="1"
