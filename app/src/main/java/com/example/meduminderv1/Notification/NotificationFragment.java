@@ -1,4 +1,4 @@
-package com.example.meduminderv1.Schedule;
+package com.example.meduminderv1.Notification;
 
 import android.os.Bundle;
 
@@ -10,10 +10,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 
-import com.example.meduminderv1.Notification.NotificationFragment;
 import com.example.meduminderv1.R;
 
-public class MedicineReminderFragment extends Fragment {
+public class NotificationFragment extends Fragment {
 
     ImageButton btnBack;
 
@@ -21,12 +20,12 @@ public class MedicineReminderFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view =  inflater.inflate(R.layout.fragment_medicine_reminder, container, false);
+        View view = inflater.inflate(R.layout.fragment_notification, container, false);
 
         btnBack = view.findViewById(R.id.btnBack);
 
         btnBack.setOnClickListener(v -> {
-            NavHostFragment.findNavController(MedicineReminderFragment.this)
+            NavHostFragment.findNavController(NotificationFragment.this)
                     .navigateUp();
         });
 
