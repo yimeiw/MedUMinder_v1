@@ -89,15 +89,24 @@
                 android:layout_marginHorizontal="10dp"
                 android:textColor="@color/black"/>
 
-            <AutoCompleteTextView
-                android:id="@+id/freqMinumObat"
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/border"
-                android:hint="Pilih frekuensi minum obat Anda"
-                android:textColorHint="@color/placeholder"
-                android:paddingHorizontal="20dp"
-                android:textSize="12sp"/>
+                app:boxBackgroundColor="@null">
+
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/freqMinumObat"
+                    android:background="@drawable/border"
+                    android:hint="Pilih frekuensi minum obat Anda"
+                    android:textColorHint="@color/placeholder"
+                    android:paddingHorizontal="20dp"
+                    android:textSize="12sp"
+                    android:focusable="false"
+                    android:clickable="true"
+                    android:textColor="@color/black"/>
+            </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
         <LinearLayout
