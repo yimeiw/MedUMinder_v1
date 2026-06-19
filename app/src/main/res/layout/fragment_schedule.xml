@@ -33,7 +33,7 @@
                 android:id="@+id/tvSchedulePage"
                 android:text="Schedule"
                 android:textStyle="bold"
-                android:textColor="@color/black"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="24sp"
                 android:layout_weight="1"
                 android:gravity="center"/>
@@ -74,7 +74,7 @@
                 android:layout_weight="1"
                 android:text="Medicine"
                 android:id="@+id/btnMedicine"
-                android:backgroundTint="@color/white"
+                android:backgroundTint="?attr/colorPrimary"
                 app:strokeWidth="1dp"
                 app:cornerRadius="15dp"
                 android:textAllCaps="false"/>
@@ -85,7 +85,7 @@
                 android:layout_weight="1"
                 android:text="Appointment"
                 android:id="@+id/btnAppointment"
-                android:backgroundTint="@color/white"
+                android:backgroundTint="?attr/colorPrimary"
                 app:strokeWidth="1dp"
                 app:cornerRadius="15dp"
                 android:textAllCaps="false"/>

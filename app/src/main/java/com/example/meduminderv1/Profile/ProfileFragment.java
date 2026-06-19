@@ -1,8 +1,14 @@
 package com.example.meduminderv1.Profile;
 
+import static android.content.Context.MODE_PRIVATE;
+
+import static androidx.core.app.ActivityCompat.recreate;
+
 import android.app.AlertDialog;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
@@ -10,6 +16,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.example.meduminderv1.R;
@@ -24,6 +32,9 @@ public class ProfileFragment extends Fragment {
     String currentRole, name, email;
     boolean caregiverEnabled;
     TextView curr_role, name_input, email_input;
+    RelativeLayout themeSwitch;
+    ImageView iconToggle;
+    SharedPreferences prefs;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -51,7 +62,33 @@ public class ProfileFragment extends Fragment {
             showRoleDialog();
         });
 
+        themeSwitch = view.findViewById(R.id.themeSwitch);
+        iconToggle = view.findViewById(R.id.iconToggle);
+        prefs = getActivity().getSharedPreferences("themes", MODE_PRIVATE);
+        boolean isDark = prefs.getBoolean("dark_mode", false);
+
+        AppCompatDelegate.setDefaultNightMode(isDark ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
+        updateToggleUI(isDark, iconToggle);
+
+        themeSwitch.setOnClickListener(v -> {
+            boolean currentMode = prefs.getBoolean("dark_mode", false);
+            boolean newMode = !currentMode;
+
+            prefs.edit().putBoolean("dark_mode", newMode).apply();
+            AppCompatDelegate.setDefaultNightMode(newMode ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
+            updateToggleUI(newMode, iconToggle);
+            requireActivity().recreate();
+        });
+
         return view;
+    }
+
+    private void updateToggleUI(boolean isDark, ImageView iconToggle) {
+        if (isDark){
+            iconToggle.setImageResource(R.drawable.ic_moon);
+        } else {
+            iconToggle.setImageResource(R.drawable.ic_sun);
+        }
     }
 
     private void showRoleDialog() {
