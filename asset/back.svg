@@ -1,3 +1,3 @@
 <svg width="36" height="33" viewBox="0 0 36 33" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M1.33325 13H24.4333C37.6333 13 37.6333 31.3333 24.4333 31.3333M12.8833 24.6667L1.33325 13L12.8833 1.33333" stroke="#333F48" stroke-width="2.66667" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1.33325 13H24.4333C37.6333 13 37.6333 31.3333 24.4333 31.3333M12.8833 24.6667L1.33325 13L12.8833 1.33333" stroke="?attr/colorOnSurface" stroke-width="2.66667" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

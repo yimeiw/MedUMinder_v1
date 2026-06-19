@@ -5,6 +5,6 @@
     <corners android:topRightRadius="800dp"
         android:topLeftRadius="800dp"
         />
-    <solid android:color="@color/bckg"/>
+    <solid android:color="?attr/colorSurface"/>
 
 </shape>

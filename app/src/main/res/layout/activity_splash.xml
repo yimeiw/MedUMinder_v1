@@ -19,8 +19,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Med"
-        android:textColor="@color/black"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="40sp"
+        android:textStyle="bold"
         android:fontFamily="@font/inter_28pt_black"
         android:layout_centerInParent="true"
         android:alpha="0"
@@ -31,7 +32,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Minder"
-        android:textColor="@color/pink"
+        android:textColor="?attr/colorSecondary"
+        android:textStyle="bold"
         android:textSize="40sp"
         android:fontFamily="@font/inter_28pt_black"
         android:layout_centerInParent="true"
@@ -58,7 +60,7 @@
         android:id="@+id/overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/black"
+        android:background="?attr/colorOnSurface"
         android:visibility="gone"/>
 
 </RelativeLayout>
