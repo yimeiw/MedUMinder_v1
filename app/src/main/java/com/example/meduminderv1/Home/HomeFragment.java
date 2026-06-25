@@ -1,8 +1,12 @@
 package com.example.meduminderv1.Home;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
@@ -26,6 +30,7 @@ public class HomeFragment extends Fragment {
     FirebaseFirestore db;
     ImageButton btnNotif, btnProfile;
     LinearLayout addMed, addAppoint, addDoc;
+    SharedPreferences prefs;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -47,6 +52,10 @@ public class HomeFragment extends Fragment {
         btnProfile.setImageDrawable(requireContext().getDrawable(R.drawable.ic_profile));
 
         checkCurrentUser();
+
+        prefs = getActivity().getSharedPreferences("themes", MODE_PRIVATE);
+        boolean isDark = prefs.getBoolean("dark_mode", false);
+        AppCompatDelegate.setDefaultNightMode(isDark ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
 
         btnNotif.setOnClickListener(v -> {
             btnNotif.setImageDrawable(requireContext().getDrawable(R.drawable.ic_notif_hover));

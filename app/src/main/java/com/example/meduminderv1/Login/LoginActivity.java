@@ -4,9 +4,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -16,15 +18,27 @@ import com.example.meduminderv1.Home.HomeFragment;
 import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.SignUp.SignUpActivity;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.GoogleAuthProvider;
+
 public class LoginActivity extends AppCompatActivity {
     Button signUpButton, login;
+    ImageButton googleProvider, phoneProvider;
     EditText emailInput, passwordInput;
     FirebaseAuth mAuth;
     FirebaseFirestore db;
+    GoogleSignInClient googleSignInClient;
+    private static final int RC_SIGN_IN = 9001;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +66,18 @@ public class LoginActivity extends AppCompatActivity {
             Intent intent = new Intent(this, SignUpActivity.class);
             startActivity(intent);
         });
+
+        googleProvider = findViewById(R.id.google_provider);
+        phoneProvider = findViewById(R.id.phone_provider);
+
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestIdToken(getString(R.string.default_web_client_id)).requestEmail().build();
+        googleSignInClient = com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(this, gso);
+
+        googleProvider.setOnClickListener(v -> {
+            Intent signIn = googleSignInClient.getSignInIntent();
+            startActivityForResult(signIn, RC_SIGN_IN);
+        });
+
     }
 
     private void loginUser() {
@@ -103,4 +129,31 @@ public class LoginActivity extends AppCompatActivity {
             finish();
         }
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == RC_SIGN_IN) {
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            try {
+                GoogleSignInAccount account = task.getResult(ApiException.class);
+                firebaseAuthWithGoogle(account.getIdToken());
+            } catch (ApiException e) {
+                Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void firebaseAuthWithGoogle(String idToken){
+        AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
+        mAuth.signInWithCredential(credential).addOnCompleteListener( authResult -> {
+            if (authResult.isSuccessful()){
+                startActivity(new Intent(this, HomeFragment.class));
+            } else{
+                Toast.makeText(this, "Login gagal", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+    }
+
 }

@@ -44,6 +44,7 @@ dependencies {
     implementation "androidx.navigation:navigation-fragment-ktx:2.9.8"
     implementation "androidx.navigation:navigation-ui-ktx:2.9.8"
     implementation "androidx.core:core-splashscreen:1.0.0"
+    implementation 'com.google.android.gms:play-services-auth:21.2.0'
 
     implementation libs.appcompat
     implementation libs.material

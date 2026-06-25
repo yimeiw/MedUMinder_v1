@@ -5,13 +5,16 @@ import static android.content.Context.MODE_PRIVATE;
 import static androidx.core.app.ActivityCompat.recreate;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
+import android.transition.TransitionManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,13 +23,19 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.example.meduminderv1.Login.LoginActivity;
 import com.example.meduminderv1.R;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserInfo;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class ProfileFragment extends Fragment {
 
-    ImageButton btnBack;
+    ImageButton btnBack, btnLogout;
     FirebaseAuth mAuth;
     FirebaseFirestore db;
     String currentRole, name, email;
@@ -35,6 +44,7 @@ public class ProfileFragment extends Fragment {
     RelativeLayout themeSwitch;
     ImageView iconToggle;
     SharedPreferences prefs;
+    GoogleSignInClient googleSignInClient;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -49,14 +59,18 @@ public class ProfileFragment extends Fragment {
                     .navigateUp();
         });
 
+        btnLogout = view.findViewById(R.id.btnLogout);
+        btnLogout.setOnClickListener(v -> {
+            showLogoutDialog();
+        });
+
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
-
-        loadUserRole();
 
         curr_role = view.findViewById(R.id.curr_role);
         name_input = view.findViewById(R.id.name_input);
         email_input = view.findViewById(R.id.email_input);
+        loadUserRole();
 
         curr_role.setOnClickListener(v -> {
             showRoleDialog();
@@ -64,31 +78,103 @@ public class ProfileFragment extends Fragment {
 
         themeSwitch = view.findViewById(R.id.themeSwitch);
         iconToggle = view.findViewById(R.id.iconToggle);
+
         prefs = getActivity().getSharedPreferences("themes", MODE_PRIVATE);
         boolean isDark = prefs.getBoolean("dark_mode", false);
-
-        AppCompatDelegate.setDefaultNightMode(isDark ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
         updateToggleUI(isDark, iconToggle);
 
         themeSwitch.setOnClickListener(v -> {
+            v.jumpDrawablesToCurrentState();
+            v.clearAnimation();
             boolean currentMode = prefs.getBoolean("dark_mode", false);
             boolean newMode = !currentMode;
 
             prefs.edit().putBoolean("dark_mode", newMode).apply();
             AppCompatDelegate.setDefaultNightMode(newMode ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
             updateToggleUI(newMode, iconToggle);
-            requireActivity().recreate();
+
+            themeSwitch.postDelayed(() -> {
+                if (isAdded() && getActivity() != null) {
+                    getActivity().recreate();
+                }
+                }, 300);
         });
+
+        GoogleSignInOptions gso =
+                new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .requestIdToken(getString(R.string.default_web_client_id))
+                        .requestEmail()
+                        .build();
+
+        googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso);
 
         return view;
     }
 
+    private void showLogoutDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Logout");
+        builder.setMessage("Apakah Anda yakin ingin logout?");
+
+        builder.setPositiveButton("Ya", (dialog, which) -> {
+            logoutUser();
+        });
+
+        builder.setNegativeButton("Batal", null);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        if (dialog.getWindow() != null){
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.green));
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.pink));
+        }
+    }
+
+    private void logoutUser() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            navigateToLogin();
+            return;
+        }
+
+        boolean isGoogleLogin = false;
+
+        for (UserInfo profile : user.getProviderData()) {
+            if ("google.com".equals(profile.getProviderId())){
+                isGoogleLogin = true;
+                break;
+            }
+        } if (isGoogleLogin && googleSignInClient != null){
+            googleSignInClient.signOut().addOnCompleteListener(task -> {
+                FirebaseAuth.getInstance().signOut();
+                navigateToLogin();
+            });
+        } else{
+            FirebaseAuth.getInstance().signOut();
+            navigateToLogin();
+        }
+    }
+
+    private void navigateToLogin() {
+        Intent intent = new Intent(requireContext(), LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        requireActivity().finish();
+    }
+
     private void updateToggleUI(boolean isDark, ImageView iconToggle) {
+        TransitionManager.beginDelayedTransition(themeSwitch);
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) iconToggle.getLayoutParams();
         if (isDark){
             iconToggle.setImageResource(R.drawable.ic_moon);
+            params.removeRule(RelativeLayout.ALIGN_PARENT_START);
+            params.addRule(RelativeLayout.ALIGN_PARENT_END);
         } else {
             iconToggle.setImageResource(R.drawable.ic_sun);
+            params.removeRule(RelativeLayout.ALIGN_PARENT_END);
+            params.addRule(RelativeLayout.ALIGN_PARENT_START);
         }
+        iconToggle.setLayoutParams(params);
     }
 
     private void showRoleDialog() {
@@ -103,7 +189,11 @@ public class ProfileFragment extends Fragment {
                 selectCaregiver();
             }
         });
-        builder.show();
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        if (dialog.getWindow() != null){
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+        }
     }
 
     private void selectCaregiver() {
@@ -111,32 +201,35 @@ public class ProfileFragment extends Fragment {
             NavHostFragment.findNavController(this)
                     .navigate(R.id.activateCaregiverFragment);
             return;
-        } if (currentRole.equals("caregiver")){
+        } if (currentRole.equals("Caregiver")){
             NavHostFragment.findNavController(this)
                     .navigate(R.id.caregiverHomeFragment);
             return;
         }
-        updateRole("caregiver");
+        updateRole("Caregiver");
     }
 
     private void updateRole(String role) {
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         db.collection("users").document(uid).update("current_role", role).addOnSuccessListener(unused ->{
-            if (role.equals("consumer")){
-                NavHostFragment.findNavController(this)
-                        .navigate(R.id.homeFragment);
-            } else {
-                NavHostFragment.findNavController(this)
-                        .navigate(R.id.caregiverHomeFragment);
+            if (isAdded()){
+                if (getView() != null) getView().jumpDrawablesToCurrentState();
+                if (role.equals("Consumer")){
+                    NavHostFragment.findNavController(this)
+                            .navigate(R.id.homeFragment);
+                } else {
+                    NavHostFragment.findNavController(this)
+                            .navigate(R.id.caregiverHomeFragment);
+                }
             }
         });
     }
 
     private void selectConsumer() {
-        if (currentRole.equals("consumer")){
+        if (currentRole.equals("Consumer")){
             return;
         }
-        updateRole("consumer");
+        updateRole("Consumer");
     }
 
     private void loadUserRole() {
@@ -144,12 +237,12 @@ public class ProfileFragment extends Fragment {
         db.collection("users").document(uid).get().addOnSuccessListener(document -> {
             if (document.exists()) {
                 currentRole = document.getString("current_role");
-                String name = document.getString("name");
+                name = document.getString("name");
                 name_input.setText(name);
-                String email = document.getString("email");
+                email = document.getString("email");
                 email_input.setText(email);
                 Boolean enabled = document.getBoolean("caregiver_enabled");
-                caregiverEnabled = enabled != null & enabled;
+                caregiverEnabled = enabled != null && enabled;
                 curr_role.setText(currentRole);
             }
         });

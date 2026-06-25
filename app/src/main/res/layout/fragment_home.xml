@@ -70,13 +70,15 @@
                 android:id="@+id/greeting"
                 android:textSize="18sp"
                 android:layout_marginTop="10dp"
+                android:textColor="?attr/colorOnSurface"
                 />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/greetings_consumer"
-                android:textSize="14sp"/>
+                android:textSize="14sp"
+                android:textColor="?attr/colorOnSurface"/>
 
             <View
                 android:layout_width="match_parent"
@@ -119,6 +121,7 @@
                         android:text="Tambah Pengingat"
                         android:textAlignment="center"
                         android:fontFamily="@font/inter_18pt_semibold"
+                        android:textColor="?attr/colorOnSurface"
                         android:background="@android:color/transparent"/>
 
                 </LinearLayout>
@@ -147,6 +150,7 @@
                         android:fontFamily="@font/inter_18pt_semibold"
                         android:text="Tambah Appointment"
                         android:textAlignment="center"
+                        android:textColor="?attr/colorOnSurface"
                         android:background="@android:color/transparent"/>
 
                 </LinearLayout>
@@ -175,6 +179,7 @@
                         android:text="Dokumen Kesehatan"
                         android:textAlignment="center"
                         android:fontFamily="@font/inter_18pt_semibold"
+                        android:textColor="?attr/colorOnSurface"
                         android:background="@android:color/transparent"/>
 
                 </LinearLayout>
@@ -322,6 +327,7 @@
                     android:layout_height="wrap_content"
                     android:text="Jadwal Hari Ini"
                     android:textSize="20dp"
+                    android:textColor="?attr/colorOnSurface"
                     android:textStyle="bold"/>
 
                 <LinearLayout

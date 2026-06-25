@@ -134,7 +134,7 @@ public class SignUpActivity extends AppCompatActivity {
         user.put("name", name);
         user.put("email", email);
         user.put("phone", phone);
-        user.put("current_role", "consumer");
+        user.put("current_role", "Consumer");
         user.put("caregiver_enabled", false);
         user.put("preferred_language", "Indonesia");
         user.put("timezone", "Asia/Jakarta");
