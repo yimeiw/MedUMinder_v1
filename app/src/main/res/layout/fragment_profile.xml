@@ -75,7 +75,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:layout_margin="20dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginHorizontal="10dp"
                     android:layout_weight="1">
 
                     <TextView
@@ -104,7 +105,7 @@
                     android:background="@drawable/border_wp"
                     android:backgroundTint="?attr/colorTertiary"
                     android:paddingVertical="6dp"
-                    android:paddingHorizontal="24dp"
+                    android:paddingHorizontal="12dp"
                     android:textSize="12sp"
                     android:textColor="?attr/colorOnSurface"
                     android:layout_margin="5dp"/>

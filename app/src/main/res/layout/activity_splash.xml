@@ -32,7 +32,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Minder"
-        android:textColor="?attr/colorSecondary"
+        android:textColor="?attr/colorAccent"
         android:textStyle="bold"
         android:textSize="40sp"
         android:fontFamily="@font/inter_28pt_black"

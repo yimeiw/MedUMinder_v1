@@ -3,10 +3,10 @@ package com.example.meduminderv1.SignUp;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.Patterns;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -15,24 +15,23 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.meduminderv1.Auth.AuthManager;
+import com.example.meduminderv1.Callback.AuthCallback;
 import com.example.meduminderv1.Home.HomeFragment;
 import com.example.meduminderv1.Login.LoginActivity;
+import com.example.meduminderv1.Model.AuthProviderType;
+import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FieldValue;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.Timestamp;
 import com.hbb20.CountryCodePicker;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class SignUpActivity extends AppCompatActivity {
 
     Button signUp, loginButton;
+    ImageButton googleBtn;
     CountryCodePicker ccp;
     EditText phoneInput, nameInput, emailInput, passwordInput;
-    FirebaseAuth mAuth;
-    FirebaseFirestore db;
+    AuthManager authManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +45,7 @@ public class SignUpActivity extends AppCompatActivity {
         });
 
         signUp = findViewById(R.id.signup_button);
+        googleBtn = findViewById(R.id.google_provider);
 
         nameInput = findViewById(R.id.name_input);
         emailInput = findViewById(R.id.email_input);
@@ -55,8 +55,7 @@ public class SignUpActivity extends AppCompatActivity {
         ccp = findViewById(R.id.picker_country);
         ccp.registerCarrierNumberEditText(phoneInput);
 
-        mAuth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
+        authManager = authManager.getInstance(getApplicationContext());
 
         signUp.setOnClickListener(v -> registerUser());
 
@@ -66,32 +65,62 @@ public class SignUpActivity extends AppCompatActivity {
             Intent intent = new Intent(this, LoginActivity.class);
             startActivity(intent);
         });
+
+        googleBtn.setOnClickListener(v -> signUpWithGoogle());
     }
 
-    private void registerUser() {
-        String name = nameInput.getText().toString().trim();
-        String email = emailInput.getText().toString().trim();
-        String password = passwordInput.getText().toString().trim();
-        String phone = phoneInput.getText().toString().trim();
+    private void signUpWithGoogle() {
+        authManager.loginWithGoogle(SignUpActivity.this, new AuthCallback<User>() {
+            @Override
+            public void onSuccess(User result) {
+                startActivity(new Intent(SignUpActivity.this, HomeFragment.class));
+                finishAffinity();
+            }
 
-        if (name.isEmpty() || email.isEmpty() || password.isEmpty() || phone.isEmpty()) {
-            Toast.makeText(this, "Semua field harus diisi", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if(!validateInput(name,email,password,phone)){
-            return;
-        }
-
-        mAuth.createUserWithEmailAndPassword(email, password).addOnSuccessListener(authResult -> {
-            String uid = authResult.getUser().getUid();
-            saveUserToFirestore(uid, name, email, phone);
-        }).addOnFailureListener(e -> {
-            Toast.makeText(SignUpActivity.this,e.getMessage(),Toast.LENGTH_LONG).show();
+            @Override
+            public void onFailure(String message) {
+                Toast.makeText(SignUpActivity.this, message, Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
-    private boolean validateInput(String name, String email, String password, String phone) {
+    private void registerUser() {
+        User user = new User();
+        user.setName(nameInput.getText().toString().trim());
+        user.setEmail(emailInput.getText().toString().trim());
+        user.setPhone(ccp.getFullNumberWithPlus() + phoneInput.getText().toString().trim());
+        user.setCurrent_role("Consumer");
+        user.setCaregiver_enabled(false);
+        user.setAuthProvider(AuthProviderType.EMAIL);
+        user.setPreferred_language("Indonesia");
+        user.setTimezone("Asia/Jakarta");
+        user.setCreatedAt(Timestamp.now());
+        user.setUpdatedAt(Timestamp.now());
+        user.setDeletedAt(null);
+
+        String password = passwordInput.getText().toString().trim();
+
+        if (user.getName().isEmpty() || user.getEmail().isEmpty() || password.isEmpty() || user.getPhone().isEmpty()) {
+            Toast.makeText(this, "Semua field harus diisi", Toast.LENGTH_SHORT).show();
+            return;
+        } if (!validateInput(user.getName(), user.getEmail(), password)){
+            return;
+        }
+        authManager.registerWithEmail(user, password, new AuthCallback<User>() {
+            @Override
+            public void onSuccess(User result) {
+                startActivity(new Intent(SignUpActivity.this, HomeFragment.class));
+                finishAffinity();
+            }
+
+            @Override
+            public void onFailure(String message) {
+                Toast.makeText(SignUpActivity.this, message, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private boolean validateInput(String name, String email, String password) {
         if(TextUtils.isEmpty(name)){
             nameInput.setError("Nama harus diisi");
             return false;
@@ -112,7 +141,7 @@ public class SignUpActivity extends AppCompatActivity {
             passwordInput.setError("Password harus lebih dari 6 karakter");
             return false;
         }
-        if (TextUtils.isEmpty(phone)){
+        if (TextUtils.isEmpty(phoneInput.getText().toString().trim())){
             phoneInput.setError("Nomor telepon harus diisi");
             return false;
         }
@@ -120,51 +149,7 @@ public class SignUpActivity extends AppCompatActivity {
             phoneInput.setError("Nomor telepon tidak valid");
             return false;
         }
-        if (phone.length() < 10){
-            phoneInput.setError("Nomor telepon harus lebih dari 10 karakter");
-            return false;
-        }
         return true;
-    }
-
-    private void saveUserToFirestore(String uid, String name, String email, String phone) {
-        Map<String, Object> user = new HashMap<>();
-
-        user.put("auth_uid", uid);
-        user.put("name", name);
-        user.put("email", email);
-        user.put("phone", phone);
-        user.put("current_role", "Consumer");
-        user.put("caregiver_enabled", false);
-        user.put("preferred_language", "Indonesia");
-        user.put("timezone", "Asia/Jakarta");
-        user.put("created_at", FieldValue.serverTimestamp());
-        user.put("updated_at", FieldValue.serverTimestamp());
-        user.put("deleted_at", FieldValue.serverTimestamp());
-
-        Map<String, Object> notificationPreferences = new HashMap<>();
-        notificationPreferences.put("sound", "default");
-        notificationPreferences.put("snooze_duration_minutes", 5);
-        notificationPreferences.put("repeat_until_confirmed", true);
-
-        user.put("notification_preferences", notificationPreferences);
-
-        db.collection("users").document(uid).set(user).addOnSuccessListener(unused -> {
-            Toast.makeText(SignUpActivity.this, "Registrasi berhasil", Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(SignUpActivity.this, HomeFragment.class));
-        }).addOnFailureListener(e -> {
-            Log.e(
-                    "FIRESTORE_ERROR",
-                    e.getMessage(),
-                    e
-            );
-
-            Toast.makeText(
-                    SignUpActivity.this,
-                    e.getMessage(),
-                    Toast.LENGTH_LONG
-            ).show();
-        });
     }
 
 }

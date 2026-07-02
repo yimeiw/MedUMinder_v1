@@ -6,6 +6,7 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Path;
 import android.os.Bundle;
 import android.view.MotionEvent;
@@ -17,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import com.example.meduminderv1.Login.LoginActivity;
 import com.example.meduminderv1.R;
@@ -29,6 +31,14 @@ public class SplashActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //menerapkan last mode user
+        SharedPreferences prefs = getSharedPreferences("themes", MODE_PRIVATE);
+        boolean isDark = prefs.getBoolean("dark_mode", false);
+        int targetMode = isDark ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO;
+        if (AppCompatDelegate.getDefaultNightMode() != targetMode){
+            AppCompatDelegate.setDefaultNightMode(targetMode);
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 

@@ -9,8 +9,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
+import androidx.credentials.ClearCredentialStateRequest;
+import androidx.credentials.CredentialManager;
+import androidx.credentials.CredentialManagerCallback;
+import androidx.credentials.exceptions.ClearCredentialException;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
@@ -25,8 +30,6 @@ import android.widget.TextView;
 
 import com.example.meduminderv1.Login.LoginActivity;
 import com.example.meduminderv1.R;
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -44,7 +47,6 @@ public class ProfileFragment extends Fragment {
     RelativeLayout themeSwitch;
     ImageView iconToggle;
     SharedPreferences prefs;
-    GoogleSignInClient googleSignInClient;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -100,14 +102,6 @@ public class ProfileFragment extends Fragment {
                 }, 300);
         });
 
-        GoogleSignInOptions gso =
-                new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                        .requestIdToken(getString(R.string.default_web_client_id))
-                        .requestEmail()
-                        .build();
-
-        googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso);
-
         return view;
     }
 
@@ -137,22 +131,29 @@ public class ProfileFragment extends Fragment {
             return;
         }
 
-        boolean isGoogleLogin = false;
-
-        for (UserInfo profile : user.getProviderData()) {
-            if ("google.com".equals(profile.getProviderId())){
-                isGoogleLogin = true;
-                break;
-            }
-        } if (isGoogleLogin && googleSignInClient != null){
-            googleSignInClient.signOut().addOnCompleteListener(task -> {
-                FirebaseAuth.getInstance().signOut();
-                navigateToLogin();
-            });
-        } else{
-            FirebaseAuth.getInstance().signOut();
-            navigateToLogin();
+        for (UserInfo info : user.getProviderData()){
+            android.util.Log.d("AUTH_PROVIDER", info.getProviderId());
         }
+
+        FirebaseAuth.getInstance().signOut();
+        CredentialManager credentialManager = CredentialManager.create(requireContext());
+        ClearCredentialStateRequest request = new ClearCredentialStateRequest();
+        credentialManager.clearCredentialStateAsync(request, null, Runnable::run, new CredentialManagerCallback<Void, ClearCredentialException>() {
+            @Override
+            public void onResult(Void unused) {
+                if (isAdded()){
+                    navigateToLogin();
+                }
+            }
+
+            @Override
+            public void onError(@NonNull ClearCredentialException e) {
+                android.util.Log.e("Logout", e.getMessage(), e);
+                if (isAdded()){
+                    navigateToLogin();
+                }
+            }
+        });
     }
 
     private void navigateToLogin() {

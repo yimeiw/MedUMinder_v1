@@ -66,7 +66,7 @@
             android:background="@drawable/edittext_border"
             android:hint="Enter your full name"
             android:paddingStart="20dp"
-            android:textColorHint="@color/placeholder"
+            android:textColorHint="?attr/colorPrimaryInverse"
             android:textColor="?attr/colorPrimary"
             android:textSize="12sp"
             />
@@ -101,7 +101,7 @@
             android:background="@drawable/edittext_border"
             android:hint="Enter your email"
             android:paddingStart="20dp"
-            android:textColorHint="@color/placeholder"
+            android:textColorHint="?attr/colorPrimaryInverse"
             android:textColor="?attr/colorPrimary"
             android:textSize="12sp"
             />
@@ -136,7 +136,7 @@
             android:background="@drawable/edittext_border"
             android:hint="Enter your password"
             android:paddingStart="20dp"
-            android:textColorHint="@color/placeholder"
+            android:textColorHint="?attr/colorPrimaryInverse"
             android:textColor="?attr/colorPrimary"
             android:inputType="textPassword"
             android:textSize="12sp"
@@ -174,13 +174,13 @@
             >
             <com.hbb20.CountryCodePicker
                 android:id="@+id/picker_country"
-                android:layout_width="wrap_content"
+                android:layout_width="45dp"
                 android:layout_height="wrap_content"
                 app:ccp_defaultNameCode="ID"
                 app:ccp_showFlag="false"
                 app:ccp_showNameCode="false"
-                app:ccp_contentColor="?attr/colorPrimary"
-                app:ccp_textSize="15sp"
+                app:ccp_contentColor="?attr/colorPrimaryInverse"
+                app:ccp_textSize="12sp"
                 />
 
             <EditText
@@ -189,7 +189,7 @@
                 android:layout_height="match_parent"
                 android:background="@null"
                 android:hint="Input your phone number"
-                android:textColorHint="@color/placeholder"
+                android:textColorHint="?attr/colorPrimaryInverse"
                 android:textColor="?attr/colorPrimary"
                 android:textSize="12sp"
                 />
@@ -202,7 +202,7 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/signup_button"
         android:text="SignUp"
-        android:textColor="?attr/colorPrimary"
+        android:textColor="?attr/colorPrimaryFixed"
         android:layout_width="100dp"
         android:layout_height="40dp"
         android:layout_below="@id/phone_section"
