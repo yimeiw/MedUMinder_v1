@@ -40,7 +40,7 @@
         />
 
     <LinearLayout
-        android:id="@+id/email_section"
+        android:id="@+id/phone_section"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -52,84 +52,74 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Email"
-            android:fontFamily="@font/inter_18pt_semibold"
-            android:layout_marginStart="15dp"
-            android:layout_marginBottom="5dp"
-            />
-
-        <EditText
-            android:id="@+id/email_input"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/edittext_border"
-            android:hint="Enter your email"
-            android:paddingStart="20dp"
-            android:textColorHint="?attr/colorPrimaryInverse"
-            android:textColor="?attr/colorPrimary"
-            android:textSize="12sp"
-            />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/password_section"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_below="@id/email_section"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="10dp"
-        >
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Password"
+            android:text="Phone Number"
             android:textColor="?attr/colorOnSurface"
             android:fontFamily="@font/inter_18pt_semibold"
             android:layout_marginStart="15dp"
             android:layout_marginBottom="5dp"
             />
 
-
-        <EditText
-            android:id="@+id/password_input"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="230dp"
             android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
             android:background="@drawable/edittext_border"
-            android:hint="Enter your password"
-            android:paddingStart="20dp"
-            android:textColorHint="?attr/colorPrimaryInverse"
-            android:textColor="?attr/colorPrimary"
-            android:inputType="textPassword"
-            android:textSize="12sp"
-            />
-    </LinearLayout>
+            >
+            <com.hbb20.CountryCodePicker
+                android:id="@+id/picker_country"
+                android:layout_width="45dp"
+                android:layout_height="wrap_content"
+                app:ccp_defaultNameCode="ID"
+                app:ccp_showFlag="false"
+                app:ccp_showNameCode="false"
+                app:ccp_contentColor="?attr/colorPrimaryInverse"
+                app:ccp_textSize="12sp"
+                />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/login_button"
-        android:text="Login"
-        android:textColor="?attr/colorPrimaryFixed"
-        android:layout_width="100dp"
-        android:layout_height="40dp"
-        android:layout_below="@id/password_section"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="30dp"
-        android:background="@drawable/button_selector"
-        android:fontFamily="@font/inter_18pt_medium"
-        app:backgroundTint="?attr/colorOnSurface"
-        android:textAllCaps="false"
-        />
+            <EditText
+                android:id="@+id/phone_input"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:background="@null"
+                android:hint="Input your phone number"
+                android:textColorHint="?attr/colorPrimaryInverse"
+                android:textColor="?attr/colorPrimary"
+                android:textSize="12sp"
+                android:inputType="phone"
+                />
+
+        </LinearLayout>
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="15dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSendOtp"
+            android:text="Send OTP"
+            android:textColor="?attr/colorPrimary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/phone_section"
+            android:layout_gravity="center"
+            android:layout_centerHorizontal="true"
+            android:background="@drawable/button_selector"
+            android:fontFamily="@font/inter_18pt_medium"
+            app:backgroundTint="?attr/colorSecondary"
+            android:textAllCaps="false"
+            />
+
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/separator"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_below="@id/login_button"
+        android:layout_below="@id/phone_section"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="60dp"
         >
 
         <View
@@ -179,10 +169,10 @@
             />
 
         <ImageButton
-            android:id="@+id/phone_provider"
+            android:id="@+id/email"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:background="@drawable/phone_default"
+            android:background="@drawable/email"
             android:layout_gravity="center"
             android:focusable="true"
             />
