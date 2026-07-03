@@ -19,6 +19,7 @@ import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Callback.AuthCallback;
 import com.example.meduminderv1.Home.HomeFragment;
 import com.example.meduminderv1.Login.LoginActivity;
+import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.Model.AuthProviderType;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
@@ -73,7 +74,7 @@ public class SignUpActivity extends AppCompatActivity {
         authManager.loginWithGoogle(SignUpActivity.this, new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
-                startActivity(new Intent(SignUpActivity.this, HomeFragment.class));
+                startActivity(new Intent(SignUpActivity.this, MainActivity.class));
                 finishAffinity();
             }
 
@@ -109,7 +110,7 @@ public class SignUpActivity extends AppCompatActivity {
         authManager.registerWithEmail(user, password, new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
-                startActivity(new Intent(SignUpActivity.this, HomeFragment.class));
+                startActivity(new Intent(SignUpActivity.this, MainActivity.class));
                 finishAffinity();
             }
 

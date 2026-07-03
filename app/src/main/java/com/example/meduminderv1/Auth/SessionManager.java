@@ -8,7 +8,7 @@ public class SessionManager {
     static SessionManager instance;
     FirebaseAuth auth;
     User currentUser;
-    public SessionManager(){
+    private SessionManager(){
         auth = FirebaseAuth.getInstance();
     }
     public static synchronized SessionManager getInstance(){

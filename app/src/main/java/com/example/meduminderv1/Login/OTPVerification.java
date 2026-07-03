@@ -90,7 +90,7 @@ public class OTPVerification extends AppCompatActivity {
             authManager.verifyOtp(otp, new AuthCallback<User>() {
                 @Override
                 public void onSuccess(User result) {
-                    startActivity(new Intent(OTPVerification.this, HomeFragment.class));
+                    startActivity(new Intent(OTPVerification.this, MainActivity.class));
                     finishAffinity();
                 }
 

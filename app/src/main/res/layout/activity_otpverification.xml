@@ -52,7 +52,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="OTP Verification"
+            android:text="OTP Code"
             android:textColor="?attr/colorOnSurface"
             android:fontFamily="@font/inter_18pt_semibold"
             android:layout_marginStart="15dp"
@@ -61,7 +61,7 @@
 
         <LinearLayout
             android:id="@+id/layoutOtp"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center"
@@ -133,14 +133,14 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_below="@id/auth_provider"
-            android:layout_gravity="center"
+            android:layout_gravity="center_horizontal"
             >
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Don’t receive code yet?"
-                android:fontFamily="@font/inter_18pt_medium"
+                android:text="Haven't received the OTP code yet?"
+                android:textSize="12sp"
                 android:textColor="?attr/colorOnSurface"
                 />
 
@@ -149,7 +149,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Resend OTP Code"
-                android:fontFamily="@font/inter_18pt_medium"
+                android:textSize="12sp"
                 android:textColor="?attr/colorOnSurface"
                 android:clickable="true"
                 android:focusable="true"
@@ -157,6 +157,7 @@
                 android:backgroundTint="@null"
                 android:textAllCaps="false"
                 android:paddingHorizontal="5dp"
+                android:paddingVertical="2dp"
                 />
         </LinearLayout>
     </LinearLayout>

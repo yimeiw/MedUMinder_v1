@@ -124,7 +124,7 @@ public class AuthManager {
        } if (password == null || password.isEmpty()){
            callback.onFailure("Password tidak boleh kosong.");
            return;
-        }
+       }
 
        mAuth.signInWithEmailAndPassword(email, password).addOnSuccessListener(authResult -> {
            FirebaseUser firebaseUser = authResult.getUser();
@@ -540,6 +540,26 @@ public class AuthManager {
     }
 
 //    ACCOUNT
+    public void restoreSession(AuthCallback<User> callback){
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser == null){
+            callback.onFailure("Belum login.");
+            return;
+        }
+
+        userRepository.getUserbyUid(firebaseUser.getUid(), new RepoCallback<User>() {
+            @Override
+            public void onSuccess(User result) {
+                sessionManager.saveUser(result);
+                callback.onSuccess(result);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
     private void updateUserProfile(User user, AuthCallback<Void> callback) {
         userRepository.updateUser(user, new RepoCallback<Void>(){
             @Override

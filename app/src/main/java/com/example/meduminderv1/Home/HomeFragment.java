@@ -29,8 +29,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 public class HomeFragment extends Fragment {
 
     TextView tvGreeting;
-    FirebaseAuth mAuth;
-    FirebaseFirestore db;
     ImageButton btnNotif, btnProfile;
     LinearLayout addMed, addAppoint, addDoc;
     SharedPreferences prefs;
@@ -49,8 +47,7 @@ public class HomeFragment extends Fragment {
         addAppoint = view.findViewById(R.id.layoutAddAppoint);
         addDoc = view.findViewById(R.id.layoutDoc);
 
-        mAuth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
+        sessionManager = SessionManager.getInstance();
 
         btnNotif.setImageDrawable(requireContext().getDrawable(R.drawable.ic_notif));
         btnProfile.setImageDrawable(requireContext().getDrawable(R.drawable.ic_profile));
@@ -87,25 +84,9 @@ public class HomeFragment extends Fragment {
         return view;
     }
     private void checkCurrentUser() {
-        if (!sessionManager.isLoggedIn() || sessionManager.getUser() == null){
-            Intent intent = new Intent(requireActivity(), LoginActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            requireActivity().finish();
-            return;
-        } User user = sessionManager.getUser();
-        tvGreeting.setText("Halo, " + user.getName() + "!");
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        if (!sessionManager.isLoggedIn() || sessionManager.getUser() == null){
-            startActivity(new Intent(requireActivity(), LoginActivity.class));
-            requireActivity().finish();
-        } if (sessionManager.isLoggedIn()){
-            startActivity(new Intent(requireActivity(), HomeFragment.class));
-            requireActivity().finish();
+        User user = sessionManager.getUser();
+        if (user != null){
+            tvGreeting.setText("Halo, " + user.getName() + "!");
         }
     }
 }

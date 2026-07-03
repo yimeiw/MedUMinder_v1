@@ -42,8 +42,6 @@ public class LoginActivity extends AppCompatActivity {
     Button signUpButton, login;
     ImageButton googleBtn, phoneBtn;
     EditText emailInput, passwordInput;
-    FirebaseAuth mAuth;
-    FirebaseFirestore db;
     CredentialManager credentialManager;
     AuthManager authManager;
     SessionManager sessionManager;
@@ -65,9 +63,9 @@ public class LoginActivity extends AppCompatActivity {
         emailInput = findViewById(R.id.email_input);
         passwordInput = findViewById(R.id.password_input);
 
-        mAuth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
         credentialManager = CredentialManager.create(this);
+        sessionManager = SessionManager.getInstance();
+        authManager = AuthManager.getInstance(getApplicationContext());
 
         login.setOnClickListener(v -> {
             loginUser();
@@ -119,7 +117,7 @@ public class LoginActivity extends AppCompatActivity {
         authManager.loginWithEmail(email, password, new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
-                startActivity(new Intent(LoginActivity.this, HomeFragment.class));
+                startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 finish();
             }
 
@@ -128,15 +126,6 @@ public class LoginActivity extends AppCompatActivity {
                 Toast.makeText(LoginActivity.this, message, Toast.LENGTH_SHORT).show();
             }
         });
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (sessionManager.isLoggedIn()){
-            startActivity(new Intent(this, MainActivity.class));
-            finish();
-        }
     }
 
 }
