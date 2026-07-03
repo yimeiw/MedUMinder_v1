@@ -77,7 +77,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Dikonsumsi"
-            android:background="@drawable/border_hugcontent"
+            android:background="@drawable/border_hugcontent_nopadding"
             android:backgroundTint="@color/green"
             android:paddingVertical="6dp"
             android:paddingHorizontal="24dp"

@@ -14,13 +14,21 @@
       },
       "oauth_client": [
         {
+          "client_id": "280378087598-fj819s7hj13ml86fc14ti9g289a8s5k3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.meduminderv1",
+            "certificate_hash": "f91ed83584bd1b52ce86608ee161e258bc6950c3"
+          }
+        },
+        {
           "client_id": "280378087598-1igm6pkd94i1escim3gfoiti1c8r0vpt.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAskujR0eUxmtbCKwmsEb5rDxdYV8kDmbQ"
+          "current_key": "AIzaSyArPS6RvLyLAdEtv6WgkUNqifY2ARrY54Y"
         }
       ],
       "services": {
