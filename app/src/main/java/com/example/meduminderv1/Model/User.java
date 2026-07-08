@@ -7,6 +7,8 @@ public class User {
     private String name;
     private String email;
     private String phone;
+    private boolean phoneVerified;
+
     private String current_role;
 
     private AuthProviderType authProvider;
@@ -19,11 +21,9 @@ public class User {
     public String getAuth_uid() {
         return auth_uid;
     }
-
     public void setAuth_uid(String auth_uid) {
         this.auth_uid = auth_uid;
     }
-
     public String getName() {
         return name;
     }
@@ -46,6 +46,14 @@ public class User {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public boolean isPhoneVerified() {
+        return phoneVerified;
+    }
+
+    public void setPhoneVerified(boolean phoneVerified) {
+        this.phoneVerified = phoneVerified;
     }
 
     public String getCurrent_role() {
@@ -110,5 +118,8 @@ public class User {
 
     public void setDeletedAt(Timestamp deletedAt) {
         this.deletedAt = deletedAt;
+    }
+
+    public void setGoogleLinked(boolean linked) {
     }
 }

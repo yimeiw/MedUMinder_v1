@@ -8,40 +8,25 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.credentials.Credential;
 import androidx.credentials.CredentialManager;
-import androidx.credentials.CredentialManagerCallback;
-import androidx.credentials.CustomCredential;
-import androidx.credentials.GetCredentialResponse;
-import androidx.credentials.GetCredentialRequest;
-import androidx.credentials.exceptions.GetCredentialException;
 
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.AuthCallback;
-import com.example.meduminderv1.Home.HomeFragment;
 import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.SignUp.SignUpActivity;
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
-
-import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class LoginActivity extends AppCompatActivity {
     Button signUpButton, login;
     ImageButton googleBtn, phoneBtn;
-    EditText emailInput, passwordInput;
+    EditText emailInput, passwordInput, forgotPassword;
     CredentialManager credentialManager;
     AuthManager authManager;
     SessionManager sessionManager;
@@ -62,6 +47,7 @@ public class LoginActivity extends AppCompatActivity {
 
         emailInput = findViewById(R.id.email_input);
         passwordInput = findViewById(R.id.password_input);
+        forgotPassword = findViewById(R.id.forgot_password);
 
         credentialManager = CredentialManager.create(this);
         sessionManager = SessionManager.getInstance();
@@ -69,6 +55,31 @@ public class LoginActivity extends AppCompatActivity {
 
         login.setOnClickListener(v -> {
             loginUser();
+        });
+
+        forgotPassword.setOnClickListener(v -> {
+            String email = emailInput.getText().toString().trim();
+            authManager.resetPassword(email, new AuthCallback<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    new MaterialAlertDialogBuilder(LoginActivity.this).setTitle("Email berhasil dikirim")
+                            .setMessage("Silahkan buka email Anda untuk mengatur ulang password.")
+                            .setPositiveButton("Buka Email", (dialog, which) -> {
+                                Intent intent = new Intent(Intent.ACTION_MAIN);
+                                intent.addCategory(Intent.CATEGORY_APP_EMAIL);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                                try {
+                                    startActivity(intent);
+                                } catch (Exception ignored){}
+                            }).setNegativeButton("Tutup", null).show();
+                }
+
+                @Override
+                public void onFailure(String message) {
+                    Toast.makeText(LoginActivity.this, message, Toast.LENGTH_SHORT).show();
+                }
+            });
         });
 
         signUpButton.setOnClickListener(view -> {

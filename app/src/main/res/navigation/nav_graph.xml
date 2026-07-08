@@ -65,4 +65,20 @@
         android:label="Appointment Reminder"
         />
 
+    <fragment
+        android:id="@+id/editProfileFragment"
+        android:name="com.example.meduminderv1.Profile.EditProfileFragment"
+        android:label="Edit Profile"
+        />
+
+    <fragment
+        android:id="@+id/changePhoneFragment"
+        android:name="com.example.meduminderv1.Profile.ChangePhoneFragment"
+        android:label="Change Phone Number"/>
+
+    <fragment
+        android:id="@+id/verifyPhoneFragment"
+        android:name="com.example.meduminderv1.Profile.VerifyChangePhoneFragment"
+        android:label="Verify Phone Number"/>
+
 </navigation>

@@ -2,8 +2,6 @@ package com.example.meduminderv1.Profile;
 
 import static android.content.Context.MODE_PRIVATE;
 
-import static androidx.core.app.ActivityCompat.recreate;
-
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -25,12 +23,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.example.meduminderv1.Login.LoginActivity;
 import com.example.meduminderv1.R;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserInfo;
@@ -47,6 +45,7 @@ public class ProfileFragment extends Fragment {
     RelativeLayout themeSwitch;
     ImageView iconToggle;
     SharedPreferences prefs;
+    LinearLayout btnEditProfile;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -76,6 +75,12 @@ public class ProfileFragment extends Fragment {
 
         curr_role.setOnClickListener(v -> {
             showRoleDialog();
+        });
+
+        btnEditProfile = view.findViewById(R.id.btnEditProfile);
+        btnEditProfile.setOnClickListener(v -> {
+            NavHostFragment.findNavController(this)
+                    .navigate(R.id.editProfileFragment);
         });
 
         themeSwitch = view.findViewById(R.id.themeSwitch);
