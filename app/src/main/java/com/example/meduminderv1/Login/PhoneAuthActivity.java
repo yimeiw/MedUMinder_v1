@@ -15,7 +15,9 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Callback.AuthCallback;
+import com.example.meduminderv1.Home.HomeFragment;
 import com.example.meduminderv1.MainActivity;
+import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.SignUp.SignUpActivity;
 import com.google.firebase.auth.FirebaseAuth;
@@ -24,7 +26,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.hbb20.CountryCodePicker;
 
 public class PhoneAuthActivity extends AppCompatActivity {
-    ImageButton googleProvider, email;
+    ImageButton btnGoogle, email;
     Button signUpButton, btnSendOtp;
     EditText phone_input;
     CountryCodePicker ccp;
@@ -54,11 +56,15 @@ public class PhoneAuthActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        googleProvider = findViewById(R.id.google_provider);
+        btnGoogle = findViewById(R.id.google_provider);
         email = findViewById(R.id.email);
 
         email.setOnClickListener(v -> {
             startActivity(new Intent(this, LoginActivity.class));
+        });
+
+        btnGoogle.setOnClickListener(v ->{
+            signInWithGoogle();
         });
 
         btnSendOtp.setOnClickListener(v -> {
@@ -82,6 +88,21 @@ public class PhoneAuthActivity extends AppCompatActivity {
                     Toast.makeText(PhoneAuthActivity.this, message, Toast.LENGTH_SHORT).show();
                 }
             });
+        });
+    }
+
+    private void signInWithGoogle() {
+        authManager.loginWithGoogle(this, new AuthCallback<User>() {
+            @Override
+            public void onSuccess(User result) {
+                startActivity(new Intent(PhoneAuthActivity.this, MainActivity.class));
+                finish();
+            }
+
+            @Override
+            public void onFailure(String message) {
+                Toast.makeText(PhoneAuthActivity.this, message, Toast.LENGTH_SHORT).show();
+            }
         });
     }
 }

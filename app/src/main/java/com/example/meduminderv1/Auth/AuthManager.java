@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.compose.ui.platform.AndroidUriHandler;
 import androidx.credentials.Credential;
 import androidx.credentials.CredentialManager;
 import androidx.credentials.CredentialManagerCallback;
@@ -33,6 +34,7 @@ import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthOptions;
 import com.google.firebase.auth.PhoneAuthProvider;
 import com.google.firebase.auth.UserInfo;
+import com.google.firebase.auth.UserProfileChangeRequest;
 
 import java.util.concurrent.TimeUnit;
 
@@ -44,6 +46,7 @@ public class AuthManager {
     private final CredentialManager credentialManager;
     private String verificationId;
     private PhoneAuthProvider.ForceResendingToken resendToken;
+    private String pendingPhoneNumber;
 
     public AuthManager(Context context){
         mAuth = FirebaseAuth.getInstance();
@@ -118,43 +121,44 @@ public class AuthManager {
     }
 
     public void loginWithEmail(String email, String password, AuthCallback<User> callback){
-       if (email == null || email.trim().isEmpty()){
-           callback.onFailure("Email tidak boleh kosong");
-           return;
-       } if (password == null || password.isEmpty()){
-           callback.onFailure("Password tidak boleh kosong.");
-           return;
+        if (email == null || email.trim().isEmpty()){
+            callback.onFailure("Email tidak boleh kosong");
+            return;
+        } if (password == null || password.isEmpty()){
+            callback.onFailure("Password tidak boleh kosong.");
+            return;
         }
 
-       mAuth.signInWithEmailAndPassword(email, password).addOnSuccessListener(authResult -> {
-           FirebaseUser firebaseUser = authResult.getUser();
-           if (firebaseUser == null) {
-               callback.onFailure("User tidak ditemukan.");
-               return;
-           }
+        mAuth.signInWithEmailAndPassword(email, password).addOnSuccessListener(result -> {
+            FirebaseUser firebaseUser = result.getUser();
+            if (firebaseUser == null){
+                callback.onFailure("Login gagal, User tidak ditemukan.");
+                return;
+            } userRepository.getUserbyUid(firebaseUser.getUid(), new RepoCallback<User>() {
+                @Override
+                public void onSuccess(User result) {
+                    sessionManager.saveUser(result);
+                    callback.onSuccess(result);
+                }
 
-           userRepository.getUserbyUid(firebaseUser.getUid(), new RepoCallback<User>() {
-               @Override
-               public void onSuccess(User result) {
-                   sessionManager.saveUser(result);
-                   callback.onSuccess(result);
-               }
-
-               @Override
-               public void onFailure(Exception e) {
-                   mAuth.signOut();
-                   callback.onFailure(e.getMessage());
-               }
-           });
-       }).addOnFailureListener(e -> {
-           if (e instanceof FirebaseAuthInvalidCredentialsException){
-               callback.onFailure("Email atau password salah.");
-           } else if (e instanceof FirebaseAuthInvalidUserException){
-               callback.onFailure("Akun tidak ditemukan.");
-           } else {
-               callback.onFailure(e.getMessage());
-           }
-       });
+                @Override
+                public void onFailure(Exception e) {
+                    mAuth.signOut();
+                    callback.onFailure(e.getMessage());
+                }
+            });
+        }).addOnFailureListener(e -> {
+            String message = "Email atau password salah.";
+            if (e instanceof FirebaseAuthInvalidUserException){
+                message = "Email belum terdaftar.\n\n"+
+                        "Jika akun Anda dibuat menggunakan Google, "+
+                        "silahkan login menggunakan Google.";
+            } else if (e instanceof FirebaseAuthInvalidCredentialsException){
+                message = "Password salah.\n\n"+
+                        "Jika akun Anda dibuat menggunakan Google, "+
+                        "silahkan login menggunakan Google.";
+            } callback.onFailure(message);
+        });
     }
 
     public void resetPassword(String email, AuthCallback<Void> callback){
@@ -171,60 +175,6 @@ public class AuthManager {
                         callback.onFailure(e.getMessage());
                     }
                 });
-    }
-
-    public void changePassword(String currentPassword, String newPassword, AuthCallback<Void> callback){
-        FirebaseUser firebaseUser = mAuth.getCurrentUser();
-        if (firebaseUser == null){
-            callback.onFailure("User belum login.");
-            return;
-        } if (!hasEmailProvider()){
-            callback.onFailure("Akun ini tidak menggunakan login Email");
-            return;
-        } if (currentPassword == null || currentPassword.isEmpty()){
-            callback.onFailure("Password lama tidak boleh kosong.");
-            return;
-        } if (newPassword == null || newPassword.length() < 6){
-            callback.onFailure("Password baru minimal 6 karakter.");
-            return;
-        } if (currentPassword.equals(newPassword)){
-            callback.onFailure("Password baru tidak boleh sama dengan password lama.");
-            return;
-        }
-
-        AuthCredential credential = EmailAuthProvider.getCredential(firebaseUser.getEmail(), currentPassword);
-        firebaseUser.reauthenticate(credential).addOnSuccessListener(unused -> {
-            firebaseUser.updatePassword(newPassword).addOnSuccessListener(result -> callback.onSuccess(null))
-                    .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
-        }).addOnFailureListener(e -> callback.onFailure("Password lama salah."));
-    }
-
-    public void linkEmail(String email, String password, AuthCallback<Void> callback){
-        FirebaseUser firebaseUser = mAuth.getCurrentUser();
-        if (firebaseUser == null){
-            callback.onFailure("User belum login.");
-            return;
-        } if (email == null || email.trim().isEmpty()){
-            callback.onFailure("Email tidak boleh kosong.");
-            return;
-        } if (password == null || password.length() < 6){
-            callback.onFailure("Password minimal 6 karakter.");
-            return;
-        } if (hasEmailProvider()){
-            callback.onFailure("Akun sudah memiliki login Email.");
-            return;
-        }
-
-        AuthCredential credential = EmailAuthProvider.getCredential(email.trim(), password);
-        firebaseUser.linkWithCredential(credential).addOnSuccessListener(authResult -> {
-            User user = sessionManager.getUser();
-            if (user != null){
-                user.setEmail(email.trim());
-                updateUserProfile(user, callback);
-            } else {
-                callback.onSuccess(null);
-            }
-        }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 
     //    GOOGLE
@@ -294,7 +244,7 @@ public class AuthManager {
                 User user = new User();
                 user.setAuth_uid(firebaseUser.getUid());
                 user.setName(firebaseUser.getDisplayName());
-                user.setEmail(firebaseUser.getEmail());
+                user.setEmail(firebaseUser.getEmail().trim().toLowerCase());
                 user.setAuthProvider(AuthProviderType.valueOf("GOOGLE"));
                 user.setCurrent_role("Consumer");
                 user.setCaregiver_enabled(false);
@@ -355,21 +305,26 @@ public class AuthManager {
         } if (hasGoogleProvider()){
             callback.onFailure("Google sudah terhubung");
             return;
-        }
-        AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
-        currentUser.linkWithCredential(credential).addOnSuccessListener(result -> {
-            FirebaseUser linkedUser = result.getUser();
-            User user = sessionManager.getUser();
-            if (user == null){
-                callback.onFailure("Data user tidak ditemukan.");
+        } AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
+        FirebaseAuth.getInstance().signInWithCredential(credential).addOnSuccessListener(result -> {
+            FirebaseUser googleUser = result.getUser();
+            if (googleUser == null){
+                callback.onFailure("Akun Google tidak ditemukan.");
                 return;
-            } if (linkedUser != null){
-                if (currentUser.getEmail() != null){
-                    user.setEmail(currentUser.getEmail());
-                } if (currentUser.getDisplayName() != null){
-                    user.setName(currentUser.getDisplayName());
-                }
-            } updateUserProfile(user, callback);
+            }
+
+            String googleEmail = googleUser.getEmail();
+            String currentEmail = currentUser.getEmail();
+
+            if (googleEmail == null || !googleEmail.equalsIgnoreCase(currentEmail)){
+                FirebaseAuth.getInstance().signOut();
+                callback.onFailure("Email Google harus sama dengan email akun MedUMinder.");
+                return;
+            } currentUser.linkWithCredential(credential).addOnSuccessListener(unused -> {
+                User user = sessionManager.getUser();
+                sessionManager.saveUser(user);
+                callback.onSuccess(null);
+            }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
         }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 
@@ -475,28 +430,27 @@ public class AuthManager {
         if (currentUser == null){
             callback.onFailure("User belum login.");
             return;
-        } if (hasPhoneProvider()){
-            callback.onFailure("Nomor telepon sudah terhubung");
-            return;
         }
         currentUser.linkWithCredential(credential).addOnSuccessListener(result -> {
-            FirebaseUser linkedUser = result.getUser();
             User user = sessionManager.getUser();
             if (user == null){
                 callback.onFailure("Data user tidak ditemukan.");
                 return;
-            } if (linkedUser != null && linkedUser.getPhoneNumber() != null){
-                user.setPhone(linkedUser.getPhoneNumber());
-            } updateUserProfile(user, new AuthCallback<Void>() {
+            }
+
+            user.setPhone(pendingPhoneNumber);
+            user.setUpdatedAt(Timestamp.now());
+
+            updateUserProfile(user, new AuthCallback<Void>() {
                 @Override
                 public void onSuccess(Void result) {
-                    verificationId = null;
-                    resendToken = null;
+                    clearPhoneState();
                     callback.onSuccess(null);
                 }
 
                 @Override
                 public void onFailure(String message) {
+                    clearPhoneState();
                     callback.onFailure(message);
                 }
             });
@@ -504,43 +458,155 @@ public class AuthManager {
     }
 
     public void linkPhone(Activity activity, String phone, AuthCallback<Void> callback){
-        if (phone == null || phone.trim().isEmpty()){
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser == null){
+            callback.onFailure("User belum login.");
+            return;
+        } if (phone == null || phone.trim().isEmpty()){
             callback.onFailure("Nomor telepon tidak boleh kosong.");
             return;
         }
+        pendingPhoneNumber = phone.trim();
 
-        PhoneAuthOptions options = PhoneAuthOptions.newBuilder(mAuth).setPhoneNumber(phone)
-                .setActivity(activity).setTimeout(60L, TimeUnit.SECONDS).setCallbacks(new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-                    @Override
-                    public void onVerificationCompleted(@NonNull PhoneAuthCredential phoneAuthCredential) {
-                        //OTP manual
-                    }
+        userRepository.getUserbyPhone(phone.trim(), new RepoCallback<User>() {
+            @Override
+            public void onSuccess(User result) {
+                callback.onFailure("Nomor telepon sudah digunakan.");
+            }
 
-                    @Override
-                    public void onVerificationFailed(@NonNull FirebaseException e) {
-                        callback.onFailure(e.getMessage());
-                    }
-                    @Override
-                    public void onCodeSent(@NonNull String verificationId, @NonNull PhoneAuthProvider.ForceResendingToken forceResendingToken) {
-                        AuthManager.this.verificationId = verificationId;
-                        resendToken = forceResendingToken;
-                        callback.onSuccess(null);
-                    }
-                }).build();
-        PhoneAuthProvider.verifyPhoneNumber(options);
+            @Override
+            public void onFailure(Exception e) {
+                PhoneAuthOptions options = PhoneAuthOptions.newBuilder(mAuth).setPhoneNumber(pendingPhoneNumber)
+                        .setActivity(activity).setTimeout(60L, TimeUnit.SECONDS).setCallbacks(new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+                            @Override
+                            public void onVerificationCompleted(@NonNull PhoneAuthCredential phoneAuthCredential) {
+                                //OTP manual
+                            }
+
+                            @Override
+                            public void onVerificationFailed(@NonNull FirebaseException e) {
+                                callback.onFailure(e.getMessage());
+                            }
+                            @Override
+                            public void onCodeSent(@NonNull String verificationId, @NonNull PhoneAuthProvider.ForceResendingToken forceResendingToken) {
+                                AuthManager.this.verificationId = verificationId;
+                                resendToken = forceResendingToken;
+                                callback.onSuccess(null);
+                            }
+                        }).build();
+                PhoneAuthProvider.verifyPhoneNumber(options);
+            }
+        });
     }
 
-    public void verifyLinkPhoneOtp(String otp, String phone, AuthCallback<Void> callback){
+    public void verifyLinkPhoneOtp(String otp, AuthCallback<Void> callback){
         if (verificationId == null){
-            callback.onFailure("Verification ID tidak ditemukan.");
+            callback.onFailure("OTP belum ada.");
+            return;
+        } if (otp == null || otp.trim().isEmpty()){
+            callback.onFailure("OTP tidak boleh kosong.");
             return;
         }
         PhoneAuthCredential credential = PhoneAuthProvider.getCredential(verificationId, otp);
-        linkPhoneCredential(credential, callback);
+        completePhoneLink(credential, callback);
+
     }
 
-//    ACCOUNT
+    private void completePhoneLink(PhoneAuthCredential credential, AuthCallback<Void> callback) {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser == null){
+            callback.onFailure("User belum login.");
+            return;
+        } if (hasPhoneProvider()){
+            unlinkOldPhone(currentUser, credential, callback);
+        } else {
+            linkPhoneCredential(credential, callback);
+        }
+    }
+
+    private void unlinkOldPhone(FirebaseUser currentUser, PhoneAuthCredential credential, AuthCallback<Void> callback) {
+        currentUser.updatePhoneNumber(credential).addOnSuccessListener(unused -> {
+            User user = sessionManager.getUser();
+            if (user == null){
+                callback.onFailure("User tidak ditemukan.");
+                return;
+            }
+
+            user.setPhone(pendingPhoneNumber);
+            user.setUpdatedAt(Timestamp.now());
+            updateUserProfile(user, new AuthCallback<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    clearPhoneState();
+                    callback.onSuccess(null);
+                }
+
+                @Override
+                public void onFailure(String message) {
+                    clearPhoneState();
+                    callback.onFailure(message);
+                }
+            });
+        }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    private void changePhoneCredential(PhoneAuthCredential credential, AuthCallback<Void> callback) {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser == null){
+            callback.onFailure("User belum login.");
+            return;
+        } User user = sessionManager.getUser();
+        if (user == null){
+            callback.onFailure("Data user tidak ditemukan.");
+            return;
+        }
+
+        user.setPhone(pendingPhoneNumber);
+        user.setUpdatedAt(Timestamp.now());
+        updateUserProfile(user, new AuthCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                clearPhoneState();
+                callback.onSuccess(null);
+            }
+
+            @Override
+            public void onFailure(String message) {
+                clearPhoneState();
+                callback.onFailure(message);
+            }
+        });
+    }
+
+    public void clearPhoneState() {
+        verificationId = null;
+        resendToken = null;
+        pendingPhoneNumber = null;
+    }
+
+    //    ACCOUNT
+    public void restoreSession(AuthCallback<User> callback){
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser == null){
+            callback.onFailure("Belum login.");
+            return;
+        }
+
+        userRepository.getUserbyUid(firebaseUser.getUid(), new RepoCallback<User>() {
+            @Override
+            public void onSuccess(User result) {
+                sessionManager.saveUser(result);
+                callback.onSuccess(result);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
     private void updateUserProfile(User user, AuthCallback<Void> callback) {
+        user.setUpdatedAt(Timestamp.now());
         userRepository.updateUser(user, new RepoCallback<Void>(){
             @Override
             public void onSuccess(Void result) {
@@ -585,4 +651,69 @@ public class AuthManager {
         });
     }
 
+//    tambahan untuk editprofile
+    public User getCurrentUser(){
+        return sessionManager.getUser();
+    }
+
+    public void updateDisplayName(String newName, AuthCallback<User> callback) {
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser == null){
+            callback.onFailure("User belum login.");
+            return;
+        } final String finalName = newName.trim();
+        if (finalName.length() < 4){
+            callback.onFailure("Nama minimal 4 karakter.");
+            return;
+        } UserProfileChangeRequest profileChangeRequest = new UserProfileChangeRequest.Builder().setDisplayName(finalName).build();
+        firebaseUser.updateProfile(profileChangeRequest).addOnSuccessListener(unused -> {
+            User user = sessionManager.getUser();
+            if (user == null){
+                callback.onFailure("User tidak ditemukan.");
+                return;
+            }
+            user.setName(finalName);
+            user.setUpdatedAt(Timestamp.now());
+            updateUserProfile(user, new AuthCallback<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    callback.onSuccess(sessionManager.getUser());
+                }
+
+                @Override
+                public void onFailure(String message) {
+                    callback.onFailure(message);
+                }
+            });
+        }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    public void deleteAccount(AuthCallback<Void> callback){
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser == null){
+            callback.onFailure("User belum login.");
+            return;
+        } userRepository.deleteUser(firebaseUser.getUid(), new RepoCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                firebaseUser.delete().addOnSuccessListener(unused -> {
+                    sessionManager.clearSession();
+                    callback.onSuccess(null);
+                }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
+
+    public AuthProviderType getCurrentProvider(){
+        if (hasGoogleProvider()){
+            return AuthProviderType.GOOGLE;
+        } if (hasPhoneProvider()){
+            return AuthProviderType.PHONE;
+        } return AuthProviderType.EMAIL;
+    }
 }

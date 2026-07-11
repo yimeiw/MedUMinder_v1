@@ -1,7 +1,10 @@
 package com.example.meduminderv1.Repo;
 
+import android.util.Log;
+
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Model.User;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
@@ -10,7 +13,6 @@ import java.util.Map;
 public class UserRepository {
     FirebaseFirestore db;
     static UserRepository instance;
-    static String COLLECTION = "users";
 
     private UserRepository(){
         db = FirebaseFirestore.getInstance();
@@ -23,14 +25,14 @@ public class UserRepository {
     }
 
     public void saveUser(User user, RepoCallback<Void> callback){
-        db.collection(COLLECTION).document(user.getAuth_uid()).set(user)
+        db.collection("users").document(user.getAuth_uid()).set(user)
                 .addOnSuccessListener(unused -> {
                     callback.onSuccess(null);
                 }).addOnFailureListener(callback::onFailure);
     }
 
     public void getUserbyUid(String uid, RepoCallback<User> callback){
-        db.collection(COLLECTION).document(uid).get()
+        db.collection("users").document(uid).get()
                 .addOnSuccessListener(snapshot -> {
                     if (snapshot.exists()){
                         callback.onSuccess(snapshot.toObject(User.class));
@@ -41,8 +43,10 @@ public class UserRepository {
     }
 
     public void getUserbyEmail(String email, RepoCallback<User> callback){
-        db.collection(COLLECTION).whereEqualTo("email", email).limit(1).get()
+        Log.d("USER_REPO", "Email = " + email);
+        db.collection("users").whereEqualTo("email", email).limit(1).get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
+                    Log.d("USER_REPO", "Result size = " + queryDocumentSnapshots.size());
                     if (queryDocumentSnapshots.isEmpty()){
                         callback.onFailure(new Exception("Email tidak ditemukan"));
                         return;
@@ -52,7 +56,7 @@ public class UserRepository {
     }
 
     public void getUserbyPhone (String phone, RepoCallback<User> callback){
-        db.collection(COLLECTION).whereEqualTo("phone", phone).limit(1).get()
+        db.collection("users").whereEqualTo("phone", phone).limit(1).get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     if (queryDocumentSnapshots.isEmpty()){
                         callback.onFailure(new Exception("Nomor telepon tidak ditemukan"));
@@ -69,17 +73,16 @@ public class UserRepository {
         update.put("phone", user.getPhone());
         update.put("updatedAt", user.getUpdatedAt());
 
-        db.collection(COLLECTION).document(user.getAuth_uid()).update(update)
+        db.collection("users").document(user.getAuth_uid()).update(update)
                 .addOnSuccessListener(unused -> {
                     callback.onSuccess(null);
                 }).addOnFailureListener(callback::onFailure);
     }
 
     public void deleteUser(String uid, RepoCallback<Void> callback){
-        db.collection(COLLECTION).document(uid).delete()
+        db.collection("users").document(uid).delete()
                 .addOnSuccessListener(unused -> {
                     callback.onSuccess(null);
                 }).addOnFailureListener(callback::onFailure);
     }
-
 }

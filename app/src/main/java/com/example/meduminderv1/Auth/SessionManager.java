@@ -8,7 +8,7 @@ public class SessionManager {
     static SessionManager instance;
     FirebaseAuth auth;
     User currentUser;
-    public SessionManager(){
+    private SessionManager(){
         auth = FirebaseAuth.getInstance();
     }
     public static synchronized SessionManager getInstance(){
@@ -38,5 +38,26 @@ public class SessionManager {
     public void clearSession(){
         currentUser = null;
         auth.signOut();
+    }
+
+    public void updateName(String name){
+        if (currentUser != null){
+            currentUser.setName(name);
+        }
+    }
+    public void updatePhone(String phone){
+        if (currentUser != null){
+            currentUser.setPhone(phone);
+        }
+    }
+    public void updateGoogleLinked(boolean linked){
+        if (currentUser != null){
+            currentUser.setGoogleLinked(linked);
+        }
+    }
+    public void updatePhoneVerified(boolean verified){
+        if (currentUser != null){
+            currentUser.setPhoneVerified(verified);
+        }
     }
 }

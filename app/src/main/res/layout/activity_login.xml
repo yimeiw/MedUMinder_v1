@@ -105,6 +105,7 @@
             android:inputType="textPassword"
             android:textSize="12sp"
             />
+
     </LinearLayout>
 
     <com.google.android.material.button.MaterialButton
@@ -122,12 +123,28 @@
         android:textAllCaps="false"
         />
 
+    <TextView
+        android:id="@+id/forgot_password"
+        android:layout_below="@id/login_button"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/reset_password"
+        android:textStyle=""
+        android:gravity="center"
+        android:layout_marginTop="5dp"
+        android:textSize="12sp"
+        android:textColor="?attr/colorOnSurface"
+        android:fontFamily="@font/inter_18pt_medium"
+        />
+
     <LinearLayout
         android:id="@+id/separator"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_below="@id/login_button"
+        android:layout_below="@id/forgot_password"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="20dp"
         >

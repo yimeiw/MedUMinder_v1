@@ -20,7 +20,11 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 
+import com.example.meduminderv1.Auth.AuthManager;
+import com.example.meduminderv1.Callback.AuthCallback;
 import com.example.meduminderv1.Login.LoginActivity;
+import com.example.meduminderv1.MainActivity;
+import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
 
 public class SplashActivity extends AppCompatActivity {
@@ -28,6 +32,7 @@ public class SplashActivity extends AppCompatActivity {
     private boolean revealStarted = false;
     boolean isSkip = false;
     AnimatorSet currentAnimator;
+    private AuthManager authManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +43,8 @@ public class SplashActivity extends AppCompatActivity {
         if (AppCompatDelegate.getDefaultNightMode() != targetMode){
             AppCompatDelegate.setDefaultNightMode(targetMode);
         }
+
+        authManager = AuthManager.getInstance(getApplicationContext());
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
@@ -294,8 +301,7 @@ public class SplashActivity extends AppCompatActivity {
         }
 
         //lgsng ke login
-        startActivity(new Intent(this, LoginActivity.class));
-        finish();
+        openNextScreen();
     }
 
     private void triggerReveal(View circle, View overlay) {
@@ -324,11 +330,26 @@ public class SplashActivity extends AppCompatActivity {
                     public void onAnimationEnd(Animator animation) {
                         if (isSkip) return;
                         if (isFinishing() || isDestroyed()) return;
-                        startActivity(new Intent(SplashActivity.this, LoginActivity.class));
-                        finish();
+                        openNextScreen();
                     }
         });
         reveal.start();
+    }
+
+    private void openNextScreen() {
+        authManager.restoreSession(new AuthCallback<User>() {
+            @Override
+            public void onSuccess(User result) {
+                startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                finish();
+            }
+
+            @Override
+            public void onFailure(String message) {
+                startActivity(new Intent(SplashActivity.this, LoginActivity.class));
+                finish();
+            }
+        });
     }
 
     @Override
@@ -339,4 +360,5 @@ public class SplashActivity extends AppCompatActivity {
         }
         super.onDestroy();
     }
+
 }
