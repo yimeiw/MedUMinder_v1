@@ -6,6 +6,7 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Path;
 import android.os.Bundle;
 import android.view.MotionEvent;
@@ -17,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import com.example.meduminderv1.Login.LoginActivity;
 import com.example.meduminderv1.R;
@@ -29,6 +31,14 @@ public class SplashActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //menerapkan last mode user
+        SharedPreferences prefs = getSharedPreferences("themes", MODE_PRIVATE);
+        boolean isDark = prefs.getBoolean("dark_mode", false);
+        int targetMode = isDark ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO;
+        if (AppCompatDelegate.getDefaultNightMode() != targetMode){
+            AppCompatDelegate.setDefaultNightMode(targetMode);
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
@@ -162,7 +172,7 @@ public class SplashActivity extends AppCompatActivity {
                             med,
                             "translationX",
                             0f,
-                            -150f
+                            -20f
                     );
 
             AnimatorSet medAnim = new AnimatorSet();
@@ -186,7 +196,7 @@ public class SplashActivity extends AppCompatActivity {
                             minder,
                             "translationX",
                             0f,
-                            210f
+                            285f
                     );
 
             AnimatorSet minderAnim = new AnimatorSet();
@@ -196,7 +206,7 @@ public class SplashActivity extends AppCompatActivity {
             minderAnim.setDuration(350);
 
             //pause sedetik di logo
-            ValueAnimator pause = ValueAnimator.ofInt(0,1);
+            ValueAnimator pause = ValueAnimator.ofInt(0, 1);
 
             pause.setDuration(1000);
 
@@ -255,18 +265,22 @@ public class SplashActivity extends AppCompatActivity {
 
             finalSet.start();
 
-            finalSet.addListener(
-                    new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationEnd(
-                                Animator animation) {
+            finalSet.addListener(new AnimatorListenerAdapter() {
+                boolean cancelled = false;
 
-                            triggerReveal(
-                                    circle,
-                                    overlay
-                            );
-                        }
-                    });
+                @Override
+                public void onAnimationCancel(Animator animation) {
+                    cancelled = true;
+                }
+
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    if (cancelled) return;
+                    if (isSkip) return;
+                    if (isFinishing() || isDestroyed()) return;
+                    triggerReveal(circle, overlay);
+                }
+            });
         });
     }
 
@@ -287,11 +301,14 @@ public class SplashActivity extends AppCompatActivity {
     private void triggerReveal(View circle, View overlay) {
 
         if(revealStarted || isSkip) return;
+        if(isFinishing() || isDestroyed()) return;
+        if (circle == null || overlay == null) return;
+        if(!circle.isAttachedToWindow()) return;
+        if(!overlay.isAttachedToWindow()) return;
 
         revealStarted = true;
 
         int cx = (int)(circle.getX() + circle.getWidth()/2f);
-
         int cy = (int)(circle.getY() + circle.getHeight()/2f);
 
         float radius = (float)Math.hypot(overlay.getWidth(), overlay.getHeight());
@@ -302,15 +319,24 @@ public class SplashActivity extends AppCompatActivity {
 
         reveal.setDuration(500);
 
-        reveal.start();
-
         reveal.addListener(new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         if (isSkip) return;
+                        if (isFinishing() || isDestroyed()) return;
                         startActivity(new Intent(SplashActivity.this, LoginActivity.class));
                         finish();
                     }
         });
+        reveal.start();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (currentAnimator != null){
+            currentAnimator.cancel();
+            currentAnimator = null;
+        }
+        super.onDestroy();
     }
 }
