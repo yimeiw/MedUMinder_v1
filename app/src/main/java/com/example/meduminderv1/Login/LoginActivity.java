@@ -123,6 +123,18 @@ public class LoginActivity extends AppCompatActivity {
                 finish();
             }
 
+    private void loadUserData(String uid) {
+        db.collection("users").document(uid).get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()){
+                String name = documentSnapshot.getString("name");
+                String email = documentSnapshot.getString("email");
+
+                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                intent.putExtra("name", name);
+                intent.putExtra("email", email);
+                startActivity(intent);
+            } else{
+                Toast.makeText(this, "Data pengguna tidak ditemukan", Toast.LENGTH_SHORT).show();
             @Override
             public void onFailure(String message) {
                 Toast.makeText(LoginActivity.this, message, Toast.LENGTH_SHORT).show();

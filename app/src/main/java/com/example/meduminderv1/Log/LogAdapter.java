@@ -1,5 +1,6 @@
 package com.example.meduminderv1.Log;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.meduminderv1.Model.LogItem;
+import com.example.meduminderv1.Model.MedicationLog;
 import com.example.meduminderv1.R;
 
 import java.util.List;
@@ -16,10 +18,12 @@ import java.util.List;
 public class LogAdapter
         extends RecyclerView.Adapter<LogAdapter.ViewHolder>{
 
-    private List<LogItem> logs;
+    private Context context;
+    private List<MedicationLog> medicationLogs;
 
-    public LogAdapter(List<LogItem> logs){
-        this.logs = logs;
+    public LogAdapter(Context context, List<MedicationLog> medicationLogs){
+        this.context = context;
+        this.medicationLogs = medicationLogs;
     }
 
     @NonNull
@@ -43,27 +47,14 @@ public class LogAdapter
             @NonNull ViewHolder holder,
             int position) {
 
-        LogItem item = logs.get(position);
+        MedicationLog item = medicationLogs.get(position);
 
-        holder.tvNamaJadwal.setText(item.getNamaJadwal());
-        holder.tvTime.setText(item.getTime());
-
-        if(item.getType().equals("Medication")){
-            holder.tvInformasiJadwal.setText(
-                    "Remaining Stock: " + item.getStock()
-            );
-        }
-        else{
-            holder.tvInformasiJadwal.setText(
-                    item.getLocation()
-            );
-        }
 
     }
 
     @Override
     public int getItemCount() {
-        return logs.size();
+        return medicationLogs.size();
     }
 
     public static class ViewHolder
