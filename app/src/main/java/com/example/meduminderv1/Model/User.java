@@ -6,11 +6,7 @@ public class User {
     private String auth_uid;
     private String name;
     private String email;
-    private String phone;
-    private boolean phoneVerified;
-
     private String current_role;
-
     private AuthProviderType authProvider;
     private boolean caregiver_enabled;
     private String preferred_language;
@@ -39,23 +35,6 @@ public class User {
     public void setEmail(String email) {
         this.email = email;
     }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public boolean isPhoneVerified() {
-        return phoneVerified;
-    }
-
-    public void setPhoneVerified(boolean phoneVerified) {
-        this.phoneVerified = phoneVerified;
-    }
-
     public String getCurrent_role() {
         return current_role;
     }
@@ -120,6 +99,4 @@ public class User {
         this.deletedAt = deletedAt;
     }
 
-    public void setGoogleLinked(boolean linked) {
-    }
 }

@@ -5,10 +5,13 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -25,8 +28,9 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class LoginActivity extends AppCompatActivity {
     Button signUpButton, login;
-    ImageButton googleBtn, phoneBtn;
-    EditText emailInput, passwordInput, forgotPassword;
+    ImageButton googleBtn;
+    EditText emailInput, passwordInput;
+    TextView forgotPassword;
     CredentialManager credentialManager;
     AuthManager authManager;
     SessionManager sessionManager;
@@ -59,20 +63,33 @@ public class LoginActivity extends AppCompatActivity {
 
         forgotPassword.setOnClickListener(v -> {
             String email = emailInput.getText().toString().trim();
+            if (email.isEmpty()){
+                emailInput.setError("Masukkan email terlebih dahulu.");
+                emailInput.requestFocus();
+                return;
+            }
             authManager.resetPassword(email, new AuthCallback<Void>() {
                 @Override
                 public void onSuccess(Void result) {
-                    new MaterialAlertDialogBuilder(LoginActivity.this).setTitle("Email berhasil dikirim")
+                    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(LoginActivity.this);
+                            builder.setTitle("Email berhasil dikirim")
                             .setMessage("Silahkan buka email Anda untuk mengatur ulang password.")
                             .setPositiveButton("Buka Email", (dialog, which) -> {
                                 Intent intent = new Intent(Intent.ACTION_MAIN);
                                 intent.addCategory(Intent.CATEGORY_APP_EMAIL);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
                                 try {
                                     startActivity(intent);
-                                } catch (Exception ignored){}
-                            }).setNegativeButton("Tutup", null).show();
+                                } catch (Exception e){
+                                    Toast.makeText(LoginActivity.this, "Aplikasi email tidak ditemukan.", Toast.LENGTH_SHORT).show();
+                                }
+                            }).setNegativeButton("Tutup", null);
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                    if (dialog.getWindow() != null){
+                        dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(LoginActivity.this, R.color.green));
+                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(LoginActivity.this, R.color.pink));
+                    }
                 }
 
                 @Override
@@ -88,13 +105,9 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         googleBtn = findViewById(R.id.google_provider);
-        phoneBtn = findViewById(R.id.phone_provider);
 
         googleBtn.setOnClickListener(v -> {
             signInWithGoogle();
-        });
-        phoneBtn.setOnClickListener(v ->{
-            startActivity(new Intent(this, PhoneAuthActivity.class));
         });
 
     }
@@ -146,7 +159,21 @@ public class LoginActivity extends AppCompatActivity {
                 Toast.makeText(this, "Data pengguna tidak ditemukan", Toast.LENGTH_SHORT).show();
             @Override
             public void onFailure(String message) {
-                Toast.makeText(LoginActivity.this, message, Toast.LENGTH_SHORT).show();
+                if (message.equals("EMAIL_NOT_VERIFIED")){
+                    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(LoginActivity.this);
+                            builder.setTitle("Email Belum Diverifikasi")
+                            .setMessage("Silahkan verifikasi email Anda terlebih dahulu sebelum login.")
+                            .setPositiveButton("OK", null);
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                    if (dialog.getWindow() != null){
+                        dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(LoginActivity.this, R.color.green));
+                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(LoginActivity.this, R.color.pink));
+                    }
+                }else {
+                    Toast.makeText(LoginActivity.this, message, Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
