@@ -84,7 +84,9 @@
             android:paddingHorizontal="24dp"
             android:textSize="12sp"
             android:textColor="@color/black"
-            android:layout_margin="5dp"/>
+            android:layout_margin="5dp"
+            android:gravity="center_horizontal"
+            />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

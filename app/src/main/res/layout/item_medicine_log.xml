@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="130dp">
+    android:layout_height="150dp">
 
     <View
         android:id="@+id/shadow_medicine_log"
@@ -50,7 +50,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="10dp"
+                android:layout_marginBottom="5dp"
 
                 >
                 <TextView
@@ -70,6 +70,29 @@
                     android:textSize="12sp"
                     />
             </LinearLayout>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+
+                >
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Waktu: "
+                    android:textColor="@color/black"
+                    android:textSize="12sp"
+                    />
+
+                <TextView
+                    android:id="@+id/scheduled_at"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="timestamp"
+                    android:textColor="@color/black"
+                    android:textSize="12sp"
+                    />
+            </LinearLayout>
         </LinearLayout>
 
         <TextView
@@ -83,6 +106,8 @@
             android:paddingHorizontal="24dp"
             android:textSize="12sp"
             android:textColor="@color/black"
-            android:layout_margin="5dp"/>
+            android:layout_margin="5dp"
+            android:gravity="center_horizontal"
+            />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
