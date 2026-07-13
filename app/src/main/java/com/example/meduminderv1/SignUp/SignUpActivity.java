@@ -10,7 +10,9 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -22,6 +24,7 @@ import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.Model.AuthProviderType;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.Timestamp;
 
 public class SignUpActivity extends AppCompatActivity {
@@ -102,8 +105,25 @@ public class SignUpActivity extends AppCompatActivity {
         authManager.registerWithEmail(user, password, new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
-                startActivity(new Intent(SignUpActivity.this, MainActivity.class));
-                finishAffinity();
+                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(SignUpActivity.this);
+                builder.setTitle("Verifikasi Email")
+                                .setMessage("Akun berhasil dibuat.\n"+"Kami telah mengirim email verifikasi ke: "+result.getEmail()
+                                + "\nSilahkan verifikasi email terlebih dahulu sebelum login.").setCancelable(false)
+                                .setPositiveButton("Buka Email", (dialog, which) -> {
+                                    Intent intent = new Intent(Intent.ACTION_MAIN);
+                                    intent.addCategory(Intent.CATEGORY_APP_EMAIL);
+                                    try {
+                                        startActivity(intent);
+                                    } catch (Exception ignored){
+                                    } finish();
+                                }).setNegativeButton("Nanti", (dialog, which) -> finish());
+                AlertDialog dialog = builder.create();
+                dialog.show();
+                if (dialog.getWindow() != null){
+                    dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, R.color.green));
+                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, R.color.pink));
+                }
             }
 
             @Override

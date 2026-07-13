@@ -104,6 +104,7 @@
             android:textColorHint="?attr/colorPrimaryInverse"
             android:textColor="?attr/colorPrimary"
             android:textSize="12sp"
+            android:inputType="textEmailAddress"
             />
 
     </LinearLayout>

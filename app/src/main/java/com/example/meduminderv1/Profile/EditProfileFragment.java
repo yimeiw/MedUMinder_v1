@@ -154,13 +154,16 @@ public class EditProfileFragment extends Fragment {
                 return;
             }
 
-            new MaterialAlertDialogBuilder(requireContext()).setTitle("Hubungkan Google").setMessage("Hubungkan akun Google ke akun ini?")
+            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
+            builder.setTitle("Hubungkan Google").setMessage("Hubungkan akun Google ke akun ini?")
                     .setPositiveButton("Hubungkan", (dialog, which) -> {
                         authManager.linkGoogle(requireActivity(), new AuthCallback<Void>() {
                             @Override
                             public void onSuccess(Void result) {
-                                refreshProfile();
-                                Toast.makeText(requireContext(), "Google berhasil dihubungkan.", Toast.LENGTH_SHORT).show();
+                                requireActivity().runOnUiThread(() -> {
+                                    refreshProfile();
+                                    Toast.makeText(requireContext(), "Google berhasil dihubungkan.", Toast.LENGTH_SHORT).show();
+                                });
                             }
 
                             @Override
@@ -168,7 +171,14 @@ public class EditProfileFragment extends Fragment {
                                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
                             }
                         });
-                    }).setNegativeButton("Batal", null).show();
+                    }).setNegativeButton("Batal", null);
+            AlertDialog dialog = builder.create();
+            dialog.show();
+            if (dialog.getWindow() != null){
+                dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.green));
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.pink));
+            }
         });
     }
 

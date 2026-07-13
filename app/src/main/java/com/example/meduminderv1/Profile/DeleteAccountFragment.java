@@ -19,6 +19,7 @@ import com.example.meduminderv1.Login.LoginActivity;
 import com.example.meduminderv1.Model.AuthProviderType;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.SignUp.SignUpActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.rpc.context.AttributeContext;
 
@@ -53,7 +54,7 @@ public class DeleteAccountFragment extends Fragment {
                 @Override
                 public void onSuccess(Void result) {
                     Toast.makeText(requireContext(), "Akun berhasil dihapus", Toast.LENGTH_SHORT).show();
-                   startActivity(new Intent(requireContext(), LoginActivity.class));
+                   startActivity(new Intent(requireContext(), SignUpActivity.class));
                    requireActivity().finish();
                 }
 

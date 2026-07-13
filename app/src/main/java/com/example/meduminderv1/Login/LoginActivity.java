@@ -9,7 +9,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -69,7 +71,8 @@ public class LoginActivity extends AppCompatActivity {
             authManager.resetPassword(email, new AuthCallback<Void>() {
                 @Override
                 public void onSuccess(Void result) {
-                    new MaterialAlertDialogBuilder(LoginActivity.this).setTitle("Email berhasil dikirim")
+                    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(LoginActivity.this);
+                            builder.setTitle("Email berhasil dikirim")
                             .setMessage("Silahkan buka email Anda untuk mengatur ulang password.")
                             .setPositiveButton("Buka Email", (dialog, which) -> {
                                 Intent intent = new Intent(Intent.ACTION_MAIN);
@@ -79,7 +82,14 @@ public class LoginActivity extends AppCompatActivity {
                                 } catch (Exception e){
                                     Toast.makeText(LoginActivity.this, "Aplikasi email tidak ditemukan.", Toast.LENGTH_SHORT).show();
                                 }
-                            }).setNegativeButton("Tutup", null).show();
+                            }).setNegativeButton("Tutup", null);
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                    if (dialog.getWindow() != null){
+                        dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(LoginActivity.this, R.color.green));
+                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(LoginActivity.this, R.color.pink));
+                    }
                 }
 
                 @Override
@@ -137,7 +147,21 @@ public class LoginActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(String message) {
-                Toast.makeText(LoginActivity.this, message, Toast.LENGTH_SHORT).show();
+                if (message.equals("EMAIL_NOT_VERIFIED")){
+                    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(LoginActivity.this);
+                            builder.setTitle("Email Belum Diverifikasi")
+                            .setMessage("Silahkan verifikasi email Anda terlebih dahulu sebelum login.")
+                            .setPositiveButton("OK", null);
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                    if (dialog.getWindow() != null){
+                        dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(LoginActivity.this, R.color.green));
+                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(LoginActivity.this, R.color.pink));
+                    }
+                }else {
+                    Toast.makeText(LoginActivity.this, message, Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }

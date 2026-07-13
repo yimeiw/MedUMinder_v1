@@ -7,7 +7,6 @@ public class User {
     private String name;
     private String email;
     private String current_role;
-
     private AuthProviderType authProvider;
     private boolean caregiver_enabled;
     private String preferred_language;
@@ -100,6 +99,4 @@ public class User {
         this.deletedAt = deletedAt;
     }
 
-    public void setGoogleLinked(boolean linked) {
-    }
 }

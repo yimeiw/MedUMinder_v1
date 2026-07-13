@@ -57,6 +57,7 @@ public class AuthManager {
     public boolean hasGoogleProvider(){
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) return false;
+        user.reload();
         for (UserInfo info : user.getProviderData()){
             if (GoogleAuthProvider.PROVIDER_ID.equals(info.getProviderId())){
                 return true;
@@ -115,18 +116,30 @@ public class AuthManager {
             if (firebaseUser == null){
                 callback.onFailure("Login gagal, User tidak ditemukan.");
                 return;
-            } userRepository.getUserbyUid(firebaseUser.getUid(), new RepoCallback<User>() {
-                @Override
-                public void onSuccess(User result) {
-                    sessionManager.saveUser(result);
-                    callback.onSuccess(result);
-                }
-
-                @Override
-                public void onFailure(Exception e) {
+            } firebaseUser.reload().addOnSuccessListener(unused -> {
+                if (!firebaseUser.isEmailVerified()){
                     mAuth.signOut();
-                    callback.onFailure(e.getMessage());
+                    sessionManager.clearSession();
+                    callback.onFailure("EMAIL_NOT_VERIFIED");
+                    return;
                 }
+                userRepository.getUserbyUid(firebaseUser.getUid(), new RepoCallback<User>() {
+                    @Override
+                    public void onSuccess(User result) {
+                        sessionManager.saveUser(result);
+                        callback.onSuccess(result);
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        mAuth.signOut();
+                        sessionManager.clearSession();
+                        callback.onFailure(e.getMessage());
+                    }
+                });
+            }).addOnFailureListener(e -> {
+                mAuth.signOut();
+                callback.onFailure(e.getMessage());
             });
         }).addOnFailureListener(e -> {
             String message = "Email atau password salah.";
@@ -275,13 +288,13 @@ public class AuthManager {
             return;
         } try {
             GoogleIdTokenCredential googleIdTokenCredential = GoogleIdTokenCredential.createFrom(customCredential.getData());
-            firebaseLinkGoogle(googleIdTokenCredential.getIdToken(), callback);
+            firebaseLinkGoogle(googleIdTokenCredential, callback);
         } catch (Exception e){
             callback.onFailure(e.getMessage());
         }
     }
 
-    private void firebaseLinkGoogle(String idToken, AuthCallback<Void> callback) {
+    private void firebaseLinkGoogle(GoogleIdTokenCredential googleIdTokenCredential, AuthCallback<Void> callback) {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null){
             callback.onFailure("User belum login.");
@@ -289,24 +302,22 @@ public class AuthManager {
         } if (hasGoogleProvider()){
             callback.onFailure("Google sudah terhubung");
             return;
-        } AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
-        FirebaseAuth.getInstance().signInWithCredential(credential).addOnSuccessListener(result -> {
-            FirebaseUser googleUser = result.getUser();
-            if (googleUser == null){
-                callback.onFailure("Akun Google tidak ditemukan.");
-                return;
-            }
+        }
+        String googleEmail = googleIdTokenCredential.getId();
+        String currentEmail = currentUser.getEmail();
 
-            String googleEmail = googleUser.getEmail();
-            String currentEmail = currentUser.getEmail();
-
-            if (googleEmail == null || !googleEmail.equalsIgnoreCase(currentEmail)){
-                FirebaseAuth.getInstance().signOut();
-                callback.onFailure("Email Google harus sama dengan email akun MedUMinder.");
+        if (googleEmail == null || !googleEmail.equalsIgnoreCase(currentEmail)){
+            FirebaseAuth.getInstance().signOut();
+            callback.onFailure("Email Google harus sama dengan email akun MedUMinder.");
+            return;
+        }
+        AuthCredential credential = GoogleAuthProvider.getCredential(googleIdTokenCredential.getIdToken(), null);
+        currentUser.linkWithCredential(credential).addOnSuccessListener(authResult -> {
+            FirebaseUser updatedUser = authResult.getUser();
+            if (updatedUser == null){
+                callback.onFailure("User tidak ditemukan.");
                 return;
-            } currentUser.linkWithCredential(credential).addOnSuccessListener(unused -> {
-                User user = sessionManager.getUser();
-                sessionManager.saveUser(user);
+            } updatedUser.reload().addOnSuccessListener(unused -> {
                 callback.onSuccess(null);
             }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
         }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
@@ -353,8 +364,15 @@ public class AuthManager {
         userRepository.saveUser(user, new RepoCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                sessionManager.saveUser(user);
-                callback.onSuccess(user);
+                FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                if (firebaseUser == null){
+                    callback.onFailure("User tidak ditemukan.");
+                    return;
+                } firebaseUser.sendEmailVerification().addOnSuccessListener(unused -> {
+                    mAuth.signOut();
+                    sessionManager.clearSession();
+                    callback.onSuccess(user);
+                }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
             }
 
             @Override
