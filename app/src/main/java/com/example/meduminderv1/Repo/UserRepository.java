@@ -50,27 +50,14 @@ public class UserRepository {
                     if (queryDocumentSnapshots.isEmpty()){
                         callback.onFailure(new Exception("Email tidak ditemukan"));
                         return;
-                    } User user = queryDocumentSnapshots.getDocuments().get(0).toObject(User.class);
+                     } User user = queryDocumentSnapshots.getDocuments().get(0).toObject(User.class);
                     callback.onSuccess(user);
                 }).addOnFailureListener(callback::onFailure);
     }
-
-    public void getUserbyPhone (String phone, RepoCallback<User> callback){
-        db.collection("users").whereEqualTo("phone", phone).limit(1).get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    if (queryDocumentSnapshots.isEmpty()){
-                        callback.onFailure(new Exception("Nomor telepon tidak ditemukan"));
-                        return;
-                    } User user = queryDocumentSnapshots.getDocuments().get(0).toObject(User.class);
-                    callback.onSuccess(user);
-                }).addOnFailureListener(callback::onFailure);
-    }
-
     public void updateUser(User user, RepoCallback<Void> callback){
         Map<String, Object> update = new HashMap<>();
         update.put("name", user.getName());
         update.put("email", user.getEmail());
-        update.put("phone", user.getPhone());
         update.put("updatedAt", user.getUpdatedAt());
 
         db.collection("users").document(user.getAuth_uid()).update(update)

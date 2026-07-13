@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -25,8 +26,9 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class LoginActivity extends AppCompatActivity {
     Button signUpButton, login;
-    ImageButton googleBtn, phoneBtn;
-    EditText emailInput, passwordInput, forgotPassword;
+    ImageButton googleBtn;
+    EditText emailInput, passwordInput;
+    TextView forgotPassword;
     CredentialManager credentialManager;
     AuthManager authManager;
     SessionManager sessionManager;
@@ -59,6 +61,11 @@ public class LoginActivity extends AppCompatActivity {
 
         forgotPassword.setOnClickListener(v -> {
             String email = emailInput.getText().toString().trim();
+            if (email.isEmpty()){
+                emailInput.setError("Masukkan email terlebih dahulu.");
+                emailInput.requestFocus();
+                return;
+            }
             authManager.resetPassword(email, new AuthCallback<Void>() {
                 @Override
                 public void onSuccess(Void result) {
@@ -67,11 +74,11 @@ public class LoginActivity extends AppCompatActivity {
                             .setPositiveButton("Buka Email", (dialog, which) -> {
                                 Intent intent = new Intent(Intent.ACTION_MAIN);
                                 intent.addCategory(Intent.CATEGORY_APP_EMAIL);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
                                 try {
                                     startActivity(intent);
-                                } catch (Exception ignored){}
+                                } catch (Exception e){
+                                    Toast.makeText(LoginActivity.this, "Aplikasi email tidak ditemukan.", Toast.LENGTH_SHORT).show();
+                                }
                             }).setNegativeButton("Tutup", null).show();
                 }
 
@@ -88,13 +95,9 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         googleBtn = findViewById(R.id.google_provider);
-        phoneBtn = findViewById(R.id.phone_provider);
 
         googleBtn.setOnClickListener(v -> {
             signInWithGoogle();
-        });
-        phoneBtn.setOnClickListener(v ->{
-            startActivity(new Intent(this, PhoneAuthActivity.class));
         });
 
     }

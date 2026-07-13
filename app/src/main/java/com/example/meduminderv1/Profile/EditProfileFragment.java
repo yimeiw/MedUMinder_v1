@@ -4,18 +4,17 @@ import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
 
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,17 +23,16 @@ import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.AuthCallback;
 import com.example.meduminderv1.Login.LoginActivity;
+import com.example.meduminderv1.Model.AuthProviderType;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
-import com.google.android.material.button.MaterialButton;
-import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class EditProfileFragment extends Fragment {
 
     EditText userName;
     ImageButton btnBack;
-    TextView btnGoogle, emailUser, phoneNumber;
+    TextView btnGoogle, emailUser;
     LinearLayout deleteAcc;
     SessionManager sessionManager;
     AuthManager authManager;
@@ -49,7 +47,6 @@ public class EditProfileFragment extends Fragment {
 
         userName = view.findViewById(R.id.userName);
         emailUser = view.findViewById(R.id.emailUser);
-        phoneNumber = view.findViewById(R.id.phoneNumber);
         btnGoogle = view.findViewById(R.id.googleLinked);
         btnBack = view.findViewById(R.id.btnBack);
         deleteAcc = view.findViewById(R.id.deleteAcc);
@@ -61,8 +58,42 @@ public class EditProfileFragment extends Fragment {
         loadProfile();
         setupName();
         setupGoogle();
-        setupPhone();
-        setupDelete();
+
+        deleteAcc.setOnClickListener(v -> {
+            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
+            builder.setTitle("Hapus Akun")
+                    .setMessage("Apakah Anda yakin ingin menghapus akun?\nSeluruh data akan dihapus permanen.")
+                    .setPositiveButton("Hapus", (dialog, which) -> {
+                        AuthProviderType providerType = authManager.getPrimaryProvider();
+                        if (providerType == AuthProviderType.EMAIL){
+                            NavHostFragment.findNavController(this).navigate(R.id.deleteAccountFragment);
+                        } else if (providerType == AuthProviderType.GOOGLE){
+                            authManager.deleteAccount(requireActivity(), null, new AuthCallback<Void>() {
+                                @Override
+                                public void onSuccess(Void result) {
+                                    Toast.makeText(requireContext(), "Akun berhasil dihapus", Toast.LENGTH_SHORT).show();
+                                    Intent intent = new Intent(requireContext(), LoginActivity.class);
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                    startActivity(intent);
+                                    requireActivity().finish();
+                                }
+
+                                @Override
+                                public void onFailure(String message) {
+                                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    }).setNegativeButton("Batal", null);
+
+            AlertDialog dialog = builder.create();
+            dialog.show();
+            if (dialog.getWindow() != null){
+                dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.green));
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.pink));
+            }
+        });
 
         btnBack.setOnClickListener(v -> requireActivity().getSupportFragmentManager().popBackStack());
 
@@ -141,35 +172,6 @@ public class EditProfileFragment extends Fragment {
         });
     }
 
-    private void setupPhone() {
-        phoneNumber.setOnClickListener(v -> {
-            Fragment fragment = new ChangePhoneFragment();
-            requireActivity().getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentChangePhone, fragment).addToBackStack(null).commit();
-        });
-    }
-
-    private void setupDelete() {
-        deleteAcc.setOnClickListener(v -> {
-            new MaterialAlertDialogBuilder(requireContext()).setTitle("Hapus Akun")
-                    .setMessage("Apakah Anda yakin ingin menghapus akun ini?\n\nSeluruh data akan dihapus permnen.")
-                    .setPositiveButton("Hapus", (dialog, which) -> {
-                        authManager.deleteAccount(new AuthCallback<Void>() {
-                            @Override
-                            public void onSuccess(Void result) {
-                                Toast.makeText(requireContext(), "Akun berhasil dihapus.", Toast.LENGTH_SHORT).show();
-                                startActivity(new Intent(requireContext(), LoginActivity.class));
-                            }
-
-                            @Override
-                            public void onFailure(String message) {
-                                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    }).setNegativeButton("Batal", null).show();
-        });
-    }
-
     private void loadProfile() {
         currentUser = authManager.getCurrentUser();
 
@@ -186,19 +188,7 @@ public class EditProfileFragment extends Fragment {
         userName.setText(currentUser.getName());
         emailUser.setText(currentUser.getEmail());
 
-        updatePhone();
         updateGoogle();
-    }
-
-    private void updatePhone() {
-        String phone = currentUser.getPhone();
-        if (phone == null || phone.trim().isEmpty()){
-            phoneNumber.setText("Not Linked");
-            phoneNumber.setTextColor(ContextCompat.getColor(requireContext(), R.color.placeholder));
-        } else{
-            phoneNumber.setText(phone);
-            phoneNumber.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
-        }
     }
 
     private void updateGoogle() {

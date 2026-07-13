@@ -2,9 +2,10 @@ package com.example.meduminderv1.Auth;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Patterns;
 
 import androidx.annotation.NonNull;
-import androidx.compose.ui.platform.AndroidUriHandler;
+import androidx.annotation.Nullable;
 import androidx.credentials.Credential;
 import androidx.credentials.CredentialManager;
 import androidx.credentials.CredentialManagerCallback;
@@ -21,7 +22,6 @@ import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.UserRepository;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
-import com.google.firebase.FirebaseException;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
@@ -30,13 +30,8 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
-import com.google.firebase.auth.PhoneAuthCredential;
-import com.google.firebase.auth.PhoneAuthOptions;
-import com.google.firebase.auth.PhoneAuthProvider;
 import com.google.firebase.auth.UserInfo;
 import com.google.firebase.auth.UserProfileChangeRequest;
-
-import java.util.concurrent.TimeUnit;
 
 public class AuthManager {
     private static AuthManager instance;
@@ -44,9 +39,6 @@ public class AuthManager {
     private final UserRepository userRepository;
     private final SessionManager sessionManager;
     private final CredentialManager credentialManager;
-    private String verificationId;
-    private PhoneAuthProvider.ForceResendingToken resendToken;
-    private String pendingPhoneNumber;
 
     public AuthManager(Context context){
         mAuth = FirebaseAuth.getInstance();
@@ -61,12 +53,6 @@ public class AuthManager {
         } return instance;
     }
 
-//    general method
-
-    public void logout(){
-        sessionManager.clearSession();
-    }
-
 //    provider
     public boolean hasGoogleProvider(){
         FirebaseUser user = mAuth.getCurrentUser();
@@ -77,23 +63,12 @@ public class AuthManager {
             }
         } return false;
     }
-    public boolean hasEmailProvider(){
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user == null) return false;
-        for (UserInfo info : user.getProviderData()){
-            if (EmailAuthProvider.PROVIDER_ID.equals(info.getProviderId())){
-                return true;
-            }
-        } return false;
-    }
-    public boolean hasPhoneProvider(){
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user == null) return false;
-        for (UserInfo info : user.getProviderData()){
-            if (PhoneAuthProvider.PROVIDER_ID.equals(info.getProviderId())){
-                return true;
-            }
-        } return false;
+
+    public AuthProviderType getPrimaryProvider(){
+        User user = sessionManager.getUser();
+        if (user == null){
+            return null;
+        } return user.getAuthProvider();
     }
 
 //    EMAIl
@@ -103,6 +78,9 @@ public class AuthManager {
             return;
         } if (user.getEmail() == null || user.getEmail().trim().isEmpty()){
             callback.onFailure("Email tidak boleh kosong.");
+            return;
+        } if (!Patterns.EMAIL_ADDRESS.matcher(user.getEmail().trim()).matches()){
+            callback.onFailure("Format email tidak valid.");
             return;
         } if (password == null || password.length() < 6){
             callback.onFailure("Password minimal 6 karakter.");
@@ -123,6 +101,9 @@ public class AuthManager {
     public void loginWithEmail(String email, String password, AuthCallback<User> callback){
         if (email == null || email.trim().isEmpty()){
             callback.onFailure("Email tidak boleh kosong");
+            return;
+        } if (!Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()){
+            callback.onFailure("Format email tidak valid.");
             return;
         } if (password == null || password.isEmpty()){
             callback.onFailure("Password tidak boleh kosong.");
@@ -164,6 +145,9 @@ public class AuthManager {
     public void resetPassword(String email, AuthCallback<Void> callback){
         if (email == null || email.trim().isEmpty()){
             callback.onFailure("Email tidak boleh kosong.");
+            return;
+        } if (!Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()){
+            callback.onFailure("Format email tidak valid.");
             return;
         }
 
@@ -328,262 +312,6 @@ public class AuthManager {
         }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 
-    //    PHONE
-    public void sendOtp(Activity activity, String phone, AuthCallback<Void> callback){
-        if (phone == null || phone.trim().isEmpty()){
-            callback.onFailure("Nomor telepon tidak boleh kosong.");
-            return;
-        }
-        PhoneAuthOptions options = PhoneAuthOptions.newBuilder(mAuth).setPhoneNumber(phone)
-                .setActivity(activity).setTimeout(60L, TimeUnit.SECONDS).setCallbacks(new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-            @Override
-            public void onVerificationCompleted(@NonNull PhoneAuthCredential phoneAuthCredential) {
-
-            }
-
-            @Override
-            public void onVerificationFailed(@NonNull FirebaseException e) {
-                callback.onFailure(e.getMessage());
-            }
-
-            @Override
-            public void onCodeSent(@NonNull String verificationId, @NonNull PhoneAuthProvider.ForceResendingToken forceResendingToken) {
-                AuthManager.this.verificationId = verificationId;
-                resendToken = forceResendingToken;
-                callback.onSuccess(null);
-            }
-        }).build();
-        PhoneAuthProvider.verifyPhoneNumber(options);
-    }
-
-    public void resendOtp(Activity activity, String phone, AuthCallback<Void> callback) {
-        if (resendToken == null){
-            callback.onFailure("Resend belum tersedia.");
-            return;
-        }
-        PhoneAuthOptions options = PhoneAuthOptions.newBuilder(mAuth).setPhoneNumber(phone)
-                .setActivity(activity).setTimeout(60L, TimeUnit.SECONDS).setForceResendingToken(resendToken)
-                .setCallbacks(new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-                    @Override
-                    public void onVerificationCompleted(@NonNull PhoneAuthCredential phoneAuthCredential) {
-
-                    }
-
-                    @Override
-                    public void onVerificationFailed(@NonNull FirebaseException e) {
-                        callback.onFailure(e.getMessage());
-                    }
-
-                    @Override
-                    public void onCodeSent(@NonNull String verificationId, @NonNull PhoneAuthProvider.ForceResendingToken forceResendingToken) {
-                        AuthManager.this.verificationId = verificationId;
-                        AuthManager.this.resendToken = forceResendingToken;
-                        callback.onSuccess(null);
-                    }
-                }).build();
-        PhoneAuthProvider.verifyPhoneNumber(options);
-    }
-
-    private void signInWithPhoneCredential(PhoneAuthCredential phoneAuthCredential, AuthCallback<User> callback) {
-        mAuth.signInWithCredential(phoneAuthCredential).addOnSuccessListener(authResult -> {
-            FirebaseUser firebaseUser = authResult.getUser();
-            if (firebaseUser == null){
-                callback.onFailure("User tidak ditemukan.");
-                return;
-            }
-            userRepository.getUserbyUid(firebaseUser.getUid(), new RepoCallback<User>() {
-                @Override
-                public void onSuccess(User result) {
-                    sessionManager.saveUser(result);
-                    callback.onSuccess(result);
-                    verificationId = null;
-                    resendToken = null;
-                }
-
-                @Override
-                public void onFailure(Exception e) {
-                    mAuth.signOut();
-                    callback.onFailure("Nomor Telepon belum terdaftar.");
-                    verificationId = null;
-                    resendToken = null;
-                }
-            });
-        }).addOnFailureListener(e -> {
-            callback.onFailure(e.getMessage());
-        });
-    }
-
-    public void verifyOtp(String otp, AuthCallback<User> callback){
-        if (verificationId == null){
-            callback.onFailure("OTP belum dimasukkan.");
-            return;
-        } if (otp == null || otp.trim().isEmpty()){
-            callback.onFailure("OTP tidak boleh kosong.");
-            return;
-        }
-        PhoneAuthCredential credential = PhoneAuthProvider.getCredential(verificationId, otp);
-        signInWithPhoneCredential(credential, callback);
-    }
-
-    private void linkPhoneCredential(PhoneAuthCredential credential, AuthCallback<Void> callback) {
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser == null){
-            callback.onFailure("User belum login.");
-            return;
-        }
-        currentUser.linkWithCredential(credential).addOnSuccessListener(result -> {
-            User user = sessionManager.getUser();
-            if (user == null){
-                callback.onFailure("Data user tidak ditemukan.");
-                return;
-            }
-
-            user.setPhone(pendingPhoneNumber);
-            user.setUpdatedAt(Timestamp.now());
-
-            updateUserProfile(user, new AuthCallback<Void>() {
-                @Override
-                public void onSuccess(Void result) {
-                    clearPhoneState();
-                    callback.onSuccess(null);
-                }
-
-                @Override
-                public void onFailure(String message) {
-                    clearPhoneState();
-                    callback.onFailure(message);
-                }
-            });
-        }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
-    }
-
-    public void linkPhone(Activity activity, String phone, AuthCallback<Void> callback){
-        FirebaseUser firebaseUser = mAuth.getCurrentUser();
-        if (firebaseUser == null){
-            callback.onFailure("User belum login.");
-            return;
-        } if (phone == null || phone.trim().isEmpty()){
-            callback.onFailure("Nomor telepon tidak boleh kosong.");
-            return;
-        }
-        pendingPhoneNumber = phone.trim();
-
-        userRepository.getUserbyPhone(phone.trim(), new RepoCallback<User>() {
-            @Override
-            public void onSuccess(User result) {
-                callback.onFailure("Nomor telepon sudah digunakan.");
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                PhoneAuthOptions options = PhoneAuthOptions.newBuilder(mAuth).setPhoneNumber(pendingPhoneNumber)
-                        .setActivity(activity).setTimeout(60L, TimeUnit.SECONDS).setCallbacks(new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-                            @Override
-                            public void onVerificationCompleted(@NonNull PhoneAuthCredential phoneAuthCredential) {
-                                //OTP manual
-                            }
-
-                            @Override
-                            public void onVerificationFailed(@NonNull FirebaseException e) {
-                                callback.onFailure(e.getMessage());
-                            }
-                            @Override
-                            public void onCodeSent(@NonNull String verificationId, @NonNull PhoneAuthProvider.ForceResendingToken forceResendingToken) {
-                                AuthManager.this.verificationId = verificationId;
-                                resendToken = forceResendingToken;
-                                callback.onSuccess(null);
-                            }
-                        }).build();
-                PhoneAuthProvider.verifyPhoneNumber(options);
-            }
-        });
-    }
-
-    public void verifyLinkPhoneOtp(String otp, AuthCallback<Void> callback){
-        if (verificationId == null){
-            callback.onFailure("OTP belum ada.");
-            return;
-        } if (otp == null || otp.trim().isEmpty()){
-            callback.onFailure("OTP tidak boleh kosong.");
-            return;
-        }
-        PhoneAuthCredential credential = PhoneAuthProvider.getCredential(verificationId, otp);
-        completePhoneLink(credential, callback);
-
-    }
-
-    private void completePhoneLink(PhoneAuthCredential credential, AuthCallback<Void> callback) {
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser == null){
-            callback.onFailure("User belum login.");
-            return;
-        } if (hasPhoneProvider()){
-            unlinkOldPhone(currentUser, credential, callback);
-        } else {
-            linkPhoneCredential(credential, callback);
-        }
-    }
-
-    private void unlinkOldPhone(FirebaseUser currentUser, PhoneAuthCredential credential, AuthCallback<Void> callback) {
-        currentUser.updatePhoneNumber(credential).addOnSuccessListener(unused -> {
-            User user = sessionManager.getUser();
-            if (user == null){
-                callback.onFailure("User tidak ditemukan.");
-                return;
-            }
-
-            user.setPhone(pendingPhoneNumber);
-            user.setUpdatedAt(Timestamp.now());
-            updateUserProfile(user, new AuthCallback<Void>() {
-                @Override
-                public void onSuccess(Void result) {
-                    clearPhoneState();
-                    callback.onSuccess(null);
-                }
-
-                @Override
-                public void onFailure(String message) {
-                    clearPhoneState();
-                    callback.onFailure(message);
-                }
-            });
-        }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
-    }
-
-    private void changePhoneCredential(PhoneAuthCredential credential, AuthCallback<Void> callback) {
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser == null){
-            callback.onFailure("User belum login.");
-            return;
-        } User user = sessionManager.getUser();
-        if (user == null){
-            callback.onFailure("Data user tidak ditemukan.");
-            return;
-        }
-
-        user.setPhone(pendingPhoneNumber);
-        user.setUpdatedAt(Timestamp.now());
-        updateUserProfile(user, new AuthCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
-                clearPhoneState();
-                callback.onSuccess(null);
-            }
-
-            @Override
-            public void onFailure(String message) {
-                clearPhoneState();
-                callback.onFailure(message);
-            }
-        });
-    }
-
-    public void clearPhoneState() {
-        verificationId = null;
-        resendToken = null;
-        pendingPhoneNumber = null;
-    }
-
     //    ACCOUNT
     public void restoreSession(AuthCallback<User> callback){
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
@@ -688,12 +416,82 @@ public class AuthManager {
         }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 
-    public void deleteAccount(AuthCallback<Void> callback){
+    public void deleteAccount(@Nullable Activity activity, @Nullable String password, AuthCallback<Void> callback){
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null){
             callback.onFailure("User belum login.");
             return;
-        } userRepository.deleteUser(firebaseUser.getUid(), new RepoCallback<Void>() {
+        } User user = sessionManager.getUser();
+        if (user == null){
+            callback.onFailure("Data user tidak ditemukan.");
+            return;
+        } switch (user.getAuthProvider()){
+            case EMAIL:
+                reauthenticateEmail(password, callback);
+                break;
+            case GOOGLE:
+                reauthenticateGoogle(activity, callback);
+                break;
+            default:
+                callback.onFailure("Provider tidak didukung.");
+                break;
+        }
+    }
+
+    private void reauthenticateGoogle(Activity activity, AuthCallback<Void> callback) {
+        GetGoogleIdOption googleIdOption = new GetGoogleIdOption.Builder().setFilterByAuthorizedAccounts(false)
+                .setServerClientId(activity.getString(R.string.default_web_client_id)).setAutoSelectEnabled(false).build();
+        GetCredentialRequest request = new GetCredentialRequest.Builder().addCredentialOption(googleIdOption).build();
+        credentialManager.getCredentialAsync(activity, request, null, activity.getMainExecutor(), new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
+            @Override
+            public void onResult(GetCredentialResponse response) {
+                handleGoogleReauthentication(response, callback);
+            }
+
+            @Override
+            public void onError(@NonNull GetCredentialException e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
+
+    private void handleGoogleReauthentication(GetCredentialResponse response, AuthCallback<Void> callback) {
+        Credential credential = response.getCredential();
+        if (!(credential instanceof  CustomCredential)){
+            callback.onFailure("Credential tidak valid.");
+            return;
+        } CustomCredential customCredential = (CustomCredential) credential;
+        try {
+            GoogleIdTokenCredential googleIdTokenCredential = GoogleIdTokenCredential.createFrom(customCredential.getData());
+            AuthCredential authCredential = GoogleAuthProvider.getCredential(googleIdTokenCredential.getIdToken(), null);
+            FirebaseUser firebaseUser = mAuth.getCurrentUser();
+            firebaseUser.reauthenticate(authCredential).addOnSuccessListener(unused -> performDelete(callback))
+                    .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+        } catch (Exception e){
+            callback.onFailure(e.getMessage());
+        }
+    }
+
+    private void reauthenticateEmail(String password, AuthCallback<Void> callback) {
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser == null){
+            callback.onFailure("User belum login.");
+            return;
+        } if (password == null || password.trim().isEmpty()){
+            callback.onFailure("Password tidak boleh kosong.");
+            return;
+        } AuthCredential credential = EmailAuthProvider.getCredential(firebaseUser.getEmail(), password);
+        firebaseUser.reauthenticate(credential).addOnSuccessListener(unused -> performDelete(callback))
+                .addOnFailureListener(e -> callback.onFailure("Password salah."));
+    }
+
+    private void performDelete(AuthCallback<Void> callback) {
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        User user = sessionManager.getUser();
+        if (firebaseUser == null || user == null){
+            callback.onFailure("User tidak ditemukan.");
+            return;
+        } userRepository.deleteUser(user.getAuth_uid(), new RepoCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
                 firebaseUser.delete().addOnSuccessListener(unused -> {
@@ -707,13 +505,5 @@ public class AuthManager {
                 callback.onFailure(e.getMessage());
             }
         });
-    }
-
-    public AuthProviderType getCurrentProvider(){
-        if (hasGoogleProvider()){
-            return AuthProviderType.GOOGLE;
-        } if (hasPhoneProvider()){
-            return AuthProviderType.PHONE;
-        } return AuthProviderType.EMAIL;
     }
 }

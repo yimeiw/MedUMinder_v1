@@ -17,21 +17,18 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Callback.AuthCallback;
-import com.example.meduminderv1.Home.HomeFragment;
 import com.example.meduminderv1.Login.LoginActivity;
 import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.Model.AuthProviderType;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
 import com.google.firebase.Timestamp;
-import com.hbb20.CountryCodePicker;
 
 public class SignUpActivity extends AppCompatActivity {
 
     Button signUp, loginButton;
     ImageButton googleBtn;
-    CountryCodePicker ccp;
-    EditText phoneInput, nameInput, emailInput, passwordInput;
+    EditText nameInput, emailInput, passwordInput;
     AuthManager authManager;
 
     @Override
@@ -51,10 +48,6 @@ public class SignUpActivity extends AppCompatActivity {
         nameInput = findViewById(R.id.name_input);
         emailInput = findViewById(R.id.email_input);
         passwordInput = findViewById(R.id.password_input);
-        phoneInput = findViewById(R.id.phone_input);
-
-        ccp = findViewById(R.id.picker_country);
-        ccp.registerCarrierNumberEditText(phoneInput);
 
         authManager = authManager.getInstance(getApplicationContext());
 
@@ -89,7 +82,6 @@ public class SignUpActivity extends AppCompatActivity {
         User user = new User();
         user.setName(nameInput.getText().toString().trim());
         user.setEmail(emailInput.getText().toString().trim());
-        user.setPhone(ccp.getFullNumberWithPlus() + phoneInput.getText().toString().trim());
         user.setCurrent_role("Consumer");
         user.setCaregiver_enabled(false);
         user.setAuthProvider(AuthProviderType.EMAIL);
@@ -101,7 +93,7 @@ public class SignUpActivity extends AppCompatActivity {
 
         String password = passwordInput.getText().toString().trim();
 
-        if (user.getName().isEmpty() || user.getEmail().isEmpty() || password.isEmpty() || user.getPhone().isEmpty()) {
+        if (user.getName().isEmpty() || user.getEmail().isEmpty() || password.isEmpty()) {
             Toast.makeText(this, "Semua field harus diisi", Toast.LENGTH_SHORT).show();
             return;
         } if (!validateInput(user.getName(), user.getEmail(), password)){
@@ -141,16 +133,7 @@ public class SignUpActivity extends AppCompatActivity {
         if (password.length() < 6){
             passwordInput.setError("Password harus lebih dari 6 karakter");
             return false;
-        }
-        if (TextUtils.isEmpty(phoneInput.getText().toString().trim())){
-            phoneInput.setError("Nomor telepon harus diisi");
-            return false;
-        }
-        if (!ccp.isValidFullNumber()){
-            phoneInput.setError("Nomor telepon tidak valid");
-            return false;
-        }
-        return true;
+        } return true;
     }
 
 }
