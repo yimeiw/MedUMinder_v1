@@ -1,10 +1,17 @@
 package com.example.meduminderv1.Model;
 
+import android.util.Log;
+
 import com.google.firebase.Timestamp;
 
+import java.util.Date;
+
 public class Appointment {
-    private String user_id;
+    private String users_id;
     private String status;
+    public LogStatus getStatusEnum() {
+        return LogStatus.fromRaw(status);
+    }
     private String address;
     private String title;
     private String created_by;
@@ -15,9 +22,9 @@ public class Appointment {
     private Timestamp deleted_at;
 
     public Appointment(){}
-    public Appointment(String user_id, String status, String address, String title, String created_by, String updated_by, Timestamp appointment_at, Timestamp created_at, Timestamp updated_at, Timestamp deleted_at){
+    public Appointment(String users_id, String status, String address, String title, String created_by, String updated_by, Timestamp appointment_at, Timestamp created_at, Timestamp updated_at, Timestamp deleted_at){
         super();
-        this.user_id = user_id;
+        this.users_id = users_id;
         this.status = status;
         this.address = address;
         this.title = title;
@@ -29,8 +36,8 @@ public class Appointment {
         this.deleted_at = deleted_at;
     }
 
-    public String getUser_id() {
-        return user_id;
+    public String getUsers_id() {
+        return users_id;
     }
     public String getStatus() {
         return status;
@@ -60,4 +67,16 @@ public class Appointment {
         return deleted_at;
     }
 
+
+    public LogStatus getStatusBasedOnDate() {
+        LogStatus stored = LogStatus.fromRaw(status);
+        if (stored == LogStatus.DIKONSUMSI) {
+            return stored;
+        }
+
+        if (appointment_at != null && appointment_at.toDate().before(new Date())) {
+            return LogStatus.TERLEWATKAN;
+        }
+        return LogStatus.AKAN_DATANG;
+    }
 }

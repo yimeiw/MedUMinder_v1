@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -22,14 +23,17 @@ import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.SignUp.SignUpActivity;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class LoginActivity extends AppCompatActivity {
     Button signUpButton, login;
     ImageButton googleBtn, phoneBtn;
-    EditText emailInput, passwordInput, forgotPassword;
+    EditText emailInput, passwordInput;
+    TextView forgotPassword;
     CredentialManager credentialManager;
     AuthManager authManager;
     SessionManager sessionManager;
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,10 +56,9 @@ public class LoginActivity extends AppCompatActivity {
         credentialManager = CredentialManager.create(this);
         sessionManager = SessionManager.getInstance();
         authManager = AuthManager.getInstance(getApplicationContext());
+        db = FirebaseFirestore.getInstance();
 
-        login.setOnClickListener(v -> {
-            loginUser();
-        });
+        login.setOnClickListener(v -> loginUser());
 
         forgotPassword.setOnClickListener(v -> {
             String email = emailInput.getText().toString().trim();
@@ -68,10 +71,10 @@ public class LoginActivity extends AppCompatActivity {
                                 Intent intent = new Intent(Intent.ACTION_MAIN);
                                 intent.addCategory(Intent.CATEGORY_APP_EMAIL);
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
                                 try {
                                     startActivity(intent);
-                                } catch (Exception ignored){}
+                                } catch (Exception ignored) {
+                                }
                             }).setNegativeButton("Tutup", null).show();
                 }
 
@@ -90,13 +93,8 @@ public class LoginActivity extends AppCompatActivity {
         googleBtn = findViewById(R.id.google_provider);
         phoneBtn = findViewById(R.id.phone_provider);
 
-        googleBtn.setOnClickListener(v -> {
-            signInWithGoogle();
-        });
-        phoneBtn.setOnClickListener(v ->{
-            startActivity(new Intent(this, PhoneAuthActivity.class));
-        });
-
+        googleBtn.setOnClickListener(v -> signInWithGoogle());
+        phoneBtn.setOnClickListener(v -> startActivity(new Intent(this, PhoneAuthActivity.class)));
     }
 
     private void signInWithGoogle() {
@@ -113,14 +111,16 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
     }
+
     private void loginUser() {
         String email = emailInput.getText().toString().trim();
         String password = passwordInput.getText().toString().trim();
 
-        if (email.isEmpty()){
+        if (email.isEmpty()) {
             emailInput.setError("Email harus diisi");
             return;
-        } if (password.isEmpty()){
+        }
+        if (password.isEmpty()) {
             passwordInput.setError("Password harus diisi");
             return;
         }
@@ -128,22 +128,9 @@ public class LoginActivity extends AppCompatActivity {
         authManager.loginWithEmail(email, password, new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
-                startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                finish();
+                loadUserData(result.getAuth_uid());
             }
 
-    private void loadUserData(String uid) {
-        db.collection("users").document(uid).get().addOnSuccessListener(documentSnapshot -> {
-            if (documentSnapshot.exists()){
-                String name = documentSnapshot.getString("name");
-                String email = documentSnapshot.getString("email");
-
-                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                intent.putExtra("name", name);
-                intent.putExtra("email", email);
-                startActivity(intent);
-            } else{
-                Toast.makeText(this, "Data pengguna tidak ditemukan", Toast.LENGTH_SHORT).show();
             @Override
             public void onFailure(String message) {
                 Toast.makeText(LoginActivity.this, message, Toast.LENGTH_SHORT).show();
@@ -151,4 +138,22 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    private void loadUserData(String uid) {
+        db.collection("users").document(uid).get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                String name = documentSnapshot.getString("name");
+                String email = documentSnapshot.getString("email");
+
+                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                intent.putExtra("name", name);
+                intent.putExtra("email", email);
+                startActivity(intent);
+                finish();
+            } else {
+                Toast.makeText(LoginActivity.this, "Data pengguna tidak ditemukan", Toast.LENGTH_SHORT).show();
+            }
+        }).addOnFailureListener(e ->
+                Toast.makeText(LoginActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show()
+        );
+    }
 }

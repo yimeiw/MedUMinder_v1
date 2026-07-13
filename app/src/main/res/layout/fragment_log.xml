@@ -54,7 +54,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
                 style="@style/MaterialButtonLog"
-                android:text="All"
+                android:text="Semua"
                  />
 
             <com.google.android.material.button.MaterialButton
@@ -63,7 +63,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
                 style="@style/MaterialButtonLog"
-                android:text="Upcoming" />
+                android:text="Akan Datang" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnTaken"
@@ -71,7 +71,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
                 style="@style/MaterialButtonLog"
-                android:text="Taken" />
+                android:text="Dikonsumsi" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnMissed"
@@ -79,7 +79,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
                 style="@style/MaterialButtonLog"
-                android:text="Missed" />
+                android:text="Terlewatkan" />
 
         </LinearLayout>
 
@@ -94,6 +94,7 @@
         android:gravity="center_horizontal"
         android:textSize="16sp"
         android:layout_marginTop="20dp"
+        android:visibility="gone"
         />
 
     <TextView
@@ -105,6 +106,7 @@
         android:gravity="center_horizontal"
         android:textSize="16sp"
         android:layout_marginTop="20dp"
+        android:visibility="gone"
         />
 
     <androidx.recyclerview.widget.RecyclerView

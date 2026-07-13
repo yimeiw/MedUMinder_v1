@@ -3,6 +3,7 @@ package com.example.meduminderv1.Model;
 import com.google.firebase.Timestamp;
 
 import java.sql.Time;
+import java.util.Date;
 
 public class MedicationLog {
 
@@ -11,6 +12,9 @@ public class MedicationLog {
     private Timestamp scheduled_at;
     private Timestamp taken_at;
     private String status;
+    public LogStatus getStatusEnum() {
+        return LogStatus.fromRaw(status);
+    }
     private Timestamp created_at;
 
     public MedicationLog() {}
@@ -42,5 +46,16 @@ public class MedicationLog {
     }
     public Timestamp getCreated_at() {
         return created_at;
+    }
+    public LogStatus getStatusBasedOnDate() {
+        LogStatus stored = LogStatus.fromRaw(status);
+        if (stored == LogStatus.DIKONSUMSI) {
+            return stored;
+        }
+
+        if (scheduled_at != null && scheduled_at.toDate().before(new Date())) {
+            return LogStatus.TERLEWATKAN;
+        }
+        return LogStatus.AKAN_DATANG;
     }
 }

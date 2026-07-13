@@ -18,9 +18,12 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 
 import com.example.meduminderv1.Home.HomeFragment;
+import com.example.meduminderv1.Model.LogGenerator;
 import com.example.meduminderv1.Schedule.ScheduleFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -31,6 +34,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
         getWindow().getDecorView().setAlpha(0f);
         getWindow().getDecorView().animate()
@@ -63,5 +68,9 @@ public class MainActivity extends AppCompatActivity {
                         bottomNav.setVisibility(View.VISIBLE);
                     }
                 });
+
+        if (user != null) {
+            new LogGenerator().generateForAllActiveSchedules(user.getUid());
+        }
     }
 }
