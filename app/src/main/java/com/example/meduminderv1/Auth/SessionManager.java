@@ -24,13 +24,6 @@ public class SessionManager {
         return currentUser;
     }
 
-    public String getUid(){
-        FirebaseUser user = auth.getCurrentUser();
-        if (user == null){
-            return null;
-        }
-        return user.getUid();
-    }
     public void saveUser(User user){
         currentUser = user;
     }
@@ -40,24 +33,4 @@ public class SessionManager {
         auth.signOut();
     }
 
-    public void updateName(String name){
-        if (currentUser != null){
-            currentUser.setName(name);
-        }
-    }
-    public void updatePhone(String phone){
-        if (currentUser != null){
-            currentUser.setPhone(phone);
-        }
-    }
-    public void updateGoogleLinked(boolean linked){
-        if (currentUser != null){
-            currentUser.setGoogleLinked(linked);
-        }
-    }
-    public void updatePhoneVerified(boolean verified){
-        if (currentUser != null){
-            currentUser.setPhoneVerified(verified);
-        }
-    }
 }

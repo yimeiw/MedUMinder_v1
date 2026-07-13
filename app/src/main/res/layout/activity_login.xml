@@ -68,6 +68,7 @@
             android:textColorHint="?attr/colorPrimaryInverse"
             android:textColor="?attr/colorPrimary"
             android:textSize="12sp"
+            android:inputType="textEmailAddress"
             />
 
     </LinearLayout>
@@ -175,42 +176,25 @@
     </LinearLayout>
 
 
-    <LinearLayout
-        android:id="@+id/auth_provider"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
+    <ImageButton
         android:layout_below="@id/separator"
-        android:layout_centerHorizontal="true"
+        android:id="@+id/google_provider"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center"
         android:layout_marginTop="30dp"
-        >
-
-        <ImageButton
-            android:id="@+id/google_provider"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/google_default"
-            android:layout_gravity="center"
-            android:layout_marginEnd="20dp"
-            android:focusable="true"
-            />
-
-        <ImageButton
-            android:id="@+id/phone_provider"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/phone_default"
-            android:layout_gravity="center"
-            android:focusable="true"
-            />
-    </LinearLayout>
+        android:focusable="true"
+        android:clickable="true"
+        android:src="@drawable/google_default"
+        android:layout_centerHorizontal="true"
+        />
 
     <LinearLayout
         android:id="@+id/dont_have_acc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_below="@id/auth_provider"
+        android:layout_below="@id/google_provider"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="15dp"
         >
