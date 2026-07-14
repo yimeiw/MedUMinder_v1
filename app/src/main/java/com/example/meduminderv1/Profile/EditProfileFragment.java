@@ -34,7 +34,6 @@ public class EditProfileFragment extends Fragment {
     ImageButton btnBack;
     TextView btnGoogle, emailUser;
     LinearLayout deleteAcc;
-    SessionManager sessionManager;
     AuthManager authManager;
     User currentUser;
     boolean isUpdatingName = false;
@@ -51,9 +50,8 @@ public class EditProfileFragment extends Fragment {
         btnBack = view.findViewById(R.id.btnBack);
         deleteAcc = view.findViewById(R.id.deleteAcc);
 
-        sessionManager = SessionManager.getInstance();
         authManager = AuthManager.getInstance(requireContext());
-        currentUser = sessionManager.getUser();
+        currentUser = authManager.getCurrentUser();
 
         loadProfile();
         setupName();

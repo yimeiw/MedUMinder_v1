@@ -46,32 +46,39 @@
             android:layout_height="match_parent"
             android:orientation="horizontal"
             android:layout_marginTop="15dp"
+            android:paddingHorizontal="5dp"
             >
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAll"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="9dp"
                 style="@style/MaterialButtonLog"
                 android:text="Semua"
+                android:textSize="12sp"
+                android:textAllCaps="false"
                  />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnUpcoming"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="9dp"
                 style="@style/MaterialButtonLog"
+                android:textAllCaps="false"
+                android:textSize="12sp"
                 android:text="Akan Datang" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnTaken"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="9dp"
                 style="@style/MaterialButtonLog"
-                android:text="Dikonsumsi" />
+                android:textAllCaps="false"
+                android:textSize="12sp"
+                android:text="Dikonsumsi"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnMissed"
@@ -79,6 +86,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
                 style="@style/MaterialButtonLog"
+                android:textAllCaps="false"
+                android:textSize="12sp"
                 android:text="Terlewatkan" />
 
         </LinearLayout>

@@ -32,61 +32,67 @@
         app:layout_constraintEnd_toEndOf="parent"
         >
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_weight="1"
-
-            >
-            <TextView
-                android:id="@+id/nama_appointment_log"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Nama Appointment"
-                android:textColor="@color/black"
-                android:textStyle="bold"
-                android:textSize="15sp"
-                android:layout_marginBottom="10dp"
-                />
+            android:orientation="horizontal"
+            android:layout_marginEnd="10dp"
+            android:layout_marginStart="5dp">
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_horizontal"
-                >
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/ic_location"
-                    android:layout_marginEnd="10dp"
-                    />
+                android:orientation="vertical"
+                android:layout_weight="1">
 
                 <TextView
-                    android:id="@+id/nama_lokasi"
+                    android:id="@+id/nama_appointment_log"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Ada deh"
+                    android:text="Nama Appointment"
                     android:textColor="@color/black"
-                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textSize="15sp"
+                    android:layout_marginBottom="10dp"
                     />
-            </LinearLayout>
-        </LinearLayout>
 
-        <TextView
-            android:id="@+id/curr_status_appoint"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Dihadiri"
-            android:background="@drawable/border_hugcontent_nopadding"
-            android:backgroundTint="@color/green"
-            android:paddingVertical="6dp"
-            android:paddingHorizontal="24dp"
-            android:textSize="12sp"
-            android:textColor="@color/black"
-            android:layout_margin="5dp"
-            android:gravity="center_horizontal"
-            />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_horizontal"
+                    >
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/ic_location"
+                        android:layout_marginEnd="10dp"
+                        />
+
+                    <TextView
+                        android:id="@+id/nama_lokasi"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Ada deh"
+                        android:textColor="@color/black"
+                        android:textSize="12sp"
+                        />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/curr_status_appoint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Dihadiri"
+                android:background="@drawable/border_hugcontent_nopadding"
+                android:backgroundTint="@color/green"
+                android:paddingVertical="6dp"
+                android:paddingHorizontal="24dp"
+                android:textSize="12sp"
+                android:textColor="@color/black"
+                android:gravity="center_horizontal"
+                />
+        </LinearLayout>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

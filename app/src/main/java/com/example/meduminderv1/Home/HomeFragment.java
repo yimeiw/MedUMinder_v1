@@ -17,6 +17,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Login.LoginActivity;
 import com.example.meduminderv1.MainActivity;
@@ -32,7 +33,7 @@ public class HomeFragment extends Fragment {
     ImageButton btnNotif, btnProfile;
     LinearLayout addMed, addAppoint, addDoc;
     SharedPreferences prefs;
-    SessionManager sessionManager;
+    AuthManager authManager;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -47,7 +48,7 @@ public class HomeFragment extends Fragment {
         addAppoint = view.findViewById(R.id.layoutAddAppoint);
         addDoc = view.findViewById(R.id.layoutDoc);
 
-        sessionManager = SessionManager.getInstance();
+        authManager = AuthManager.getInstance(requireContext());
 
         btnNotif.setImageDrawable(requireContext().getDrawable(R.drawable.ic_notif));
         btnProfile.setImageDrawable(requireContext().getDrawable(R.drawable.ic_profile));
@@ -84,7 +85,7 @@ public class HomeFragment extends Fragment {
         return view;
     }
     private void checkCurrentUser() {
-        User user = sessionManager.getUser();
+        User user = authManager.getCurrentUser();
         if (user != null){
             tvGreeting.setText("Halo, " + user.getName() + "!");
         }

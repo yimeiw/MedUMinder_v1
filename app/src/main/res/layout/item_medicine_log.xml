@@ -21,93 +21,100 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
         android:layout_margin="16dp"
         android:padding="16dp"
+        android:gravity="center_vertical"
         android:background="@drawable/bg_log_card_main"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        >
+        app:layout_constraintEnd_toEndOf="parent">
+
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_weight="1"
-            >
+            android:orientation="horizontal"
+            android:layout_marginEnd="10dp"
+            android:layout_marginStart="5dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_weight="1"
+                >
+                <TextView
+                    android:id="@+id/nama_obat_log"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Antimo"
+                    android:textColor="@color/black"
+                    android:textStyle="bold"
+                    android:textSize="20sp"
+                    />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="5dp"
+
+                    >
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Sisa stok: "
+                        android:textColor="@color/black"
+                        android:textSize="12sp"
+                        />
+
+                    <TextView
+                        android:id="@+id/sisa_stok_log"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textColor="@color/black"
+                        android:textSize="12sp"
+                        />
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Waktu:"
+                        android:textColor="@color/black"
+                        android:textSize="12sp"
+                        android:layout_marginEnd="2dp"
+                        />
+
+                    <TextView
+                        android:id="@+id/scheduled_at"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="timestamp"
+                        android:textColor="@color/black"
+                        android:textSize="12sp"
+                        />
+                </LinearLayout>
+            </LinearLayout>
+
             <TextView
-                android:id="@+id/nama_obat_log"
+                android:id="@+id/curr_status"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Antimo"
+                android:text="Dikonsumsi"
+                android:background="@drawable/border_hugcontent_nopadding"
+                android:backgroundTint="@color/green"
+                android:paddingVertical="6dp"
+                android:paddingHorizontal="24dp"
+                android:textSize="12sp"
                 android:textColor="@color/black"
-                android:textStyle="bold"
-                android:textSize="20sp"
                 />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="5dp"
-
-                >
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Sisa stok: "
-                    android:textColor="@color/black"
-                    android:textSize="12sp"
-                    />
-
-                <TextView
-                    android:id="@+id/sisa_stok_log"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0"
-                    android:textColor="@color/black"
-                    android:textSize="12sp"
-                    />
-            </LinearLayout>
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-
-                >
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Waktu: "
-                    android:textColor="@color/black"
-                    android:textSize="12sp"
-                    />
-
-                <TextView
-                    android:id="@+id/scheduled_at"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="timestamp"
-                    android:textColor="@color/black"
-                    android:textSize="12sp"
-                    />
-            </LinearLayout>
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/curr_status"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Dikonsumsi"
-            android:background="@drawable/border_hugcontent_nopadding"
-            android:backgroundTint="@color/green"
-            android:paddingVertical="6dp"
-            android:paddingHorizontal="24dp"
-            android:textSize="12sp"
-            android:textColor="@color/black"
-            android:layout_margin="5dp"
-            android:gravity="center_horizontal"
-            />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
