@@ -65,4 +65,15 @@
         android:label="Appointment Reminder"
         />
 
+    <fragment
+        android:id="@+id/editProfileFragment"
+        android:name="com.example.meduminderv1.Profile.EditProfileFragment"
+        android:label="Edit Profile"
+        />
+
+    <fragment
+        android:id="@+id/deleteAccountFragment"
+        android:name="com.example.meduminderv1.Profile.DeleteAccountFragment"
+        android:label="Delete Account"/>
+
 </navigation>

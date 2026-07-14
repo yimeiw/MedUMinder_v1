@@ -1,16 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- LAYER 1: The Outer Border/Shadow -->
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="@color/white"/>
-            <corners
-                android:topLeftRadius="100dp"
-                android:topRightRadius="100dp"
-                android:bottomLeftRadius="100dp"
-                android:bottomRightRadius="100dp"/>
-            <stroke android:width="1dp"
-                android:color="@color/black"/>
+            <solid android:color="?attr/colorOnSurface" /> <!-- Border color -->
+            <corners android:radius="100dp" />
         </shape>
     </item>
 
-</selector>
+    <!-- LAYER 2: The Main Background (Track) -->
+    <!-- We add 1dp padding (top/bottom/left/right) so the layer below shows as a border -->
+    <item
+        android:bottom="2dp"
+        android:left="2dp"
+        android:right="2dp"
+        android:top="2dp">
+        <shape android:shape="rectangle">
+            <solid android:color="?attr/colorPrimary" />
+            <corners android:radius="100dp" />
+        </shape>
+    </item>
+
+    <!-- LAYER 3: Optional Inner Accent (Color Tertiary) -->
+    <!-- This creates a smaller accent bar or highlight inside -->
+    <item
+        android:bottom="6dp"
+        android:left="6dp"
+        android:right="6dp"
+        android:top="6dp">
+        <shape android:shape="rectangle">
+            <solid android:color="?attr/colorOnSurface" />
+            <corners android:radius="100dp" />
+        </shape>
+    </item>
+
+    <item
+        android:bottom="7dp"
+        android:left="7dp"
+        android:right="7dp"
+        android:top="7dp">
+        <shape android:shape="rectangle">
+            <solid android:color="?attr/colorSurface" />
+            <corners android:radius="100dp" />
+        </shape>
+    </item>
+
+</layer-list>

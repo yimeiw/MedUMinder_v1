@@ -6,8 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".Home.HomeFragment"
-    >
+    tools:context=".Home.HomeFragment">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -71,7 +70,7 @@
                 android:id="@+id/greeting"
                 android:textSize="18sp"
                 android:layout_marginTop="10dp"
-                android:textColor="@color/black"
+                android:textColor="?attr/colorOnSurface"
                 />
 
             <TextView
@@ -79,12 +78,12 @@
                 android:layout_height="wrap_content"
                 android:text="@string/greetings_consumer"
                 android:textSize="14sp"
-                android:textColor="@color/black"/>
+                android:textColor="?attr/colorOnSurface"/>
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="@color/black"
+                android:background="?attr/colorOnSurface"
                 android:layout_gravity="center"
                 android:layout_marginVertical="20dp"
                 />
@@ -121,8 +120,8 @@
                         android:layout_marginTop="8dp"
                         android:text="Tambah Pengingat"
                         android:textAlignment="center"
-                        android:textColor="@color/black"
                         android:fontFamily="@font/inter_18pt_semibold"
+                        android:textColor="?attr/colorOnSurface"
                         android:background="@android:color/transparent"/>
 
                 </LinearLayout>
@@ -150,8 +149,8 @@
                         android:layout_marginTop="8dp"
                         android:fontFamily="@font/inter_18pt_semibold"
                         android:text="Tambah Appointment"
-                        android:textColor="@color/black"
                         android:textAlignment="center"
+                        android:textColor="?attr/colorOnSurface"
                         android:background="@android:color/transparent"/>
 
                 </LinearLayout>
@@ -179,8 +178,8 @@
                         android:layout_marginTop="8dp"
                         android:text="Dokumen Kesehatan"
                         android:textAlignment="center"
-                        android:textColor="@color/black"
                         android:fontFamily="@font/inter_18pt_semibold"
+                        android:textColor="?attr/colorOnSurface"
                         android:background="@android:color/transparent"/>
 
                 </LinearLayout>
@@ -189,7 +188,7 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="@color/black"
+                android:background="?attr/colorOnSurface"
                 android:layout_gravity="center"
                 android:layout_marginVertical="20dp"
                 />
@@ -209,7 +208,7 @@
                     android:layout_height="wrap_content"
                     android:text="Jadwal Berikutnya"
                     android:textSize="14sp"
-                    android:textColor="@color/white"
+                    android:textColor="?attr/colorPrimary"
                     android:paddingHorizontal="12dp"
                     android:paddingTop="10dp"
                     android:background="@android:color/transparent"/>
@@ -221,7 +220,7 @@
                     android:fontFamily="@font/inter_24pt_bold"
                     android:textSize="24sp"
                     android:text="Nama Obat/Appointment"
-                    android:textColor="@color/white"
+                    android:textColor="?attr/colorPrimary"
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="5dp"
                     android:background="@android:color/transparent"/>
@@ -241,7 +240,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Hari ini"
-                        android:textColor="@color/white"
+                        android:textColor="?attr/colorPrimary"
                         android:gravity="center"
                         android:background="@android:color/transparent"/>
 
@@ -258,7 +257,7 @@
                         android:layout_height="20dp"
                         android:background="@drawable/ic_time"
                         android:layout_gravity="center"
-                        android:backgroundTint="@color/white"
+                        android:backgroundTint="?attr/colorPrimary"
                         android:layout_marginRight="5dp"
                         />
 
@@ -267,7 +266,7 @@
                         android:layout_height="wrap_content"
                         android:id="@+id/tvTime"
                         android:text="00:00"
-                        android:textColor="@color/white"
+                        android:textColor="?attr/colorPrimary"
                         android:layout_gravity="center"
                         android:background="@android:color/transparent"/>
 
@@ -287,7 +286,7 @@
                         android:id="@+id/tvStokObat"
                         android:text="Stok Obat: "
                         android:textSize="12sp"
-                        android:textColor="@color/white"
+                        android:textColor="?attr/colorPrimary"
                         android:background="@android:color/transparent"/>
 
                     <TextView
@@ -296,7 +295,7 @@
                         android:id="@+id/tvTotalStok"
                         android:text="10"
                         android:textSize="12sp"
-                        android:textColor="@color/white"
+                        android:textColor="?attr/colorPrimary"
                         android:background="@android:color/transparent"/>
 
                 </LinearLayout>
@@ -310,7 +309,7 @@
                     app:backgroundTint="@null"
                     android:textAllCaps="false"
                     android:textSize="14sp"
-                    android:textColor="@color/black"
+                    android:textColor="?attr/colorOnSurface"
                     android:paddingHorizontal="12dp"
                     android:layout_margin="10dp"/>
 
@@ -328,7 +327,7 @@
                     android:layout_height="wrap_content"
                     android:text="Jadwal Hari Ini"
                     android:textSize="20dp"
-                    android:textColor="@color/black"
+                    android:textColor="?attr/colorOnSurface"
                     android:textStyle="bold"/>
 
                 <LinearLayout
@@ -337,15 +336,15 @@
                     android:layout_weight="1"
                     android:gravity="end">
 
-                    <Button
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/viewAll"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Lihat Selengkapnya"
-                        android:fontFamily="@font/inter_18pt_medium"
-                        android:textColor="@color/black"
                         android:clickable="true"
                         android:focusable="true"
+                        android:paddingEnd="0dp"
+                        android:textColor="?attr/colorOnSurface"
                         android:background="@android:color/transparent"
                         android:backgroundTint="@null"
                         android:textAllCaps="false"

@@ -4,27 +4,36 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.credentials.CredentialManager;
 
-import com.example.meduminderv1.Home.HomeFragment;
+import com.example.meduminderv1.Auth.AuthManager;
+import com.example.meduminderv1.Auth.SessionManager;
+import com.example.meduminderv1.Callback.AuthCallback;
 import com.example.meduminderv1.MainActivity;
+import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.SignUp.SignUpActivity;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class LoginActivity extends AppCompatActivity {
     Button signUpButton, login;
+    ImageButton googleBtn;
     EditText emailInput, passwordInput;
-    FirebaseAuth mAuth;
-    FirebaseFirestore db;
+    TextView forgotPassword;
+    CredentialManager credentialManager;
+    AuthManager authManager;
+    SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,18 +51,81 @@ public class LoginActivity extends AppCompatActivity {
 
         emailInput = findViewById(R.id.email_input);
         passwordInput = findViewById(R.id.password_input);
+        forgotPassword = findViewById(R.id.forgot_password);
 
-        mAuth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
+        credentialManager = CredentialManager.create(this);
+        sessionManager = SessionManager.getInstance();
+        authManager = AuthManager.getInstance(getApplicationContext());
 
-        login.setOnClickListener(v -> loginUser());
+        login.setOnClickListener(v -> {
+            loginUser();
+        });
+
+        forgotPassword.setOnClickListener(v -> {
+            String email = emailInput.getText().toString().trim();
+            if (email.isEmpty()){
+                emailInput.setError("Masukkan email terlebih dahulu.");
+                emailInput.requestFocus();
+                return;
+            }
+            authManager.resetPassword(email, new AuthCallback<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(LoginActivity.this);
+                            builder.setTitle("Email berhasil dikirim")
+                            .setMessage("Silahkan buka email Anda untuk mengatur ulang password.")
+                            .setPositiveButton("Buka Email", (dialog, which) -> {
+                                Intent intent = new Intent(Intent.ACTION_MAIN);
+                                intent.addCategory(Intent.CATEGORY_APP_EMAIL);
+                                try {
+                                    startActivity(intent);
+                                } catch (Exception e){
+                                    Toast.makeText(LoginActivity.this, "Aplikasi email tidak ditemukan.", Toast.LENGTH_SHORT).show();
+                                }
+                            }).setNegativeButton("Tutup", null);
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                    if (dialog.getWindow() != null){
+                        dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(LoginActivity.this, R.color.green));
+                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(LoginActivity.this, R.color.pink));
+                    }
+                }
+
+                @Override
+                public void onFailure(String message) {
+                    Toast.makeText(LoginActivity.this, message, Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
 
         signUpButton.setOnClickListener(view -> {
             Intent intent = new Intent(this, SignUpActivity.class);
             startActivity(intent);
         });
+
+        googleBtn = findViewById(R.id.google_provider);
+
+        googleBtn.setOnClickListener(v -> {
+            signInWithGoogle();
+        });
+
     }
 
+    private void signInWithGoogle() {
+        authManager.loginWithGoogle(this, new AuthCallback<User>() {
+            @Override
+            public void onSuccess(User result) {
+                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                finish();
+            }
+
+            @Override
+            public void onFailure(String message) {
+                Toast.makeText(LoginActivity.this, message, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
     private void loginUser() {
         String email = emailInput.getText().toString().trim();
         String password = passwordInput.getText().toString().trim();
@@ -66,13 +138,12 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        mAuth.signInWithEmailAndPassword(email,password).addOnSuccessListener(authResult -> {
-            String uid = authResult.getUser().getUid();
-            loadUserData(uid);
-        }).addOnFailureListener(e -> {
-            Toast.makeText(LoginActivity.this,e.getMessage(), Toast.LENGTH_LONG).show();
-        });
-    }
+        authManager.loginWithEmail(email, password, new AuthCallback<User>() {
+            @Override
+            public void onSuccess(User result) {
+                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                finish();
+            }
 
     private void loadUserData(String uid) {
         db.collection("users").document(uid).get().addOnSuccessListener(documentSnapshot -> {
@@ -86,21 +157,25 @@ public class LoginActivity extends AppCompatActivity {
                 startActivity(intent);
             } else{
                 Toast.makeText(this, "Data pengguna tidak ditemukan", Toast.LENGTH_SHORT).show();
+            @Override
+            public void onFailure(String message) {
+                if (message.equals("EMAIL_NOT_VERIFIED")){
+                    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(LoginActivity.this);
+                            builder.setTitle("Email Belum Diverifikasi")
+                            .setMessage("Silahkan verifikasi email Anda terlebih dahulu sebelum login.")
+                            .setPositiveButton("OK", null);
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                    if (dialog.getWindow() != null){
+                        dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(LoginActivity.this, R.color.green));
+                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(LoginActivity.this, R.color.pink));
+                    }
+                }else {
+                    Toast.makeText(LoginActivity.this, message, Toast.LENGTH_SHORT).show();
+                }
             }
-        }).addOnFailureListener(e -> {
-            Toast.makeText(this,e.getMessage(), Toast.LENGTH_LONG).show();
         });
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-
-        if (currentUser != null){
-            startActivity(new Intent(this, MainActivity.class));
-            finish();
-        }
-    }
 }

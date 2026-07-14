@@ -1,8 +1,12 @@
 package com.example.meduminderv1.Home;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
@@ -13,7 +17,10 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Login.LoginActivity;
+import com.example.meduminderv1.MainActivity;
+import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -22,10 +29,10 @@ import com.google.firebase.firestore.FirebaseFirestore;
 public class HomeFragment extends Fragment {
 
     TextView tvGreeting;
-    FirebaseAuth mAuth;
-    FirebaseFirestore db;
     ImageButton btnNotif, btnProfile;
     LinearLayout addMed, addAppoint, addDoc;
+    SharedPreferences prefs;
+    SessionManager sessionManager;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -40,16 +47,24 @@ public class HomeFragment extends Fragment {
         addAppoint = view.findViewById(R.id.layoutAddAppoint);
         addDoc = view.findViewById(R.id.layoutDoc);
 
-        mAuth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
+        sessionManager = SessionManager.getInstance();
+
+        btnNotif.setImageDrawable(requireContext().getDrawable(R.drawable.ic_notif));
+        btnProfile.setImageDrawable(requireContext().getDrawable(R.drawable.ic_profile));
 
         checkCurrentUser();
 
+        prefs = getActivity().getSharedPreferences("themes", MODE_PRIVATE);
+        boolean isDark = prefs.getBoolean("dark_mode", false);
+        AppCompatDelegate.setDefaultNightMode(isDark ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
+
         btnNotif.setOnClickListener(v -> {
+            btnNotif.setImageDrawable(requireContext().getDrawable(R.drawable.ic_notif_hover));
             NavHostFragment.findNavController(this)
                     .navigate(R.id.notificationFragment);
         });
         btnProfile.setOnClickListener(v -> {
+            btnProfile.setImageDrawable(requireContext().getDrawable(R.drawable.ic_profile_hover));
             NavHostFragment.findNavController(this)
                     .navigate(R.id.profileFragment);
         });
@@ -69,33 +84,9 @@ public class HomeFragment extends Fragment {
         return view;
     }
     private void checkCurrentUser() {
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser == null) {
-            startActivity(new Intent(requireActivity(), LoginActivity.class));
-            requireActivity().finish();
-            return;
-        }
-        loadUserData(currentUser.getUid());
-    }
-
-    private void loadUserData(String uid) {
-        db.collection("users").document(uid).get().addOnSuccessListener(documentSnapshot -> {
-            if (documentSnapshot.exists()) {
-                String name = documentSnapshot.getString("name");
-                tvGreeting.setText("Halo, " + name + "!");
-            }
-        });
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-
-        if (currentUser == null){
-            startActivity(new Intent(requireActivity(), LoginActivity.class));
-            requireActivity().finish();
+        User user = sessionManager.getUser();
+        if (user != null){
+            tvGreeting.setText("Halo, " + user.getName() + "!");
         }
     }
 }

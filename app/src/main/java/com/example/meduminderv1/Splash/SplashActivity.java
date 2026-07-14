@@ -6,8 +6,10 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Path;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -16,18 +18,45 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
+import com.example.meduminderv1.Auth.AuthManager;
+import com.example.meduminderv1.Callback.AuthCallback;
 import com.example.meduminderv1.Login.LoginActivity;
+import com.example.meduminderv1.MainActivity;
+import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
 
 public class SplashActivity extends AppCompatActivity {
 
     private boolean revealStarted = false;
+    boolean isSkip = false;
+    AnimatorSet currentAnimator;
+    private AuthManager authManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //menerapkan last mode user
+        SharedPreferences prefs = getSharedPreferences("themes", MODE_PRIVATE);
+        boolean isDark = prefs.getBoolean("dark_mode", false);
+        int targetMode = isDark ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO;
+        if (AppCompatDelegate.getDefaultNightMode() != targetMode){
+            AppCompatDelegate.setDefaultNightMode(targetMode);
+        }
+
+        authManager = AuthManager.getInstance(getApplicationContext());
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+
+        View rootView = findViewById(android.R.id.content);
+        rootView.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN){
+                skipSplash();
+                return true;
+            }
+            return false;
+        } );
 
         ImageView pill = findViewById(R.id.medicine_icon);
         ImageView letterU = findViewById(R.id.letter_u);
@@ -75,13 +104,9 @@ public class SplashActivity extends AppCompatActivity {
 
             rotatePill.setDuration(1600);
 
-            AnimatorSet pillAnim =
-                    new AnimatorSet();
+            AnimatorSet pillAnim = new AnimatorSet();
 
-            pillAnim.playTogether(
-                    movePill,
-                    rotatePill
-            );
+            pillAnim.playTogether(movePill, rotatePill);
 
             ObjectAnimator scaleX =
                     ObjectAnimator.ofFloat(
@@ -101,13 +126,9 @@ public class SplashActivity extends AppCompatActivity {
                             1f
                     );
 
-            AnimatorSet bounce =
-                    new AnimatorSet();
+            AnimatorSet bounce = new AnimatorSet();
 
-            bounce.playTogether(
-                    scaleX,
-                    scaleY
-            );
+            bounce.playTogether(scaleX, scaleY);
 
             bounce.setDuration(180);
 
@@ -137,14 +158,9 @@ public class SplashActivity extends AppCompatActivity {
                             1f
                     );
 
-            AnimatorSet uAnim =
-                    new AnimatorSet();
+            AnimatorSet uAnim = new AnimatorSet();
 
-            uAnim.playTogether(
-                    fadeU,
-                    scaleUX,
-                    scaleUY
-            );
+            uAnim.playTogether(fadeU, scaleUX, scaleUY);
 
             uAnim.setDuration(250);
 
@@ -163,16 +179,12 @@ public class SplashActivity extends AppCompatActivity {
                             med,
                             "translationX",
                             0f,
-                            -150f
+                            -20f
                     );
 
-            AnimatorSet medAnim =
-                    new AnimatorSet();
+            AnimatorSet medAnim = new AnimatorSet();
 
-            medAnim.playTogether(
-                    medFade,
-                    medSlide
-            );
+            medAnim.playTogether(medFade, medSlide);
 
             medAnim.setDuration(350);
 
@@ -191,22 +203,17 @@ public class SplashActivity extends AppCompatActivity {
                             minder,
                             "translationX",
                             0f,
-                            210f
+                            285f
                     );
 
-            AnimatorSet minderAnim =
-                    new AnimatorSet();
+            AnimatorSet minderAnim = new AnimatorSet();
 
-            minderAnim.playTogether(
-                    minderFade,
-                    minderSlide
-            );
+            minderAnim.playTogether(minderFade, minderSlide);
 
             minderAnim.setDuration(350);
 
             //pause sedetik di logo
-            ValueAnimator pause =
-                    ValueAnimator.ofInt(0,1);
+            ValueAnimator pause = ValueAnimator.ofInt(0, 1);
 
             pause.setDuration(1000);
 
@@ -240,8 +247,7 @@ public class SplashActivity extends AppCompatActivity {
                             1f
                     );
 
-            AnimatorSet circleAnim =
-                    new AnimatorSet();
+            AnimatorSet circleAnim = new AnimatorSet();
 
             circleAnim.playTogether(
                     circleX,
@@ -251,8 +257,8 @@ public class SplashActivity extends AppCompatActivity {
 
             circleAnim.setDuration(500);
 
-            AnimatorSet finalSet =
-                    new AnimatorSet();
+            currentAnimator = new AnimatorSet();
+            AnimatorSet finalSet = currentAnimator;
 
             finalSet.playSequentially(
                     pillAnim,
@@ -266,73 +272,93 @@ public class SplashActivity extends AppCompatActivity {
 
             finalSet.start();
 
-            finalSet.addListener(
-                    new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationEnd(
-                                Animator animation) {
+            finalSet.addListener(new AnimatorListenerAdapter() {
+                boolean cancelled = false;
 
-                            triggerReveal(
-                                    circle,
-                                    overlay
-                            );
-                        }
-                    });
+                @Override
+                public void onAnimationCancel(Animator animation) {
+                    cancelled = true;
+                }
+
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    if (cancelled) return;
+                    if (isSkip) return;
+                    if (isFinishing() || isDestroyed()) return;
+                    triggerReveal(circle, overlay);
+                }
+            });
         });
     }
 
-    private void triggerReveal(
-            View circle,
-            View overlay) {
+    private void skipSplash() {
+        if (isSkip) return;
+        isSkip = true;
 
-        if(revealStarted) return;
+        //stop animasi yg lg jalan
+        if (currentAnimator != null){
+            currentAnimator.cancel();
+        }
+
+        //lgsng ke login
+        openNextScreen();
+    }
+
+    private void triggerReveal(View circle, View overlay) {
+
+        if(revealStarted || isSkip) return;
+        if(isFinishing() || isDestroyed()) return;
+        if (circle == null || overlay == null) return;
+        if(!circle.isAttachedToWindow()) return;
+        if(!overlay.isAttachedToWindow()) return;
 
         revealStarted = true;
 
-        int cx =
-                (int)(circle.getX()
-                        + circle.getWidth()/2f);
+        int cx = (int)(circle.getX() + circle.getWidth()/2f);
+        int cy = (int)(circle.getY() + circle.getHeight()/2f);
 
-        int cy =
-                (int)(circle.getY()
-                        + circle.getHeight()/2f);
-
-        float radius =
-                (float)Math.hypot(
-                        overlay.getWidth(),
-                        overlay.getHeight()
-                );
+        float radius = (float)Math.hypot(overlay.getWidth(), overlay.getHeight());
 
         overlay.setVisibility(View.VISIBLE);
 
-        Animator reveal =
-                ViewAnimationUtils.createCircularReveal(
-                        overlay,
-                        cx,
-                        cy,
-                        0f,
-                        radius
-                );
+        Animator reveal = ViewAnimationUtils.createCircularReveal(overlay, cx, cy, 0f, radius);
 
         reveal.setDuration(500);
 
-        reveal.start();
-
-        reveal.addListener(
-                new AnimatorListenerAdapter() {
+        reveal.addListener(new AnimatorListenerAdapter() {
                     @Override
-                    public void onAnimationEnd(
-                            Animator animation) {
-
-                        startActivity(
-                                new Intent(
-                                        SplashActivity.this,
-                                        LoginActivity.class
-                                )
-                        );
-
-                        finish();
+                    public void onAnimationEnd(Animator animation) {
+                        if (isSkip) return;
+                        if (isFinishing() || isDestroyed()) return;
+                        openNextScreen();
                     }
-                });
+        });
+        reveal.start();
     }
+
+    private void openNextScreen() {
+        authManager.restoreSession(new AuthCallback<User>() {
+            @Override
+            public void onSuccess(User result) {
+                startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                finish();
+            }
+
+            @Override
+            public void onFailure(String message) {
+                startActivity(new Intent(SplashActivity.this, LoginActivity.class));
+                finish();
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (currentAnimator != null){
+            currentAnimator.cancel();
+            currentAnimator = null;
+        }
+        super.onDestroy();
+    }
+
 }

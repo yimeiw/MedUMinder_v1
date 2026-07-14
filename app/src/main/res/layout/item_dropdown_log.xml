@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="345dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_log_dropdown"
+    android:padding="1dp"
+    >
+
+    <TextView
+        android:id="@+id/itemConsumption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_popup_item_up"
+        android:padding="14dp"
+        android:text="Riwayat Konsumsi"
+        android:textColor="@color/black"
+        android:textSize="16sp"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/black"
+        />
+
+    <TextView
+        android:id="@+id/itemAppointment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_popup_item_bot"
+        android:padding="14dp"
+        android:text="Riwayat Janji Temu"
+        android:textColor="@color/black"
+        android:textSize="16sp"/>
+
+</LinearLayout>
