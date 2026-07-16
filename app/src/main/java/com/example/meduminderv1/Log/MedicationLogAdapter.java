@@ -31,11 +31,15 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
     private Context context;
     private FirebaseFirestore db;
     private Map<String, String> namaObatCache = new HashMap<>();
-
+    private OnMedLogClickListener listener;
     public MedicationLogAdapter(List<MedicationLog> medicationLogs, Context context) {
         this.medicationLogs = medicationLogs;
         this.db = FirebaseFirestore.getInstance();
         this.context = context;
+    }
+
+    public void setOnMedLogClickListener(OnMedLogClickListener listener) {
+        this.listener = listener;
     }
 
     @NonNull
@@ -61,7 +65,13 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
         }
         holder.currStatus.setText(statusLog.displayLabel(false));
         holder.scheduledAt.setText(medicationLog.getScheduled_at().toDate().toString());
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) listener.onMedLogClick(medicationLog);
+        });
+
         applyStatusColor(holder, statusLog);
+
     }
 
     @Override

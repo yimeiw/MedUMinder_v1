@@ -76,4 +76,10 @@
         android:name="com.example.meduminderv1.Profile.DeleteAccountFragment"
         android:label="Delete Account"/>
 
+    <fragment
+        android:id="@+id/reminderFragment"
+        android:name="com.example.meduminderv1.Reminder.ReminderFragment"
+        android:label="Reminder"
+        />
+
 </navigation>

@@ -18,6 +18,7 @@ import android.widget.Toast;
 import com.example.meduminderv1.Notification.NotificationFragment;
 import com.example.meduminderv1.R;
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -101,18 +102,21 @@ public class AppointmentReminderFragment extends Fragment {
         }
 
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        Timestamp appointmentAt = new Timestamp(selectedCalendar.getTime());
+
         Map<String, Object> appointment = new HashMap<>();
-        appointment.put("user_id", uid);
+        appointment.put("users_id", uid);
         appointment.put("title", nameAppoint);
         appointment.put("address", location);
-        appointment.put("appointment_date", tvDate.getText().toString());
-        appointment.put("appointment_time", tvTime.getText().toString());
+        appointment.put("appointment_at", appointmentAt);
+//        appointment.put("appointment_date", tvDate.getText().toString());
+//        appointment.put("appointment_time", tvTime.getText().toString());
         appointment.put("created_at", FieldValue.serverTimestamp());
         appointment.put("updated_at", FieldValue.serverTimestamp());
         appointment.put("deleted_at", null);
         appointment.put("status", "upcoming");
-        appointment.put("created_by", Map.of("uid", uid, "role", uid));
-        appointment.put("updated_by", Map.of("uid", uid, "role", uid));
+        appointment.put("created_by", uid);
+        appointment.put("updated_by", uid);
 
         db.collection("appointments").add(appointment).addOnSuccessListener(documentReference -> {
             Toast.makeText(requireContext(), "Appointment berhasil disimpan", Toast.LENGTH_SHORT).show();

@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Reminder.ReminderFragment"
+    android:id="@+id/reminderFragment"
+    android:layout_margin="20dp"
+    >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        >
+
+<!--        back button dan title page-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:id="@+id/headerSection"
+            android:layout_marginBottom="50dp"
+            >
+
+            <ImageButton
+                android:layout_width="30dp"
+                android:layout_height="26dp"
+                android:background="@drawable/ic_back"
+                android:id="@+id/btnBack"
+                android:layout_gravity="center"
+                app:tint="@color/hover_pressed"
+                />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/tvAddReminderMed"
+                android:text="Konfirmasi Pengingat"
+                android:textStyle="bold"
+                android:textSize="24sp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:textColor="?attr/colorOnSurface"/>
+        </LinearLayout>
+
+<!--         bulat isi nama obat-->
+        <LinearLayout
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            android:orientation="vertical"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:background="@drawable/circle_confirm_reminder"
+            android:outlineSpotShadowColor="?attr/colorTertiary"
+            android:elevation="20dp"
+            android:layout_marginBottom="20dp"
+            >
+            <TextView
+                android:id="@+id/namaObatConfirmReminder"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nama Obat"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface"
+                />
+            
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="15dp"
+                />
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_tablet"
+                />
+        </LinearLayout>
+
+<!--        detail tanggal, waktu dan status-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:orientation="vertical"
+            android:background="@drawable/border"
+            android:padding="20dp"
+            android:paddingStart="30dp"
+            android:layout_marginBottom="20dp"
+            >
+
+<!--            waktu dan tanggal reminder-->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                >
+                <TextView
+                    android:id="@+id/dateReminder"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="dd/mm/yyyy"
+                    android:textColor="?attr/colorOnSurface"
+                    android:paddingRight="10dp"
+                    android:textSize="14sp"
+                    />
+
+                <TextView
+                    android:layout_width="5dp"
+                    android:layout_height="15dp"
+                    android:text="|"
+                    android:textSize="14sp"
+                    />
+
+                <TextView
+                    android:id="@+id/timeReminder"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="10dp"
+                    android:text="00:00"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="14sp"
+                    />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/statusReminder"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Status"
+                android:textColor="?attr/colorOnSurface"
+                android:textStyle="bold"
+                android:paddingTop="10dp"
+                android:textSize="20sp"
+                />
+
+        </LinearLayout>
+
+<!--        button confirm taken dan tunda-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_horizontal"
+            >
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnIsTaken"
+                android:layout_width="170dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_selector"
+                app:backgroundTint="@null"
+                android:text="Sudah Diminum"
+                android:textColor="?attr/colorPrimary"
+                android:textAllCaps="false"
+                android:layout_marginVertical="10dp"
+                android:textStyle="bold"
+                />
+
+            <Space
+                android:layout_width="10dp"
+                android:layout_height="match_parent"
+                />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTundaReminder"
+                android:layout_width="170dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_border"
+                app:backgroundTint="@null"
+                android:text="Tunda Pengingat"
+                android:textColor="?attr/colorOnSurface"
+                android:textAllCaps="false"
+                android:layout_marginVertical="10dp"
+                android:textStyle="bold"
+                />
+        </LinearLayout>
+
+
+
+
+    </LinearLayout>
+
+
+</RelativeLayout>
