@@ -34,6 +34,8 @@ import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.MedicationRepo;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
+import com.google.android.material.timepicker.MaterialTimePicker;
+import com.google.android.material.timepicker.TimeFormat;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -43,6 +45,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -233,6 +236,7 @@ public class MedicineReminderFragment extends Fragment {
 
         endDateReminder.setOnClickListener(v -> {
             Calendar today = Calendar.getInstance();
+
             DatePickerDialog dialog = new DatePickerDialog(requireContext(), (view1, year, month, day)->{
                 selectedCalendar.set(Calendar.YEAR, year);
                 selectedCalendar.set(Calendar.MONTH, month);
@@ -381,22 +385,30 @@ public class MedicineReminderFragment extends Fragment {
         timeReminder.removeAllViews();
         timeViews.clear();
 
-        int color = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface);
+        int labelColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface);
+        int hintColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorPrimaryInverse);
 
         for (int i = 1; i <= frequency; i++){
             TextView label = new TextView(requireContext());
             label.setText("Jam Minum Obat " + i);
             label.setPadding(20,10,20,5);
-            label.setTextColor(color);
+            label.setTextColor(labelColor);
 
             TextView tvTime = new TextView(requireContext());
             tvTime.setText("Pilih Jam");
             tvTime.setPadding(50,40,50,40);
-            tvTime.setTextColor(color);
+            tvTime.setTextColor(hintColor);
 
             tvTime.setBackgroundResource(R.drawable.border_hugcontent_nopadding);
             tvTime.setClickable(true);
             tvTime.setFocusable(false);
+
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+
+            tvTime.setLayoutParams(params);
 
             tvTime.setOnClickListener(v -> showTimePicker(tvTime));
             timeViews.add(tvTime);
@@ -406,17 +418,25 @@ public class MedicineReminderFragment extends Fragment {
     }
 
     private void showTimePicker(TextView selectedView) {
+        Log.d("TIME_PICKER", "showTimePicker sipanggil");
         Calendar now = Calendar.getInstance();
-        TimePickerDialog dialog = new TimePickerDialog(requireContext(), (view, hour, minute) -> {
-            String time = String.format("%02d:%02d", hour, minute);
+        int filledColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface);
+        MaterialTimePicker picker = new MaterialTimePicker.Builder().setTimeFormat(TimeFormat.CLOCK_24H)
+                .setHour(now.get(Calendar.HOUR_OF_DAY))
+                .setMinute(now.get(Calendar.MINUTE))
+                .setTitleText("Pilih Jam Minum Obat").build();
+
+        picker.addOnPositiveButtonClickListener(v -> {
+            String time = String.format(Locale.getDefault(), "%02d:%02d", picker.getHour(), picker.getMinute());
             for (TextView tv : timeViews){
                 if (tv != selectedView && tv.getText().toString().equals(time)){
                     Toast.makeText(requireContext(), "Jam tersebut sudah dipilih.", Toast.LENGTH_SHORT).show();
                     return;
                 }
             } selectedView.setText(time);
-        }, now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE), true);
-        dialog.show();
+            selectedView.setTextColor(filledColor);
+        });
+        picker.show(getParentFragmentManager(), "time_picker");
     }
 
     private void clearFields() {

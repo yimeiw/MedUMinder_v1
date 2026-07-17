@@ -149,7 +149,7 @@
                         android:layout_height="wrap_content"
                         android:hint="dd/mm/yyyy"
                         android:textColorHint="@color/placeholder"
-                        android:paddingHorizontal="10dp"
+                        android:paddingEnd="10dp"
                         android:textSize="14sp"
                         android:textColor="?attr/colorOnSurface"
                         />
