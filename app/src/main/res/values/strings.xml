@@ -14,6 +14,7 @@
     <string name="login_failed">"Login failed"</string>
     <string name="login_success">"Login success"</string>
     <string name="greetings_consumer">"Jangan lupa untuk minum obat Anda!"</string>
+    <string name="greetings_caregiver">"Tolong ingatkan Consumer untuk minum obat!"</string>
     <string name="desc_kepatuhan_tinggi">"Minggu ini kepatuhan Anda sangat bagus. Pertahankan!"</string>
     <string name="desc_kepatuhan_okela">"Minggu ini kepatuhan Anda cukup bagus. Ayo ditingkatkan!"</string>
     <string name="desc_kepatuhan_rendah">"Minggu ini kepatuhan Anda sangat kurang. Segera ditingkatkan!"</string>
