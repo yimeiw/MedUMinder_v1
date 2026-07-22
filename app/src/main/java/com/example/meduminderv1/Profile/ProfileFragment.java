@@ -2,11 +2,11 @@ package com.example.meduminderv1.Profile;
 
 import static android.content.Context.MODE_PRIVATE;
 
-import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -30,6 +30,7 @@ import com.example.meduminderv1.Login.LoginActivity;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.R;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class ProfileFragment extends Fragment {
 
@@ -211,11 +212,19 @@ public class ProfileFragment extends Fragment {
 
     private void showSwitchRole(UserRole targetRole) {
         String roleName = targetRole == UserRole.Consumer ? "Consumer" : "Caregiver";
-        new AlertDialog.Builder(requireContext()).setTitle("Ganti Role")
-                .setMessage("Apakah Anda yakin ingin berpindah ke role " + roleName + "?")
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
+        builder.setTitle("Ganti Role").setMessage("Apakah Anda yakin ingin berpindah ke role " + roleName + "?")
                 .setNegativeButton("Batal", null).setPositiveButton("Ya", (dialog, which) -> {
                     switchRole(targetRole);
-                }).show();
+                });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        if (dialog.getWindow() != null){
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.green));
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.pink));
+        }
     }
 
     private void switchRole(UserRole targetRole) {
@@ -309,10 +318,10 @@ public class ProfileFragment extends Fragment {
             imgAktivasi.setImageResource(R.drawable.ic_activate);
         } if (user.getCurrentRole() == UserRole.Consumer){
             txtAktivasi.setText("Invite Caregiver");
-            imgAktivasi.setImageResource(R.drawable.ic_invite);
+            imgAktivasi.setImageResource(R.drawable.ic_add_people);
         } else {
             txtAktivasi.setText("Invite Consumer");
-            imgAktivasi.setImageResource(R.drawable.ic_invite);
+            imgAktivasi.setImageResource(R.drawable.ic_add_people);
         }
     }
 
