@@ -2,22 +2,26 @@ package com.example.meduminderv1.Auth;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 import android.util.Patterns;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.credentials.ClearCredentialStateRequest;
 import androidx.credentials.Credential;
 import androidx.credentials.CredentialManager;
 import androidx.credentials.CredentialManagerCallback;
 import androidx.credentials.CustomCredential;
 import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
+import androidx.credentials.exceptions.ClearCredentialException;
 import androidx.credentials.exceptions.GetCredentialException;
 
 import com.example.meduminderv1.Callback.AuthCallback;
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Model.AuthProviderType;
 import com.example.meduminderv1.Model.User;
+import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.UserRepository;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
@@ -32,6 +36,9 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.auth.UserInfo;
 import com.google.firebase.auth.UserProfileChangeRequest;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class AuthManager {
     private static AuthManager instance;
@@ -248,9 +255,9 @@ public class AuthManager {
                 user.setAuthProvider(AuthProviderType.GOOGLE);
                 user.setPreferred_language("Indonesia");
                 user.setTimezone("Asian/Jakarta");
-                user.setCreatedAt(Timestamp.now());
-                user.setUpdatedAt(Timestamp.now());
-                user.setDeletedAt(null);
+                user.setCreated_at(Timestamp.now());
+                user.setUpdated_at(Timestamp.now());
+                user.setDeleted_at(null);
                 saveUserProfile(user, callback);
             }
         });
@@ -345,7 +352,7 @@ public class AuthManager {
         });
     }
     private void updateUserProfile(User user, AuthCallback<Void> callback) {
-        user.setUpdatedAt(Timestamp.now());
+        user.setUpdated_at(Timestamp.now());
         userRepository.updateUser(user, new RepoCallback<Void>(){
             @Override
             public void onSuccess(Void result) {
@@ -359,7 +366,7 @@ public class AuthManager {
             }
         });
     }
-//    PRIVATE METHOD
+//   general method
     private void saveUserProfile(User user, AuthCallback<User> callback) {
         userRepository.saveUser(user, new RepoCallback<Void>() {
             @Override
@@ -397,6 +404,90 @@ public class AuthManager {
         });
     }
 
+    public void loadCurrentUserProfile(AuthCallback<User> callback){
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser == null){
+            callback.onFailure("User belum login.");
+            return;
+        } loadUserProfile(firebaseUser.getUid(), callback);
+    }
+
+    public void logout(Context context, AuthCallback<Void> callback){
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser == null){
+            sessionManager.clearSession();
+            callback.onSuccess(null);
+            return;
+        } mAuth.signOut();
+        sessionManager.clearSession();
+        ClearCredentialStateRequest request = new ClearCredentialStateRequest();
+        credentialManager.clearCredentialStateAsync(request, null, Runnable::run, new CredentialManagerCallback<Void, ClearCredentialException>() {
+            @Override
+            public void onResult(Void unused) {
+                callback.onSuccess(null);
+            }
+
+            @Override
+            public void onError(@NonNull ClearCredentialException e) {
+                Log.e("LOGOUT", "Clear credential gagal", e);
+                //firebasenya sudah logout, jadi tidak dianggap gagal
+                callback.onSuccess(null);
+            }
+        });
+    }
+
+    public void updateProfile(User user, AuthCallback<User> callback){
+        userRepository.updateUser(user, new RepoCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                loadUserProfile(user.getAuth_uid(), callback);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
+
+    // role
+    public void switchRole(UserRole role, AuthCallback<User> callback) {
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser == null){
+            callback.onFailure("User belum login.");
+            return;
+        }
+        userRepository.updateRole(firebaseUser.getUid(), role, new RepoCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                loadUserProfile(firebaseUser.getUid(), callback);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
+
+    public void enableCaregiver(AuthCallback<User> callback) {
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser == null){
+            callback.onFailure("User belum login.");
+            return;
+        } userRepository.enableCaregiver(firebaseUser.getUid(), new RepoCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                loadUserProfile(firebaseUser.getUid(), callback);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
+
 //    tambahan untuk editprofile
     public User getCurrentUser(){
         return sessionManager.getUser();
@@ -419,7 +510,7 @@ public class AuthManager {
                 return;
             }
             user.setName(finalName);
-            user.setUpdatedAt(Timestamp.now());
+            user.setUpdated_at(Timestamp.now());
             updateUserProfile(user, new AuthCallback<Void>() {
                 @Override
                 public void onSuccess(Void result) {

@@ -7,13 +7,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
-import androidx.credentials.ClearCredentialStateRequest;
-import androidx.credentials.CredentialManager;
-import androidx.credentials.CredentialManagerCallback;
-import androidx.credentials.exceptions.ClearCredentialException;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
@@ -26,26 +21,27 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.example.meduminderv1.Auth.AuthManager;
+import com.example.meduminderv1.Auth.SessionManager;
+import com.example.meduminderv1.Callback.AuthCallback;
 import com.example.meduminderv1.Login.LoginActivity;
+import com.example.meduminderv1.Model.User;
+import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.R;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.UserInfo;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 public class ProfileFragment extends Fragment {
 
     ImageButton btnBack, btnLogout;
-    FirebaseAuth mAuth;
-    FirebaseFirestore db;
-    String currentRole, name, email;
-    boolean caregiverEnabled;
-    TextView curr_role, name_input, email_input;
+    SessionManager sessionManager;
+    User user;
+    AuthManager authManager;
+    TextView curr_role, name_input, email_input, txtAktivasi;
     RelativeLayout themeSwitch;
-    ImageView iconToggle;
+    ImageView iconToggle, imgAktivasi;
     SharedPreferences prefs;
-    LinearLayout btnEditProfile;
+    LinearLayout btnEditProfile, btnAktivasi;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -65,13 +61,20 @@ public class ProfileFragment extends Fragment {
             showLogoutDialog();
         });
 
-        mAuth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
+        sessionManager = SessionManager.getInstance();
+        user = sessionManager.getUser();
+        authManager = AuthManager.getInstance(requireContext());
 
         curr_role = view.findViewById(R.id.curr_role);
         name_input = view.findViewById(R.id.name_input);
         email_input = view.findViewById(R.id.email_input);
-        loadUserRole();
+        btnAktivasi = view.findViewById(R.id.btnAktivasi);
+        imgAktivasi = view.findViewById(R.id.imgAktivasi);
+        txtAktivasi = view.findViewById(R.id.txtAktivasi);
+
+        if (user != null){
+            loadUser();
+        }
 
         curr_role.setOnClickListener(v -> {
             showRoleDialog();
@@ -107,7 +110,18 @@ public class ProfileFragment extends Fragment {
                 }, 300);
         });
 
+        btnAktivasi.setOnClickListener(v -> {
+            if (!user.isCaregiver_enabled()){
+                showEnableCaregiver(false);
+            } else {
+                openInvation();
+            }
+        });
+
         return view;
+    }
+
+    private void openInvation() {
     }
 
     private void showLogoutDialog() {
@@ -130,33 +144,15 @@ public class ProfileFragment extends Fragment {
     }
 
     private void logoutUser() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) {
-            navigateToLogin();
-            return;
-        }
-
-        for (UserInfo info : user.getProviderData()){
-            android.util.Log.d("AUTH_PROVIDER", info.getProviderId());
-        }
-
-        FirebaseAuth.getInstance().signOut();
-        CredentialManager credentialManager = CredentialManager.create(requireContext());
-        ClearCredentialStateRequest request = new ClearCredentialStateRequest();
-        credentialManager.clearCredentialStateAsync(request, null, Runnable::run, new CredentialManagerCallback<Void, ClearCredentialException>() {
+        authManager.logout(requireContext(), new AuthCallback<Void>() {
             @Override
-            public void onResult(Void unused) {
-                if (isAdded()){
-                    navigateToLogin();
-                }
+            public void onSuccess(Void result) {
+                navigateToLogin();
             }
 
             @Override
-            public void onError(@NonNull ClearCredentialException e) {
-                android.util.Log.e("Logout", e.getMessage(), e);
-                if (isAdded()){
-                    navigateToLogin();
-                }
+            public void onFailure(String message) {
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -182,75 +178,142 @@ public class ProfileFragment extends Fragment {
         }
         iconToggle.setLayoutParams(params);
     }
-
+// switch role
     private void showRoleDialog() {
         String[] roles ={"Consumer","Caregiver"};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle("Pilih Role");
         builder.setItems(roles, (dialog, which) -> {
-            if (which == 0){
-                selectConsumer();
-            } if (which == 1){
-                selectCaregiver();
-            }
+            UserRole targetRole = which == 0 ?
+                    UserRole.Consumer : UserRole.Caregiver;
+            selectRole(targetRole);
         });
         AlertDialog dialog = builder.create();
         dialog.show();
         if (dialog.getWindow() != null){
             dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.green));
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.pink));
         }
     }
 
-    private void selectCaregiver() {
-        if (!caregiverEnabled){
-            NavHostFragment.findNavController(this)
-                    .navigate(R.id.activateCaregiverFragment);
+    private void selectRole(UserRole targetRole) {
+        if (user == null) return;
+        //kalau role yg dipilh sama
+        if (targetRole == user.getCurrentRole()){
             return;
-        } if (currentRole.equals("Caregiver")){
-            NavHostFragment.findNavController(this)
-                    .navigate(R.id.caregiverHomeFragment);
+        } if (targetRole == UserRole.Caregiver && !user.isCaregiver_enabled()){ //kalau caregiver belum aktif
+            showEnableCaregiver(true);
             return;
-        }
-        updateRole("Caregiver");
+        } showSwitchRole(targetRole); //caregiver sudah aktif
     }
 
-    private void updateRole(String role) {
-        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        db.collection("users").document(uid).update("current_role", role).addOnSuccessListener(unused ->{
-            if (isAdded()){
-                if (getView() != null) getView().jumpDrawablesToCurrentState();
-                if (role.equals("Consumer")){
-                    NavHostFragment.findNavController(this)
-                            .navigate(R.id.homeFragment);
+    private void showSwitchRole(UserRole targetRole) {
+        String roleName = targetRole == UserRole.Consumer ? "Consumer" : "Caregiver";
+        new AlertDialog.Builder(requireContext()).setTitle("Ganti Role")
+                .setMessage("Apakah Anda yakin ingin berpindah ke role " + roleName + "?")
+                .setNegativeButton("Batal", null).setPositiveButton("Ya", (dialog, which) -> {
+                    switchRole(targetRole);
+                }).show();
+    }
+
+    private void switchRole(UserRole targetRole) {
+        authManager.switchRole(targetRole, new AuthCallback<User>() {
+            @Override
+            public void onSuccess(User result) {
+                bindUser(result);
+                if (targetRole == UserRole.Caregiver){
+                    NavHostFragment.findNavController(ProfileFragment.this).navigate(R.id.caregiverHomeFragment);
                 } else {
-                    NavHostFragment.findNavController(this)
-                            .navigate(R.id.caregiverHomeFragment);
+                    NavHostFragment.findNavController(ProfileFragment.this).navigate(R.id.homeFragment);
                 }
             }
-        });
-    }
 
-    private void selectConsumer() {
-        if (currentRole.equals("Consumer")){
-            return;
-        }
-        updateRole("Consumer");
-    }
-
-    private void loadUserRole() {
-        String uid = mAuth.getCurrentUser().getUid();
-        db.collection("users").document(uid).get().addOnSuccessListener(document -> {
-            if (document.exists()) {
-                currentRole = document.getString("current_role");
-                name = document.getString("name");
-                name_input.setText(name);
-                email = document.getString("email");
-                email_input.setText(email);
-                Boolean enabled = document.getBoolean("caregiver_enabled");
-                caregiverEnabled = enabled != null && enabled;
-                curr_role.setText(currentRole);
+            @Override
+            public void onFailure(String message) {
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
     }
+
+    private void showEnableCaregiver(boolean continueSwitchRole) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Aktivasi Caregiver");
+        builder.setMessage("Mengaktifkan akses caregiver untuk memantau dan membantu pengingat konsumsi obat consumer.");
+        builder.setNegativeButton("Batal", null);
+        builder.setPositiveButton("Aktifkan", (dialog, which) -> {
+            enableCaregiver(continueSwitchRole);
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        if (dialog.getWindow() != null){
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.green));
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.pink));
+        }
+    }
+
+    private void enableCaregiver(boolean continueSwitchRole) {
+        authManager.enableCaregiver(new AuthCallback<User>() {
+            @Override
+            public void onSuccess(User result) {
+                bindUser(result);
+                Toast.makeText(requireContext(), "Role caregiver berhasil diaktifkan.", Toast.LENGTH_SHORT).show();
+                if (continueSwitchRole){
+                    switchRole(UserRole.Caregiver);
+                }
+            }
+
+            @Override
+            public void onFailure(String message) {
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void loadUser() {
+        authManager.loadCurrentUserProfile(new AuthCallback<User>() {
+            @Override
+            public void onSuccess(User result) {
+                bindUser(result);
+            }
+
+            @Override
+            public void onFailure(String message) {
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void bindUser(User user) {
+        this.user = user;
+        name_input.setText(user.getName());
+        email_input.setText(user.getEmail());
+        curr_role.setText(formatRole(user.getCurrentRole()));
+        setUpCaregiverButton();
+    }
+
+    private String formatRole(UserRole role) {
+        switch (role){
+            case Caregiver:
+                return "Caregiver";
+            default:
+                return "Consumer";
+        }
+    }
+
+    private void setUpCaregiverButton() {
+        if (!user.isCaregiver_enabled()){
+            txtAktivasi.setText("Aktivasi Caregiver");
+            imgAktivasi.setImageResource(R.drawable.ic_activate);
+        } if (user.getCurrentRole() == UserRole.Consumer){
+            txtAktivasi.setText("Invite Caregiver");
+            imgAktivasi.setImageResource(R.drawable.ic_invite);
+        } else {
+            txtAktivasi.setText("Invite Consumer");
+            imgAktivasi.setImageResource(R.drawable.ic_invite);
+        }
+    }
+
 }
