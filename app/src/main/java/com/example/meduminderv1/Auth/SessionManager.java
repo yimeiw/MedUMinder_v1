@@ -5,7 +5,6 @@ import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Repo.UserRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-
 public class SessionManager {
     static SessionManager instance;
     FirebaseAuth auth;

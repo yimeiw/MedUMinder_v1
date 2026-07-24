@@ -18,11 +18,19 @@ import androidx.credentials.exceptions.ClearCredentialException;
 import androidx.credentials.exceptions.GetCredentialException;
 
 import com.example.meduminderv1.Callback.AuthCallback;
+import com.example.meduminderv1.Callback.InvitationCallback;
 import com.example.meduminderv1.Callback.RepoCallback;
+import com.example.meduminderv1.Invitation.Invitation;
+import com.example.meduminderv1.Invitation.InvitationStatus;
 import com.example.meduminderv1.Model.AuthProviderType;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
+import com.example.meduminderv1.Notification.Notification;
+import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Repo.CareRelationshipRepo;
+import com.example.meduminderv1.Repo.InvitationRepo;
+import com.example.meduminderv1.Repo.NotificationRepo;
 import com.example.meduminderv1.Repo.UserRepository;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
@@ -37,8 +45,14 @@ import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.auth.UserInfo;
 import com.google.firebase.auth.UserProfileChangeRequest;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 public class AuthManager {
     private static AuthManager instance;
@@ -46,12 +60,18 @@ public class AuthManager {
     private final UserRepository userRepository;
     private final SessionManager sessionManager;
     private final CredentialManager credentialManager;
+    private final InvitationRepo invitationRepo;
+    private final NotificationRepo notificationRepo;
+    private final CareRelationshipRepo relationshipRepo;
 
     public AuthManager(Context context){
         mAuth = FirebaseAuth.getInstance();
         credentialManager = CredentialManager.create(context);
         userRepository = UserRepository.getInstance();
         sessionManager = SessionManager.getInstance();
+        invitationRepo = new InvitationRepo();
+        notificationRepo = new NotificationRepo();
+        relationshipRepo = new CareRelationshipRepo();
     }
 
     public static synchronized AuthManager getInstance(Context context){
@@ -607,6 +627,207 @@ public class AuthManager {
                     sessionManager.clearSession();
                     callback.onSuccess(null);
                 }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
+
+    //invitation & notification
+    public void sendInvitation(String receiverEmail, UserRole relationshipRole, InvitationCallback callback){
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser == null){
+            callback.onFailure("User belum login.");
+            return;
+        } User sender = getCurrentUser();
+        if (sender == null) {
+            callback.onFailure("Data user tidak ditemukan.");
+            return;
+        } if (receiverEmail.trim().isEmpty()){
+            callback.onFailure("Anda tidak adapat mengundang akun sendiri.");
+            return;
+        } userRepository.getUserbyEmail(receiverEmail, new RepoCallback<User>() {
+            @Override
+            public void onSuccess(User result) {
+                String receiverUid = result == null ? null : result.getAuth_uid();
+                relationshipRepo.hasRelationship(sender.getAuth_uid(), receiverUid, new RepoCallback<Boolean>() {
+                    @Override
+                    public void onSuccess(Boolean hasRelationship) {
+                        if (Boolean.TRUE.equals(hasRelationship)){
+                            callback.onFailure("User sudah terhubung.");
+                            return;
+                        } invitationRepo.hasPendingInvitation(sender.getAuth_uid(), receiverEmail, new RepoCallback<Boolean>() {
+                            @Override
+                            public void onSuccess(Boolean pending) {
+                                if (Boolean.TRUE.equals(pending)){
+                                    callback.onFailure("Invitation masih pending.");
+                                    return;
+                                } createInvitation(sender, result, receiverEmail, relationshipRole, callback);
+                            }
+
+                            @Override
+                            public void onFailure(Exception e) {
+                                callback.onFailure(e.getMessage());
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        callback.onFailure(e.getMessage());
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
+
+    private void createInvitation(User sender, User receiver, String receiverEmail, UserRole relationshipRole, InvitationCallback callback) {
+        Invitation invitation = new Invitation();
+        invitation.setInvitation_id(UUID.randomUUID().toString());
+        invitation.setSender_uid(sender.getAuth_uid());
+        invitation.setSender_name(sender.getName());
+        invitation.setSender_email(sender.getEmail());
+        invitation.setReceiver_uid(receiver.getAuth_uid());
+        invitation.setReceiver_email(receiverEmail);
+        invitation.setInvite_role(relationshipRole);
+        invitation.setStatus(InvitationStatus.Pending);
+        invitation.setCreated_at(Timestamp.now());
+        invitation.setUpdated_at(Timestamp.now());
+
+        if (receiver != null){
+            invitation.setReceiver_uid(receiver.getAuth_uid());
+        }
+
+        invitationRepo.createInvitation(invitation, new RepoCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                if (receiver == null){
+                    callback.onSuccess(false);
+                    return;
+                } createNotification(invitation, callback);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
+
+    private void createNotification(Invitation invitation, InvitationCallback callback) {
+        Notification notification = new Notification();
+        notification.setNotification_id(UUID.randomUUID().toString());
+        notification.setReceiver_uid(invitation.getReceiver_uid());
+        notification.setSender_uid(invitation.getSender_uid());
+        notification.setInvitation_id(invitation.getInvitation_id());
+        notification.setType(NotificationType.Invitation);
+        notification.setMessage(invitation.getSender_name()
+        + " mengundang Anda menjadi " + invitation.getInvite_role().name());
+        notification.setIs_read(false);
+        notification.setCreated_at(Timestamp.now());
+        notification.setUpdated_at(Timestamp.now());
+        notificationRepo.createNotification(notification, new RepoCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                callback.onSuccess(true);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
+//notif
+    public void loadNotification(AuthCallback<List<Notification>> callback){
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser == null){
+            callback.onFailure("User belum login.");
+            return;
+        } notificationRepo.getNotification(firebaseUser.getUid(), new RepoCallback<List<Notification>>() {
+            @Override
+            public void onSuccess(List<Notification> result) {
+                callback.onSuccess(result);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
+    public void loadNotifDetail(String notifId, AuthCallback<Notification> callback){
+        notificationRepo.getNotifbyId(notifId, new RepoCallback<Notification>() {
+            @Override
+            public void onSuccess(Notification result) {
+                callback.onSuccess(result);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
+
+    public int getNotificationIcon(NotificationType type){
+
+        switch (type){
+            case Invitation:
+                return R.drawable.ic_invite;
+            case Medicine:
+                return R.drawable.ic_med;
+            case Appointment:
+                return R.drawable.ic_calendar;
+            case Stock:
+                return R.drawable.ic_reminder_stock;
+            default:
+                return R.drawable.ic_notif;
+        }
+
+    }
+
+    public String getNotificationTitle(NotificationType type){
+        switch (type){
+            case Invitation:
+                return "Invitation";
+            case Medicine:
+                return "Medicine Reminder";
+            case Appointment:
+                return "Appointment Reminder";
+            case Stock:
+                return "Low Stock Reminder";
+            default:
+                return "Notification";
+        }
+    }
+
+    public String formatNotificationTime(Timestamp timestamp) {
+        if (timestamp == null) return "";
+        Date date = timestamp.toDate();
+        Calendar notif = Calendar.getInstance();
+        notif.setTime(date);
+        Calendar today = Calendar.getInstance();
+        boolean sameDay = notif.get(Calendar.YEAR) == today.get(Calendar.YEAR)
+                && notif.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR);
+        if (sameDay){
+            return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(date);
+        } return new SimpleDateFormat("dd MMM", Locale.getDefault()).format(date);
+    }
+
+    public void markNotificationAsRead(String notifId, AuthCallback<Void> callback){
+        notificationRepo.markAsRead(notifId, new RepoCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                callback.onSuccess(result);
             }
 
             @Override

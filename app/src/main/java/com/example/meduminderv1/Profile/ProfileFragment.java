@@ -16,6 +16,7 @@ import android.transition.TransitionManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -27,6 +28,7 @@ import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.AuthCallback;
 import com.example.meduminderv1.Login.LoginActivity;
+import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.R;
@@ -316,13 +318,20 @@ public class ProfileFragment extends Fragment {
         if (!user.isCaregiver_enabled()){
             txtAktivasi.setText("Aktivasi Caregiver");
             imgAktivasi.setImageResource(R.drawable.ic_activate);
+            btnAktivasi.setOnClickListener(v -> showEnableCaregiver(false));
         } if (user.getCurrentRole() == UserRole.Consumer){
             txtAktivasi.setText("Invite Caregiver");
             imgAktivasi.setImageResource(R.drawable.ic_add_people);
+            btnAktivasi.setOnClickListener(v -> showInvite(UserRole.Caregiver));
         } else {
             txtAktivasi.setText("Invite Consumer");
             imgAktivasi.setImageResource(R.drawable.ic_add_people);
+            btnAktivasi.setOnClickListener(v -> showInvite(UserRole.Consumer));
         }
+    }
+// invite function
+    private void showInvite(UserRole userRole) {
+
     }
 
 }
