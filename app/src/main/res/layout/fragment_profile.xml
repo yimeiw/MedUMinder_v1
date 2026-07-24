@@ -218,6 +218,7 @@
 
                 <!--                pengaturan invite caregiver-->
                 <LinearLayout
+                    android:id="@+id/btnAktivasi"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -225,18 +226,19 @@
                     android:layout_marginVertical="5dp">
 
                     <ImageView
+                        android:id="@+id/imgAktivasi"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
-                        android:src="@drawable/ic_add_people"
+                        android:src="@drawable/ic_activate"
                         android:layout_margin="8dp"/>
 
                     <TextView
+                        android:id="@+id/txtAktivasi"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Invite Caregiver"
+                        android:text="Aktivasi Caregiver"
                         android:layout_weight="1"
                         android:layout_gravity="center"
-
                         android:fontFamily="@font/inter_24pt_bold"/>
 
                     <ImageView
@@ -278,35 +280,6 @@
 
                 </LinearLayout>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:background="@drawable/border_wp"
-                    android:layout_marginVertical="5dp">
-
-                    <ImageView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:src="@drawable/ic_activate"
-                        android:layout_margin="8dp"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Aktivasi Caregiver"
-
-                        android:layout_weight="1"
-                        android:layout_gravity="center"
-                        android:fontFamily="@font/inter_24pt_bold"/>
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_arrow"
-                        android:layout_gravity="center"/>
-
-                </LinearLayout>
 
                 <!--                pengaturan profile-->
                 <LinearLayout
