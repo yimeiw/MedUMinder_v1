@@ -74,6 +74,11 @@
         android:name="com.example.meduminderv1.Notification.NotificationDetailFragment"
         android:label="Notification Detail"
         tools:layout="@layout/fragment_notification_detail"/>
+    <fragment
+        android:id="@+id/invitationFragment"
+        android:name="com.example.meduminderv1.Profile.InvitationFragment"
+        android:label="Invitation"
+        tools:layout="@layout/fragment_invitation"/>
 
     <!--    caregiver-->
     <fragment

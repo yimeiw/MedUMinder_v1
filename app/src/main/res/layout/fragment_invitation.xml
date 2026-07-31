@@ -60,7 +60,8 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/tvInvitation"
                 android:textSize="18sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold"
+                android:gravity="center"/>
         </LinearLayout>
 
         <LinearLayout
@@ -83,6 +84,7 @@
                 android:background="@drawable/border"
                 android:inputType="textEmailAddress"
                 android:hint="Masukkan Email"
+                android:textSize="16sp"
                 android:paddingHorizontal="20dp"
                 android:paddingVertical="18dp"/>
 

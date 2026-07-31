@@ -24,6 +24,19 @@ public class NotificationRepo {
         db = FirebaseFirestore.getInstance();
     }
 
+    public void loadNotification(String uid, RepoCallback<List<Notification>> callback){
+        db.collection("notifications").whereEqualTo("receiver_uid", uid)
+                .orderBy("created_at", Query.Direction.DESCENDING).get().addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<Notification> list = new ArrayList<>();
+                    for (DocumentSnapshot doc : queryDocumentSnapshots){
+                        Notification notification = doc.toObject(Notification.class);
+                        if (notification != null){
+                            notification.setNotification_id(doc.getId());
+                            list.add(notification);
+                        }
+                    } callback.onSuccess(list);
+                }).addOnFailureListener(callback::onFailure);
+    }
     public void createNotification(Notification notification, RepoCallback<Void> callback){
         String id = db.collection("notifications").document().getId();
         notification.setNotification_id(id);
@@ -31,20 +44,6 @@ public class NotificationRepo {
         db.collection("notifications").document(id).set(notification)
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
-    }
-    public void getNotification(String receiverUid, RepoCallback<List<Notification>> callback){
-        db.collection("notifications")
-                .whereEqualTo("receriver_uid", receiverUid)
-                .orderBy("created_at", Query.Direction.DESCENDING).get()
-                .addOnSuccessListener(query -> {
-                    List<Notification> listNotif = new ArrayList<>();
-                    for (DocumentSnapshot doc : query){
-                        Notification notification = doc.toObject(Notification.class);
-                        if (notification != null){
-                            listNotif.add(notification);
-                        }
-                    } callback.onSuccess(listNotif);
-                }).addOnFailureListener(callback::onFailure);
     }
     public void getNotifbyId(String notificationId, RepoCallback<Notification> callback){
         db.collection("notifications").document(notificationId).get()

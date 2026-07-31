@@ -234,11 +234,6 @@ public class ProfileFragment extends Fragment {
             @Override
             public void onSuccess(User result) {
                 bindUser(result);
-                if (targetRole == UserRole.Caregiver){
-                    NavHostFragment.findNavController(ProfileFragment.this).navigate(R.id.caregiverHomeFragment);
-                } else {
-                    NavHostFragment.findNavController(ProfileFragment.this).navigate(R.id.homeFragment);
-                }
             }
 
             @Override
@@ -322,16 +317,12 @@ public class ProfileFragment extends Fragment {
         } if (user.getCurrentRole() == UserRole.Consumer){
             txtAktivasi.setText("Invite Caregiver");
             imgAktivasi.setImageResource(R.drawable.ic_add_people);
-            btnAktivasi.setOnClickListener(v -> showInvite(UserRole.Caregiver));
+            btnAktivasi.setOnClickListener(v -> NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
         } else {
             txtAktivasi.setText("Invite Consumer");
             imgAktivasi.setImageResource(R.drawable.ic_add_people);
-            btnAktivasi.setOnClickListener(v -> showInvite(UserRole.Consumer));
+            btnAktivasi.setOnClickListener(v -> NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
         }
-    }
-// invite function
-    private void showInvite(UserRole userRole) {
-
     }
 
 }

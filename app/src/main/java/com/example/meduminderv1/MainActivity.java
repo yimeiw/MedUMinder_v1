@@ -118,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
                     if (updatedUser == null)return;
                     sessionManager.saveUser(updatedUser);
                     UserRole newRole = updatedUser.getCurrentRole();
-                    if (newRole != lastUserRole){
+                    if (lastUserRole == null || lastUserRole != newRole){
                         lastUserRole = newRole;
                         setupBottomNavRole(newRole);
                     }
@@ -133,9 +133,21 @@ public class MainActivity extends AppCompatActivity {
             bottomNav.inflateMenu(R.menu.bottom_nav_caregiver);
         } bottomNav.setOnItemSelectedListener(getBottomNavListener());
 
-        if (navController.getCurrentDestination() != null &&
-        bottomNav.getMenu().findItem(navController.getCurrentDestination().getId()) != null){
-            bottomNav.setSelectedItemId(navController.getCurrentDestination().getId());
+        navigateHome(role);
+    }
+
+    private void navigateHome(UserRole role) {
+        int destination;
+        if (role == UserRole.Consumer){
+            destination = R.id.homeFragment;
+        } else {
+            destination = R.id.caregiverHomeFragment;
+        } if (navController.getCurrentDestination() == null ||
+        navController.getCurrentDestination().getId() != destination){
+            NavOptions options = new NavOptions.Builder().setPopUpTo(
+                    navController.getGraph().getStartDestinationId(), true)
+                    .setLaunchSingleTop(true).build();
+            navController.navigate(destination, null, options);
         }
     }
 
