@@ -2,7 +2,9 @@ package com.example.meduminderv1.Schedule;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,8 +21,11 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.example.meduminderv1.Model.LogGenerator;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
@@ -45,8 +50,8 @@ public class MedicineReminderFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                Bundle savedInstanceState) {
-        View view =  inflater.inflate(R.layout.fragment_medicine_reminder, container, false);
+                             Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_medicine_reminder, container, false);
 
         btnBack = view.findViewById(R.id.btnBack);
         namaObat = view.findViewById(R.id.namaObat);
@@ -72,11 +77,11 @@ public class MedicineReminderFragment extends Fragment {
 
         db.collection("medicine_catalog").get().addOnSuccessListener(queryDocumentSnapshots -> {
             medList.clear();
-            for (DocumentSnapshot doc: queryDocumentSnapshots){
+            for (DocumentSnapshot doc : queryDocumentSnapshots) {
                 String namaObat = doc.getString("nama_obat");
-                if (namaObat != null){
+                if (namaObat != null) {
                     medList.add(namaObat);
-                } else{
+                } else {
                     medList.add("No Data");
                 }
                 adapter.notifyDataSetChanged();
@@ -84,13 +89,13 @@ public class MedicineReminderFragment extends Fragment {
         });
 
         String[] frequencies = {"Sekali sehari", "Dua kali sehari", "Tiga kali sehari", "Empat kali sehari", "Lima kali sehari", "Enam kali sehari"};
-        ArrayAdapter<String> freqAdapter = new ArrayAdapter<>(requireContext(),android.R.layout.simple_list_item_1, frequencies);
+        ArrayAdapter<String> freqAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, frequencies);
         freqMinumObat.setAdapter(freqAdapter);
 
         freqMinumObat.setInputType(0);
-        freqMinumObat.setOnClickListener(v ->{
-            if(!isDropdownOpen){
-                freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_arrow_up,0);
+        freqMinumObat.setOnClickListener(v -> {
+            if (!isDropdownOpen) {
+                freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_up, 0);
                 freqMinumObat.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
                 freqMinumObat.setDropDownVerticalOffset(20);
                 freqMinumObat.showDropDown();
@@ -103,11 +108,11 @@ public class MedicineReminderFragment extends Fragment {
             String selected = parent.getItemAtPosition(position).toString();
             int frequency = convertFrequencyToNumber(selected);
             createTimeFields(frequency);
-            freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_arrow_down,0);
+            freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
         });
 
-        freqMinumObat.setOnDismissListener(()->{
-            freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_arrow_down,0);
+        freqMinumObat.setOnDismissListener(() -> {
+            freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
             freqMinumObat.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
             freqMinumObat.setDropDownVerticalOffset(20);
             isDropdownOpen = false;
@@ -115,7 +120,7 @@ public class MedicineReminderFragment extends Fragment {
 
         endDateReminder.setOnClickListener(v -> {
             Calendar today = Calendar.getInstance();
-            DatePickerDialog dialog = new DatePickerDialog(requireContext(), (view1, year, month, day)->{
+            DatePickerDialog dialog = new DatePickerDialog(requireContext(), (view1, year, month, day) -> {
                 selectedCalendar.set(Calendar.YEAR, year);
                 selectedCalendar.set(Calendar.MONTH, month);
                 selectedCalendar.set(Calendar.DAY_OF_MONTH, day);
@@ -135,7 +140,7 @@ public class MedicineReminderFragment extends Fragment {
     }
 
     private int convertFrequencyToNumber(String selected) {
-        switch (selected){
+        switch (selected) {
             case "Sekali sehari":
                 return 1;
             case "Dua kali sehari":
@@ -154,73 +159,177 @@ public class MedicineReminderFragment extends Fragment {
     }
 
     private void saveReminder() {
+        Context context = getContext();
+
+        if (context == null) {
+            return;
+        }
+
         String nama = namaObat.getText().toString().trim();
         String freq = freqMinumObat.getText().toString().trim();
         String stok = stokObat.getText().toString().trim();
-        long endDate = selectedCalendar.getTimeInMillis();
 
-        if (nama.isEmpty()){
+        if (nama.isEmpty()) {
             namaObat.setError("Nama obat wajib diisi");
             return;
-        } if (freq.isEmpty()){
-            freqMinumObat.setError("Frekuensi minum obat wajib diisi");
-            return;
-        } if (stok.isEmpty()){
-            stokObat.setError("Stok obat wajib diisi");
         }
-        
+
+        if (freq.isEmpty()) {
+            freqMinumObat.setError("Frekuensi wajib diisi");
+            return;
+        }
+
+        if (stok.isEmpty()) {
+            stokObat.setError("Stok wajib diisi");
+            return;
+        }
+
         int frequency = convertFrequencyToNumber(freq);
 
         ArrayList<String> times = new ArrayList<>();
-        for (int i = 0; i < timeReminder.getChildCount(); i++){
-            View child = timeReminder.getChildAt(i);
-            if (child instanceof TextView){
-                TextView tv = (TextView) child;
-                if (!tv.getText().toString().equals("Pilih Jam")){
-                    times.add(tv.getText().toString());
-                }
+
+        for (int i = 1; i < timeReminder.getChildCount(); i += 2) {
+
+            TextView tv = (TextView) timeReminder.getChildAt(i);
+
+            if (tv.getText().toString().equals("Pilih Jam")) {
+                Toast.makeText(requireContext(),
+                        "Semua jam minum harus dipilih",
+                        Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            times.add(tv.getText().toString());
         }
 
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        Map<String, Object> reminder = new HashMap<>();
-        reminder.put("user_id", uid);
-        reminder.put("nama_obat", nama);
-        reminder.put("freq_minum", frequency);
-        reminder.put("stok_obat", stok);
-        reminder.put("end_date", endDate);
-        reminder.put("times", times);
-        reminder.put("is_active", true);
-        reminder.put("created_at", FieldValue.serverTimestamp());
-        reminder.put("updated_at", FieldValue.serverTimestamp());
-        reminder.put("deleted_at", null);
-        reminder.put("status", "upcoming");
-        reminder.put("created_by", Map.of("uid", uid, "role", uid));
-        reminder.put("updated_by", Map.of("uid", uid, "role", uid));
 
-        db.collection("users").document(uid).collection("medication_schedules").add(reminder).addOnSuccessListener(doc -> {
-            Toast.makeText(requireContext(), "Pengingat berhasil disimpan", Toast.LENGTH_SHORT).show();
-            clearFields();
-            NavHostFragment.findNavController(this).navigateUp();
-        }).addOnFailureListener(e ->{
-            Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-            NavHostFragment.findNavController(this).navigateUp();
-        });
+        Timestamp endDate = new Timestamp(selectedCalendar.getTime());
+        Timestamp startDate = Timestamp.now();
+
+        // ===============================
+        // Cari apakah obat ada di catalog
+        // ===============================
+
+        db.collection("medicine_catalog")
+                .whereEqualTo("nama_obat", nama)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+
+                    String catalogId = null;
+                    String customMedicineName = null;
+
+                    if (!snapshot.isEmpty()) {
+                        catalogId = snapshot.getDocuments().get(0).getId();
+                    } else {
+                        customMedicineName = nama;
+                    }
+
+                    //-----------------------------------
+                    // Save medication
+                    //-----------------------------------
+
+                    Map<String, Object> stock = new HashMap<>();
+                    stock.put("initial_stock", Integer.parseInt(stok));
+                    stock.put("minimum_stock", 5);
+                    stock.put("stok_obat", Integer.parseInt(stok));
+
+                    Map<String, Object> medication = new HashMap<>();
+                    medication.put("users_id", uid);
+                    medication.put("catalog_id", catalogId);
+                    medication.put("custom_medicine_name", customMedicineName);
+                    medication.put("is_active", true);
+                    medication.put("stock", stock);
+                    medication.put("created_at", FieldValue.serverTimestamp());
+                    medication.put("updated_at", FieldValue.serverTimestamp());
+                    medication.put("deleted_at", null);
+                    medication.put("created_by", uid);
+                    medication.put("updated_by", uid);
+
+                    db.collection("medications")
+                            .add(medication)
+                            .addOnSuccessListener(medDoc -> {
+
+                                Map<String, Object> schedule = new HashMap<>();
+
+                                schedule.put("users_id", uid);
+                                schedule.put("medication_id", medDoc.getId());
+                                schedule.put("frequency", frequency);
+                                schedule.put("times_of_day", times);
+                                schedule.put("start_date", startDate);
+                                schedule.put("end_date", endDate);
+                                schedule.put("is_active", true);
+                                schedule.put("created_at", FieldValue.serverTimestamp());
+                                schedule.put("updated_at", FieldValue.serverTimestamp());
+                                schedule.put("deleted_at", null);
+                                schedule.put("created_by", uid);
+                                schedule.put("updated_by", uid);
+
+                                db.collection("medication_schedules")
+                                        .add(schedule)
+                                        .addOnSuccessListener(scheduleDoc -> {
+
+                                            new LogGenerator().ensureLogsGenerated(
+                                                    uid,
+                                                    scheduleDoc.getId(),
+                                                    times,
+                                                    startDate,
+                                                    endDate
+                                            );
+
+                                            Toast.makeText(
+                                                    context,
+                                                    "Pengingat berhasil disimpan",
+                                                    Toast.LENGTH_SHORT
+                                            ).show();
+
+                                            AlarmSchedulerHelper.scheduleAll(
+                                                    context,
+                                                    scheduleDoc.getId(),
+                                                    nama,
+                                                    times,
+                                                    endDate.toDate().getTime()
+                                            );
+
+//                                            clearFields();
+                                            if (isAdded()) {
+                                                NavHostFragment.findNavController(this).navigateUp();
+                                            }
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            Toast.makeText(
+                                                    context,
+                                                    e.getMessage(),
+                                                    Toast.LENGTH_SHORT
+                                            ).show();
+                                        });
+
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(
+                                        context,
+                                        e.getMessage(),
+                                        Toast.LENGTH_SHORT
+                                ).show();
+                            });
+
+                });
     }
 
     private void createTimeFields(int frequency) {
         timeReminder.removeAllViews();
         TypedValue typedValue = new TypedValue();
-        requireContext().getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurface, typedValue,true);
+        requireContext().getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurface, typedValue, true);
 
-        for (int i = 1; i <= frequency; i++){
+        for (int i = 1; i <= frequency; i++) {
             TextView label = new TextView(requireContext());
             label.setText("Jam Minum Obat " + i);
-            label.setPadding(20,10,20,5);
+            label.setPadding(20, 10, 20, 5);
             label.setTextColor(typedValue.data);
             TextView tvTime = new TextView(requireContext());
             tvTime.setText("Pilih Jam");
-            tvTime.setPadding(50,40,50,40);
+            tvTime.setPadding(50, 40, 50, 40);
             tvTime.setTextColor(typedValue.data);
 
             tvTime.setBackgroundResource(R.drawable.border_hugcontent_nopadding);
@@ -228,12 +337,12 @@ public class MedicineReminderFragment extends Fragment {
             tvTime.setFocusable(false);
 
             tvTime.setOnClickListener(v -> {
-               Calendar now = Calendar.getInstance();
+                Calendar now = Calendar.getInstance();
 
                 TimePickerDialog dialog = new TimePickerDialog(requireContext(), (view, hour, minute) -> {
                     String time = String.format("%02d:%02d", hour, minute);
                     tvTime.setText(time);
-                }, now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE), true );
+                }, now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE), true);
                 dialog.show();
             });
             timeReminder.addView(label);
@@ -249,6 +358,6 @@ public class MedicineReminderFragment extends Fragment {
         timeReminder.removeAllViews();
         selectedCalendar = Calendar.getInstance();
         isDropdownOpen = false;
-        freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_arrow_down,0);
+        freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
     }
 }

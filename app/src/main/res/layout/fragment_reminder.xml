@@ -47,6 +47,7 @@
 
 <!--         bulat isi nama obat-->
         <LinearLayout
+            android:id="@+id/circleNamaObat"
             android:layout_width="300dp"
             android:layout_height="300dp"
             android:orientation="vertical"

@@ -67,7 +67,12 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
         holder.scheduledAt.setText(medicationLog.getScheduled_at().toDate().toString());
 
         holder.itemView.setOnClickListener(v -> {
-            if (listener != null) listener.onMedLogClick(medicationLog);
+            if (listener != null) {
+                String namaObat = namaObatCache.containsKey(medication_schedules_id)
+                        ? namaObatCache.get(medication_schedules_id)
+                        : holder.namaObatLog.getText().toString();
+                listener.onMedLogClick(medicationLog, namaObat);
+            }
         });
 
         applyStatusColor(holder, statusLog);
@@ -115,20 +120,7 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
         if (status == null) {
             colorRes = R.color.white;
         } else {
-            switch (status) {
-                case DIKONSUMSI:
-                    colorRes = R.color.green;
-                    break;
-                case TERLEWATKAN:
-                    colorRes = R.color.pink;
-                    break;
-                case AKAN_DATANG:
-                    colorRes = R.color.gray;
-                    break;
-                default:
-                    colorRes = R.color.white;
-                    break;
-            }
+            colorRes = status.getColorRes();
         }
         int color = ContextCompat.getColor(context, colorRes);
 

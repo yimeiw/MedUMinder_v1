@@ -106,6 +106,7 @@ public class LogFragment extends Fragment {
         rvLogs.setLayoutManager(new LinearLayoutManager(requireContext()));
         medAdapter = new MedicationLogAdapter(medLog, requireContext());
         rvLogs.setAdapter(medAdapter);
+        medAdapter.setOnMedLogClickListener(this::navigateToReminder);
 
         updateFilterButtonLabels();
         loadMedicationLogs();
@@ -364,18 +365,17 @@ public class LogFragment extends Fragment {
                 );
     }
 
-    private void navigateToReminder(MedicationLog log) {
+    private void navigateToReminder(MedicationLog log, String namaObat) {
         Bundle bundle = new Bundle();
         bundle.putString("medication_schedules_id", log.getMedication_schedules_id());
         bundle.putLong("scheduled_at", log.getScheduled_at().toDate().getTime());
         if (log.getTaken_at() != null) {
             bundle.putLong("taken_at", log.getTaken_at().toDate().getTime());
         }
-        bundle.putString("status", log.getStatus());
 
-        // kalau nama obat tidak ada langsung di MedicationLog,
-        // kamu perlu simpan/ambil dari MedicineCatalog dulu, lalu:
-        // bundle.putString("nama_obat", namaObat);
+        LogStatus status = log.getStatusBasedOnDate();
+        bundle.putString("status", status.name());
+        bundle.putString("nama_obat", namaObat);
 
         NavHostFragment.findNavController(LogFragment.this)
                 .navigate(R.id.reminderFragment, bundle);
