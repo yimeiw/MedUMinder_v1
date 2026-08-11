@@ -1,9 +1,10 @@
 package com.example.meduminderv1.Auth;
 
+import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Model.User;
+import com.example.meduminderv1.Repo.UserRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-
 public class SessionManager {
     static SessionManager instance;
     FirebaseAuth auth;
@@ -31,6 +32,24 @@ public class SessionManager {
     public void clearSession(){
         currentUser = null;
         auth.signOut();
+    }
+
+    public void refreshCurrentUser(UserRepository repo, RepoCallback<User> callback){
+        if (currentUser == null){
+            callback.onFailure(new Exception("Session kosong"));
+            return;
+        } repo.getUserbyUid(currentUser.getAuth_uid(), new RepoCallback<User>() {
+            @Override
+            public void onSuccess(User result) {
+                currentUser = result;
+                callback.onSuccess(result);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e);
+            }
+        });
     }
 
 }

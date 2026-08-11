@@ -11,9 +11,9 @@ public class User {
     private boolean caregiver_enabled;
     private String preferred_language;
     private String timezone;
-    private Timestamp createdAt;
-    private Timestamp updatedAt;
-    private Timestamp deletedAt;
+    private Timestamp created_at;
+    private Timestamp updated_at;
+    private Timestamp deleted_at;
     public String getAuth_uid() {
         return auth_uid;
     }
@@ -75,28 +75,30 @@ public class User {
         this.timezone = timezone;
     }
 
-    public Timestamp getCreatedAt() {
-        return createdAt;
+    public Timestamp getCreated_at() {
+        return created_at;
     }
 
-    public void setCreatedAt(Timestamp createdAt) {
-        this.createdAt = createdAt;
+    public void setCreated_at(Timestamp created_at) {
+        this.created_at = created_at;
     }
 
-    public Timestamp getUpdatedAt() {
-        return updatedAt;
+    public Timestamp getUpdated_at() {
+        return updated_at;
     }
 
-    public void setUpdatedAt(Timestamp updatedAt) {
-        this.updatedAt = updatedAt;
+    public void setUpdated_at(Timestamp updated_at) {
+        this.updated_at = updated_at;
     }
 
-    public Timestamp getDeletedAt() {
-        return deletedAt;
+    public Timestamp getDeleted_at() {
+        return deleted_at;
     }
 
-    public void setDeletedAt(Timestamp deletedAt) {
-        this.deletedAt = deletedAt;
+    public void setDeleted_at(Timestamp deleted_at) {
+        this.deleted_at = deleted_at;
     }
-
+    public UserRole getCurrentRole(){
+        return UserRole.valueOf(current_role);
+    }
 }
