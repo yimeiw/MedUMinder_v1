@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,14 +37,27 @@ public class LogGenerator {
                 .whereEqualTo("is_active", true)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
+
+                    Log.d("CHECK", "Jumlah schedule = " + querySnapshot.size());
+
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        MedicationSchedules schedule = doc.toObject(MedicationSchedules.class);
-                        if (schedule != null) {
-                            ensureLogsGenerated(schedule, doc.getId());
+
+                        Log.d("CHECK", "Doc ID = " + doc.getId());
+
+                        for (String key : doc.getData().keySet()) {
+                            Object value = doc.get(key);
+
+                            Log.d("CHECK",
+                                    key + " -> " +
+                                            value +
+                                            " (" +
+                                            (value == null ? "null" : value.getClass().getSimpleName()) +
+                                            ")");
                         }
+
+                        MedicationSchedules schedule = doc.toObject(MedicationSchedules.class);
                     }
-                })
-                .addOnFailureListener(e -> Log.e("LogGenerator", "Gagal ambil schedules", e));
+                });
     }
 
     /** Generate log untuk satu schedule, aman dipanggil berkali-kali (idempotent) */
@@ -84,6 +98,55 @@ public class LogGenerator {
 
                 // merge=true -> kalau dokumen udah ada (misal status-nya udah "dikonsumsi"
                 // karena user sudah minum), field status TIDAK ketimpa balik ke "akan datang"
+                batch.set(ref, log, SetOptions.merge());
+                count++;
+
+                if (count >= BATCH_LIMIT) {
+                    batch.commit();
+                    batch = db.batch();
+                    count = 0;
+                }
+            }
+        }
+
+        if (count > 0) {
+            batch.commit()
+                    .addOnFailureListener(e -> Log.e("LogGenerator", "Gagal generate log", e));
+        }
+    }
+
+    /** Overload: generate langsung dari data yang sudah ada di memory (habis create schedule),
+     *  tanpa perlu fetch ulang dokumen dari Firestore. */
+    public void ensureLogsGenerated(String userId, String scheduleId,
+                                    ArrayList<String> timesOfDay,
+                                    Timestamp startDate, Timestamp endDate) {
+        if (startDate == null || timesOfDay == null || timesOfDay.isEmpty()) {
+            return;
+        }
+
+        LocalDate start = toLocalDate(startDate);
+        LocalDate genUntil = (endDate != null) ? toLocalDate(endDate) : LocalDate.now().plusDays(DAYS_AHEAD_IF_NO_END);
+
+        if (start.isAfter(genUntil)) return;
+
+        WriteBatch batch = db.batch();
+        int count = 0;
+
+        for (LocalDate date = start; !date.isAfter(genUntil); date = date.plusDays(1)) {
+            for (String time : timesOfDay) {
+                Timestamp scheduledAt = toTimestamp(date, time);
+                if (scheduledAt == null) continue;
+
+                String logId = buildLogId(scheduleId, date, time);
+
+                Map<String, Object> log = new HashMap<>();
+                log.put("users_id", userId);
+                log.put("medication_schedules_id", scheduleId);
+                log.put("scheduled_at", scheduledAt);
+                log.put("status", "akan datang");
+                log.put("created_at", Timestamp.now());
+
+                DocumentReference ref = db.collection("medication_logs").document(logId);
                 batch.set(ref, log, SetOptions.merge());
                 count++;
 

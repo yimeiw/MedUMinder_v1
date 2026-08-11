@@ -1,5 +1,6 @@
 package com.example.meduminderv1;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -22,8 +23,12 @@ import androidx.navigation.ui.NavigationUI;
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Home.HomeFragment;
 import com.example.meduminderv1.Model.LogGenerator;
+
+import com.example.meduminderv1.Reminder.AppLifecycleTracker;
+import com.example.meduminderv1.Reminder.ReminderEventBus;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
+
 import com.example.meduminderv1.Schedule.ScheduleFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
@@ -32,7 +37,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ReminderEventBus.Listener {
 
     BottomNavigationView bottomNav;
     NavController navController;
@@ -44,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        AppLifecycleTracker.init();
         setContentView(R.layout.activity_main);
 
         db = FirebaseFirestore.getInstance();
@@ -88,6 +94,57 @@ public class MainActivity extends AppCompatActivity {
         if (user != null) {
             new LogGenerator().generateForAllActiveSchedules(user.getUid());
         }
+
+        handleReminderIntent(getIntent());
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        ReminderEventBus.setListener(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        ReminderEventBus.setListener(null);
+    }
+
+    @Override
+    public void onShowReminder(String scheduleId, String namaObat, long scheduledAt) {
+        Log.d("TEST", "MainActivity menerima reminder");
+
+        Bundle bundle = new Bundle();
+        bundle.putString("medication_schedules_id", scheduleId);
+        bundle.putString("nama_obat", namaObat);
+        bundle.putLong("scheduled_at", scheduledAt);
+        bundle.putLong("taken_at", 0L);
+        bundle.putString("status", "AKAN_DATANG");
+
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.nav_host_fragment);
+        navHostFragment.getNavController().navigate(R.id.reminderFragment, bundle);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleReminderIntent(intent);
+    }
+
+    private void handleReminderIntent(Intent intent) {
+        if (intent == null || !"reminder".equals(intent.getStringExtra("navigate_to"))) return;
+
+        Bundle bundle = new Bundle();
+        bundle.putString("medication_schedules_id", intent.getStringExtra("schedule_id"));
+        bundle.putString("nama_obat", intent.getStringExtra("nama_obat"));
+        bundle.putLong("scheduled_at", intent.getLongExtra("scheduled_at", 0L));
+        bundle.putString("status", intent.getStringExtra("status"));
+
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.nav_host_fragment);
+        navHostFragment.getNavController().navigate(R.id.reminderFragment, bundle);
     }
 
     private NavigationBarView.OnItemSelectedListener getBottomNavListener() {

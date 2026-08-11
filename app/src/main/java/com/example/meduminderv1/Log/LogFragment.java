@@ -1,6 +1,7 @@
 package com.example.meduminderv1.Log;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.graphics.drawable.GradientDrawable;
 import android.media.Image;
 import android.os.Bundle;
@@ -27,6 +28,7 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.meduminderv1.Model.Appointment;
 import com.example.meduminderv1.Model.LogItem;
@@ -104,6 +106,7 @@ public class LogFragment extends Fragment {
         rvLogs.setLayoutManager(new LinearLayoutManager(requireContext()));
         medAdapter = new MedicationLogAdapter(medLog, requireContext());
         rvLogs.setAdapter(medAdapter);
+        medAdapter.setOnMedLogClickListener(this::navigateToReminder);
 
         updateFilterButtonLabels();
         loadMedicationLogs();
@@ -111,6 +114,7 @@ public class LogFragment extends Fragment {
         return view;
     }
 
+    //filter dropdown med dan appoint
     private void filterDropdown() {
         layoutFilter.setOnClickListener(v -> {
             View popupView = LayoutInflater.from(requireContext())
@@ -144,6 +148,7 @@ public class LogFragment extends Fragment {
                 currentType = LogType.APPOINTMENT;
                 updateFilterButtonLabels();
                 appointAdapter = new AppointmentLogAdapter(appointLog, requireContext());
+                appointAdapter.setOnAppointClickListener(this::showAppointmentStatusDialog);
                 rvLogs.setAdapter(appointAdapter);
                 initialMedicine.setVisibility(View.GONE);
                 loadAppointmentLogs();
@@ -156,11 +161,9 @@ public class LogFragment extends Fragment {
             });
         });
     }
-
     private int dpToPx(int dp) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, getResources().getDisplayMetrics());
     }
-
     //state button kalau dipilih
     private void selectButton(MaterialButton selected) {
         MaterialButton[] buttons = { btnAll, btnUpcoming, btnTaken, btnMissed };
@@ -171,10 +174,9 @@ public class LogFragment extends Fragment {
             ));
         }
     }
-
     private void updateFilterButtonLabels() {
         boolean isAppointment = currentType == LogType.APPOINTMENT;
-        btnTaken.setText(isAppointment ? "DIHADIRI" : "DIKONSUMSI");
+        btnTaken.setText(isAppointment ? "Dihadiri" : "Dikonsumsi");
     }
     //Filter dropdown dan button horizontal
     private void applyFilter() {
@@ -191,7 +193,7 @@ public class LogFragment extends Fragment {
         } else {
             appointLog.clear();
             for (Appointment appt : allAppointLog) {
-                if (matchesFilter(appt) && isWithinDisplayRange(appt.getAppointment_at())) {
+                if (matchesFilter(appt)) {
                     appointLog.add(appt);
                 }
             }
@@ -228,7 +230,6 @@ public class LogFragment extends Fragment {
                 return true;
         }
     }
-
     private boolean isWithinDisplayRange(Timestamp scheduledAt) {
         if (scheduledAt == null) return false;
         LocalDate date = scheduledAt.toDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
@@ -236,7 +237,6 @@ public class LogFragment extends Fragment {
         LocalDate yesterday = today.minusDays(1);
         return date.isEqual(today) || date.isEqual(yesterday);
     }
-
     //Ambil data dari firestore
     private void loadMedicationLogs() {
         String users_id = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -273,7 +273,6 @@ public class LogFragment extends Fragment {
                 })
                 .addOnFailureListener(e -> Log.e("Medication Log", "Gagal ambil data", e));
     }
-
     private void loadAppointmentLogs() {
         String users_id = FirebaseAuth.getInstance().getCurrentUser().getUid();
         Log.d("AUTH", users_id == null ? "NULL" : users_id);
@@ -287,11 +286,98 @@ public class LogFragment extends Fragment {
                         Log.d("FIRESTORE", doc.getId() + " => " + doc.getData());
                         Log.d("DOC", doc.getData().toString());
                         Appointment appointment = doc.toObject(Appointment.class);
-                        if (appointment != null) allAppointLog.add(appointment);
+                        if (appointment != null) {
+                            appointment.setDocId(doc.getId());
+                            allAppointLog.add(appointment);
+                        }
                     }
                     applyFilter();
                     Log.d("FIRESTORE", "List size: " + medLog.size());
                 })
                 .addOnFailureListener(e -> Log.d("FIRESTORE", "Gagal ambil data", e));
+    }
+    //passing data dari log ke reminder view
+    private void showAppointmentStatusDialog(Appointment appointment) {
+        LogStatus currentStatus = appointment.getStatusBasedOnDate();
+
+        if (currentStatus == LogStatus.DIKONSUMSI) {
+            android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(requireContext())
+                    .setTitle(appointment.getTitle())
+                    .setMessage("Anda sudah menandai appointment ini sebagai dihadiri.")
+                    .setPositiveButton("Tutup", null)
+                    .setNegativeButton("Batalkan Status", (d, which) -> {
+                        updateAppointmentStatus(appointment, "akan datang");
+                    })
+                    .create();
+
+            dialog.setOnShowListener(d -> {
+                dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
+                        .setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
+                dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
+                        .setTextColor(ContextCompat.getColor(requireContext(), R.color.pink));
+            });
+
+            dialog.show();
+            return;
+        }
+
+        String message = (currentStatus == LogStatus.TERLEWATKAN)
+                ? "Jadwal appointment ini sudah lewat. Apakah Anda tetap menghadirinya?"
+                : "Apakah Anda sudah menghadiri appointment ini?";
+
+        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(requireContext())
+                .setTitle(appointment.getTitle())
+                .setMessage(message)
+                .setPositiveButton("Sudah Hadir", (d, which) -> {
+                    updateAppointmentStatus(appointment, "dihadiri");
+                })
+                .setNegativeButton("Batal", null)
+                .create();
+
+        dialog.setOnShowListener(d -> {
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
+                    .setTextColor(ContextCompat.getColor(requireContext(), R.color.green));
+            dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
+                    .setTextColor(ContextCompat.getColor(requireContext(), R.color.pink));
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+        });
+
+        dialog.show();
+    }
+    private void updateAppointmentStatus(Appointment appointment, String newStatus) {
+        if (appointment.getDocId() == null) return;
+
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        db.collection("appointments").document(appointment.getDocId())
+                .update(
+                        "status", newStatus,
+                        "updated_at", com.google.firebase.firestore.FieldValue.serverTimestamp(),
+                        "updated_by", uid
+                )
+                .addOnSuccessListener(unused -> {
+                    appointment.setStatus(newStatus);
+                    applyFilter();
+                    Toast.makeText(requireContext(), "Status berhasil diperbarui", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(requireContext(), "Gagal update status: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                );
+    }
+
+    private void navigateToReminder(MedicationLog log, String namaObat) {
+        Bundle bundle = new Bundle();
+        bundle.putString("medication_schedules_id", log.getMedication_schedules_id());
+        bundle.putLong("scheduled_at", log.getScheduled_at().toDate().getTime());
+        if (log.getTaken_at() != null) {
+            bundle.putLong("taken_at", log.getTaken_at().toDate().getTime());
+        }
+
+        LogStatus status = log.getStatusBasedOnDate();
+        bundle.putString("status", status.name());
+        bundle.putString("nama_obat", namaObat);
+
+        NavHostFragment.findNavController(LogFragment.this)
+                .navigate(R.id.reminderFragment, bundle);
     }
 }

@@ -27,11 +27,16 @@ public class AppointmentLogAdapter extends RecyclerView.Adapter<AppointmentLogAd
     private List<Appointment> appointmentLog;
     private Context context;
     private FirebaseFirestore db;
+    private OnAppointClickListener listener;
 
     public AppointmentLogAdapter(List<Appointment> appointmentLog, Context context) {
         this.appointmentLog = appointmentLog;
         this.context = context;
         this.db = FirebaseFirestore.getInstance();
+    }
+
+    public void setOnAppointClickListener(OnAppointClickListener listener) {
+        this.listener = listener;
     }
 
     @NonNull
@@ -50,6 +55,10 @@ public class AppointmentLogAdapter extends RecyclerView.Adapter<AppointmentLogAd
         LogStatus status = appointment.getStatusBasedOnDate();
         holder.currStatus.setText(status.displayLabel(true));
         applyStatusColor(holder, status);
+
+        holder.itemView.setOnClickListener(view -> {
+            if (listener != null) listener.onAppointClick(appointment);
+        });
 
     }
 

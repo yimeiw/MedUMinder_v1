@@ -31,11 +31,15 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
     private Context context;
     private FirebaseFirestore db;
     private Map<String, String> namaObatCache = new HashMap<>();
-
+    private OnMedLogClickListener listener;
     public MedicationLogAdapter(List<MedicationLog> medicationLogs, Context context) {
         this.medicationLogs = medicationLogs;
         this.db = FirebaseFirestore.getInstance();
         this.context = context;
+    }
+
+    public void setOnMedLogClickListener(OnMedLogClickListener listener) {
+        this.listener = listener;
     }
 
     @NonNull
@@ -61,7 +65,18 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
         }
         holder.currStatus.setText(statusLog.displayLabel(false));
         holder.scheduledAt.setText(medicationLog.getScheduled_at().toDate().toString());
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                String namaObat = namaObatCache.containsKey(medication_schedules_id)
+                        ? namaObatCache.get(medication_schedules_id)
+                        : holder.namaObatLog.getText().toString();
+                listener.onMedLogClick(medicationLog, namaObat);
+            }
+        });
+
         applyStatusColor(holder, statusLog);
+
     }
 
     @Override
@@ -105,20 +120,7 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
         if (status == null) {
             colorRes = R.color.white;
         } else {
-            switch (status) {
-                case DIKONSUMSI:
-                    colorRes = R.color.green;
-                    break;
-                case TERLEWATKAN:
-                    colorRes = R.color.pink;
-                    break;
-                case AKAN_DATANG:
-                    colorRes = R.color.gray;
-                    break;
-                default:
-                    colorRes = R.color.white;
-                    break;
-            }
+            colorRes = status.getColorRes();
         }
         int color = ContextCompat.getColor(context, colorRes);
 
