@@ -4,7 +4,9 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.LayerDrawable;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -69,13 +71,12 @@ public class AppointmentLogAdapter extends RecyclerView.Adapter<AppointmentLogAd
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         TextView namaAppointment, namaLokasi, currStatus;
-        View shadowLog, capsuleAppointLog;
+        View capsuleAppointLog;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             namaAppointment = itemView.findViewById(R.id.nama_appointment_log);
             namaLokasi = itemView.findViewById(R.id.nama_lokasi);
             currStatus = itemView.findViewById(R.id.curr_status_appoint);
-            shadowLog = itemView.findViewById(R.id.shadow_appointment_log);
             capsuleAppointLog = itemView.findViewById(R.id.capsule_appointment_log);
         }
     }
@@ -96,34 +97,56 @@ public class AppointmentLogAdapter extends RecyclerView.Adapter<AppointmentLogAd
     }
 
     private void applyStatusColor(AppointmentLogAdapter.ViewHolder holder, LogStatus status) {
-        int colorRes;
+        int colorAttr;
 
+        //tentukan attr theme(warna) berdasarkan status
         if (status == null) {
-            colorRes = R.color.white;
+            colorAttr = com.google.android.material.R.attr.colorPrimaryFixed; //putih
         } else {
             switch (status) {
                 case DIKONSUMSI:
-                    colorRes = R.color.green;
+                    colorAttr = com.google.android.material.R.attr.colorTertiaryFixed; //hijau
                     break;
                 case TERLEWATKAN:
-                    colorRes = R.color.pink;
+                    colorAttr = com.google.android.material.R.attr.colorSecondary; //pink
                     break;
                 case AKAN_DATANG:
-                    colorRes = R.color.gray;
+                    colorAttr = com.google.android.material.R.attr.colorSecondaryFixed; //abu
                     break;
                 default:
-                    colorRes = R.color.white;
+                    colorAttr = com.google.android.material.R.attr.colorPrimaryFixed; //putih
                     break;
             }
         }
-        int color = ContextCompat.getColor(context, colorRes);
+        //ambil warna asli dari attr theme
+        int color = getColorFromAttr(context, colorAttr);
 
-        holder.currStatus.setBackgroundTintList(ColorStateList.valueOf(color));
-        holder.shadowLog.setBackgroundTintList(ColorStateList.valueOf(color));
-        Drawable bg = holder.capsuleAppointLog.getBackground().mutate();
-        if (bg instanceof GradientDrawable) {
-            ((GradientDrawable) bg).setStroke(dpToPx(1.5f), color);
+        //apply warna ke layerdrawable (bg_lef_offset)
+        Drawable bg = holder.capsuleAppointLog.getBackground();
+        if (bg != null){
+            Drawable mutatedBg = bg.mutate();
+            if (mutatedBg instanceof LayerDrawable) {
+                LayerDrawable layerDrawable = (LayerDrawable) mutatedBg;
+                Drawable offset = layerDrawable.findDrawableByLayerId(R.id.layer_main_offset);
+                Drawable stroke = layerDrawable.findDrawableByLayerId(R.id.layer_offset);
+                if (stroke instanceof GradientDrawable){
+                    GradientDrawable shape = (GradientDrawable) stroke;
+                    shape.setColor(color);
+                }
+                if (offset instanceof GradientDrawable){
+                    GradientDrawable shape = (GradientDrawable) offset;
+                    //ubah warna strokenya
+                    shape.setStroke(dpToPx(1.0f), color);
+                }
+            }
         }
+        holder.currStatus.setBackgroundTintList(ColorStateList.valueOf(color));
+    }
+
+    private int getColorFromAttr(Context context, int colorAttr) {
+        TypedValue typedValue = new TypedValue();
+        context.getTheme().resolveAttribute(colorAttr, typedValue, true);
+        return typedValue.data;
     }
 
     private int dpToPx(float dp) {

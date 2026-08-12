@@ -60,7 +60,7 @@ public class HomeFragment extends Fragment {
         AppCompatDelegate.setDefaultNightMode(isDark ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
 
         btnNotif.setOnClickListener(v -> {
-            btnNotif.setImageDrawable(requireContext().getDrawable(R.drawable.ic_notif_hover));
+        //    btnNotif.setImageDrawable(requireContext().getDrawable(R.drawable.ic_notif_hover));
             NavHostFragment.findNavController(this)
                     .navigate(R.id.notificationFragment);
         });

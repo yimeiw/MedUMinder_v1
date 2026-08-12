@@ -120,7 +120,7 @@ public class LogFragment extends Fragment {
             View popupView = LayoutInflater.from(requireContext())
                     .inflate(R.layout.item_dropdown_log, null);
 
-            int width = dpToPx(345);
+            int width = dpToPx(355);
             PopupWindow popupWindow = new PopupWindow(popupView, width, ViewGroup.LayoutParams.WRAP_CONTENT, true);
             int xOffset = (layoutFilter.getWidth() - width) / 2;
             popupWindow.showAsDropDown(layoutFilter, xOffset, dpToPx(8));
