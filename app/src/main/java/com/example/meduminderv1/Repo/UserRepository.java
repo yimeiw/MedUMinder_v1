@@ -49,7 +49,8 @@ public class UserRepository {
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     Log.d("USER_REPO", "Result size = " + queryDocumentSnapshots.size());
                     if (queryDocumentSnapshots.isEmpty()){
-                        callback.onFailure(new Exception("Email tidak ditemukan"));
+                        //user belum terdaftar tapi bukan error
+                        callback.onSuccess(null);
                         return;
                      } User user = queryDocumentSnapshots.getDocuments().get(0).toObject(User.class);
                     callback.onSuccess(user);

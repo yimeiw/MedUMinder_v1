@@ -46,8 +46,8 @@ public class InvitationRepo {
                 .update(update).addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
     }
-    public void getPendingInvitationByEmail(String email, RepoCallback<List<Invitation>> callback){
-        db.collection("invitations").whereEqualTo("receiver_email", email)
+    public void getPendingInvitationByEmail(String receiverEmail, RepoCallback<List<Invitation>> callback){
+        db.collection("invitations").whereEqualTo("receiver_email", receiverEmail)
                 .whereEqualTo("status", InvitationStatus.Pending.name()).get()
                 .addOnSuccessListener(query -> {
                     List<Invitation> invitations = new ArrayList<>();
