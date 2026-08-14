@@ -86,6 +86,7 @@
                 />
 <!--            pilih consumer yang mau diawasi-->
             <LinearLayout
+                android:id="@+id/dropdownConsumer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
@@ -104,7 +105,9 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/namaConsumer"
                     android:layout_weight="1"
-                    android:textSize="14sp"/>
+                    android:textSize="14sp"
+                    android:layout_marginHorizontal="10dp"
+                    android:layout_gravity="center"/>
 
                 <ImageView
                     android:layout_width="20dp"
@@ -114,7 +117,7 @@
 
             </LinearLayout>
 
-            <!--            card jadwal skrg-->
+            <!--            card jadwal berikutnya-->
             <LinearLayout
                 android:id="@+id/card_now"
                 android:layout_width="match_parent"
@@ -140,11 +143,10 @@
                     android:id="@+id/tvtitleCard"
                     android:fontFamily="@font/inter_24pt_bold"
                     android:textSize="24sp"
-                    android:text="Nama Obat/Appointment"
+                    android:text=""
                     android:textColor="?attr/colorPrimary"
                     android:paddingHorizontal="12dp"
-                    android:paddingVertical="5dp"
-                    android:background="@android:color/transparent"/>
+                    android:paddingVertical="5dp"/>
 
                 <!--                hari, tgl-->
                 <LinearLayout
@@ -154,16 +156,14 @@
                     android:orientation="horizontal"
                     android:paddingHorizontal="12dp"
                     android:paddingTop="6dp"
-                    android:paddingBottom="10dp"
-                    android:background="@android:color/transparent">
+                    android:paddingBottom="10dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Hari ini"
+                        android:text=""
                         android:textColor="?attr/colorPrimary"
-                        android:gravity="center"
-                        android:background="@android:color/transparent"/>
+                        android:gravity="center"/>
 
                     <View
                         android:layout_width="5dp"
@@ -188,8 +188,7 @@
                         android:id="@+id/tvTime"
                         android:text="00:00"
                         android:textColor="?attr/colorPrimary"
-                        android:layout_gravity="center"
-                        android:background="@android:color/transparent"/>
+                        android:layout_gravity="center"/>
 
                 </LinearLayout>
 
@@ -207,25 +206,23 @@
                         android:id="@+id/tvStokObat"
                         android:text="Stok Obat: "
                         android:textSize="12sp"
-                        android:textColor="?attr/colorPrimary"
-                        android:background="@android:color/transparent"/>
+                        android:textColor="?attr/colorPrimary"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:id="@+id/tvTotalStok"
-                        android:text="10"
+                        android:text=""
                         android:textSize="12sp"
-                        android:textColor="?attr/colorPrimary"
-                        android:background="@android:color/transparent"/>
+                        android:textColor="?attr/colorPrimary"/>
 
                 </LinearLayout>
 
                 <com.google.android.material.button.MaterialButton
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:id="@+id/btnKonfirmasi"
-                    android:text="Sudah Dikonsumsi"
+                    android:id="@+id/btnRemindConsumer"
+                    android:text="Remind Consumer"
                     android:background="@drawable/border"
                     app:backgroundTint="@null"
                     android:textAllCaps="false"
@@ -236,6 +233,7 @@
 
             </LinearLayout>
 
+<!--            Jadwal Hari ini-->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -257,33 +255,158 @@
                     android:layout_weight="1"
                     android:gravity="end">
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/viewAll"
+                    <TextView
+                        android:id="@+id/btnLihatSemua"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Lihat Selengkapnya"
+                        android:text="Lihat Semua"
+                        android:textSize="12sp"
                         android:clickable="true"
                         android:focusable="true"
-                        android:paddingEnd="0dp"
-                        android:textColor="?attr/colorOnSurface"
-                        android:background="@android:color/transparent"
-                        android:backgroundTint="@null"
-                        android:textAllCaps="false"
-                        />
-
+                        android:textColor="?attr/colorOnSurface"/>
                 </LinearLayout>
-
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/emptyTodaySchedule"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Tidak ada jadwal hari ini."
+                android:textColor="?attr/colorOnSurface"
+                android:gravity="center"
+                android:layout_marginTop="10dp"
+                android:visibility="gone"/>
 
             <!--            list jadwal-->
             <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvTodaySchedule"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingVertical="20dp"
-                android:paddingHorizontal="20dp">
+                android:paddingHorizontal="20dp"
+                android:nestedScrollingEnabled="false">
 
             </androidx.recyclerview.widget.RecyclerView>
 
+            <!-- Tingkat Kepatuhan -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Tingkat Kepatuhan Minum Obat"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:layout_marginTop="20dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/border"
+                android:padding="20dp"
+                android:layout_marginTop="10dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Adherence Rate"
+                    android:textStyle="bold"/>
+
+                <com.example.meduminderv1.Home.ProgressView
+                    android:id="@+id/adherenceRing"
+                    android:layout_width="140dp"
+                    android:layout_height="140dp"
+                    android:layout_marginVertical="10dp"/>
+
+                <TextView
+                    android:id="@+id/tvAdherenceDesc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Excellent adherence this week!"
+                    android:textSize="12sp"/>
+            </LinearLayout>
+
+            <!-- Stat Cards -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/border"
+                    android:backgroundTint="?attr/colorTertiaryFixed"
+                    android:padding="14dp"
+                    android:layout_marginEnd="5dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Total Obat Dikonsumsi"
+                        android:textStyle="bold"
+                        android:textSize="12sp"/>
+
+                    <TextView
+                        android:id="@+id/tvTotalDikonsumsi"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="0 Obat"
+                        android:textSize="11sp"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/border"
+                    android:backgroundTint="?attr/colorSecondary"
+                    android:padding="14dp"
+                    android:layout_marginStart="5dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Total Obat Terlewat"
+                        android:textStyle="bold"
+                        android:textSize="12sp"/>
+
+                    <TextView
+                        android:id="@+id/tvTotalTerlewat"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="0 Obat"
+                        android:textSize="11sp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/border"
+                android:backgroundTint="?attr/colorSecondaryFixed"
+                android:padding="14dp"
+                android:layout_marginTop="10dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Total Obat Akan Datang"
+                    android:textStyle="bold"
+                    android:textSize="12sp"/>
+
+                <TextView
+                    android:id="@+id/tvTotalAkanDatang"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="0 Obat"
+                    android:textSize="11sp"/>
+            </LinearLayout>
         </LinearLayout>
 
     </ScrollView>

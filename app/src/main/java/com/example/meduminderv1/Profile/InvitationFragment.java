@@ -128,8 +128,10 @@ public class InvitationFragment extends Fragment {
         }
     }
     private void shareInvitation(String email) {
+    //    String appLink = "https://play.google.com/store/apps/details?id=" + requireContext().getPackageName();
         String message = "Saya mengundang Anda bergabung di MedUMinder.\n\n" +
-                "Silahkan download aplikasi MedUMinder dan daftar menggunakan email: "
+                "Silahkan download aplikasi MedUMinder menggunakan link berikut:\n" +
+                /* appLink + */ "\n\nDaftar menggunakan email atau google dengan email: "
                 + email + "\n\nSetelah login menggunakan email tersebut, Invitation akan otomatis muncul pada menu Notification.";
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("text/plain");

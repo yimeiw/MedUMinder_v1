@@ -16,13 +16,20 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Auth.SessionManager;
+import com.example.meduminderv1.Callback.AuthCallback;
+import com.example.meduminderv1.Callback.RepoCallback;
+import com.example.meduminderv1.Invitation.Invitation;
 import com.example.meduminderv1.Login.LoginActivity;
 import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.Model.User;
+import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Repo.InvitationRepo;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -34,6 +41,7 @@ public class HomeFragment extends Fragment {
     LinearLayout addMed, addAppoint, addDoc;
     SharedPreferences prefs;
     AuthManager authManager;
+    InvitationRepo invitationRepo;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -88,6 +96,54 @@ public class HomeFragment extends Fragment {
         User user = authManager.getCurrentUser();
         if (user != null){
             tvGreeting.setText("Halo, " + user.getName() + "!");
+        }
+    }
+    private void checkPendingInvitation(){
+        authManager.getPendingInvitation(new AuthCallback<Invitation>() {
+            @Override
+            public void onSuccess(Invitation invitation) {
+                if (invitation != null) showInvitationPopup(invitation);
+            }
+
+            @Override
+            public void onFailure(String message) {
+            }
+        });
+    }
+    private void showInvitationPopup(Invitation invitation) {
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
+        builder.setTitle("Undangan Baru")
+                .setMessage(invitation.getSender_name() + " mengundang Anda menjadi "
+                + invitation.getInvite_role().name()).setCancelable(false)
+                .setPositiveButton("Terima", (dialog, which) -> {
+                    authManager.linkAndRespondInvitation(invitation.getInvitation_id(), true, new AuthCallback<User>() {
+                        @Override
+                        public void onSuccess(User result) {
+                            afterResponse(result);
+                        }
+
+                        @Override
+                        public void onFailure(String message) {
+                            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }).setNegativeButton("Tolak", (dialog, which) -> {
+                    authManager.linkAndRespondInvitation(invitation.getInvitation_id(), false, new AuthCallback<User>() {
+                        @Override
+                        public void onSuccess(User result) {
+                            afterResponse(result);
+                        }
+
+                        @Override
+                        public void onFailure(String message) {
+                            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                });
+    }
+    private void afterResponse(User result) {
+        if (result != null && result.getCurrentRole() == UserRole.Caregiver){
+            NavHostFragment.findNavController(this).navigate(R.id.caregiverHomeFragment);
         }
     }
 }

@@ -18,6 +18,8 @@ import com.example.meduminderv1.Callback.AuthCallback;
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Invitation.Invitation;
 import com.example.meduminderv1.Invitation.InvitationStatus;
+import com.example.meduminderv1.Model.User;
+import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.InvitationRepo;
 import com.google.android.material.button.MaterialButton;
@@ -129,10 +131,10 @@ public class NotificationDetailFragment extends Fragment {
     }
 
     private void rejectInvitation() {
-        authManager.rejectInvitation(invitation, new AuthCallback<Void>() {
+        authManager.respondToInvitation(notification.getInvitation_id(), false, new AuthCallback<User>() {
             @Override
-            public void onSuccess(Void result) {
-                Toast.makeText(requireContext(), "Invitation berhasil ditolak.", Toast.LENGTH_SHORT).show();
+            public void onSuccess(User result) {
+                Toast.makeText(requireContext(), "Undangan ditolak", Toast.LENGTH_SHORT).show();
                 NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
             }
 
@@ -144,11 +146,14 @@ public class NotificationDetailFragment extends Fragment {
     }
 
     private void acceptInvitation() {
-        authManager.acceptInvitation(invitation, notification, new AuthCallback<Void>() {
+        authManager.respondToInvitation(notification.getInvitation_id(), true, new AuthCallback<User>() {
             @Override
-            public void onSuccess(Void result) {
-                Toast.makeText(requireContext(), "Invitation berhasil diterima.", Toast.LENGTH_SHORT).show();
-                NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
+            public void onSuccess(User result) {
+                if (result != null && result.getCurrentRole() == UserRole.Caregiver){
+                    NavHostFragment.findNavController(NotificationDetailFragment.this).navigate(R.id.caregiverHomeFragment);
+                } else {
+                    NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
+                }
             }
 
             @Override

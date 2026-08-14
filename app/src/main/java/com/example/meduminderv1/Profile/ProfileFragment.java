@@ -40,11 +40,11 @@ public class ProfileFragment extends Fragment {
     SessionManager sessionManager;
     User user;
     AuthManager authManager;
-    TextView curr_role, name_input, email_input, txtAktivasi;
+    TextView curr_role, name_input, email_input, txtAktivasi, txtListRelation;
     RelativeLayout themeSwitch;
     ImageView iconToggle, imgAktivasi;
     SharedPreferences prefs;
-    LinearLayout btnEditProfile, btnAktivasi;
+    LinearLayout btnEditProfile, btnAktivasi, btnListRelation;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -74,6 +74,8 @@ public class ProfileFragment extends Fragment {
         btnAktivasi = view.findViewById(R.id.btnAktivasi);
         imgAktivasi = view.findViewById(R.id.imgAktivasi);
         txtAktivasi = view.findViewById(R.id.txtAktivasi);
+        txtListRelation = view.findViewById(R.id.txtListRelation);
+        btnListRelation = view.findViewById(R.id.btnRelationList);
 
         if (user != null){
             loadUser();
@@ -298,6 +300,14 @@ public class ProfileFragment extends Fragment {
         email_input.setText(user.getEmail());
         curr_role.setText(formatRole(user.getCurrentRole()));
         setUpCaregiverButton();
+
+        boolean isConsumer = user.getCurrentRole() == UserRole.Consumer;
+        txtListRelation.setText(isConsumer ? "List Caregiver" : "List Consumer");
+        btnListRelation.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putString(RelationListFragment.ARG_MODE, isConsumer ? "Caregiver" : "Consumer");
+            NavHostFragment.findNavController(this).navigate(R.id.relationListFragment, bundle);
+        });
     }
 
     private String formatRole(UserRole role) {

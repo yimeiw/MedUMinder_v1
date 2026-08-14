@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".Profile.RelationListFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="20dp"
+        android:id="@+id/headerSection">
+
+        <ImageButton
+            android:layout_width="30dp"
+            android:layout_height="26dp"
+            android:background="@drawable/ic_back"
+            android:id="@+id/btnBack"
+            android:layout_gravity="center"
+            app:tint="@color/hover_pressed" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/tvHeaderRelation"
+            android:textStyle="bold"
+            android:textSize="22sp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:textColor="?attr/colorOnSurface"/>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/emptyState"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/headerSection"
+        android:text="Belum ada relasi."
+        android:gravity="center"
+        android:layout_marginTop="20dp"
+        android:visibility="gone"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvRelation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/headerSection"
+        android:layout_marginHorizontal="20dp"/>
+
+</RelativeLayout>

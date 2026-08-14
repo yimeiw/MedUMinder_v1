@@ -79,11 +79,16 @@
         android:name="com.example.meduminderv1.Profile.InvitationFragment"
         android:label="Invitation"
         tools:layout="@layout/fragment_invitation"/>
+    <fragment
+        android:id="@+id/relationListFragment"
+        android:name="com.example.meduminderv1.Profile.RelationListFragment"
+        android:label="Relation List"
+        tools:layout="@layout/fragment_relation_list"/>
 
     <!--    caregiver-->
     <fragment
         android:id="@+id/caregiverHomeFragment"
-        android:name="com.example.meduminderv1.Caregiver.CaregiverHomeFragment"
+        android:name="com.example.meduminderv1.Home.CaregiverHomeFragment"
         android:label="Caregiver Home"
         tools:layout="@layout/fragment_caregiver_home" />
 

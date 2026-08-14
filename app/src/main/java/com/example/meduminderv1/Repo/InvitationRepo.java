@@ -46,18 +46,12 @@ public class InvitationRepo {
                 .update(update).addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
     }
-    public void getPendingInvitationByEmail(String receiverEmail, RepoCallback<List<Invitation>> callback){
+    public void getPendingInvitationByEmail(String receiverEmail, RepoCallback<Invitation> callback){
         db.collection("invitations").whereEqualTo("receiver_email", receiverEmail)
-                .whereEqualTo("status", InvitationStatus.Pending.name()).get()
+                .whereEqualTo("status", InvitationStatus.Pending.name())
+                .whereEqualTo("receiver_uid", null).limit(1).get()
                 .addOnSuccessListener(query -> {
-                    List<Invitation> invitations = new ArrayList<>();
-                    for (DocumentSnapshot doc : query){
-                        Invitation invitation = doc.toObject(Invitation.class);
-                        if (invitation != null){
-                            invitation.setInvitation_id(doc.getId());
-                            invitations.add(invitation);
-                        }
-                    } callback.onSuccess(invitations);
+                    callback.onSuccess(query.isEmpty() ? null : query.getDocuments().get(0).toObject(Invitation.class));
                 }).addOnFailureListener(callback::onFailure);
     }
     public void updateReceiverUid(String invitationId, String receiverUid, RepoCallback<Void> callback){
@@ -77,5 +71,13 @@ public class InvitationRepo {
                     } Invitation invitation = doc.toObject(Invitation.class);
                     callback.onSuccess(invitation);
                 }).addOnFailureListener(callback::onFailure);
+    }
+    public void linkReceiver(String invitationId, String receiverUid, RepoCallback<Void> callback){
+        Map<String, Object> update = new HashMap<>();
+        update.put("receiver_uid", receiverUid);
+        update.put("updated_at", Timestamp.now());
+        db.collection("invitations").document(invitationId).update(update)
+                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onFailure);
     }
 }
