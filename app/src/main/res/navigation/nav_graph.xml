@@ -84,6 +84,11 @@
         android:name="com.example.meduminderv1.Profile.RelationListFragment"
         android:label="Relation List"
         tools:layout="@layout/fragment_relation_list"/>
+    <fragment
+        android:id="@+id/statistikFragment"
+        android:name="com.example.meduminderv1.Statistik.StatistikFragment"
+        android:label="Statistik"
+        tools:layout="@layout/fragment_statistik"/>
 
     <!--    caregiver-->
     <fragment

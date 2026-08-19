@@ -1,414 +1,605 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/homeFragment"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".Home.HomeFragment">
+    tools:context=".Home.CaregiverHomeFragment">
 
-    <ScrollView
+    <!-- KONTEN UTAMA (Konten ScrollView + Bottom Nav)    -->
+    <RelativeLayout
+        android:id="@+id/caregiverContent"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingVertical="20dp"
-        android:paddingHorizontal="20dp">
+        android:layout_height="match_parent"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="20dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!--            Logo & Icon Notif-->
+            <!-- Logo & Icon Notif -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
                 <ImageButton
-                    android:id="@+id/btnNotif"
+                    android:id="@+id/btnSideNav"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/ic_sidenav"
-                    android:background="@null"
-                    android:layout_gravity="center"/>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
+                    android:background="@null"
+                    android:src="@drawable/ic_sidenav" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
                     android:gravity="center">
 
                     <ImageView
                         android:id="@+id/logo"
-                        android:src="@drawable/logo_tulisan"
                         android:layout_width="160dp"
                         android:layout_height="wrap_content"
-                        android:layout_alignTop="@+id/capsule"
-                        />
+                        android:src="@drawable/logo_tulisan" />
                 </LinearLayout>
 
                 <ImageButton
-                    android:id="@+id/btnProfile"
+                    android:id="@+id/btnNotif"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/ic_notif"
+                    android:layout_gravity="center"
                     android:background="@null"
-                    android:layout_gravity="center"/>
-
+                    android:src="@drawable/ic_notif" />
             </LinearLayout>
-            <!--greetings-->
+
+            <!-- Greetings -->
             <TextView
+                android:id="@+id/greeting"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=" "
-                android:fontFamily="@font/inter_18pt_semibold"
-                android:id="@+id/greeting"
-                android:textSize="18sp"
                 android:layout_marginTop="10dp"
+                android:fontFamily="@font/inter_18pt_semibold"
+                android:text=" "
                 android:textColor="?attr/colorOnSurface"
-                />
+                android:textSize="18sp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/greetings_caregiver"
-                android:textSize="14sp"
-                android:textColor="?attr/colorOnSurface"/>
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="14sp" />
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="?attr/colorOnSurface"
                 android:layout_gravity="center"
                 android:layout_marginVertical="20dp"
-                />
-<!--            pilih consumer yang mau diawasi-->
-            <LinearLayout
-                android:id="@+id/dropdownConsumer"
+                android:background="?attr/colorOnSurface" />
+
+            <!-- Konten ScrollView (Dibatasi agar berhenti di atas Bottom Nav) -->
+            <ScrollView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:background="@drawable/border"
-                android:paddingHorizontal="20dp"
-                android:paddingVertical="22dp"
-                android:layout_marginBottom="10dp">
-
-                <ImageView
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:src="@drawable/ic_profile"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/namaConsumer"
-                    android:layout_weight="1"
-                    android:textSize="14sp"
-                    android:layout_marginHorizontal="10dp"
-                    android:layout_gravity="center"/>
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/ic_arrow_down"
-                    android:layout_gravity="center"/>
-
-            </LinearLayout>
-
-            <!--            card jadwal berikutnya-->
-            <LinearLayout
-                android:id="@+id/card_now"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/edittext_border"
-                android:layout_marginVertical="10dp">
-
-                <TextView
-                    android:id="@+id/tvcard"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Jadwal Berikutnya"
-                    android:textSize="14sp"
-                    android:textColor="?attr/colorPrimary"
-                    android:paddingHorizontal="12dp"
-                    android:paddingTop="10dp"
-                    android:background="@android:color/transparent"/>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/tvtitleCard"
-                    android:fontFamily="@font/inter_24pt_bold"
-                    android:textSize="24sp"
-                    android:text=""
-                    android:textColor="?attr/colorPrimary"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="5dp"/>
-
-                <!--                hari, tgl-->
-                <LinearLayout
-                    android:id="@+id/timeCard"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="12dp"
-                    android:paddingTop="6dp"
-                    android:paddingBottom="10dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text=""
-                        android:textColor="?attr/colorPrimary"
-                        android:gravity="center"/>
-
-                    <View
-                        android:layout_width="5dp"
-                        android:layout_height="5dp"
-                        android:background="@drawable/circle"
-                        android:layout_margin="5dp"
-                        android:layout_gravity="center"
-                        />
-
-                    <View
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:background="@drawable/ic_time"
-                        android:layout_gravity="center"
-                        android:backgroundTint="?attr/colorPrimary"
-                        android:layout_marginRight="5dp"
-                        />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:id="@+id/tvTime"
-                        android:text="00:00"
-                        android:textColor="?attr/colorPrimary"
-                        android:layout_gravity="center"/>
-
-                </LinearLayout>
+                android:layout_height="match_parent">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="12dp"
-                    android:paddingBottom="10dp"
-                    android:background="@android:color/transparent">
+                    android:orientation="vertical">
+
+                    <!-- Pilih Consumer Dropdown -->
+                    <include
+                        android:id="@+id/consumerPicker"
+                        layout="@layout/dropdown_consumer_picker"/>
+
+                    <!-- Card Jadwal Berikutnya -->
+                    <LinearLayout
+                        android:id="@+id/card_now"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginVertical="10dp"
+                        android:layout_marginBottom="10dp"
+                        android:background="@drawable/edittext_border"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvcard"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@android:color/transparent"
+                            android:paddingHorizontal="12dp"
+                            android:paddingTop="10dp"
+                            android:text="Jadwal Berikutnya"
+                            android:textColor="?attr/colorPrimary"
+                            android:textSize="16sp" />
+
+                        <LinearLayout
+                            android:id="@+id/haveSchedule"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:visibility="gone">
+
+                            <TextView
+                                android:id="@+id/tvtitleCard"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/inter_24pt_bold"
+                                android:paddingHorizontal="12dp"
+                                android:paddingVertical="5dp"
+                                android:text=""
+                                android:textColor="?attr/colorPrimary"
+                                android:textSize="24sp" />
+
+                            <LinearLayout
+                                android:id="@+id/timeCard"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="12dp"
+                                android:paddingTop="6dp"
+                                android:paddingBottom="10dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center"
+                                    android:textColor="?attr/colorPrimary" />
+
+                                <View
+                                    android:layout_width="5dp"
+                                    android:layout_height="5dp"
+                                    android:layout_gravity="center"
+                                    android:layout_margin="5dp"
+                                    android:background="@drawable/circle" />
+
+                                <View
+                                    android:layout_width="20dp"
+                                    android:layout_height="20dp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginRight="5dp"
+                                    android:background="@drawable/ic_time"
+                                    android:backgroundTint="?attr/colorPrimary" />
+
+                                <TextView
+                                    android:id="@+id/tvTime"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center"
+                                    android:text="00:00"
+                                    android:textColor="?attr/colorPrimary" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:background="@android:color/transparent"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="12dp"
+                                android:paddingBottom="10dp">
+
+                                <TextView
+                                    android:id="@+id/tvStokObat"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Stok Obat: "
+                                    android:textColor="?attr/colorPrimary"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:id="@+id/tvTotalStok"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text=""
+                                    android:textColor="?attr/colorPrimary"
+                                    android:textSize="12sp" />
+                            </LinearLayout>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnRemindConsumer"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="10dp"
+                                android:background="@drawable/border"
+                                android:paddingHorizontal="12dp"
+                                android:text="Remind Consumer"
+                                android:textAllCaps="false"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="14sp"
+                                app:backgroundTint="@null" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/consumerNoSchedule"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:paddingVertical="16dp"
+                            android:visibility="visible">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Consumer belum memiliki jadwal."
+                                android:textColor="?attr/colorPrimary"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Jadwal Hari Ini -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="5dp"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Jadwal Hari Ini"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="end">
+
+                            <TextView
+                                android:id="@+id/btnLihatSemua"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:text="Lihat Semua"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="12sp"
+                                android:visibility="gone" />
+                        </LinearLayout>
+                    </LinearLayout>
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:id="@+id/emptyTodaySchedule"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:id="@+id/tvStokObat"
-                        android:text="Stok Obat: "
-                        android:textSize="12sp"
-                        android:textColor="?attr/colorPrimary"/>
+                        android:layout_marginTop="10dp"
+                        android:gravity="center"
+                        android:text="Belum ada jadwal hari ini."
+                        android:textColor="?attr/colorOnSurface"
+                        android:visibility="visible" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvTodaySchedule"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:id="@+id/tvTotalStok"
-                        android:text=""
-                        android:textSize="12sp"
-                        android:textColor="?attr/colorPrimary"/>
+                        android:nestedScrollingEnabled="false"
+                        android:paddingHorizontal="20dp"
+                        android:paddingVertical="20dp"
+                        android:visibility="gone" />
 
-                </LinearLayout>
-
-                <com.google.android.material.button.MaterialButton
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/btnRemindConsumer"
-                    android:text="Remind Consumer"
-                    android:background="@drawable/border"
-                    app:backgroundTint="@null"
-                    android:textAllCaps="false"
-                    android:textSize="14sp"
-                    android:textColor="?attr/colorOnSurface"
-                    android:paddingHorizontal="12dp"
-                    android:layout_margin="10dp"/>
-
-            </LinearLayout>
-
-<!--            Jadwal Hari ini-->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginHorizontal="5dp"
-                android:gravity="center">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Jadwal Hari Ini"
-                    android:textSize="20dp"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textStyle="bold"/>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="end">
-
-                    <TextView
-                        android:id="@+id/btnLihatSemua"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Lihat Semua"
-                        android:textSize="12sp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:textColor="?attr/colorOnSurface"/>
-                </LinearLayout>
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/emptyTodaySchedule"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Tidak ada jadwal hari ini."
-                android:textColor="?attr/colorOnSurface"
-                android:gravity="center"
-                android:layout_marginTop="10dp"
-                android:visibility="gone"/>
-
-            <!--            list jadwal-->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvTodaySchedule"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingVertical="20dp"
-                android:paddingHorizontal="20dp"
-                android:nestedScrollingEnabled="false">
-
-            </androidx.recyclerview.widget.RecyclerView>
-
-            <!-- Tingkat Kepatuhan -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Tingkat Kepatuhan Minum Obat"
-                android:textStyle="bold"
-                android:textSize="18sp"
-                android:layout_marginTop="20dp"/>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:background="@drawable/border"
-                android:padding="20dp"
-                android:layout_marginTop="10dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Adherence Rate"
-                    android:textStyle="bold"/>
-
-                <com.example.meduminderv1.Home.ProgressView
-                    android:id="@+id/adherenceRing"
-                    android:layout_width="140dp"
-                    android:layout_height="140dp"
-                    android:layout_marginVertical="10dp"/>
-
-                <TextView
-                    android:id="@+id/tvAdherenceDesc"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Excellent adherence this week!"
-                    android:textSize="12sp"/>
-            </LinearLayout>
-
-            <!-- Stat Cards -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="10dp">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="@drawable/border"
-                    android:backgroundTint="?attr/colorTertiaryFixed"
-                    android:padding="14dp"
-                    android:layout_marginEnd="5dp">
-
+                    <!-- Tingkat Kepatuhan -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Total Obat Dikonsumsi"
-                        android:textStyle="bold"
-                        android:textSize="12sp"/>
+                        android:layout_marginTop="30dp"
+                        android:text="Tingkat Kepatuhan Minum Obat"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
 
-                    <TextView
-                        android:id="@+id/tvTotalDikonsumsi"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="0 Obat"
-                        android:textSize="11sp"/>
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/border"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="20dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Adherence Rate"
+                            android:textStyle="bold" />
+
+                        <com.example.meduminderv1.Home.ProgressView
+                            android:id="@+id/adherenceRing"
+                            android:layout_width="140dp"
+                            android:layout_height="140dp"
+                            android:layout_marginVertical="10dp" />
+
+                        <TextView
+                            android:id="@+id/tvAdherenceDesc"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text=""
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <!-- Stat Cards -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="5dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/border"
+                            android:backgroundTint="?attr/colorTertiaryFixed"
+                            android:orientation="vertical"
+                            android:padding="14dp">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Total Obat Dikonsumsi"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvTotalDikonsumsi"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="0 Obat"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="5dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/border"
+                            android:backgroundTint="?attr/colorSecondary"
+                            android:orientation="vertical"
+                            android:padding="14dp">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Total Obat Terlewat"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvTotalTerlewat"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="0 Obat"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/border"
+                        android:backgroundTint="?attr/colorSecondaryFixed"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Total Obat Akan Datang"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvTotalAkanDatang"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="0 Obat"
+                            android:textSize="11sp" />
+                    </LinearLayout>
                 </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="@drawable/border"
-                    android:backgroundTint="?attr/colorSecondary"
-                    android:padding="14dp"
-                    android:layout_marginStart="5dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Total Obat Terlewat"
-                        android:textStyle="bold"
-                        android:textSize="12sp"/>
-
-                    <TextView
-                        android:id="@+id/tvTotalTerlewat"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="0 Obat"
-                        android:textSize="11sp"/>
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/border"
-                android:backgroundTint="?attr/colorSecondaryFixed"
-                android:padding="14dp"
-                android:layout_marginTop="10dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Total Obat Akan Datang"
-                    android:textStyle="bold"
-                    android:textSize="12sp"/>
-
-                <TextView
-                    android:id="@+id/tvTotalAkanDatang"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="0 Obat"
-                    android:textSize="11sp"/>
-            </LinearLayout>
+            </ScrollView>
         </LinearLayout>
 
-    </ScrollView>
+    </RelativeLayout>
 
-</RelativeLayout>
+    <!-- Custom drawer -->
+    <LinearLayout
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:orientation="vertical"
+        android:background="?attr/colorPrimaryFixed"
+        android:elevation="8dp">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingVertical="24dp">
+
+                <!-- Logo -->
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="40dp"
+                    android:layout_marginBottom="20dp"
+                    android:src="@drawable/logo_tulisan"/>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/placeholder"
+                    android:layout_marginBottom="10dp"
+                    android:layout_marginHorizontal="20dp"/>
+
+                <!-- GROUP: General (disembunyikan kalau belum ada consumer) -->
+                <LinearLayout
+                    android:id="@+id/groupGeneralMenu"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="20dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="General"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:textColor="?attr/colorOnSurface"
+                        android:paddingHorizontal="20dp"
+                        android:paddingBottom="8dp"/>
+
+                    <LinearLayout
+                        android:id="@+id/navDocument"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="20dp"
+                        android:paddingHorizontal="20dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="@drawable/border">
+
+                        <ImageView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:src="@drawable/ic_doc"
+                            android:layout_marginEnd="14dp"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Document"
+                            android:textSize="14sp"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/navRiwayat"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="20dp"
+                        android:paddingHorizontal="20dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="@drawable/border">
+
+                        <ImageView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:src="@drawable/ic_arrow_down"
+                            android:layout_marginEnd="14dp"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Riwayat"
+                            android:textSize="14sp"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/navStatistik"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="20dp"
+                        android:paddingHorizontal="20dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="@drawable/border">
+
+                        <ImageView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:src="@drawable/ic_time"
+                            android:layout_marginEnd="14dp"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Statistik"
+                            android:textSize="14sp"/>
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- GROUP: List Consumer -->
+                <TextView
+                    android:id="@+id/labelListConsumer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="List Consumer"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:paddingHorizontal="20dp"
+                    android:paddingBottom="8dp"/>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvDrawerConsumer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"/>
+
+                <TextView
+                    android:id="@+id/emptyConsumerDrawer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Belum ada consumer terhubung."
+                    android:textSize="14sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:gravity="center"
+                    android:paddingHorizontal="20dp"
+                    android:layout_marginBottom="10dp"
+                    android:visibility="gone"/>
+
+                <LinearLayout
+                    android:id="@+id/navAddConsumer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginHorizontal="20dp"
+                    android:paddingVertical="20dp"
+                    android:paddingHorizontal="20dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="@drawable/border">
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:src="@drawable/ic_add_people"
+                        android:layout_marginEnd="14dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Add Consumer"
+                        android:textSize="14sp"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+
+</androidx.drawerlayout.widget.DrawerLayout>

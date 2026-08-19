@@ -30,6 +30,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.meduminderv1.Auth.SessionManager;
+import com.example.meduminderv1.Caregiver.ConsumerPickerHelper;
 import com.example.meduminderv1.Model.Appointment;
 import com.example.meduminderv1.Model.LogItem;
 import com.example.meduminderv1.Model.LogStatus;
@@ -56,7 +58,8 @@ public class LogFragment extends Fragment {
     TextView tvType, initialMedicine, initialAppoint;
     ImageView imgArrow;
     private RecyclerView rvLogs;
-
+    ConsumerPickerHelper consumerPickerHelper;
+    String targetUid;
     //List semua data dari firestore
     private List<MedicationLog> allMedLog = new ArrayList<>();
     private List<Appointment> allAppointLog = new ArrayList<>();
@@ -95,6 +98,18 @@ public class LogFragment extends Fragment {
         btnMissed = view.findViewById(R.id.btnMissed);
 
         filterDropdown();
+
+        View pickerRoot = view.findViewById(R.id.consumerPicker);
+        consumerPickerHelper = new ConsumerPickerHelper(pickerRoot, requireContext(), uid -> {
+            targetUid = uid;
+            if (uid == null){
+                initialMedicine.setVisibility(View.VISIBLE);
+                initialAppoint.setVisibility(View.VISIBLE);
+                allMedLog.clear(); allAppointLog.clear();
+                applyFilter();
+                return;
+            } loadMedicationLogs();
+        }); consumerPickerHelper.setup();
 
         selectButton(btnAll);
         btnAll.setOnClickListener(v -> { currentFilter = FilterType.ALL; selectButton(btnAll); applyFilter(); });
@@ -239,7 +254,11 @@ public class LogFragment extends Fragment {
     }
     //Ambil data dari firestore
     private void loadMedicationLogs() {
-        String users_id = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String users_id = SessionManager.getInstance().getTargetUid();
+        if (users_id == null){
+            initialMedicine.setVisibility(View.VISIBLE);
+            return; //caregiver blm pilih consumer atau blm punya consumer
+        }
 
         Calendar startCal = Calendar.getInstance();
         startCal.set(Calendar.HOUR_OF_DAY, 0);
@@ -274,7 +293,11 @@ public class LogFragment extends Fragment {
                 .addOnFailureListener(e -> Log.e("Medication Log", "Gagal ambil data", e));
     }
     private void loadAppointmentLogs() {
-        String users_id = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String users_id = SessionManager.getInstance().getTargetUid();
+        if (users_id == null){
+            initialMedicine.setVisibility(View.VISIBLE);
+            return; //caregiver blm pilih consumer atau blm punya consumer
+        }
         Log.d("AUTH", users_id == null ? "NULL" : users_id);
         db.collection("appointments")
                 .whereEqualTo("users_id", users_id)

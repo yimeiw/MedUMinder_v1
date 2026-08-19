@@ -46,12 +46,25 @@ public class InvitationRepo {
                 .update(update).addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
     }
-    public void getPendingInvitationByEmail(String receiverEmail, RepoCallback<Invitation> callback){
-        db.collection("invitations").whereEqualTo("receiver_email", receiverEmail)
-                .whereEqualTo("status", InvitationStatus.Pending.name())
-                .whereEqualTo("receiver_uid", null).limit(1).get()
-                .addOnSuccessListener(query -> {
-                    callback.onSuccess(query.isEmpty() ? null : query.getDocuments().get(0).toObject(Invitation.class));
+    public void getPendingInvitationForUser(String uid, String email, RepoCallback<Invitation> callback){
+        db.collection("invitations").whereEqualTo("receiver_uid", uid)
+                .whereEqualTo("status", InvitationStatus.Pending.name()).limit(1).get().addOnSuccessListener(query -> {
+                    if (!query.isEmpty()){
+                        callback.onSuccess(query.getDocuments().get(0).toObject(Invitation.class));
+                        return;
+                    }
+                    db.collection("invitations").whereEqualTo("receiver_email", email)
+                            .whereEqualTo("status", InvitationStatus.Pending.name()).limit(1).get().addOnSuccessListener(query2 -> {
+                                if (query2.isEmpty()){
+                                    callback.onSuccess(null);
+                                    return;
+                                } Invitation invitation = query2.getDocuments().get(0).toObject(Invitation.class);
+                                if (invitation.getReceiver_uid() == null){
+                                    callback.onSuccess(invitation);
+                                } else {
+                                    callback.onSuccess(null);
+                                }
+                            }).addOnFailureListener(callback::onFailure);
                 }).addOnFailureListener(callback::onFailure);
     }
     public void updateReceiverUid(String invitationId, String receiverUid, RepoCallback<Void> callback){

@@ -2,7 +2,10 @@ package com.example.meduminderv1.Home;
 
 import android.os.Bundle;
 
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -10,15 +13,20 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.RepoCallback;
+import com.example.meduminderv1.Caregiver.ConsumerPickerHelper;
+import com.example.meduminderv1.Caregiver.DrawerConsumerAdapter;
 import com.example.meduminderv1.Caregiver.TodayScheduleAdapter;
+import com.example.meduminderv1.Invitation.InvitationPopupHelper;
 import com.example.meduminderv1.Model.Appointment;
 import com.example.meduminderv1.Model.CareRelationship;
 import com.example.meduminderv1.Model.LogItem;
@@ -51,10 +59,15 @@ import java.util.UUID;
 public class CaregiverHomeFragment extends Fragment {
 
     TextView namaConsumer, tvGreeting, tvtitleCard, tvTime, tvStokNext, tvAdherenceDesc,
-            tvTotalDikonsumsi, tvTotalTerlewat, tvTotalAkanDatang, emptyTodaySchedule;
+            tvTotalDikonsumsi, tvTotalTerlewat, tvTotalAkanDatang, emptyTodaySchedule, btnLihatSemua,
+            labelListConsumer, emptyConsumerDrawer;
     ImageView imgArrow;
-    LinearLayout dropdownConsumer;
-    RecyclerView rvTodaySchedule;
+    DrawerLayout drawerLayout;
+    ImageButton btnSideNav, btnNotif;
+    LinearLayout dropdownConsumer, haveSchedule, noSchedule, drawerContainer, groupGeneralMenu,
+            navDocument, navRiwayat, navStatistik, navAddConsumer;
+    RecyclerView rvTodaySchedule, rvDrawerConsumer;
+    DrawerConsumerAdapter drawerConsumerAdapter;
     MaterialButton btnRemindConsumer;
     ProgressView adherenceRing;
     SessionManager sessionManager;
@@ -63,9 +76,12 @@ public class CaregiverHomeFragment extends Fragment {
     MedicationRepo medicationRepo;
     NotificationRepo notificationRepo;
     FirebaseFirestore db;
+    AuthManager authManager;
+    ConsumerPickerHelper consumerPicker;
     private List<CareRelationship> consumerRelations = new ArrayList<>();
     private String selectedConsumerUid;
     private String nextScheduleMedName;
+    String targetUid;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -73,10 +89,18 @@ public class CaregiverHomeFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_caregiver_home, container, false);
 
         tvGreeting = view.findViewById(R.id.greeting);
-        dropdownConsumer = view.findViewById(R.id.dropdownConsumer);
-        namaConsumer = view.findViewById(R.id.namaConsumer);
-        imgArrow = view.findViewById(R.id.imgArrow);
+        drawerLayout = view.findViewById(R.id.drawerLayout);
+        btnSideNav = view.findViewById(R.id.btnSideNav);
+        groupGeneralMenu = view.findViewById(R.id.groupGeneralMenu);
+        labelListConsumer = view.findViewById(R.id.labelListConsumer);
+        rvDrawerConsumer = view.findViewById(R.id.rvDrawerConsumer);
+        emptyConsumerDrawer = view.findViewById(R.id.emptyConsumerDrawer);
+        navDocument = view.findViewById(R.id.navDocument);
+        navRiwayat = view.findViewById(R.id.navRiwayat);
+        navStatistik = view.findViewById(R.id.navStatistik);
+        btnNotif = view.findViewById(R.id.btnNotif);
         rvTodaySchedule = view.findViewById(R.id.rvTodaySchedule);
+        btnLihatSemua = view.findViewById(R.id.btnLihatSemua);
         adherenceRing = view.findViewById(R.id.adherenceRing);
         tvAdherenceDesc = view.findViewById(R.id.tvAdherenceDesc);
         tvTotalDikonsumsi = view.findViewById(R.id.tvTotalDikonsumsi);
@@ -87,21 +111,61 @@ public class CaregiverHomeFragment extends Fragment {
         tvTime = view.findViewById(R.id.tvTime);
         tvStokNext = view.findViewById(R.id.tvStokObat);
         btnRemindConsumer = view.findViewById(R.id.btnRemindConsumer);
+        haveSchedule = view.findViewById(R.id.haveSchedule);
+        noSchedule = view.findViewById(R.id.consumerNoSchedule);
 
         sessionManager = SessionManager.getInstance();
         careRelationshipRepo = new CareRelationshipRepo();
         userRepository = UserRepository.getInstance();
         medicationRepo = new MedicationRepo();
         db = FirebaseFirestore.getInstance();
+        authManager = AuthManager.getInstance(requireContext());
+
+        rvDrawerConsumer.setLayoutManager(new LinearLayoutManager(requireContext()));
+
+        btnSideNav.setOnClickListener(v -> {
+            if (!drawerLayout.isDrawerOpen(GravityCompat.START)){
+                drawerLayout.openDrawer(GravityCompat.START);
+            } else {
+                drawerLayout.closeDrawer(GravityCompat.START);
+            }
+        });
+
+        setupSideNavInteractions(view);
 
         rvTodaySchedule.setLayoutManager(new LinearLayoutManager(requireContext()));
         User caregiver = sessionManager.getUser();
         if (caregiver != null) tvGreeting.setText("Halo, " + caregiver.getName());
 
-        dropdownConsumer.setOnClickListener(v -> showConsumerDropdown());
-        loadConsumerList();
+        View pickerRoot = view.findViewById(R.id.consumerPicker);
+        consumerPicker = new ConsumerPickerHelper( pickerRoot, requireContext(), uid -> {
+            targetUid = uid;
+            if (uid == null){
+                return;
+            } showConsumerDropdown();
+        }); consumerPicker.setup();
 
         return view;
+    }
+    private void setupSideNavInteractions(View view) {
+        view.findViewById(R.id.navDocument).setOnClickListener(v -> {
+            drawerLayout.closeDrawer(GravityCompat.START);
+            NavHostFragment.findNavController(this).navigate(R.id.documentFragment);
+        });
+        view.findViewById(R.id.navRiwayat).setOnClickListener(v -> {
+            drawerLayout.closeDrawer(GravityCompat.START);
+            NavHostFragment.findNavController(this).navigate(R.id.logFragment);
+        });
+        view.findViewById(R.id.navStatistik).setOnClickListener(v -> {
+            drawerLayout.closeDrawer(GravityCompat.START);
+            NavHostFragment.findNavController(this).navigate(R.id.statistikFragment);
+        });
+        view.findViewById(R.id.navAddConsumer).setOnClickListener(v -> {
+            drawerLayout.closeDrawer(GravityCompat.START);
+            Bundle bundle = new Bundle();
+            bundle.putString("relationship_role", "Consumer");
+            NavHostFragment.findNavController(this).navigate(R.id.invitationFragment, bundle);
+        });
     }
 
     private void showConsumerDropdown() {
@@ -110,6 +174,7 @@ public class CaregiverHomeFragment extends Fragment {
         popupContent.setOrientation(LinearLayout.VERTICAL);
         popupContent.setBackgroundResource(R.drawable.bg_log_dropdown);
         int width = dropdownConsumer.getWidth();
+        imgArrow.setImageResource(R.drawable.ic_arrow_down);
         PopupWindow popupWindow = new PopupWindow(popupContent, width, ViewGroup.LayoutParams.WRAP_CONTENT, true);
         popupWindow.setElevation(12f);
         for (CareRelationship relationship : consumerRelations){
@@ -150,8 +215,18 @@ public class CaregiverHomeFragment extends Fragment {
             public void onSuccess(List<CareRelationship> result) {
                 consumerRelations.clear();
                 consumerRelations.addAll(result);
-                if (result.isEmpty()){
+                boolean hasConsumer = !result.isEmpty();
+                groupGeneralMenu.setVisibility(hasConsumer ? View.VISIBLE : View.GONE);
+                rvDrawerConsumer.setVisibility(hasConsumer ? View.VISIBLE : View.GONE);
+                emptyConsumerDrawer.setVisibility(hasConsumer ? View.GONE : View.VISIBLE);
+                if (!hasConsumer){
                     namaConsumer.setText("Belum ada consumer");
+                    imgArrow.setImageResource(R.drawable.ic_add);
+                    dropdownConsumer.setOnClickListener(v -> {
+                        NavHostFragment.findNavController(CaregiverHomeFragment.this).navigate(R.id.invitationFragment);
+                    });
+                    haveSchedule.setVisibility(View.GONE);
+                    noSchedule.setVisibility(View.VISIBLE);
                     return;
                 } String preselected = sessionManager.getActiveConsumerUid();
                 boolean stillValid = false;
@@ -160,7 +235,13 @@ public class CaregiverHomeFragment extends Fragment {
                         stillValid = true;
                         break;
                     }
-                } selectConsumer(stillValid ? preselected : result.get(0).getConsumer_uid());
+                } String toSelect = stillValid ? preselected : result.get(0).getConsumer_uid();
+                drawerConsumerAdapter = new DrawerConsumerAdapter(consumerRelations,
+                        requireContext(),
+                        toSelect,
+                        CaregiverHomeFragment.this::onDrawerConsumerSelected);
+                rvDrawerConsumer.setAdapter(drawerConsumerAdapter);
+                selectConsumer(toSelect);
             }
 
             @Override
@@ -169,19 +250,20 @@ public class CaregiverHomeFragment extends Fragment {
             }
         });
     }
+
+    private void onDrawerConsumerSelected(String consumerUid) {
+        selectConsumer(consumerUid);
+        if (drawerConsumerAdapter != null){
+            drawerConsumerAdapter.setActiveUid(consumerUid);
+        } drawerLayout.closeDrawer(GravityCompat.START);
+    }
+
     private void selectConsumer(String consumerUid) {
         selectedConsumerUid = consumerUid;
         sessionManager.setActiveConsumerUid(consumerUid);
-        userRepository.getUserbyUid(consumerUid, new RepoCallback<User>() {
-            @Override
-            public void onSuccess(User consumer) {
-                namaConsumer.setText(consumer.getName());
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-            }
-        });
+        if (drawerConsumerAdapter != null){
+            drawerConsumerAdapter.setActiveUid(consumerUid);
+        }
         loadNextSchedule(consumerUid);
         loadTodaySchedule(consumerUid);
         loadAdherenceAndStats(consumerUid);
@@ -193,15 +275,18 @@ public class CaregiverHomeFragment extends Fragment {
                 .whereEqualTo("status", "akan datang").whereGreaterThanOrEqualTo("scheduled_at", now)
                 .orderBy("scheduled_at").limit(1).get().addOnSuccessListener(query -> {
                     if (query.isEmpty()){
-                        tvtitleCard.setText("Tidak ada jadwal.");
-                        tvTime.setText("-");
-                        tvStokNext.setText("-");
-                        btnRemindConsumer.setOnClickListener(null);
+                        haveSchedule.setVisibility(View.GONE);
+                        noSchedule.setVisibility(View.VISIBLE);
                         return;
                     }
                     DocumentSnapshot doc = query.getDocuments().get(0);
                     MedicationLog log = doc.toObject(MedicationLog.class);
-                    if (log == null) return;
+                    if (log == null){
+                        haveSchedule.setVisibility(View.GONE);
+                        noSchedule.setVisibility(View.VISIBLE);
+                        return;
+                    } haveSchedule.setVisibility(View.VISIBLE);
+                    noSchedule.setVisibility(View.GONE);
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                     tvTime.setText(sdf.format(log.getScheduled_at().toDate()));
                     resolveMedName(log.getMedication_schedules_id(), (medName, stock) -> {
@@ -210,7 +295,11 @@ public class CaregiverHomeFragment extends Fragment {
                         tvStokNext.setText("Sisa stok: " + stock);
                         btnRemindConsumer.setOnClickListener(v -> sendReminder(consumerUid, medName));
                     });
-                }).addOnFailureListener(e -> Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show());
+                }).addOnFailureListener(e -> {
+                    haveSchedule.setVisibility(View.GONE);
+                    noSchedule.setVisibility(View.VISIBLE);
+                    Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void sendReminder(String consumerUid, String medName) {
@@ -323,7 +412,15 @@ public class CaregiverHomeFragment extends Fragment {
                     }
                     Collections.sort(combined, (a, b) -> a.getTime().compareTo(b.getTime()));
                     rvTodaySchedule.setAdapter(new TodayScheduleAdapter(combined, requireContext()));
-                    emptyTodaySchedule.setVisibility(combined.isEmpty() ? View.VISIBLE : View.GONE);
+                    if (combined.isEmpty()){
+                        emptyTodaySchedule.setVisibility(View.VISIBLE);
+                        rvTodaySchedule.setVisibility(View.GONE);
+                        btnLihatSemua.setVisibility(View.GONE);
+                    } else {
+                        emptyTodaySchedule.setVisibility(View.GONE);
+                        rvTodaySchedule.setVisibility(View.VISIBLE);
+                        btnLihatSemua.setVisibility(View.VISIBLE);
+                    }
                 });
     }
 
@@ -362,5 +459,11 @@ public class CaregiverHomeFragment extends Fragment {
 
     private int dpToPx(int dp) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, getResources().getDisplayMetrics());
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        InvitationPopupHelper.checkAndShow(this, authManager);
     }
 }

@@ -19,7 +19,7 @@ public class ProgressView extends View {
     private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF rectF = new RectF();
     private int progress = 0; // 0-100
-    private float strokeWidth = 20f;
+    private float strokeWidth = 50f;
 
     public ProgressView(Context context) { super(context); init(); }
     public ProgressView(Context context, @Nullable AttributeSet attrs) { super(context, attrs); init(); }

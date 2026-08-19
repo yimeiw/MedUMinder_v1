@@ -79,7 +79,8 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
                             || navDestination.getId() == R.id.profileFragment
                             || navDestination.getId() == R.id.appointmentReminderFragment
                             || navDestination.getId() == R.id.medicineReminderFragment
-                            || navDestination.getId() == R.id.documentFragment){
+                            || navDestination.getId() == R.id.documentFragment
+                            || navDestination.getId() == R.id.invitationFragment){
                         bottomNav.setVisibility(View.GONE);
                     } else {
                         bottomNav.setVisibility(View.VISIBLE);

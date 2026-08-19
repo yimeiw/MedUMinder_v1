@@ -819,7 +819,7 @@ public class AuthManager {
         if (user == null){
             callback.onFailure("User belum login.");
             return;
-        } invitationRepo.getPendingInvitationByEmail(user.getEmail(), new RepoCallback<Invitation>() {
+        } invitationRepo.getPendingInvitationForUser(user.getAuth_uid(), user.getEmail(), new RepoCallback<Invitation>() {
             @Override
             public void onSuccess(Invitation result) {
                 callback.onSuccess(result);
