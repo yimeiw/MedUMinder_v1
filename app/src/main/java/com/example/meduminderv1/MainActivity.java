@@ -1,5 +1,6 @@
 package com.example.meduminderv1;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -22,8 +23,12 @@ import androidx.navigation.ui.NavigationUI;
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Home.HomeFragment;
 import com.example.meduminderv1.Model.LogGenerator;
+
+import com.example.meduminderv1.Reminder.AppLifecycleTracker;
+import com.example.meduminderv1.Reminder.ReminderEventBus;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
+
 import com.example.meduminderv1.Schedule.ScheduleFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
@@ -32,7 +37,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ReminderEventBus.Listener {
 
     BottomNavigationView bottomNav;
     NavController navController;
@@ -44,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        AppLifecycleTracker.init();
         setContentView(R.layout.activity_main);
 
         db = FirebaseFirestore.getInstance();
@@ -73,7 +79,8 @@ public class MainActivity extends AppCompatActivity {
                             || navDestination.getId() == R.id.profileFragment
                             || navDestination.getId() == R.id.appointmentReminderFragment
                             || navDestination.getId() == R.id.medicineReminderFragment
-                            || navDestination.getId() == R.id.documentFragment){
+                            || navDestination.getId() == R.id.documentFragment
+                            || navDestination.getId() == R.id.invitationFragment){
                         bottomNav.setVisibility(View.GONE);
                     } else {
                         bottomNav.setVisibility(View.VISIBLE);
@@ -88,6 +95,57 @@ public class MainActivity extends AppCompatActivity {
         if (user != null) {
             new LogGenerator().generateForAllActiveSchedules(user.getUid());
         }
+
+        handleReminderIntent(getIntent());
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        ReminderEventBus.setListener(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        ReminderEventBus.setListener(null);
+    }
+
+    @Override
+    public void onShowReminder(String scheduleId, String namaObat, long scheduledAt) {
+        Log.d("TEST", "MainActivity menerima reminder");
+
+        Bundle bundle = new Bundle();
+        bundle.putString("medication_schedules_id", scheduleId);
+        bundle.putString("nama_obat", namaObat);
+        bundle.putLong("scheduled_at", scheduledAt);
+        bundle.putLong("taken_at", 0L);
+        bundle.putString("status", "AKAN_DATANG");
+
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.nav_host_fragment);
+        navHostFragment.getNavController().navigate(R.id.reminderFragment, bundle);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleReminderIntent(intent);
+    }
+
+    private void handleReminderIntent(Intent intent) {
+        if (intent == null || !"reminder".equals(intent.getStringExtra("navigate_to"))) return;
+
+        Bundle bundle = new Bundle();
+        bundle.putString("medication_schedules_id", intent.getStringExtra("schedule_id"));
+        bundle.putString("nama_obat", intent.getStringExtra("nama_obat"));
+        bundle.putLong("scheduled_at", intent.getLongExtra("scheduled_at", 0L));
+        bundle.putString("status", intent.getStringExtra("status"));
+
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.nav_host_fragment);
+        navHostFragment.getNavController().navigate(R.id.reminderFragment, bundle);
     }
 
     private NavigationBarView.OnItemSelectedListener getBottomNavListener() {
@@ -118,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
                     if (updatedUser == null)return;
                     sessionManager.saveUser(updatedUser);
                     UserRole newRole = updatedUser.getCurrentRole();
-                    if (newRole != lastUserRole){
+                    if (lastUserRole == null || lastUserRole != newRole){
                         lastUserRole = newRole;
                         setupBottomNavRole(newRole);
                     }
@@ -133,9 +191,21 @@ public class MainActivity extends AppCompatActivity {
             bottomNav.inflateMenu(R.menu.bottom_nav_caregiver);
         } bottomNav.setOnItemSelectedListener(getBottomNavListener());
 
-        if (navController.getCurrentDestination() != null &&
-        bottomNav.getMenu().findItem(navController.getCurrentDestination().getId()) != null){
-            bottomNav.setSelectedItemId(navController.getCurrentDestination().getId());
+        navigateHome(role);
+    }
+
+    private void navigateHome(UserRole role) {
+        int destination;
+        if (role == UserRole.Consumer){
+            destination = R.id.homeFragment;
+        } else {
+            destination = R.id.caregiverHomeFragment;
+        } if (navController.getCurrentDestination() == null ||
+        navController.getCurrentDestination().getId() != destination){
+            NavOptions options = new NavOptions.Builder().setPopUpTo(
+                    navController.getGraph().getStartDestinationId(), true)
+                    .setLaunchSingleTop(true).build();
+            navController.navigate(destination, null, options);
         }
     }
 

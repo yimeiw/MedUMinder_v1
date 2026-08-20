@@ -7,6 +7,8 @@ import com.google.firebase.Timestamp;
 import java.util.Date;
 
 public class Appointment {
+
+    private String docId;
     private String users_id;
     private String status;
     public LogStatus getStatusEnum() {
@@ -36,9 +38,12 @@ public class Appointment {
         this.deleted_at = deleted_at;
     }
 
+    public String getDocId() {return docId;}
+
     public String getUsers_id() {
         return users_id;
     }
+
     public String getStatus() {
         return status;
     }
@@ -79,4 +84,40 @@ public class Appointment {
         }
         return LogStatus.AKAN_DATANG;
     }
+
+    public void setDocId(String docId) {
+        this.docId = docId;
+    }
+
+    public void setUsers_id(String users_id) {
+        this.users_id = users_id;
+    }
+    public void setStatus(String status) {
+        this.status = status;
+    }
+    public void setAddress(String address) {
+        this.address = address;
+    }
+    public void setTitle(String title) {
+        this.title = title;
+    }
+    public void setCreated_by(String created_by) {
+        this.created_by = created_by;
+    }
+    public void setUpdated_by(String updated_by) {
+        this.updated_by = updated_by;
+    }
+    public void setAppointment_at(Timestamp appointment_at) {
+        this.appointment_at = appointment_at;
+    }
+    public void setCreated_at(Timestamp created_at) {
+        this.created_at = created_at;
+    }
+    public void setUpdated_at(Timestamp updated_at) {
+        this.updated_at = updated_at;
+    }
+    public void setDeleted_at(Timestamp deleted_at) {
+        this.deleted_at = deleted_at;
+    }
+
 }

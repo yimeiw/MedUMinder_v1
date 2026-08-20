@@ -19,6 +19,7 @@ import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Callback.AuthCallback;
 import com.example.meduminderv1.R;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class NotificationFragment extends Fragment {
@@ -39,10 +40,6 @@ public class NotificationFragment extends Fragment {
         authManager = AuthManager.getInstance(getContext());
 
         rvNotif = view.findViewById(R.id.rvNotif);
-        typeNotif = view.findViewById(R.id.typeNotif);
-        titleNotif = view.findViewById(R.id.titleNotif);
-        messageNotif = view.findViewById(R.id.messageNotif);
-        timeNotif = view.findViewById(R.id.timeNotif);
         btnBack = view.findViewById(R.id.btnBack);
 
         btnBack.setOnClickListener(v -> {
@@ -71,9 +68,7 @@ public class NotificationFragment extends Fragment {
     }
 
     private void setupRecylerView() {
-        adapter = new NotificationAdapter(notification ->  {
-            onNotificationClick(notification);
-        });
+        adapter = new NotificationAdapter(this::onNotificationClick);
         rvNotif.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvNotif.setAdapter(adapter);
     }

@@ -9,14 +9,16 @@ public class Notification {
     private String reference_id;
 
     private String receiver_uid, sender_uid;
+    private String title;
+
     private String message;
+
     private NotificationType type;
     private boolean is_read;
     private Timestamp created_at, updated_at;
     public String getNotification_id() {
         return notification_id;
     }
-
     public void setNotification_id(String notification_id) {
         this.notification_id = notification_id;
     }
@@ -51,6 +53,14 @@ public class Notification {
 
     public void setSender_uid(String sender_uid) {
         this.sender_uid = sender_uid;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public String getMessage() {

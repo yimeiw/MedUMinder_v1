@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Model;
 
+import com.example.meduminderv1.R;
+
 public enum LogStatus {
     AKAN_DATANG("akan datang"),
     DIKONSUMSI("dikonsumsi"),
@@ -40,6 +42,19 @@ public enum LogStatus {
                 return "Terlewatkan";
             default:
                 return "";
+        }
+    }
+
+    public int getColorRes() {
+        switch (this) {
+            case DIKONSUMSI:
+                return R.color.green;
+            case TERLEWATKAN:
+                return R.color.pink;
+            case AKAN_DATANG:
+                return R.color.gray;
+            default:
+                return R.color.white;
         }
     }
 }

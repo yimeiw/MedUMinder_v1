@@ -1,10 +1,10 @@
 package com.example.meduminderv1.Profile;
 
-import android.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 
-import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
@@ -24,6 +24,7 @@ import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.R;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class InvitationFragment extends Fragment {
     private ImageButton btnBack;
@@ -32,16 +33,6 @@ public class InvitationFragment extends Fragment {
     private EditText etEmail;
     private MaterialButton btnInvite;
     private AuthManager authManager;
-    private User user;
-    private UserRole relationshipRole;
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null){
-            relationshipRole = UserRole.valueOf(getArguments().getString("relationship_role"));
-        }
-    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -57,23 +48,10 @@ public class InvitationFragment extends Fragment {
         btnInvite = view.findViewById(R.id.btnInvite);
 
         authManager = AuthManager.getInstance(requireContext());
-        loadCurrentUser();
+
+        setupPage();
+
         return view;
-    }
-
-    private void loadCurrentUser() {
-        authManager.loadCurrentUserProfile(new AuthCallback<User>() {
-            @Override
-            public void onSuccess(User result) {
-                user = result;
-                setupPage();
-            }
-
-            @Override
-            public void onFailure(String message) {
-                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     private void setupPage() {
@@ -81,18 +59,28 @@ public class InvitationFragment extends Fragment {
             NavHostFragment.findNavController(this).popBackStack();
         });
 
-        if (relationshipRole == UserRole.Caregiver){
-            tvHeaderInvite.setText("Invite Caregiver");
-            tvInvitation.setText("Sekarang kamu adalah Consumer");
-            imgInvite.setImageResource(R.drawable.ic_invite);
-            alert.setText(R.string.alert_invite_caregiver);
+        authManager.loadCurrentUserProfile(new AuthCallback<User>() {
+            @Override
+            public void onSuccess(User result) {
+                if (result.getCurrentRole() == UserRole.Consumer){
+                    tvHeaderInvite.setText("Invite Caregiver");
+                    tvInvitation.setText("Sekarang kamu adalah Consumer");
+                    imgInvite.setImageResource(R.drawable.ic_invite);
+                    alert.setText(R.string.alert_invite_caregiver);
 
-        } else {
-            tvHeaderInvite.setText("Invite Consumer");
-            tvInvitation.setText("Sekarang kamu adalah Caregiver");
-            imgInvite.setImageResource(R.drawable.ic_add_people);
-            alert.setText(R.string.alert_invite_consumer);
-        }
+                } else {
+                    tvHeaderInvite.setText("Invite Consumer");
+                    tvInvitation.setText("Sekarang kamu adalah Caregiver");
+                    imgInvite.setImageResource(R.drawable.ic_add_people);
+                    alert.setText(R.string.alert_invite_consumer);
+                }
+            }
+
+            @Override
+            public void onFailure(String message) {
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
 
         btnInvite.setOnClickListener(v -> {
             sendInvitation();
@@ -104,10 +92,10 @@ public class InvitationFragment extends Fragment {
         if (email.isEmpty()){
             etEmail.setError("Email wajib diisi");
             return;
-        } authManager.sendInvitation(email, relationshipRole, new InvitationCallback() {
+        } authManager.sendInvitation(email, authManager.getCurrentUser().getCurrentRole(), new InvitationCallback() {
             @Override
             public void onSuccess(boolean registered) {
-                if (registered){
+                if (registered){ // jika user sudah terdaftar
                     Toast.makeText(requireContext(), "Invitation berhasil dikirim.", Toast.LENGTH_SHORT).show();
                     NavHostFragment.findNavController(InvitationFragment.this).popBackStack();
                 } else {
@@ -123,18 +111,28 @@ public class InvitationFragment extends Fragment {
     }
 
     private void showShareDialog(String email) {
-        new AlertDialog.Builder(requireContext())
-                .setTitle("User belum terdaftar")
-                .setMessage("Email belum terdaftar pada aplikasi MedUMinder." +
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
+        builder.setTitle("Undangan berhasil dibuat.")
+                .setMessage("Tetapi email tersebut belum terdaftar pada aplikasi MedUMinder." +
                         "\nBagikan link aplikasi agar pengguna dapat mendaftar menggunakan email tersebut.")
                 .setNegativeButton("Nanti", null)
-                .setPositiveButton("Bagikan", (dialog, which) -> shareInvitation(email)).show();
+                .setPositiveButton("Bagikan", (dialog, which) -> {
+                    shareInvitation(email);
+                });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        if (dialog.getWindow() != null){
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.green));
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.pink));
+        }
     }
-
     private void shareInvitation(String email) {
+    //    String appLink = "https://play.google.com/store/apps/details?id=" + requireContext().getPackageName();
         String message = "Saya mengundang Anda bergabung di MedUMinder.\n\n" +
-                "Silahkan download aplikasi MedUMinder dan daftar menggunakan email: "
-                + email + "\n\nSetelah login, invitation akan otomatis muncul pada menu Notification.";
+                "Silahkan download aplikasi MedUMinder menggunakan link berikut:\n" +
+                /* appLink + */ "\n\nDaftar menggunakan email atau google dengan email: "
+                + email + "\n\nSetelah login menggunakan email tersebut, Invitation akan otomatis muncul pada menu Notification.";
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("text/plain");
         intent.putExtra(Intent.EXTRA_TEXT, message);

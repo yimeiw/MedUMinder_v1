@@ -23,6 +23,7 @@ import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Invitation.Invitation;
 import com.example.meduminderv1.Invitation.InvitationStatus;
 import com.example.meduminderv1.Model.AuthProviderType;
+import com.example.meduminderv1.Model.CareRelationship;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
@@ -44,6 +45,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.auth.UserInfo;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -104,16 +106,17 @@ public class AuthManager {
         if (user == null){
             callback.onFailure("Data user tidak boleh kosong.");
             return;
-        } if (user.getEmail() == null || user.getEmail().trim().isEmpty()){
+        } String cleanEmail = user.getEmail() != null ? user.getEmail().trim() : "";
+        if (cleanEmail.isEmpty()){
             callback.onFailure("Email tidak boleh kosong.");
             return;
-        } if (!Patterns.EMAIL_ADDRESS.matcher(user.getEmail().trim()).matches()){
+        } if (!Patterns.EMAIL_ADDRESS.matcher(cleanEmail).matches()){
             callback.onFailure("Format email tidak valid.");
             return;
         } if (password == null || password.length() < 6){
             callback.onFailure("Password minimal 6 karakter.");
             return;
-        }
+        } user.setEmail(cleanEmail);
 
         mAuth.createUserWithEmailAndPassword(user.getEmail(), password).addOnSuccessListener(authResult -> {
             FirebaseUser firebaseUser = authResult.getUser();
@@ -122,10 +125,30 @@ public class AuthManager {
                 return;
             }
             user.setAuth_uid(firebaseUser.getUid());
-            saveUserProfile(user, callback);
+            saveUserProfile(user, new AuthCallback<User>() {
+                @Override
+                public void onSuccess(User user) {
+//                    syncInvitation(user, new AuthCallback<Void>() {
+//                        @Override
+//                        public void onSuccess(Void result) {
+//                            callback.onSuccess(user);
+//                        }
+//
+//                        @Override
+//                        public void onFailure(String message) {
+//                            Log.w("Register", "Sync invitation gagal: " + message);
+//                            callback.onSuccess(user);
+//                        }
+//                    });
+                }
+
+                @Override
+                public void onFailure(String message) {
+                    callback.onFailure(message);
+                }
+            });
         }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
-
     public void loginWithEmail(String email, String password, AuthCallback<User> callback){
         if (email == null || email.trim().isEmpty()){
             callback.onFailure("Email tidak boleh kosong");
@@ -205,7 +228,6 @@ public class AuthManager {
     public void loginWithGoogle(Activity activity, AuthCallback<User> callback){
         startGoogleSignIn(activity, callback);
     }
-
     private void startGoogleSignIn(Activity activity, AuthCallback<User> callback) {
         GetGoogleIdOption googleIdOption = new GetGoogleIdOption.Builder().setFilterByAuthorizedAccounts(false)
                 .setServerClientId(activity.getString(R.string.default_web_client_id)).setAutoSelectEnabled(false).build();
@@ -224,7 +246,6 @@ public class AuthManager {
                     }
                 });
     }
-
     private void handleGoogleCredential(GetCredentialResponse response, AuthCallback<User> callback) {
         Credential credential = response.getCredential();
         if (!(credential instanceof CustomCredential)){
@@ -242,7 +263,6 @@ public class AuthManager {
             callback.onFailure(e.getMessage());
         }
     }
-
     private void firebaseGoogleLogin(String idToken, AuthCallback<User> callback) {
         AuthCredential authCredential = GoogleAuthProvider.getCredential(idToken, null);
         mAuth.signInWithCredential(authCredential).addOnSuccessListener(result -> {
@@ -254,7 +274,6 @@ public class AuthManager {
             checkGoogleProfile(firebaseUser, callback);
         }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
-
     private void checkGoogleProfile(FirebaseUser firebaseUser,  AuthCallback<User> callback) {
         userRepository.getUserbyUid(firebaseUser.getUid(), new RepoCallback<User>() {
             @Override
@@ -278,7 +297,27 @@ public class AuthManager {
                 user.setCreated_at(Timestamp.now());
                 user.setUpdated_at(Timestamp.now());
                 user.setDeleted_at(null);
-                saveUserProfile(user, callback);
+                saveUserProfile(user, new AuthCallback<User>() {
+                    @Override
+                    public void onSuccess(User user) {
+//                        syncInvitation(user, new AuthCallback<Void>() {
+//                            @Override
+//                            public void onSuccess(Void result) {
+//                                callback.onSuccess(user);
+//                            }
+//
+//                            @Override
+//                            public void onFailure(String message) {
+//                                callback.onSuccess(user);
+//                            }
+//                        });
+                    }
+
+                    @Override
+                    public void onFailure(String message) {
+                        callback.onFailure(message);
+                    }
+                });
             }
         });
     }
@@ -452,20 +491,6 @@ public class AuthManager {
                 Log.e("LOGOUT", "Clear credential gagal", e);
                 //firebasenya sudah logout, jadi tidak dianggap gagal
                 callback.onSuccess(null);
-            }
-        });
-    }
-
-    public void updateProfile(User user, AuthCallback<User> callback){
-        userRepository.updateUser(user, new RepoCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
-                loadUserProfile(user.getAuth_uid(), callback);
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                callback.onFailure(e.getMessage());
             }
         });
     }
@@ -646,26 +671,34 @@ public class AuthManager {
         if (sender == null) {
             callback.onFailure("Data user tidak ditemukan.");
             return;
-        } if (receiverEmail.trim().isEmpty()){
-            callback.onFailure("Anda tidak adapat mengundang akun sendiri.");
+        } final String email = receiverEmail.trim();
+        if (email.isEmpty()){
+            callback.onFailure("Email wajib diisi.");
             return;
-        } userRepository.getUserbyEmail(receiverEmail, new RepoCallback<User>() {
+        } if (email.equalsIgnoreCase(sender.getEmail())){
+            callback.onFailure("Anda tidak dapat mengundang akun sendiri.");
+            return;
+        } userRepository.getUserbyEmail(email, new RepoCallback<User>() {
             @Override
-            public void onSuccess(User result) {
-                String receiverUid = result == null ? null : result.getAuth_uid();
-                relationshipRepo.hasRelationship(sender.getAuth_uid(), receiverUid, new RepoCallback<Boolean>() {
+            public void onSuccess(User receiver) {
+                //user belum terdaftar
+                if (receiver == null){
+                    createInvitation(sender, null, email, relationshipRole, callback);
+                    return;
+                } //user sudah terdaftar
+                relationshipRepo.hasRelationship(sender.getAuth_uid(), receiver.getAuth_uid(), new RepoCallback<Boolean>() {
                     @Override
                     public void onSuccess(Boolean hasRelationship) {
                         if (Boolean.TRUE.equals(hasRelationship)){
                             callback.onFailure("User sudah terhubung.");
                             return;
-                        } invitationRepo.hasPendingInvitation(sender.getAuth_uid(), receiverEmail, new RepoCallback<Boolean>() {
+                        } invitationRepo.hasPendingInvitation(sender.getAuth_uid(), email, new RepoCallback<Boolean>() {
                             @Override
                             public void onSuccess(Boolean pending) {
                                 if (Boolean.TRUE.equals(pending)){
                                     callback.onFailure("Invitation masih pending.");
                                     return;
-                                } createInvitation(sender, result, receiverEmail, relationshipRole, callback);
+                                } createInvitation(sender, receiver, email, relationshipRole, callback);
                             }
 
                             @Override
@@ -682,6 +715,7 @@ public class AuthManager {
                 });
             }
 
+
             @Override
             public void onFailure(Exception e) {
                 callback.onFailure(e.getMessage());
@@ -689,30 +723,89 @@ public class AuthManager {
         });
     }
 
+    private void loadReceiver(User sender, String email, UserRole relationshipRole, InvitationCallback callback) {
+        userRepository.getUserbyEmail(email, new RepoCallback<User>() {
+            @Override
+            public void onSuccess(User receiver) {
+                checkInvitation(sender, receiver, email, relationshipRole, callback);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
+    private void checkInvitation(User sender, User receiver, String receiverEmail, UserRole relationshipRole, InvitationCallback callback) {
+        if (receiver == null){
+            createInvitation(sender, null, receiverEmail, relationshipRole, callback);
+            return;
+        } relationshipRepo.hasRelationship(sender.getAuth_uid(), receiver.getAuth_uid(), new RepoCallback<Boolean>() {
+            @Override
+            public void onSuccess(Boolean hasRelationship) {
+                if (Boolean.TRUE.equals(hasRelationship)){
+                    callback.onFailure("User sudah terhubung.");
+                    return;
+                } invitationRepo.hasPendingInvitation(sender.getAuth_uid(), receiverEmail, new RepoCallback<Boolean>() {
+                    @Override
+                    public void onSuccess(Boolean result) {
+                        if (Boolean.TRUE.equals(result)) {
+                            callback.onFailure("Invitation masih pending.");
+                            return;
+                        } createInvitation(sender, receiver, receiverEmail, relationshipRole, callback);
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        callback.onFailure(e.getMessage());
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
     private void createInvitation(User sender, User receiver, String receiverEmail, UserRole relationshipRole, InvitationCallback callback) {
         Invitation invitation = new Invitation();
         invitation.setInvitation_id(UUID.randomUUID().toString());
         invitation.setSender_uid(sender.getAuth_uid());
         invitation.setSender_name(sender.getName());
         invitation.setSender_email(sender.getEmail());
-        invitation.setReceiver_uid(receiver.getAuth_uid());
         invitation.setReceiver_email(receiverEmail);
+
+        if (receiver != null){
+            invitation.setReceiver_uid(receiver.getAuth_uid());
+        } else {
+            invitation.setReceiver_uid(null);
+        }
+
         invitation.setInvite_role(relationshipRole);
         invitation.setStatus(InvitationStatus.Pending);
         invitation.setCreated_at(Timestamp.now());
         invitation.setUpdated_at(Timestamp.now());
 
-        if (receiver != null){
-            invitation.setReceiver_uid(receiver.getAuth_uid());
-        }
-
         invitationRepo.createInvitation(invitation, new RepoCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                if (receiver == null){
+                //user belum terdaftar
+                if (receiver == null) {
                     callback.onSuccess(false);
                     return;
-                } createNotification(invitation, callback);
+                } //user sudah terdaftar
+                createNotification(invitation, receiver.getAuth_uid(), new AuthCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void result) {
+                        callback.onSuccess(true);
+                    }
+
+                    @Override
+                    public void onFailure(String message) {
+                        callback.onFailure(message);
+                    }
+                });
             }
 
             @Override
@@ -721,14 +814,136 @@ public class AuthManager {
             }
         });
     }
+    public void getPendingInvitation(AuthCallback<Invitation> callback){
+        User user = getCurrentUser();
+        if (user == null){
+            callback.onFailure("User belum login.");
+            return;
+        } invitationRepo.getPendingInvitationForUser(user.getAuth_uid(), user.getEmail(), new RepoCallback<Invitation>() {
+            @Override
+            public void onSuccess(Invitation result) {
+                callback.onSuccess(result);
+            }
 
-    private void createNotification(Invitation invitation, InvitationCallback callback) {
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
+    public void respondToInvitation(String invitationId, boolean accept, AuthCallback<User> callback){
+        invitationRepo.getInvitationById(invitationId, new RepoCallback<Invitation>() {
+            @Override
+            public void onSuccess(Invitation invitation) {
+                InvitationStatus newStatus = accept ? InvitationStatus.Accepted : InvitationStatus.Rejected;
+                invitationRepo.updateInvitationStatus(invitationId, newStatus, new RepoCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void result) {
+                        if (accept){
+                            handleAcceptedInvitation(invitation, callback);
+                        } else {
+                            notifySender(invitation, false);
+                            callback.onSuccess(null); //tidak ada perpindahan role
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        callback.onFailure(e.getMessage());
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
+    private void handleAcceptedInvitation(Invitation invitation, AuthCallback<User> callback) {
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        String receiverUid = firebaseUser.getUid();
+        //Tentukan siapa consumer & siapa caregiver dalam relationship
+        CareRelationship relationship = new CareRelationship();
+        String consumerUid;
+        if (invitation.getInvite_role() == UserRole.Caregiver){
+            consumerUid = invitation.getSender_uid();
+            relationship.setConsumer_uid(consumerUid);
+            relationship.setCaregiver_uid(receiverUid);
+        } else {
+            consumerUid = receiverUid;
+            relationship.setConsumer_uid(consumerUid);
+            relationship.setCaregiver_uid(invitation.getSender_uid());
+        } relationshipRepo.createRelationship(relationship, new RepoCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                notifySender(invitation, true);
+                if (invitation.getInvite_role() == UserRole.Caregiver){
+                    sessionManager.setActiveConsumerUid(consumerUid); //cmn state
+                    //auto enable role caregiver + switch role ke caregiver dan diarahkan ke home caregiver
+                    userRepository.enableCaregiver(receiverUid, new RepoCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void result) {
+                            switchRole(UserRole.Caregiver, callback);
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            callback.onFailure(e.getMessage());
+                        }
+                    });
+                } else {
+                    loadUserProfile(receiverUid, callback); //tetap dirole sekarang
+                }
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
+    public void linkAndRespondInvitation(String invitationId, boolean accept, AuthCallback<User> callback){
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser == null){
+            callback.onFailure("User belum login.");
+            return;
+        } invitationRepo.linkReceiver(invitationId, firebaseUser.getUid(), new RepoCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                respondToInvitation(invitationId, accept, callback);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
+    private void notifySender(Invitation invitation, boolean accepted) {
+        Notification notif = new Notification();
+        notif.setReceiver_uid(invitation.getSender_uid());
+        notif.setSender_uid(invitation.getReceiver_uid());
+        notif.setInvitation_id(invitation.getInvitation_id());
+        notif.setType(NotificationType.Invitation);
+        notif.setMessage(accepted ? "Undangan Anda diterima." : "Undangan Anda ditolak.");
+        notif.setIs_read(false);
+        notificationRepo.createNotification(notif, new RepoCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+            }
+        });
+    }
+    private void createNotification(Invitation invitation, String receiverUid, AuthCallback<Void> callback) {
         Notification notification = new Notification();
         notification.setNotification_id(UUID.randomUUID().toString());
-        notification.setReceiver_uid(invitation.getReceiver_uid());
-        notification.setSender_uid(invitation.getSender_uid());
-        notification.setInvitation_id(invitation.getInvitation_id());
+        notification.setReceiver_uid(receiverUid);
         notification.setType(NotificationType.Invitation);
+        notification.setTitle("Invitation " + invitation.getInvite_role().name());
         notification.setMessage(invitation.getSender_name()
         + " mengundang Anda menjadi " + invitation.getInvite_role().name());
         notification.setIs_read(false);
@@ -737,7 +952,7 @@ public class AuthManager {
         notificationRepo.createNotification(notification, new RepoCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                callback.onSuccess(true);
+                callback.onSuccess(null);
             }
 
             @Override
@@ -746,13 +961,12 @@ public class AuthManager {
             }
         });
     }
-//notif
     public void loadNotification(AuthCallback<List<Notification>> callback){
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null){
             callback.onFailure("User belum login.");
             return;
-        } notificationRepo.getNotification(firebaseUser.getUid(), new RepoCallback<List<Notification>>() {
+        } notificationRepo.loadNotification(firebaseUser.getUid(), new RepoCallback<List<Notification>>() {
             @Override
             public void onSuccess(List<Notification> result) {
                 callback.onSuccess(result);

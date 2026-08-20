@@ -35,6 +35,10 @@
             android:src="@drawable/ic_arrow_down"/>
     </LinearLayout>
 
+    <include
+        android:id="@+id/consumerPicker"
+        layout="@layout/dropdown_consumer_picker"/>
+
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -45,15 +49,14 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="horizontal"
-            android:layout_marginTop="15dp"
-            android:paddingHorizontal="5dp"
+            android:paddingHorizontal="2dp"
             >
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAll"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="9dp"
+                android:layout_marginEnd="10dp"
                 style="@style/MaterialButtonLog"
                 android:text="Semua"
                 android:textSize="12sp"
@@ -64,7 +67,7 @@
                 android:id="@+id/btnUpcoming"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="9dp"
+                android:layout_marginEnd="10dp"
                 style="@style/MaterialButtonLog"
                 android:textAllCaps="false"
                 android:textSize="12sp"
@@ -74,7 +77,7 @@
                 android:id="@+id/btnTaken"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="9dp"
+                android:layout_marginEnd="10dp"
                 style="@style/MaterialButtonLog"
                 android:textAllCaps="false"
                 android:textSize="12sp"
@@ -122,5 +125,6 @@
         android:id="@+id/rvLogs"
         android:layout_weight="1"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        />
 </LinearLayout>

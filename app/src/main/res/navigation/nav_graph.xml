@@ -74,13 +74,34 @@
         android:name="com.example.meduminderv1.Notification.NotificationDetailFragment"
         android:label="Notification Detail"
         tools:layout="@layout/fragment_notification_detail"/>
+    <fragment
+        android:id="@+id/invitationFragment"
+        android:name="com.example.meduminderv1.Profile.InvitationFragment"
+        android:label="Invitation"
+        tools:layout="@layout/fragment_invitation"/>
+    <fragment
+        android:id="@+id/relationListFragment"
+        android:name="com.example.meduminderv1.Profile.RelationListFragment"
+        android:label="Relation List"
+        tools:layout="@layout/fragment_relation_list"/>
+    <fragment
+        android:id="@+id/statistikFragment"
+        android:name="com.example.meduminderv1.Statistik.StatistikFragment"
+        android:label="Statistik"
+        tools:layout="@layout/fragment_statistik"/>
 
     <!--    caregiver-->
     <fragment
         android:id="@+id/caregiverHomeFragment"
-        android:name="com.example.meduminderv1.Caregiver.CaregiverHomeFragment"
+        android:name="com.example.meduminderv1.Home.CaregiverHomeFragment"
         android:label="Caregiver Home"
         tools:layout="@layout/fragment_caregiver_home" />
 
+
+    <fragment
+        android:id="@+id/reminderFragment"
+        android:name="com.example.meduminderv1.Reminder.ReminderFragment"
+        android:label="Reminder"
+        />
 
 </navigation>

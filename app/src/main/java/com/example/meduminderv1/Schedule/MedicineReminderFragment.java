@@ -2,7 +2,10 @@ package com.example.meduminderv1.Schedule;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
+import android.util.TypedValue;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
@@ -25,6 +28,12 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.example.meduminderv1.Model.LogGenerator;
+import com.example.meduminderv1.R;
+import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
+import com.google.android.material.button.MaterialButton;
+import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Model.Medication;
@@ -75,8 +84,8 @@ public class MedicineReminderFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                Bundle savedInstanceState) {
-        View view =  inflater.inflate(R.layout.fragment_medicine_reminder, container, false);
+                             Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_medicine_reminder, container, false);
 
         btnBack = view.findViewById(R.id.btnBack);
         namaObat = view.findViewById(R.id.namaObat);
@@ -206,13 +215,13 @@ public class MedicineReminderFragment extends Fragment {
         });
 
         String[] frequencies = {"Sekali sehari", "Dua kali sehari", "Tiga kali sehari", "Empat kali sehari", "Lima kali sehari", "Enam kali sehari"};
-        ArrayAdapter<String> freqAdapter = new ArrayAdapter<>(requireContext(),android.R.layout.simple_list_item_1, frequencies);
+        ArrayAdapter<String> freqAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, frequencies);
         freqMinumObat.setAdapter(freqAdapter);
 
         freqMinumObat.setInputType(0);
-        freqMinumObat.setOnClickListener(v ->{
-            if(!isDropdownOpen){
-                freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_arrow_up,0);
+        freqMinumObat.setOnClickListener(v -> {
+            if (!isDropdownOpen) {
+                freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_up, 0);
                 freqMinumObat.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
                 freqMinumObat.setDropDownVerticalOffset(20);
                 freqMinumObat.showDropDown();
@@ -224,11 +233,11 @@ public class MedicineReminderFragment extends Fragment {
             String selected = parent.getItemAtPosition(position).toString();
             int frequency = convertFrequencyToNumber(selected);
             createTimeFields(frequency);
-            freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_arrow_down,0);
+            freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
         });
 
-        freqMinumObat.setOnDismissListener(()->{
-            freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_arrow_down,0);
+        freqMinumObat.setOnDismissListener(() -> {
+            freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
             freqMinumObat.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
             freqMinumObat.setDropDownVerticalOffset(20);
             isDropdownOpen = false;
@@ -257,7 +266,7 @@ public class MedicineReminderFragment extends Fragment {
     }
 
     private int convertFrequencyToNumber(String selected) {
-        switch (selected){
+        switch (selected) {
             case "Sekali sehari":
                 return 1;
             case "Dua kali sehari":
@@ -388,7 +397,7 @@ public class MedicineReminderFragment extends Fragment {
         int labelColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface);
         int hintColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorPrimaryInverse);
 
-        for (int i = 1; i <= frequency; i++){
+        for (int i = 1; i <= frequency; i++) {
             TextView label = new TextView(requireContext());
             label.setText("Jam Minum Obat " + i);
             label.setPadding(20,10,20,5);
