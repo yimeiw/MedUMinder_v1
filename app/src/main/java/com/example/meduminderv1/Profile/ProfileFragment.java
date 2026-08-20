@@ -27,12 +27,19 @@ import android.widget.Toast;
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.AuthCallback;
+import com.example.meduminderv1.Home.ProgressView;
 import com.example.meduminderv1.Login.LoginActivity;
 import com.example.meduminderv1.MainActivity;
+import com.example.meduminderv1.Model.LogStatus;
+import com.example.meduminderv1.Model.MedicationLog;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.R;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.DocumentSnapshot;
+
+import java.util.Calendar;
 
 public class ProfileFragment extends Fragment {
 
@@ -40,11 +47,13 @@ public class ProfileFragment extends Fragment {
     SessionManager sessionManager;
     User user;
     AuthManager authManager;
-    TextView curr_role, name_input, email_input, txtAktivasi, txtListRelation;
+    TextView curr_role, name_input, email_input, txtAktivasi, txtListRelation,
+            adherencePercent, adherenceDesc;
     RelativeLayout themeSwitch;
     ImageView iconToggle, imgAktivasi;
     SharedPreferences prefs;
     LinearLayout btnEditProfile, btnAktivasi, btnListRelation;
+    ProgressView adherenceRing;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -119,16 +128,16 @@ public class ProfileFragment extends Fragment {
             if (!user.isCaregiver_enabled()){
                 showEnableCaregiver(false);
             } else {
-                openInvation();
+                return;
             }
         });
 
+        adherenceDesc = view.findViewById(R.id.adherenceDesc);
+        adherencePercent = view.findViewById(R.id.adherencePercent);
+        adherenceRing = view.findViewById(R.id.adherenceRing);
+
         return view;
     }
-
-    private void openInvation() {
-    }
-
     private void showLogoutDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle("Logout");
@@ -333,6 +342,12 @@ public class ProfileFragment extends Fragment {
             imgAktivasi.setImageResource(R.drawable.ic_add_people);
             btnAktivasi.setOnClickListener(v -> NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
         }
+    }
+
+    private String adherenceDesc(int percent) {
+        if (percent >= 80) return "@string/desc_kepatuhan_tinggi";
+        if (percent >= 50) return "@string/desc_kepatuhan_okela";
+        return "@string/desc_kepatuhan_rendah";
     }
 
 }

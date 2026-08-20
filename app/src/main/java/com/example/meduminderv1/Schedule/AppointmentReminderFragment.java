@@ -15,6 +15,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.meduminderv1.Caregiver.ConsumerPickerHelper;
 import com.example.meduminderv1.Notification.NotificationFragment;
 import com.example.meduminderv1.R;
 import com.google.android.material.button.MaterialButton;
@@ -35,6 +36,8 @@ public class AppointmentReminderFragment extends Fragment {
     Calendar selectedCalendar;
     FirebaseAuth mAuth;
     FirebaseFirestore db;
+    ConsumerPickerHelper consumerPickerHelper;
+    String targetUid;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -56,6 +59,15 @@ public class AppointmentReminderFragment extends Fragment {
         selectedCalendar = Calendar.getInstance();
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
+
+        View pickerRoot = viewF.findViewById(R.id.consumerPicker);
+        consumerPickerHelper = new ConsumerPickerHelper(pickerRoot, requireContext(), uid -> {
+            targetUid = uid;
+            if (uid == null){
+                pickerRoot.setOnClickListener(v ->  NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
+                return;
+            }
+        }); consumerPickerHelper.setup();
 
         tvDate.setOnClickListener(v -> {
             Calendar today = Calendar.getInstance();

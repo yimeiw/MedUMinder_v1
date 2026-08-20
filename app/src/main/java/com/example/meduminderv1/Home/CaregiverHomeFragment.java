@@ -58,14 +58,14 @@ import java.util.UUID;
 
 public class CaregiverHomeFragment extends Fragment {
 
-    TextView namaConsumer, tvGreeting, tvtitleCard, tvTime, tvStokNext, tvAdherenceDesc,
+    TextView tvGreeting, tvtitleCard, tvTime, tvStokNext, tvAdherenceDesc,
             tvTotalDikonsumsi, tvTotalTerlewat, tvTotalAkanDatang, emptyTodaySchedule, btnLihatSemua,
-            labelListConsumer, emptyConsumerDrawer;
+            labelListConsumer;
     ImageView imgArrow;
     DrawerLayout drawerLayout;
     ImageButton btnSideNav, btnNotif;
-    LinearLayout dropdownConsumer, haveSchedule, noSchedule, drawerContainer, groupGeneralMenu,
-            navDocument, navRiwayat, navStatistik, navAddConsumer;
+    LinearLayout dropdownConsumer, haveSchedule, noSchedule,  groupGeneralMenu,
+            navDocument, navRiwayat, navStatistik;
     RecyclerView rvTodaySchedule, rvDrawerConsumer;
     DrawerConsumerAdapter drawerConsumerAdapter;
     MaterialButton btnRemindConsumer;
@@ -94,7 +94,6 @@ public class CaregiverHomeFragment extends Fragment {
         groupGeneralMenu = view.findViewById(R.id.groupGeneralMenu);
         labelListConsumer = view.findViewById(R.id.labelListConsumer);
         rvDrawerConsumer = view.findViewById(R.id.rvDrawerConsumer);
-        emptyConsumerDrawer = view.findViewById(R.id.emptyConsumerDrawer);
         navDocument = view.findViewById(R.id.navDocument);
         navRiwayat = view.findViewById(R.id.navRiwayat);
         navStatistik = view.findViewById(R.id.navStatistik);
@@ -141,10 +140,10 @@ public class CaregiverHomeFragment extends Fragment {
         consumerPicker = new ConsumerPickerHelper( pickerRoot, requireContext(), uid -> {
             targetUid = uid;
             if (uid == null){
+                pickerRoot.setOnClickListener(v ->  NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
                 return;
             } showConsumerDropdown();
         }); consumerPicker.setup();
-
         return view;
     }
     private void setupSideNavInteractions(View view) {
@@ -181,7 +180,7 @@ public class CaregiverHomeFragment extends Fragment {
             View row = LayoutInflater.from(requireContext())
                     .inflate(R.layout.item_dropdown_consumer, popupContent, false);
             TextView tvName = row.findViewById(R.id.itemConsumerName);
-            tvName.setText("Mmeuat...");
+            tvName.setText("Memuat...");
             String consumerUid = relationship.getConsumer_uid();
             userRepository.getUserbyUid(consumerUid, new RepoCallback<User>() {
                 @Override
@@ -206,58 +205,6 @@ public class CaregiverHomeFragment extends Fragment {
         });
         popupWindow.showAsDropDown(dropdownConsumer, 0, dpToPx(8));
     }
-
-    private void loadConsumerList() {
-        User user = sessionManager.getUser();
-        if (user == null) return;
-        careRelationshipRepo.getConsumerForCaregiver(user.getAuth_uid(), new RepoCallback<List<CareRelationship>>() {
-            @Override
-            public void onSuccess(List<CareRelationship> result) {
-                consumerRelations.clear();
-                consumerRelations.addAll(result);
-                boolean hasConsumer = !result.isEmpty();
-                groupGeneralMenu.setVisibility(hasConsumer ? View.VISIBLE : View.GONE);
-                rvDrawerConsumer.setVisibility(hasConsumer ? View.VISIBLE : View.GONE);
-                emptyConsumerDrawer.setVisibility(hasConsumer ? View.GONE : View.VISIBLE);
-                if (!hasConsumer){
-                    namaConsumer.setText("Belum ada consumer");
-                    imgArrow.setImageResource(R.drawable.ic_add);
-                    dropdownConsumer.setOnClickListener(v -> {
-                        NavHostFragment.findNavController(CaregiverHomeFragment.this).navigate(R.id.invitationFragment);
-                    });
-                    haveSchedule.setVisibility(View.GONE);
-                    noSchedule.setVisibility(View.VISIBLE);
-                    return;
-                } String preselected = sessionManager.getActiveConsumerUid();
-                boolean stillValid = false;
-                for (CareRelationship relationship : result){
-                    if (relationship.getConsumer_uid().equals(preselected)){
-                        stillValid = true;
-                        break;
-                    }
-                } String toSelect = stillValid ? preselected : result.get(0).getConsumer_uid();
-                drawerConsumerAdapter = new DrawerConsumerAdapter(consumerRelations,
-                        requireContext(),
-                        toSelect,
-                        CaregiverHomeFragment.this::onDrawerConsumerSelected);
-                rvDrawerConsumer.setAdapter(drawerConsumerAdapter);
-                selectConsumer(toSelect);
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private void onDrawerConsumerSelected(String consumerUid) {
-        selectConsumer(consumerUid);
-        if (drawerConsumerAdapter != null){
-            drawerConsumerAdapter.setActiveUid(consumerUid);
-        } drawerLayout.closeDrawer(GravityCompat.START);
-    }
-
     private void selectConsumer(String consumerUid) {
         selectedConsumerUid = consumerUid;
         sessionManager.setActiveConsumerUid(consumerUid);

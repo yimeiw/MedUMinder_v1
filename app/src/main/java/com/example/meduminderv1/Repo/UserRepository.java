@@ -1,13 +1,18 @@
 package com.example.meduminderv1.Repo;
 
 import android.util.Log;
+import android.widget.Toast;
 
 import com.example.meduminderv1.Callback.RepoCallback;
+import com.example.meduminderv1.Model.LogStatus;
+import com.example.meduminderv1.Model.MedicationLog;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 

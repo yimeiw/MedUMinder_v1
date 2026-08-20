@@ -17,7 +17,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:id="@+id/headerSection">
+            android:id="@+id/headerSection"
+            android:layout_marginBottom="20dp">
 
             <ImageButton
                 android:layout_width="30dp"
@@ -40,11 +41,14 @@
 
         </LinearLayout>
 
+        <include
+            android:id="@+id/consumerPicker"
+            layout="@layout/dropdown_consumer_picker"/>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginVertical="10dp">
+            android:orientation="vertical">
 
             <TextView
                 android:layout_width="match_parent"
