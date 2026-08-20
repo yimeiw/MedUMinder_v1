@@ -10,29 +10,48 @@
     tools:context=".Log.LogFragment">
 
     <LinearLayout
-        android:id="@+id/layoutFilter"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:layout_gravity="center_horizontal"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:id="@+id/headerSection"
+        android:layout_marginBottom="20dp"
+        >
 
-        <TextView
-            android:id="@+id/tvType"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Riwayat Konsumsi"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="@color/black"
+        <ImageButton
+            android:layout_width="30dp"
+            android:layout_height="26dp"
+            android:background="@drawable/ic_back"
+            android:id="@+id/btnBack"
+            android:layout_gravity="center"
+            app:tint="@color/hover_pressed"
             />
 
-        <ImageView
-            android:id="@+id/imgArrow"
-            android:layout_marginStart="10dp"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/ic_arrow_down"/>
+        <LinearLayout
+            android:id="@+id/layoutFilter"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_gravity="center_horizontal"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Riwayat Konsumsi"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                />
+
+            <ImageView
+                android:id="@+id/imgArrow"
+                android:layout_marginStart="10dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_arrow_down"/>
+        </LinearLayout>
     </LinearLayout>
 
     <include

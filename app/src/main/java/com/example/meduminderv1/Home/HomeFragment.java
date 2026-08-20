@@ -9,8 +9,10 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -42,6 +44,7 @@ import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.InvitationRepo;
+import com.example.meduminderv1.Repo.MedicationRepo;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.Timestamp;
@@ -61,15 +64,17 @@ import java.util.UUID;
 public class HomeFragment extends Fragment {
 
     TextView tvGreeting, tvtitleCard, tvTime, tvTotalStok, tvAdherenceDesc,
-            tvTotalDikonsumsi, tvTotalTerlewat, tvTotalAkanDatang, emptyTodaySchedule, btnLihatSemua;
+            tvTotalDikonsumsi, tvTotalTerlewat, tvTotalAkanDatang, btnLihatSemua, emptyTodaySchedule;
     ImageButton btnNotif, btnProfile;
     MaterialButton addNoSchedule, btnKonfirmasi;
     RecyclerView rvTodaySchedule;
     LinearLayout addMed, addAppoint, addDoc, haveSchedule, noSchedule;
-    ProgressView adherenceRing;
     SharedPreferences prefs;
     AuthManager authManager;
     FirebaseFirestore db;
+    MedicationRepo medicationRepo;
+    private String nextLogId;
+    private String nextMedId;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -92,10 +97,11 @@ public class HomeFragment extends Fragment {
         btnKonfirmasi = view.findViewById(R.id.btnKonfirmasi);
         btnLihatSemua = view.findViewById(R.id.viewAll);
         rvTodaySchedule = view.findViewById(R.id.rvTodaySchedule);
-        adherenceRing = view.findViewById(R.id.adherenceRing);
+        emptyTodaySchedule = view.findViewById(R.id.emptyTodaySchedule);
 
         authManager = AuthManager.getInstance(requireContext());
         db = FirebaseFirestore.getInstance();
+        medicationRepo = new MedicationRepo();
 
         btnNotif.setImageDrawable(requireContext().getDrawable(R.drawable.ic_notif));
         btnProfile.setImageDrawable(requireContext().getDrawable(R.drawable.ic_profile));
@@ -132,6 +138,7 @@ public class HomeFragment extends Fragment {
             NavHostFragment.findNavController(this)
                     .navigate(R.id.scheduleFragment);
         });
+        rvTodaySchedule.setLayoutManager(new LinearLayoutManager(requireContext()));
 
         return view;
     }
@@ -141,11 +148,22 @@ public class HomeFragment extends Fragment {
             tvGreeting.setText("Halo, " + user.getName() + "!");
         }
     }
-    private void checkPendingInvitation(){
-        authManager.getPendingInvitation(new AuthCallback<Invitation>() {
+    @Override
+    public void onResume() {
+        super.onResume();
+        InvitationPopupHelper.checkAndShow(this, authManager);
+        checkUnreadNotif();
+        loadNextSchedule();
+        loadTodaySchedule();
+    }
+
+    private void checkUnreadNotif() {
+        authManager.unreadNotif(new AuthCallback<Integer>() {
             @Override
-            public void onSuccess(Invitation invitation) {
-                if (invitation != null) showInvitationPopup(invitation);
+            public void onSuccess(Integer result) {
+                if (!isAdded() || getContext() == null) return;
+                btnNotif.setImageDrawable(requireContext()
+                        .getDrawable(result > 0 ? R.drawable.ic_notif_hover : R.drawable.ic_notif));
             }
 
             @Override
@@ -153,53 +171,13 @@ public class HomeFragment extends Fragment {
             }
         });
     }
-    private void showInvitationPopup(Invitation invitation) {
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
-        builder.setTitle("Undangan Baru")
-                .setMessage(invitation.getSender_name() + " mengundang Anda menjadi "
-                + invitation.getInvite_role().name()).setCancelable(false)
-                .setPositiveButton("Terima", (dialog, which) -> {
-                    authManager.linkAndRespondInvitation(invitation.getInvitation_id(), true, new AuthCallback<User>() {
-                        @Override
-                        public void onSuccess(User result) {
-                            afterResponse(result);
-                        }
 
-                        @Override
-                        public void onFailure(String message) {
-                            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }).setNegativeButton("Tolak", (dialog, which) -> {
-                    authManager.linkAndRespondInvitation(invitation.getInvitation_id(), false, new AuthCallback<User>() {
-                        @Override
-                        public void onSuccess(User result) {
-                            afterResponse(result);
-                        }
-
-                        @Override
-                        public void onFailure(String message) {
-                            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                });
-    }
-    private void afterResponse(User result) {
-        if (result != null && result.getCurrentRole() == UserRole.Consumer){
-            NavHostFragment.findNavController(this).navigate(R.id.homeFragment);
-        }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        InvitationPopupHelper.checkAndShow(this, authManager);
-        loadNextSchedule(authManager.getCurrentUser().getAuth_uid());
-    }
-
-    private void loadNextSchedule(String consumerUid) {
+    private void loadNextSchedule() {
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser == null) return;
+        String uid = firebaseUser.getUid();
         Timestamp now = Timestamp.now();
-        db.collection("medication_logs").whereEqualTo("users_id", consumerUid)
+        db.collection("medication_logs").whereEqualTo("users_id", uid)
                 .whereEqualTo("status", "akan datang").whereGreaterThanOrEqualTo("scheduled_at", now)
                 .orderBy("scheduled_at").limit(1).get().addOnSuccessListener(query -> {
                     if (query.isEmpty()){
@@ -213,32 +191,66 @@ public class HomeFragment extends Fragment {
                         haveSchedule.setVisibility(View.GONE);
                         noSchedule.setVisibility(View.VISIBLE);
                         return;
-                    } haveSchedule.setVisibility(View.VISIBLE);
+                    } nextLogId = doc.getId();
+                    haveSchedule.setVisibility(View.VISIBLE);
                     noSchedule.setVisibility(View.GONE);
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                     tvTime.setText(sdf.format(log.getScheduled_at().toDate()));
-                    resolveMedName(log.getMedication_schedules_id(), (medName, stock) -> {
+                    resolveMedName(log.getMedication_schedules_id(), (medName, stock, medId) -> {
+                        nextMedId = medId;
                         tvtitleCard.setText(medName);
                         tvTotalStok.setText("Sisa stok: " + stock);
-                        btnKonfirmasi.setOnClickListener(v -> validationReminder());
                     });
+                    btnKonfirmasi.setOnClickListener(v -> confirmTaken());
                 }).addOnFailureListener(e -> {
+                    if (!isAdded() || getContext() == null) return;
                     haveSchedule.setVisibility(View.GONE);
                     noSchedule.setVisibility(View.VISIBLE);
                     Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
-    private void validationReminder() {
+    private void confirmTaken() {
+        if (nextLogId == null) return;
+        medicationRepo.markLogAsTaken(nextLogId, new RepoCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                if (nextMedId != null){
+                    medicationRepo.decrementStock(nextMedId, new RepoCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void result) {
+                            if (!isAdded() || getContext() == null) return;
+                            Toast.makeText(requireContext(),"Berhasil dicatat", Toast.LENGTH_SHORT).show();
+                            loadNextSchedule();
+                            loadTodaySchedule();
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else {
+                    loadNextSchedule();
+                    loadTodaySchedule();
+                }
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
 
     }
 
-    private void resolveMedName(String schedulesId, HomeFragment.MedResolveCallback callback) {
+    private void resolveMedName(String schedulesId, MedResolveCallback callback) {
         db.collection("medication_schedules").document(schedulesId).get()
                 .addOnSuccessListener(scheduleSnap -> {
                     MedicationSchedules schedule = scheduleSnap.toObject(MedicationSchedules.class);
                     if (schedule == null) return;
-                    db.collection("medications").document(schedule.getMedication_id()).get()
+                    String medId = schedule.getMedication_id();
+                    db.collection("medications").document(medId).get()
                             .addOnSuccessListener(medSnap -> {
                                 Medication med = medSnap.toObject(Medication.class);
                                 if (med == null) return;
@@ -247,26 +259,29 @@ public class HomeFragment extends Fragment {
                                     stock = ((Number) med.getStock().get("stok_obat")).intValue();
                                 } int finalStock = stock;
                                 if (med.getCustom_medicine_name() != null){
-                                    callback.onResolved(med.getCustom_medicine_name(), finalStock);
+                                    callback.onResolved(med.getCustom_medicine_name(), finalStock, medId);
                                 } else if (med.getCatalog_id() != null) {
                                     db.collection("medicine_catalog").document(med.getCatalog_id()).get()
                                             .addOnSuccessListener(catSnap -> {
                                                 MedicineCatalog catalog = catSnap.toObject(MedicineCatalog.class);
-                                                callback.onResolved(catalog != null ? catalog.getNama_obat() : "Obat", finalStock);
+                                                callback.onResolved(catalog != null ? catalog.getNama_obat() : "Obat", finalStock, medId);
                                             });
 
                                 } else {
-                                    callback.onResolved("Obat", finalStock);
+                                    callback.onResolved("Obat", finalStock, medId);
                                 }
                             });
                 });
     }
 
     private interface MedResolveCallback{
-        void onResolved(String name, int stock);
+        void onResolved(String name, int stock, String medicationId);
     }
 
-    private void loadTodaySchedule(String consumerUid) {
+    private void loadTodaySchedule() {
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser == null) return;
+        String uid = firebaseUser.getUid();
         Calendar startCal = Calendar.getInstance();
         startCal.set(Calendar.HOUR_OF_DAY, 0);
         startCal.set(Calendar.MINUTE, 0);
@@ -280,28 +295,32 @@ public class HomeFragment extends Fragment {
 
         List<LogItem> combined = new ArrayList<>();
 
-        db.collection("medication_logs").whereEqualTo("users_id", consumerUid)
+        db.collection("medication_logs").whereEqualTo("users_id", uid)
                 .whereGreaterThanOrEqualTo("scheduled_at", startOfDay)
                 .whereLessThan("scheduled_at", startOfTomorrow).get()
                 .addOnSuccessListener(medQuery -> {
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                     List<DocumentSnapshot> medDocs = medQuery.getDocuments();
+                    if (medDocs.isEmpty()){
+                        mergeAppointments(uid, combined, startOfDay, startOfTomorrow);
+                        return;
+                    }
                     int[] remaining = {medDocs.size()};
-                    if (remaining[0] == 0) mergeAppointments(consumerUid, combined, startOfDay, startOfTomorrow);
-
                     for (DocumentSnapshot doc : medDocs) {
                         MedicationLog log = doc.toObject(MedicationLog.class);
                         if (log == null) { remaining[0]--; continue; }
-                        resolveMedName(log.getMedication_schedules_id(), (medName, stock) -> {
-                            LogItem item = new LogItem("medicine", medName,
+                        resolveMedName(log.getMedication_schedules_id(), (medName, stock, medId) -> {
+                            combined.add(new LogItem("medicine", medName,
                                     sdf.format(log.getScheduled_at().toDate()),
-                                    "Sisa stok: " + stock, log.getStatus());
-                            combined.add(item);
+                                    "Sisa stok: " + stock, log.getStatus()));
                             remaining[0]--;
-                            if (remaining[0] <= 0) mergeAppointments(consumerUid, combined, startOfDay, startOfTomorrow);
+                            if (remaining[0] <= 0) mergeAppointments(uid, combined, startOfDay, startOfTomorrow);
                         });
                     }
-                }).addOnFailureListener(e -> Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show());
+                }).addOnFailureListener(e -> {
+                    rvTodaySchedule.setVisibility(View.VISIBLE);
+                    rvTodaySchedule.setVisibility(View.GONE);
+                });
     }
 
     private void mergeAppointments(String consumerUid, List<LogItem> combined, Timestamp startOfDay, Timestamp startOfTomorrow) {
@@ -320,6 +339,7 @@ public class HomeFragment extends Fragment {
                                 appt.getAddress(), appt.getStatus()));
                     }
                     Collections.sort(combined, (a, b) -> a.getTime().compareTo(b.getTime()));
+                    if (!isAdded() || getContext() == null) return;
                     rvTodaySchedule.setAdapter(new TodayScheduleAdapter(combined, requireContext()));
                     if (combined.isEmpty()){
                         emptyTodaySchedule.setVisibility(View.VISIBLE);
@@ -330,43 +350,11 @@ public class HomeFragment extends Fragment {
                         rvTodaySchedule.setVisibility(View.VISIBLE);
                         btnLihatSemua.setVisibility(View.VISIBLE);
                     }
-                });
-    }
-
-    private void loadAdherenceAndStats(String consumerUid) {
-        Calendar weekAgo = Calendar.getInstance();
-        weekAgo.add(Calendar.DAY_OF_YEAR, -7);
-        Timestamp startWeek = new Timestamp(weekAgo.getTime());
-
-        db.collection("medication_logs").whereEqualTo("users_id", consumerUid)
-                .whereGreaterThanOrEqualTo("scheduled_at", startWeek).get().addOnSuccessListener(query -> {
-                    int total = 0, taken = 0, missed = 0, upcoming = 0;
-                    for (DocumentSnapshot doc :query.getDocuments()){
-                        MedicationLog log = doc.toObject(MedicationLog.class);
-                        if (log == null) continue;
-                        total++;
-                        LogStatus status = log.getStatusBasedOnDate();
-                        if (status == LogStatus.DIKONSUMSI) taken++;
-                        else if (status == LogStatus.TERLEWATKAN) missed++;
-                        else upcoming++;
-                    } int percent = total == 0 ? 0 : (int) ((taken * 100f) / total);
-                    adherenceRing.setProgress(percent);
-                    tvAdherenceDesc.setText(adherenceDesc(percent));
-                    tvTotalDikonsumsi.setText(taken + " Obat");
-                    tvTotalTerlewat.setText(missed + " Obat");
-                    tvTotalAkanDatang.setText(upcoming + " Obat");
                 }).addOnFailureListener(e -> {
-                    Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Log.e("HOME_TODAY_SCHEDULE", "Gagal load appointments", e);
+                    emptyTodaySchedule.setVisibility(View.VISIBLE);
+                    rvTodaySchedule.setVisibility(View.GONE);
+                    btnLihatSemua.setVisibility(View.GONE);
                 });
-    }
-
-    private String adherenceDesc(int percent) {
-        if (percent >= 80) return "@string/desc_kepatuhan_tinggi";
-        if (percent >= 50) return "@string/desc_kepatuhan_okela";
-        return "@string/desc_kepatuhan_rendah";
-    }
-
-    private int dpToPx(int dp) {
-        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, getResources().getDisplayMetrics());
     }
 }

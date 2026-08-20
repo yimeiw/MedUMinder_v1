@@ -61,5 +61,10 @@ public class NotificationRepo {
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
     }
-
+    public void countUnread(String receiverUid, RepoCallback<Integer> callback){
+        db.collection("notifications").whereEqualTo("receiver_uid", receiverUid)
+                .whereEqualTo("is_read", false).get()
+                .addOnSuccessListener(query -> callback.onSuccess(query.size()))
+                .addOnFailureListener(callback::onFailure);
+    }
 }

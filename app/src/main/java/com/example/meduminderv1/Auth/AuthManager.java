@@ -1050,4 +1050,21 @@ public class AuthManager {
             }
         });
     }
+    public void unreadNotif(AuthCallback<Integer> callback){
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser == null){
+            callback.onFailure("User belum login.");
+            return;
+        } notificationRepo.countUnread(firebaseUser.getUid(), new RepoCallback<Integer>() {
+            @Override
+            public void onSuccess(Integer result) {
+                callback.onSuccess(result);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e.getMessage());
+            }
+        });
+    }
 }

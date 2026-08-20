@@ -38,6 +38,7 @@ import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.Model.MedicationLog;
 import com.example.meduminderv1.Model.MedicineCatalog;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Schedule.AppointmentReminderFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
@@ -72,6 +73,7 @@ public class LogFragment extends Fragment {
     private AppointmentLogAdapter appointAdapter;
     private FirebaseFirestore db;
     MaterialButton btnAll, btnUpcoming, btnTaken, btnMissed;
+    ImageButton btnBack;
 
     //Status filter aktif & tipe log aktif
     private enum FilterType { ALL, UPCOMING, TAKEN, MISSED }
@@ -96,19 +98,24 @@ public class LogFragment extends Fragment {
         btnUpcoming = view.findViewById(R.id.btnUpcoming);
         btnTaken = view.findViewById(R.id.btnTaken);
         btnMissed = view.findViewById(R.id.btnMissed);
+        btnBack = view.findViewById(R.id.btnBack);
 
-        filterDropdown();
+        btnBack.setOnClickListener(v -> {
+            NavHostFragment.findNavController(LogFragment.this)
+                    .navigateUp();
+        });
 
         View pickerRoot = view.findViewById(R.id.consumerPicker);
         consumerPickerHelper = new ConsumerPickerHelper(pickerRoot, requireContext(), uid -> {
             targetUid = uid;
             if (uid == null){
-                initialMedicine.setVisibility(View.VISIBLE);
-                initialAppoint.setVisibility(View.VISIBLE);
+                pickerRoot.setOnClickListener(v ->  NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
+                filterDropdown();
                 allMedLog.clear(); allAppointLog.clear();
                 applyFilter();
                 return;
             } loadMedicationLogs();
+            filterDropdown();
         }); consumerPickerHelper.setup();
 
         selectButton(btnAll);
@@ -135,9 +142,9 @@ public class LogFragment extends Fragment {
             View popupView = LayoutInflater.from(requireContext())
                     .inflate(R.layout.item_dropdown_log, null);
 
-            int width = dpToPx(355);
+            int width = dpToPx(365);
             PopupWindow popupWindow = new PopupWindow(popupView, width, ViewGroup.LayoutParams.WRAP_CONTENT, true);
-            int xOffset = (layoutFilter.getWidth() - width) / 2;
+            int xOffset = ((layoutFilter.getWidth() - width) / 2) - 50;
             popupWindow.showAsDropDown(layoutFilter, xOffset, dpToPx(8));
             popupWindow.setElevation(12f);
 
@@ -153,6 +160,7 @@ public class LogFragment extends Fragment {
                 updateFilterButtonLabels();
                 medAdapter = new MedicationLogAdapter(medLog, requireContext());
                 rvLogs.setAdapter(medAdapter);
+                initialMedicine.setVisibility(View.VISIBLE);
                 initialAppoint.setVisibility(View.GONE);
                 applyFilter();
                 popupWindow.dismiss();
@@ -166,6 +174,7 @@ public class LogFragment extends Fragment {
                 appointAdapter.setOnAppointClickListener(this::showAppointmentStatusDialog);
                 rvLogs.setAdapter(appointAdapter);
                 initialMedicine.setVisibility(View.GONE);
+                initialAppoint.setVisibility(View.VISIBLE);
                 loadAppointmentLogs();
                 popupWindow.dismiss();
             });

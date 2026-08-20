@@ -207,11 +207,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Jadwal Berikutnya"
-                    android:textSize="14sp"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_gravity="center"
                     android:textColor="?attr/colorPrimary"
                     android:paddingHorizontal="12dp"
-                    android:paddingTop="10dp"
-                    android:background="@android:color/transparent"/>
+                    android:paddingTop="10dp"/>
 
 <!--                ada jadwal-->
                 <LinearLayout
@@ -230,8 +231,7 @@
                         android:text=""
                         android:textColor="?attr/colorPrimary"
                         android:paddingHorizontal="12dp"
-                        android:paddingVertical="5dp"
-                        android:background="@android:color/transparent"/>
+                        android:paddingVertical="5dp"/>
 
                     <!--                hari, tgl-->
                     <LinearLayout
@@ -275,8 +275,7 @@
                             android:id="@+id/tvTime"
                             android:text="00:00"
                             android:textColor="?attr/colorPrimary"
-                            android:layout_gravity="center"
-                            android:background="@android:color/transparent"/>
+                            android:layout_gravity="center"/>
 
                     </LinearLayout>
 
@@ -285,8 +284,7 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:paddingHorizontal="12dp"
-                        android:paddingBottom="10dp"
-                        android:background="@android:color/transparent">
+                        android:paddingBottom="10dp">
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -294,8 +292,7 @@
                             android:id="@+id/tvStokObat"
                             android:text="Stok Obat: "
                             android:textSize="12sp"
-                            android:textColor="?attr/colorPrimary"
-                            android:background="@android:color/transparent"/>
+                            android:textColor="?attr/colorPrimary"/>
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -303,8 +300,7 @@
                             android:id="@+id/tvTotalStok"
                             android:text="10"
                             android:textSize="12sp"
-                            android:textColor="?attr/colorPrimary"
-                            android:background="@android:color/transparent"/>
+                            android:textColor="?attr/colorPrimary"/>
 
                     </LinearLayout>
 
@@ -320,7 +316,6 @@
                         android:textColor="?attr/colorOnSurface"
                         android:paddingHorizontal="12dp"
                         android:layout_margin="10dp"/>
-
                 </LinearLayout>
 
 <!--                belum ada jadwal-->
@@ -337,22 +332,23 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Belum ada jadwal"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="?attr/colorOnSurface"
-                        android:layout_marginBottom="12dp"/>
+                        android:textSize="14sp"
+                        android:textColor="?attr/colorPrimary"
+                        android:layout_marginBottom="20dp"/>
 
                     <com.google.android.material.button.MaterialButton
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:id="@+id/addNoSchedule"
-                        android:drawableStart="@drawable/ic_add"
                         android:text="Tambahkan Jadwal"
                         android:textAllCaps="false"
-                        android:textColor="?attr/colorPrimary"
+                        android:textColor="?attr/colorOnSurface"
                         android:background="@drawable/border"
-                        app:backgroundTint="@null"
-                        android:layout_marginHorizontal="12dp"/>
+                        android:layout_marginHorizontal="12dp"
+                        app:icon="@drawable/ic_add"
+                        app:iconGravity="textStart"
+                        app:iconTint="@null"
+                        app:iconPadding="12dp"/>
                 </LinearLayout>
 
             </LinearLayout>
@@ -362,6 +358,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layout_marginHorizontal="5dp"
+                android:layout_marginTop="10dp"
                 android:gravity="center">
 
                 <TextView
@@ -390,6 +387,7 @@
                         android:background="@android:color/transparent"
                         android:backgroundTint="@null"
                         android:textAllCaps="false"
+                        android:visibility="visible"
                         />
                 </LinearLayout>
 
@@ -399,10 +397,21 @@
                 android:id="@+id/rvTodaySchedule"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingVertical="20dp"
-                android:paddingHorizontal="20dp">
+                android:paddingVertical="10dp"
+                android:paddingHorizontal="20dp"
+                android:visibility="gone">
 
             </androidx.recyclerview.widget.RecyclerView>
+
+<!--            gada jadwal-->
+            <TextView
+                android:id="@+id/emptyTodaySchedule"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Tidak ada jadwal hari ini."
+                android:gravity="center"
+                android:visibility="visible"/>
 
         </LinearLayout>
 
