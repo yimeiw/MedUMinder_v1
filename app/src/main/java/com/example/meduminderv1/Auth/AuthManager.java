@@ -863,38 +863,54 @@ public class AuthManager {
     private void handleAcceptedInvitation(Invitation invitation, AuthCallback<User> callback) {
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         String receiverUid = firebaseUser.getUid();
-        //Tentukan siapa consumer & siapa caregiver dalam relationship
-        CareRelationship relationship = new CareRelationship();
-        String consumerUid;
-        if (invitation.getInvite_role() == UserRole.Caregiver){
-            consumerUid = invitation.getSender_uid();
-            relationship.setConsumer_uid(consumerUid);
-            relationship.setCaregiver_uid(receiverUid);
-        } else {
-            consumerUid = receiverUid;
-            relationship.setConsumer_uid(consumerUid);
-            relationship.setCaregiver_uid(invitation.getSender_uid());
-        } relationshipRepo.createRelationship(relationship, new RepoCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
-                notifySender(invitation, true);
-                if (invitation.getInvite_role() == UserRole.Caregiver){
-                    sessionManager.setActiveConsumerUid(consumerUid); //cmn state
-                    //auto enable role caregiver + switch role ke caregiver dan diarahkan ke home caregiver
-                    userRepository.enableCaregiver(receiverUid, new RepoCallback<Void>() {
-                        @Override
-                        public void onSuccess(Void result) {
-                            switchRole(UserRole.Caregiver, callback);
-                        }
 
-                        @Override
-                        public void onFailure(Exception e) {
-                            callback.onFailure(e.getMessage());
+        String consumerUid = invitation.getInvite_role() == UserRole.Caregiver
+                ? invitation.getSender_uid() : receiverUid;
+        String caregiverUid = invitation.getInvite_role() == UserRole.Caregiver
+                ? receiverUid : invitation.getSender_uid();
+        relationshipRepo.hasRelationship(consumerUid, caregiverUid, new RepoCallback<Boolean>() {
+            @Override
+            public void onSuccess(Boolean result) {
+                if (Boolean.TRUE.equals(result)){
+                    //relationship sdh ada, tdk perlu create lg
+                    notifySender(invitation, true);
+                    if (invitation.getInvite_role() == UserRole.Caregiver){
+                        sessionManager.setActiveConsumerUid(consumerUid);
+                        switchRole(UserRole.Caregiver, callback);
+                    } else {
+                        loadUserProfile(receiverUid, callback);
+                    } return;
+                } CareRelationship relationship = new CareRelationship();
+                relationship.setConsumer_uid(consumerUid);
+                relationship.setCaregiver_uid(caregiverUid);
+                relationshipRepo.createRelationship(relationship, new RepoCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void result) {
+                        notifySender(invitation, true);
+                        if (invitation.getInvite_role() == UserRole.Caregiver){
+                            sessionManager.setActiveConsumerUid(consumerUid); //cmn state
+                            //auto enable role caregiver + switch role ke caregiver dan diarahkan ke home caregiver
+                            userRepository.enableCaregiver(receiverUid, new RepoCallback<Void>() {
+                                @Override
+                                public void onSuccess(Void result) {
+                                    switchRole(UserRole.Caregiver, callback);
+                                }
+
+                                @Override
+                                public void onFailure(Exception e) {
+                                    callback.onFailure(e.getMessage());
+                                }
+                            });
+                        } else {
+                            loadUserProfile(receiverUid, callback); //tetap dirole sekarang
                         }
-                    });
-                } else {
-                    loadUserProfile(receiverUid, callback); //tetap dirole sekarang
-                }
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        callback.onFailure(e.getMessage());
+                    }
+                });
             }
 
             @Override
@@ -902,6 +918,7 @@ public class AuthManager {
                 callback.onFailure(e.getMessage());
             }
         });
+
     }
     public void linkAndRespondInvitation(String invitationId, boolean accept, AuthCallback<User> callback){
         FirebaseUser firebaseUser = mAuth.getCurrentUser();

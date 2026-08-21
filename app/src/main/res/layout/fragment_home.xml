@@ -298,7 +298,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:id="@+id/tvTotalStok"
-                            android:text="10"
+                            android:text=""
                             android:textSize="12sp"
                             android:textColor="?attr/colorPrimary"/>
 
@@ -353,65 +353,101 @@
 
             </LinearLayout>
 
+<!--            jadwal hari ini-->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginHorizontal="5dp"
-                android:layout_marginTop="10dp"
-                android:gravity="center">
+                android:orientation="vertical"
+                android:id="@+id/todaySched"
+                android:layout_marginVertical="10dp"
+                android:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginHorizontal="5dp"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Jadwal Hari Ini"
+                        android:textSize="20dp"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textStyle="bold"/>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="end">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/viewAll"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Lihat Selengkapnya"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:paddingEnd="0dp"
+                            android:textColor="?attr/colorOnSurface"
+                            android:background="@android:color/transparent"
+                            android:backgroundTint="@null"
+                            android:textAllCaps="false"
+                            android:visibility="visible"
+                            />
+                    </LinearLayout>
+
+                </LinearLayout>
+                <!--            list jadwal-->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvTodaySchedule"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="10dp"
+                    android:visibility="gone">
+
+                </androidx.recyclerview.widget.RecyclerView>
+
+                <!--            gada jadwal-->
+                <TextView
+                    android:id="@+id/emptyTodaySchedule"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="Tidak ada jadwal hari ini."
+                    android:gravity="center"
+                    android:visibility="visible"/>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="?attr/colorOnSurface"
+                android:layout_gravity="center"
+                android:layout_marginVertical="20dp"
+                />
+            <!--        ringkasan statistik-->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Jadwal Hari Ini"
+                    android:text="Ringkasan Statistik"
                     android:textSize="20dp"
                     android:textColor="?attr/colorOnSurface"
                     android:textStyle="bold"/>
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="end">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/viewAll"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Lihat Selengkapnya"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:paddingEnd="0dp"
-                        android:textColor="?attr/colorOnSurface"
-                        android:background="@android:color/transparent"
-                        android:backgroundTint="@null"
-                        android:textAllCaps="false"
-                        android:visibility="visible"
-                        />
-                </LinearLayout>
+                <com.github.mikephil.charting.charts.LineChart
+                    android:id="@+id/lineChart"
+                    android:layout_width="match_parent"
+                    android:layout_height="260dp"/>
 
             </LinearLayout>
-            <!--            list jadwal-->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvTodaySchedule"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingVertical="10dp"
-                android:paddingHorizontal="20dp"
-                android:visibility="gone">
-
-            </androidx.recyclerview.widget.RecyclerView>
-
-<!--            gada jadwal-->
-            <TextView
-                android:id="@+id/emptyTodaySchedule"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="Tidak ada jadwal hari ini."
-                android:gravity="center"
-                android:visibility="visible"/>
 
         </LinearLayout>
 

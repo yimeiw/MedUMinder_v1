@@ -45,6 +45,13 @@ import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.InvitationRepo;
 import com.example.meduminderv1.Repo.MedicationRepo;
+import com.example.meduminderv1.Repo.StatistikRepo;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.Timestamp;
@@ -63,8 +70,7 @@ import java.util.UUID;
 
 public class HomeFragment extends Fragment {
 
-    TextView tvGreeting, tvtitleCard, tvTime, tvTotalStok, tvAdherenceDesc,
-            tvTotalDikonsumsi, tvTotalTerlewat, tvTotalAkanDatang, btnLihatSemua, emptyTodaySchedule;
+    TextView tvGreeting, tvtitleCard, tvTime, tvTotalStok, btnLihatSemua, emptyTodaySchedule;
     ImageButton btnNotif, btnProfile;
     MaterialButton addNoSchedule, btnKonfirmasi;
     RecyclerView rvTodaySchedule;
@@ -75,6 +81,8 @@ public class HomeFragment extends Fragment {
     MedicationRepo medicationRepo;
     private String nextLogId;
     private String nextMedId;
+    LineChart lineChart;
+    StatistikRepo statistikRepo;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -140,8 +148,13 @@ public class HomeFragment extends Fragment {
         });
         rvTodaySchedule.setLayoutManager(new LinearLayoutManager(requireContext()));
 
+        lineChart = view.findViewById(R.id.lineChart);
+        statistikRepo = new StatistikRepo();
+        loadStats();
+
         return view;
     }
+
     private void checkCurrentUser() {
         User user = authManager.getCurrentUser();
         if (user != null){
@@ -356,5 +369,57 @@ public class HomeFragment extends Fragment {
                     rvTodaySchedule.setVisibility(View.GONE);
                     btnLihatSemua.setVisibility(View.GONE);
                 });
+    }
+    private void loadStats() {
+        String uid = authManager.getCurrentUser().getAuth_uid();
+        statistikRepo.getWeeklyAdherence(uid, new StatistikRepo.StatsCallback() {
+            @Override
+            public void onResult(List<StatistikRepo.DayStat> weekStats) {
+                if (!isAdded()) return;
+                renderChart(weekStats);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+            }
+        });
+    }
+
+    private void renderChart(List<StatistikRepo.DayStat> weekStats) {
+        List<Entry> seharusnya = new ArrayList<>();
+        List<Entry> dikonsumsi = new ArrayList<>();
+        List<Entry> persentase = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+        for (int i = 0; i < weekStats.size(); i++){
+            StatistikRepo.DayStat s = weekStats.get(i);
+            seharusnya.add(new Entry(i, s.seharusnya));
+            dikonsumsi.add(new Entry(i, s.dikonsumsi));
+            persentase.add(new Entry(i, s.persentase));
+            labels.add(s.label);
+        }
+        LineDataSet dsSeharusnya = new LineDataSet(seharusnya, "Dosis seharusnya");
+        dsSeharusnya.setColor(requireContext().getColor(R.color.dark_bckg));
+        dsSeharusnya.setCircleColor(requireContext().getColor(R.color.dark_bckg));
+
+        LineDataSet dsDikonsumsi = new LineDataSet(dikonsumsi, "Dosis dikonsumsi");
+        dsDikonsumsi.setColor(requireContext().getColor(R.color.green));
+        dsDikonsumsi.setCircleColor(requireContext().getColor(R.color.green));
+
+        LineDataSet dsPersentase = new LineDataSet(persentase, "Persentase Kepatuhan");
+        dsPersentase.setColor(requireContext().getColor(R.color.pink));
+        dsPersentase.setCircleColor(requireContext().getColor(R.color.pink));
+        dsPersentase.setDrawFilled(true);
+
+        LineData data = new LineData(dsSeharusnya, dsDikonsumsi, dsPersentase);
+        lineChart.setData(data);
+
+        XAxis xAxis = lineChart.getXAxis();
+        xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
+        xAxis.setGranularity(1f);
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+
+        lineChart.getDescription().setEnabled(false);
+        lineChart.animateX(600);
+        lineChart.invalidate();
     }
 }

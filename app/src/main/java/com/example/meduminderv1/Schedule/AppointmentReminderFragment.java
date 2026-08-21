@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,6 +33,7 @@ public class AppointmentReminderFragment extends Fragment {
     ImageButton btnBack;
     TextView tvDate, tvTime;
     EditText namaAppointment, location_input;
+    LinearLayout formContent;
     MaterialButton btnSaveAppoint;
     Calendar selectedCalendar;
     FirebaseAuth mAuth;
@@ -56,6 +58,7 @@ public class AppointmentReminderFragment extends Fragment {
         namaAppointment = viewF.findViewById(R.id.namaAppointment);
         location_input = viewF.findViewById(R.id.location_input);
         btnSaveAppoint = viewF.findViewById(R.id.btnSaveAppoint);
+        formContent = viewF.findViewById(R.id.formContent);
         selectedCalendar = Calendar.getInstance();
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
@@ -63,9 +66,10 @@ public class AppointmentReminderFragment extends Fragment {
         View pickerRoot = viewF.findViewById(R.id.consumerPicker);
         consumerPickerHelper = new ConsumerPickerHelper(pickerRoot, requireContext(), uid -> {
             targetUid = uid;
-            if (uid == null){
+            boolean hasConsumer = uid  != null;
+            formContent.setVisibility(hasConsumer ? View.VISIBLE : View.GONE);
+            if (!hasConsumer){
                 pickerRoot.setOnClickListener(v ->  NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
-                return;
             }
         }); consumerPickerHelper.setup();
 
@@ -102,6 +106,10 @@ public class AppointmentReminderFragment extends Fragment {
     }
 
     private void saveAppointment() {
+        if (targetUid == null){
+            Toast.makeText(requireContext(), "Pilih consumer terlebih dahulu", Toast.LENGTH_SHORT).show();
+            return;
+        }
         String nameAppoint = namaAppointment.getText().toString().trim();
         String location = location_input.getText().toString().trim();
 
@@ -117,7 +125,7 @@ public class AppointmentReminderFragment extends Fragment {
         Timestamp appointmentAt = new Timestamp(selectedCalendar.getTime());
 
         Map<String, Object> appointment = new HashMap<>();
-        appointment.put("users_id", uid);
+        appointment.put("users_id", targetUid);
         appointment.put("title", nameAppoint);
         appointment.put("address", location);
         appointment.put("appointment_at", appointmentAt);
@@ -126,7 +134,7 @@ public class AppointmentReminderFragment extends Fragment {
         appointment.put("created_at", FieldValue.serverTimestamp());
         appointment.put("updated_at", FieldValue.serverTimestamp());
         appointment.put("deleted_at", null);
-        appointment.put("status", "upcoming");
+        appointment.put("status", "akan datang");
         appointment.put("created_by", uid);
         appointment.put("updated_by", uid);
 

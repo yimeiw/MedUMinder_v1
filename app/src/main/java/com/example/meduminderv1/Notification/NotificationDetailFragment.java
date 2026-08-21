@@ -109,18 +109,27 @@ public class NotificationDetailFragment extends Fragment {
     }
 
     private void showInvitation() {
-        layoutButton.setVisibility(View.VISIBLE);
-        btnAction.setVisibility(View.GONE);
         invitationRepo.getInvitationById(notification.getInvitation_id(), new RepoCallback<Invitation>() {
             @Override
             public void onSuccess(Invitation result) {
                 invitation = result;
-                if (invitation.getStatus() != InvitationStatus.Pending){
-                    btnAcc.setVisibility(View.GONE);
-                    btnReject.setVisibility(View.GONE);
+                if (invitation.getStatus() == InvitationStatus.Pending
+                        && notification.getReceiver_uid() != null
+                        && notification.getMessage() != null
+                        && !notification.getMessage().contains("diterima")
+                        && !notification.getMessage().contains("ditolak")){
+                    layoutButton.setVisibility(View.VISIBLE);
+                    btnAction.setVisibility(View.GONE);
+                    btnAcc.setOnClickListener(v -> acceptInvitation());
+                    btnReject.setOnClickListener(v -> rejectInvitation());
                     return;
-                } btnAcc.setOnClickListener(v -> acceptInvitation());
-                btnReject.setOnClickListener(v -> rejectInvitation());
+                } else {
+                    //notif status invitation diacc/reject
+                    layoutButton.setVisibility(View.GONE);
+                    titleNotif.setText(invitation.getStatus() == InvitationStatus.Accepted ?
+                            "Undangan Diterima" : invitation.getStatus() == InvitationStatus.Rejected ?
+                            "Undangan Ditolak" : "Undangan");
+                }
             }
 
             @Override
