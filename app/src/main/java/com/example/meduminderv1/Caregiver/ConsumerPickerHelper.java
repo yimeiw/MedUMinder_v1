@@ -24,6 +24,7 @@ import com.example.meduminderv1.Repo.UserRepository;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public class ConsumerPickerHelper {
@@ -77,9 +78,14 @@ public class ConsumerPickerHelper {
             @Override
             public void onSuccess(List<CareRelationship> result) {
                 relations.clear();
-                relations.addAll(result);
-
-                if (result.isEmpty()) {
+                LinkedHashSet<String> seenUid = new LinkedHashSet<>();
+                for (CareRelationship relationship : result){
+                    if (relationship.getConsumer_uid() == null) continue;
+                    if (seenUid.add(relationship.getConsumer_uid())){ //true jika blm prnh ada
+                        relations.add(relationship);
+                    }
+                }
+                if (relations.isEmpty()) {
                     namaConsumer.setText("Belum ada consumer");
                     imgArrow.setImageResource(R.drawable.ic_add);
                     listener.onChanged(null);
@@ -111,13 +117,27 @@ public class ConsumerPickerHelper {
 
     private void selectConsumer(String uid) {
         sessionManager.setActiveConsumerUid(uid);
+        updateDisplayName(uid);
+        listener.onChanged(uid);
+    }
+
+    private void updateDisplayName(String uid) {
         userRepository.getUserbyUid(uid, new RepoCallback<User>() {
             @Override
-            public void onSuccess(User result) { namaConsumer.setText(result.getName()); }
+            public void onSuccess(User result) {
+                namaConsumer.setText(result.getName());
+            }
+
             @Override
-            public void onFailure(Exception e) { }
+            public void onFailure(Exception e) {
+                namaConsumer.setText("Unknown");
+            }
         });
-        listener.onChanged(uid);
+    }
+    public void syncSelectedConsumer(String uid){
+        if (uid == null) return;
+        sessionManager.setActiveConsumerUid(uid);
+        updateDisplayName(uid);
     }
 
     private void showDropdown() {

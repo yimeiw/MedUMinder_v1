@@ -41,12 +41,10 @@ public class LogGenerator {
                     Log.d("CHECK", "Jumlah schedule = " + querySnapshot.size());
 
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-
                         Log.d("CHECK", "Doc ID = " + doc.getId());
 
                         for (String key : doc.getData().keySet()) {
                             Object value = doc.get(key);
-
                             Log.d("CHECK",
                                     key + " -> " +
                                             value +
@@ -56,8 +54,11 @@ public class LogGenerator {
                         }
 
                         MedicationSchedules schedule = doc.toObject(MedicationSchedules.class);
+                        if (schedule != null){
+                            ensureLogsGenerated(schedule, doc.getId());
+                        }
                     }
-                });
+                }).addOnFailureListener(e -> Log.e("LogGenerator", "Gagal load schedule aktif", e));
     }
 
     /** Generate log untuk satu schedule, aman dipanggil berkali-kali (idempotent) */

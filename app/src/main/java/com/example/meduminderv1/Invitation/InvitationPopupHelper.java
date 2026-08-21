@@ -53,8 +53,6 @@ public class InvitationPopupHelper {
             public void onSuccess(User result) {
                 if (!fragment.isAdded()) return;
                 if (accept && result != null && result.getCurrentRole() == UserRole.Caregiver) {
-                    NavHostFragment.findNavController(fragment).navigate(R.id.caregiverHomeFragment);
-                } else if (accept) {
                     Toast.makeText(fragment.requireContext(), "Undangan diterima", Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(fragment.requireContext(), "Undangan ditolak", Toast.LENGTH_SHORT).show();

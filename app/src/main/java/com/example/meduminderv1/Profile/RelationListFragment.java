@@ -22,6 +22,9 @@ import com.example.meduminderv1.R;
 import com.example.meduminderv1.Relation.RelationAdapter;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public class RelationListFragment extends Fragment {
@@ -62,6 +65,15 @@ public class RelationListFragment extends Fragment {
         RepoCallback<List<CareRelationship>> callback = new RepoCallback<List<CareRelationship>>() {
             @Override
             public void onSuccess(List<CareRelationship> result) {
+                List<CareRelationship> deduped = new ArrayList<>();
+                LinkedHashSet<String> seenUid = new LinkedHashSet<>();
+                for (CareRelationship relationship : result){
+                    String partnerUid = showingCaregivers ? relationship.getCaregiver_uid() : relationship.getConsumer_uid();
+                    if (partnerUid == null) continue;
+                    if (seenUid.add(partnerUid)){
+                        deduped.add(relationship);
+                    }
+                }
                 emptyState.setVisibility(result.isEmpty() ? View.VISIBLE : View.GONE);
                 RelationAdapter adapter = new RelationAdapter(result, requireContext(), showingCaregivers, relationship -> {
                     if (rvRelation.getAdapter() != null && rvRelation.getAdapter().getItemCount() == 0){
@@ -82,5 +94,11 @@ public class RelationListFragment extends Fragment {
         } else {
             relationshipRepo.getConsumerForCaregiver(user.getAuth_uid(), callback);
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadRelations();
     }
 }
