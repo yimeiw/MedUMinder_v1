@@ -67,14 +67,6 @@ public class InvitationRepo {
                             }).addOnFailureListener(callback::onFailure);
                 }).addOnFailureListener(callback::onFailure);
     }
-    public void updateReceiverUid(String invitationId, String receiverUid, RepoCallback<Void> callback){
-        Map<String, Object> update = new HashMap<>();
-        update.put("receiver_uid", receiverUid);
-        update.put("updated_at", Timestamp.now());
-        db.collection("invitations").document(invitationId).update(update)
-                .addOnSuccessListener(unused -> callback.onSuccess(null))
-                .addOnFailureListener(callback::onFailure);
-    }
     public void getInvitationById(String invitationId, RepoCallback<Invitation> callback){
         db.collection("invitations").document(invitationId).get()
                 .addOnSuccessListener(doc -> {

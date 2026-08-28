@@ -52,7 +52,7 @@ public class InvitationPopupHelper {
             @Override
             public void onSuccess(User result) {
                 if (!fragment.isAdded()) return;
-                if (accept && result != null && result.getCurrentRole() == UserRole.Caregiver) {
+                if (accept) {
                     Toast.makeText(fragment.requireContext(), "Undangan diterima", Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(fragment.requireContext(), "Undangan ditolak", Toast.LENGTH_SHORT).show();

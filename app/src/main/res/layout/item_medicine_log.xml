@@ -21,8 +21,9 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:orientation="horizontal"
-        android:layout_margin="16dp"
-        android:padding="16dp"
+        android:layout_marginVertical="10dp"
+        android:layout_marginHorizontal="12dp"
+        android:paddingHorizontal="16dp"
         android:gravity="center_vertical"
         android:background="@drawable/bg_log_card_main"
         app:layout_constraintTop_toTopOf="parent"
@@ -48,7 +49,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Antimo"
-                    android:textColor="@color/black"
+                    android:textColor="?attr/colorOnPrimary"
                     android:textStyle="bold"
                     android:textSize="20sp"
                     />
@@ -64,7 +65,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Sisa stok: "
-                        android:textColor="@color/black"
+                        android:textColor="?attr/colorOnPrimary"
                         android:textSize="12sp"
                         />
 
@@ -73,7 +74,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
-                        android:textColor="@color/black"
+                        android:textColor="?attr/colorOnPrimary"
                         android:textSize="12sp"
                         />
                 </LinearLayout>
@@ -86,7 +87,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Waktu:"
-                        android:textColor="@color/black"
+                        android:textColor="?attr/colorOnPrimary"
                         android:textSize="12sp"
                         android:layout_marginEnd="2dp"
                         />
@@ -96,7 +97,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="timestamp"
-                        android:textColor="@color/black"
+                        android:textColor="?attr/colorOnPrimary"
                         android:textSize="12sp"
                         />
                 </LinearLayout>
@@ -112,7 +113,7 @@
                 android:paddingVertical="6dp"
                 android:paddingHorizontal="24dp"
                 android:textSize="12sp"
-                android:textColor="@color/black"
+                android:textColor="?attr/colorOnPrimary"
                 />
         </LinearLayout>
 

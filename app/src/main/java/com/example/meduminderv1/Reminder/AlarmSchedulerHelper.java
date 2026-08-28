@@ -4,10 +4,16 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
+import android.provider.Settings;
 import android.util.Log;
 
+import com.example.meduminderv1.Model.Medication;
 import com.example.meduminderv1.Model.MedicationSchedules;
+import com.example.meduminderv1.Model.MedicineCatalog;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -30,6 +36,8 @@ public class AlarmSchedulerHelper {
     private static final String TIME_FORMAT = "HH:mm";
     // Cap default kalau end_date null, biar ga daftar alarm sampai selama-lamanya dalam satu panggilan
     private static final long DEFAULT_WINDOW_MILLIS = 7L * 24 * 60 * 60 * 1000;
+    private static final long PRE_REMINDER_OFFSET_MS = 5 * 60 * 1000L;
+    private static final long MISSED_CHECK_DELAY_MS = 15 * 60 * 1000L;
 
     /**
      * Menjadwalkan semua occurrence (satu per entry di times_of_day) untuk satu MedicationSchedules.
@@ -71,6 +79,8 @@ public class AlarmSchedulerHelper {
             if (triggerMillis > endMillis) continue;
 
             scheduleSingleAlarm(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
+            scheduleMedicinePreReminder(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
+            scheduleMedicineMissedCheck(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
             occurrenceIndex++;
 
             Log.d("ALARM", "Scheduling alarm");
@@ -119,6 +129,8 @@ public class AlarmSchedulerHelper {
             if (triggerMillis > endMillis) continue;
 
             scheduleSingleAlarm(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
+            scheduleMedicinePreReminder(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
+            scheduleMedicineMissedCheck(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
             occurrenceIndex++;
 
             Log.d("ALARM", "Scheduling alarm");
@@ -127,7 +139,30 @@ public class AlarmSchedulerHelper {
             Log.d("ALARM", "time = " + new Date(triggerMillis));
         }
     }
+    private static void scheduleMedicinePreReminder(Context context, String scheduleId, String namaObat, long mainTrigger, int idx) {
+        long preTrigger = mainTrigger - PRE_REMINDER_OFFSET_MS;
+        if (preTrigger <= System.currentTimeMillis()) return;
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (am == null || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms())) return;
+        Intent intent = new Intent(context, MedicationPreReminderNotifReceiver.class);
+        intent.putExtra("schedule_id", scheduleId);
+        intent.putExtra("nama_obat", namaObat);
+        PendingIntent pi = PendingIntent.getBroadcast(context, (scheduleId + "_pre_" + idx).hashCode(), intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, preTrigger, pi);
+    }
 
+    private static void scheduleMedicineMissedCheck(Context context, String scheduleId, String namaObat, long mainTrigger, int idx) {
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (am == null || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms())) return;
+        Intent intent = new Intent(context, MedicationMissedNotifReceiver.class);
+        intent.putExtra("schedule_id", scheduleId);
+        intent.putExtra("nama_obat", namaObat);
+        intent.putExtra("scheduled_at", mainTrigger);
+        PendingIntent pi = PendingIntent.getBroadcast(context, (scheduleId + "_missed_" + idx).hashCode(), intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, mainTrigger + MISSED_CHECK_DELAY_MS, pi);
+    }
     /** Hitung trigger time berikutnya (hari ini kalau belum lewat, besok kalau sudah lewat) untuk "HH:mm". */
     private static long nextTriggerMillisForTime(String timeStr, SimpleDateFormat timeFormat) {
         try {
@@ -222,5 +257,44 @@ public class AlarmSchedulerHelper {
         long triggerMillis = System.currentTimeMillis() + (snoozeMinutes * 60L * 1000);
         // occurrenceIndex khusus (bukan angka biasa) biar requestCode-nya ga bentrok sama alarm asli
         scheduleSingleAlarm(context, scheduleId + "_snooze", namaObat, triggerMillis, 0);
+    }
+    public static void requestExactAlarmPermission(Context context){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
+            Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+            intent.setData(Uri.parse("package:" + context.getPackageName()));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        }
+    }
+    public static void rescheduleAllActiveForUser(Context context, String uid){
+        FirebaseFirestore.getInstance().collection("medication_schedules").whereEqualTo("users_id", uid)
+                .whereEqualTo("is_active", true).get().addOnSuccessListener(query -> {
+                    for (DocumentSnapshot doc : query.getDocuments()){
+                        MedicationSchedules schedules = doc.toObject(MedicationSchedules.class);
+                        if (schedules == null) continue;
+                        String scheduleId = doc.getId();
+                        resolveNamaObatThenSchedule(context, scheduleId, schedules);
+                    }
+                });
+    }
+
+    private static void resolveNamaObatThenSchedule(Context context, String scheduleId, MedicationSchedules schedules) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("medications").document(schedules.getMedication_id()).get().addOnSuccessListener(medSnap -> {
+            Medication med = medSnap.toObject(Medication.class);
+            if (med == null){
+                scheduleAll(context, scheduleId, "Obat", schedules);
+                return;
+            } if (med.getCustom_medicine_name() != null){
+                scheduleAll(context, scheduleId, med.getCustom_medicine_name(), schedules);
+            } else if (med.getCatalog_id() != null){
+                db.collection("medicine_catalog").document(med.getCatalog_id()).get().addOnSuccessListener(catSnap -> {
+                    MedicineCatalog cat = catSnap.toObject(MedicineCatalog.class);
+                    scheduleAll(context, scheduleId, cat != null ? cat.getNama_obat() : "Obat", schedules);
+                });
+            } else {
+                scheduleAll(context, scheduleId, "Obat", schedules);
+            }
+        });
     }
 }

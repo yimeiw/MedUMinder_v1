@@ -35,11 +35,14 @@ import com.example.meduminderv1.Model.MedicationLog;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Repo.StatistikRepo;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.Calendar;
+import java.util.List;
 
 public class ProfileFragment extends Fragment {
 
@@ -52,8 +55,10 @@ public class ProfileFragment extends Fragment {
     RelativeLayout themeSwitch;
     ImageView iconToggle, imgAktivasi;
     SharedPreferences prefs;
-    LinearLayout btnEditProfile, btnAktivasi, btnListRelation;
+    LinearLayout btnEditProfile, btnAktivasi, btnListRelation, cardStatistik;
+    MaterialButton btnSeeStatistic;
     ProgressView adherenceRing;
+    StatistikRepo statistikRepo;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -121,7 +126,7 @@ public class ProfileFragment extends Fragment {
                 if (isAdded() && getActivity() != null) {
                     getActivity().recreate();
                 }
-                }, 300);
+            }, 300);
         });
 
         btnAktivasi.setOnClickListener(v -> {
@@ -132,9 +137,16 @@ public class ProfileFragment extends Fragment {
             }
         });
 
+        cardStatistik = view.findViewById(R.id.cardStatistik);
+        btnSeeStatistic = view.findViewById(R.id.btnSeeStatistic);
         adherenceDesc = view.findViewById(R.id.adherenceDesc);
         adherencePercent = view.findViewById(R.id.adherencePercent);
         adherenceRing = view.findViewById(R.id.adherenceRing);
+        statistikRepo = new StatistikRepo();
+
+        btnSeeStatistic.setOnClickListener(v -> {
+            NavHostFragment.findNavController(this).navigate(R.id.statistikFragment);
+        });
 
         return view;
     }
@@ -317,6 +329,39 @@ public class ProfileFragment extends Fragment {
             bundle.putString(RelationListFragment.ARG_MODE, isConsumer ? "Caregiver" : "Consumer");
             NavHostFragment.findNavController(this).navigate(R.id.relationListFragment, bundle);
         });
+
+        cardStatistik.setVisibility(isConsumer ? View.VISIBLE : View.GONE);
+        if (isConsumer){
+            loadAdherence(user.getAuth_uid());
+        }
+    }
+
+    private void loadAdherence(String uid) {
+        statistikRepo.getOverallAdherence(uid, new StatistikRepo.OverallStatsCallback() {
+            @Override
+            public void onResult(int totalSeharusnya, int totalDikonsumsi, int percent) {
+                if (!isAdded()) return;
+                adherenceRing.setProgress(percent);
+                adherencePercent.setText(percent + "%");
+                adherenceDesc.setText(adherenceDescText(percent));
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                if (isAdded()){
+                    adherenceRing.setProgress(0);
+                    adherencePercent.setText("0%");
+                }
+            }
+        });
+    }
+
+    private String adherenceDescText(int percent) {
+        if (percent >= 80){
+            return getString(R.string.desc_kepatuhan_tinggi);
+        } if (percent >= 50){
+            return getString(R.string.desc_kepatuhan_okela);
+        } return getString(R.string.desc_kepatuhan_rendah);
     }
 
     private String formatRole(UserRole role) {

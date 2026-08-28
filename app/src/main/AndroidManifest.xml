@@ -44,6 +44,10 @@
         <receiver android:name=".Reminder.MedicationAlarmReceiver" android:exported="false" />
 
         <receiver android:name=".Reminder.AlarmActionReceiver" android:exported="false" />
+        <receiver android:name=".Reminder.MedicationMissedNotifReceiver" android:exported="false" />
+        <receiver android:name=".Reminder.MedicationPreReminderNotifReceiver" android:exported="false" />
+        <receiver android:name=".Reminder.AppointmentMissedNotifReceiver" android:exported="false" />
+        <receiver android:name=".Reminder.AppointmentPreReminderNotifReceiver" android:exported="false" />
 
         <receiver android:name=".Reminder.BootReceiver" android:exported="false">
             <intent-filter>

@@ -1,5 +1,6 @@
 package com.example.meduminderv1.Repo;
 
+import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.Model.MedicationLog;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -40,7 +41,7 @@ public class StatistikRepo {
         endCal.add(Calendar.DAY_OF_YEAR, 7);
         Timestamp endOfWeek = new Timestamp(endCal.getTime());
 
-        db.collection("medication_logs").whereEqualTo("users_uid", uid)
+        db.collection("medication_logs").whereEqualTo("users_id", uid)
                 .whereGreaterThanOrEqualTo("scheduled_at", startOfWeek).whereLessThan("scheduled_at", endOfWeek)
                 .get().addOnSuccessListener(query -> {
                     String[] labels = {"Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"};
@@ -63,6 +64,27 @@ public class StatistikRepo {
                         s.persentase = total[i] == 0 ? 0 : (int)((taken[i] * 100f) /  total[i]);
                         result.add(s);
                     } callback.onResult(result);
+                }).addOnFailureListener(callback::onFailure);
+    }
+    public interface OverallStatsCallback{
+        void onResult(int totalSeharusnya, int totalDikonsumsi, int percent);
+        void onFailure(Exception e);
+    }
+    public void getOverallAdherence(String uid, OverallStatsCallback callback){
+        if (uid == null){
+            callback.onResult(0,0, 0);
+            return;
+        } Timestamp now = Timestamp.now();
+        db.collection("medication_logs").whereEqualTo("users_id", uid)
+                .whereLessThanOrEqualTo("scheduled_at", now).get().addOnSuccessListener(query -> {
+                    int total = 0, taken = 0;
+                    for (DocumentSnapshot doc : query.getDocuments()){
+                        MedicationLog log = doc.toObject(MedicationLog.class);
+                        if (log == null) continue;
+                        total++;
+                        if (log.getStatusBasedOnDate() == LogStatus.DIKONSUMSI) taken++;
+                    } int percent = total == 0 ? 0 : (int) ((taken * 100f) / total);
+                    callback.onResult(total, taken, percent);
                 }).addOnFailureListener(callback::onFailure);
     }
 }

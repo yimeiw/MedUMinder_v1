@@ -78,4 +78,20 @@ public class MedicationRepo {
                     .addOnFailureListener(callback::onFailure);
         }).addOnFailureListener(callback::onFailure);
     }
+    public void markTakenAndDecrement(String logId, String medId, RepoCallback<Void> callback){
+        markLogAsTaken(logId, new RepoCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                if (medId == null){
+                    callback.onSuccess(null);
+                    return;
+                } decrementStock(medId, callback);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e);
+            }
+        });
+    }
 }
