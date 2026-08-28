@@ -107,6 +107,7 @@
                         android:layout_marginVertical="10dp"
                         android:layout_marginBottom="10dp"
                         android:background="@drawable/edittext_border"
+                        android:backgroundTint="?attr/colorPrimaryFixedDim"
                         android:orientation="vertical">
 
                         <TextView
@@ -117,7 +118,7 @@
                             android:paddingHorizontal="12dp"
                             android:paddingTop="10dp"
                             android:text="Jadwal Berikutnya"
-                            android:textColor="?attr/colorPrimary"
+                            android:textColor="?attr/colorPrimaryFixed"
                             android:textSize="16sp" />
 
                         <LinearLayout
@@ -135,7 +136,7 @@
                                 android:paddingHorizontal="12dp"
                                 android:paddingVertical="5dp"
                                 android:text=""
-                                android:textColor="?attr/colorPrimary"
+                                android:textColor="?attr/colorPrimaryFixed"
                                 android:textSize="24sp" />
 
                             <LinearLayout
@@ -148,10 +149,11 @@
                                 android:paddingBottom="10dp">
 
                                 <TextView
+                                    android:id="@+id/tvDayCard"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:gravity="center"
-                                    android:textColor="?attr/colorPrimary" />
+                                    android:textColor="?attr/colorPrimaryFixed" />
 
                                 <View
                                     android:layout_width="5dp"
@@ -166,7 +168,7 @@
                                     android:layout_gravity="center"
                                     android:layout_marginRight="5dp"
                                     android:background="@drawable/ic_time"
-                                    android:backgroundTint="?attr/colorPrimary" />
+                                    android:backgroundTint="?attr/colorPrimaryFixed" />
 
                                 <TextView
                                     android:id="@+id/tvTime"
@@ -174,7 +176,7 @@
                                     android:layout_height="wrap_content"
                                     android:layout_gravity="center"
                                     android:text="00:00"
-                                    android:textColor="?attr/colorPrimary" />
+                                    android:textColor="?attr/colorPrimaryFixed" />
                             </LinearLayout>
 
                             <LinearLayout
@@ -229,7 +231,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Consumer belum memiliki jadwal."
-                                android:textColor="?attr/colorPrimary"
+                                android:textColor="?attr/colorPrimaryFixed"
                                 android:textSize="14sp" />
                         </LinearLayout>
                     </LinearLayout>
@@ -239,6 +241,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginHorizontal="5dp"
+                        android:layout_marginTop="10dp"
                         android:gravity="center"
                         android:orientation="horizontal">
 
@@ -264,7 +267,7 @@
                                 android:focusable="true"
                                 android:text="Lihat Semua"
                                 android:textColor="?attr/colorOnSurface"
-                                android:textSize="12sp"
+                                android:textSize="14sp"
                                 android:visibility="gone" />
                         </LinearLayout>
                     </LinearLayout>
@@ -284,15 +287,19 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:nestedScrollingEnabled="false"
-                        android:paddingHorizontal="20dp"
-                        android:paddingVertical="20dp"
                         android:visibility="gone" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_gravity="center"
+                        android:layout_marginVertical="20dp"
+                        android:background="?attr/colorOnSurface" />
 
                     <!-- Tingkat Kepatuhan -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="30dp"
                         android:text="Tingkat Kepatuhan Minum Obat"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -323,6 +330,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text=""
+                            android:textColor="?attr/colorOnSurface"
                             android:textSize="12sp" />
                     </LinearLayout>
 
@@ -348,14 +356,16 @@
                                 android:layout_height="wrap_content"
                                 android:text="Total Obat Dikonsumsi"
                                 android:textSize="12sp"
-                                android:textStyle="bold" />
+                                android:textStyle="bold"
+                                android:textColor="?attr/colorOnPrimary"/>
 
                             <TextView
                                 android:id="@+id/tvTotalDikonsumsi"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="0 Obat"
-                                android:textSize="11sp" />
+                                android:text=""
+                                android:textSize="11sp"
+                                android:textColor="?attr/colorOnPrimary"/>
                         </LinearLayout>
 
                         <LinearLayout
@@ -373,14 +383,16 @@
                                 android:layout_height="wrap_content"
                                 android:text="Total Obat Terlewat"
                                 android:textSize="12sp"
-                                android:textStyle="bold" />
+                                android:textStyle="bold"
+                                android:textColor="?attr/colorOnPrimary"/>
 
                             <TextView
                                 android:id="@+id/tvTotalTerlewat"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="0 Obat"
-                                android:textSize="11sp" />
+                                android:text=""
+                                android:textSize="11sp"
+                                android:textColor="?attr/colorOnPrimary"/>
                         </LinearLayout>
                     </LinearLayout>
 
@@ -398,14 +410,16 @@
                             android:layout_height="wrap_content"
                             android:text="Total Obat Akan Datang"
                             android:textSize="12sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorOnPrimary"/>
 
                         <TextView
                             android:id="@+id/tvTotalAkanDatang"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="0 Obat"
-                            android:textSize="11sp" />
+                            android:text=""
+                            android:textSize="11sp"
+                            android:textColor="?attr/colorOnPrimary"/>
                     </LinearLayout>
                 </LinearLayout>
             </ScrollView>
@@ -557,8 +571,7 @@
                     android:textStyle="bold"
                     android:textSize="16sp"
                     android:textColor="?attr/colorOnSurface"
-                    android:paddingHorizontal="20dp"
-                    android:paddingBottom="8dp"/>
+                    android:paddingHorizontal="20dp"/>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvDrawerConsumer"
@@ -575,6 +588,7 @@
                     android:layout_marginHorizontal="20dp"
                     android:paddingVertical="16dp"
                     android:paddingHorizontal="20dp"
+                    android:layout_marginTop="8dp"
                     android:clickable="true"
                     android:focusable="true"
                     android:background="@drawable/border">

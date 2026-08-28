@@ -5,14 +5,13 @@ import com.google.firebase.Timestamp;
 public class Notification {
     private String notification_id;
     private String invitation_id;
-
     private String reference_id;
-
-    private String receiver_uid, sender_uid;
+    private String receiver_uid;
+    private String sender_uid;
+    private String consumer_uid;
+    private String consumer_name;
     private String title;
-
     private String message;
-
     private NotificationType type;
     private boolean is_read;
     private Timestamp created_at, updated_at;
@@ -47,6 +46,20 @@ public class Notification {
         this.receiver_uid = receiver_uid;
     }
 
+    public String getConsumer_uid() {
+        return consumer_uid;
+    }
+
+    public void setConsumer_uid(String consumer_uid) {
+        this.consumer_uid = consumer_uid;
+    }
+    public String getConsumer_name() {
+        return consumer_name;
+    }
+
+    public void setConsumer_name(String consumer_name) {
+        this.consumer_name = consumer_name;
+    }
     public String getSender_uid() {
         return sender_uid;
     }

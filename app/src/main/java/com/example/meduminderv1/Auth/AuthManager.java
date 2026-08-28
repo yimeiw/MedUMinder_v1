@@ -128,18 +128,6 @@ public class AuthManager {
             saveUserProfile(user, new AuthCallback<User>() {
                 @Override
                 public void onSuccess(User user) {
-//                    syncInvitation(user, new AuthCallback<Void>() {
-//                        @Override
-//                        public void onSuccess(Void result) {
-//                            callback.onSuccess(user);
-//                        }
-//
-//                        @Override
-//                        public void onFailure(String message) {
-//                            Log.w("Register", "Sync invitation gagal: " + message);
-//                            callback.onSuccess(user);
-//                        }
-//                    });
                 }
 
                 @Override
@@ -300,17 +288,6 @@ public class AuthManager {
                 saveUserProfile(user, new AuthCallback<User>() {
                     @Override
                     public void onSuccess(User user) {
-//                        syncInvitation(user, new AuthCallback<Void>() {
-//                            @Override
-//                            public void onSuccess(Void result) {
-//                                callback.onSuccess(user);
-//                            }
-//
-//                            @Override
-//                            public void onFailure(String message) {
-//                                callback.onSuccess(user);
-//                            }
-//                        });
                     }
 
                     @Override
@@ -722,52 +699,6 @@ public class AuthManager {
             }
         });
     }
-
-    private void loadReceiver(User sender, String email, UserRole relationshipRole, InvitationCallback callback) {
-        userRepository.getUserbyEmail(email, new RepoCallback<User>() {
-            @Override
-            public void onSuccess(User receiver) {
-                checkInvitation(sender, receiver, email, relationshipRole, callback);
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                callback.onFailure(e.getMessage());
-            }
-        });
-    }
-    private void checkInvitation(User sender, User receiver, String receiverEmail, UserRole relationshipRole, InvitationCallback callback) {
-        if (receiver == null){
-            createInvitation(sender, null, receiverEmail, relationshipRole, callback);
-            return;
-        } relationshipRepo.hasRelationship(sender.getAuth_uid(), receiver.getAuth_uid(), new RepoCallback<Boolean>() {
-            @Override
-            public void onSuccess(Boolean hasRelationship) {
-                if (Boolean.TRUE.equals(hasRelationship)){
-                    callback.onFailure("User sudah terhubung.");
-                    return;
-                } invitationRepo.hasPendingInvitation(sender.getAuth_uid(), receiverEmail, new RepoCallback<Boolean>() {
-                    @Override
-                    public void onSuccess(Boolean result) {
-                        if (Boolean.TRUE.equals(result)) {
-                            callback.onFailure("Invitation masih pending.");
-                            return;
-                        } createInvitation(sender, receiver, receiverEmail, relationshipRole, callback);
-                    }
-
-                    @Override
-                    public void onFailure(Exception e) {
-                        callback.onFailure(e.getMessage());
-                    }
-                });
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                callback.onFailure(e.getMessage());
-            }
-        });
-    }
     private void createInvitation(User sender, User receiver, String receiverEmail, UserRole relationshipRole, InvitationCallback callback) {
         Invitation invitation = new Invitation();
         invitation.setInvitation_id(UUID.randomUUID().toString());
@@ -878,7 +809,7 @@ public class AuthManager {
                         sessionManager.setActiveConsumerUid(consumerUid);
                         switchRole(UserRole.Caregiver, callback);
                     } else {
-                        loadUserProfile(receiverUid, callback);
+                        switchRole(UserRole.Consumer, callback);
                     } return;
                 } CareRelationship relationship = new CareRelationship();
                 relationship.setConsumer_uid(consumerUid);
@@ -902,7 +833,7 @@ public class AuthManager {
                                 }
                             });
                         } else {
-                            loadUserProfile(receiverUid, callback); //tetap dirole sekarang
+                            switchRole(UserRole.Consumer, callback); //tetap dirole sekarang
                         }
                     }
 

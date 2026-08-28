@@ -115,8 +115,8 @@ public class SignUpActivity extends AppCompatActivity {
                                     try {
                                         startActivity(intent);
                                     } catch (Exception ignored){
-                                    } finish();
-                                }).setNegativeButton("Nanti", (dialog, which) -> finish());
+                                    } goToLogin(result.getEmail());
+                                }).setNegativeButton("Nanti", (dialog, which) -> goToLogin(result.getEmail()));
                 AlertDialog dialog = builder.create();
                 dialog.show();
                 if (dialog.getWindow() != null){
@@ -131,6 +131,14 @@ public class SignUpActivity extends AppCompatActivity {
                 Toast.makeText(SignUpActivity.this, message, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void goToLogin(String email) {
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.putExtra("prefill_email", email);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     private boolean validateInput(String name, String email, String password) {

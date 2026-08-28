@@ -41,6 +41,7 @@ import com.example.meduminderv1.R;
 import com.example.meduminderv1.Schedule.AppointmentReminderFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.color.MaterialColors;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -151,7 +152,10 @@ public class LogFragment extends Fragment {
             TextView itemConsumption = popupView.findViewById(R.id.itemConsumption);
             TextView itemAppointment = popupView.findViewById(R.id.itemAppointment);
 
-            imgArrow.setColorFilter(ContextCompat.getColor(requireContext(), R.color.pink));
+            int itam = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface);
+            int pink = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorSecondary);
+
+            imgArrow.setColorFilter(pink);
             imgArrow.animate().rotation(180f).setDuration(150).start();
 
             itemConsumption.setOnClickListener(itemView -> {
@@ -180,7 +184,7 @@ public class LogFragment extends Fragment {
             });
 
             popupWindow.setOnDismissListener(() -> {
-                imgArrow.setColorFilter(ContextCompat.getColor(requireContext(), R.color.black));
+                imgArrow.setColorFilter(itam);
                 imgArrow.animate().rotation(0f).setDuration(150).start();
             });
         });
@@ -406,7 +410,7 @@ public class LogFragment extends Fragment {
         }
 
         LogStatus status = log.getStatusBasedOnDate();
-        bundle.putString("status", status.name());
+        bundle.putString("status", status.getValue());
         bundle.putString("nama_obat", namaObat);
 
         NavHostFragment.findNavController(LogFragment.this)

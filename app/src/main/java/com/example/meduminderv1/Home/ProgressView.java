@@ -11,6 +11,7 @@ import android.view.View;
 import androidx.annotation.Nullable;
 
 import com.example.meduminderv1.R;
+import com.google.android.material.color.MaterialColors;
 
 public class ProgressView extends View {
 
@@ -24,6 +25,8 @@ public class ProgressView extends View {
     public ProgressView(Context context) { super(context); init(); }
     public ProgressView(Context context, @Nullable AttributeSet attrs) { super(context, attrs); init(); }
 
+    int itam = MaterialColors.getColor(getRootView(), com.google.android.material.R.attr.colorOnSurface);
+    int ijo = MaterialColors.getColor(getRootView(), com.google.android.material.R.attr.colorTertiary);
     private void init() {
         bgPaint.setStyle(Paint.Style.STROKE);
         bgPaint.setStrokeWidth(strokeWidth);
@@ -32,9 +35,9 @@ public class ProgressView extends View {
         progressPaint.setStyle(Paint.Style.STROKE);
         progressPaint.setStrokeWidth(strokeWidth);
         progressPaint.setStrokeCap(Paint.Cap.ROUND);
-        progressPaint.setColor(getResources().getColor(R.color.green));
+        progressPaint.setColor(ijo);
 
-        textPaint.setColor(getResources().getColor(R.color.black));
+        textPaint.setColor(itam);
         textPaint.setTextAlign(Paint.Align.CENTER);
         textPaint.setFakeBoldText(true);
     }

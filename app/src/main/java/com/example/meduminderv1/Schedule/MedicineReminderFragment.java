@@ -30,8 +30,11 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.meduminderv1.Caregiver.ConsumerPickerHelper;
 import com.example.meduminderv1.Model.LogGenerator;
+import com.example.meduminderv1.Notification.Notification;
+import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
+import com.example.meduminderv1.Repo.NotificationRepo;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -77,6 +80,7 @@ public class MedicineReminderFragment extends Fragment {
     private boolean endDateSelected = false;
     SessionManager sessionManager;
     MedicationRepo medicationRepo;
+    NotificationRepo notificationRepo;
     private String selectedCatalogId = null;
     boolean isNewMed = false;
     String selectedMed = "";
@@ -105,6 +109,7 @@ public class MedicineReminderFragment extends Fragment {
         sessionManager = SessionManager.getInstance();
         db = FirebaseFirestore.getInstance();
         logGenerator = new LogGenerator();
+        notificationRepo = new NotificationRepo();
 
         btnBack.setOnClickListener(v -> {
             NavHostFragment.findNavController(MedicineReminderFragment.this)
@@ -362,6 +367,7 @@ public class MedicineReminderFragment extends Fragment {
                                         logGenerator.ensureLogsGenerated(user.getAuth_uid(), result, times, startDate, endDate);
                                         AlarmSchedulerHelper.scheduleAll(requireContext(), result, medName, times, endDate != null ?
                                                 endDate.toDate().getTime() : 0L);
+                                        notifyReminderCreated(medName);
                                         Toast.makeText(requireContext(), "Reminder berhasil dibuat", Toast.LENGTH_SHORT).show();
                                         clearFields();
                                         NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
@@ -393,6 +399,7 @@ public class MedicineReminderFragment extends Fragment {
                                     medicationRepo.saveMedSchedule(schedules, new RepoCallback<String>() {
                                         @Override
                                         public void onSuccess(String result) {
+                                            notifyReminderCreated(medName);
                                             Toast.makeText(requireContext(), "Reminder berhasil dibuat", Toast.LENGTH_SHORT).show();
                                             clearFields();
                                             NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
@@ -534,5 +541,21 @@ public class MedicineReminderFragment extends Fragment {
                     .append(word.substring(1).toLowerCase())
                     .append(" ");
         } return builder.toString().trim();
+    }
+    private void notifyReminderCreated(String medName) {
+        boolean isForSelf = targetUid.equals(user.getAuth_uid());
+        Notification notif = new Notification();
+        notif.setReceiver_uid(targetUid);
+        notif.setSender_uid(user.getAuth_uid());
+        notif.setType(NotificationType.Medicine);
+        notif.setTitle("Jadwal Obat Baru");
+        notif.setMessage(isForSelf
+                ? "Anda menambahkan jadwal minum obat: " + medName
+                : user.getName() + " menambahkan jadwal minum obat " + medName + " untuk Anda");
+        notif.setIs_read(false);
+        notificationRepo.createNotification(notif, new RepoCallback<Void>() {
+            @Override public void onSuccess(Void result) { }
+            @Override public void onFailure(Exception e) { }
+        });
     }
 }

@@ -42,7 +42,7 @@
                 android:text="Riwayat Konsumsi"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                android:textColor="@color/black"
+                android:textColor="?attr/colorOnSurface"
                 />
 
             <ImageView
@@ -121,7 +121,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Belum ada riwayat konsumsi."
-        android:textColor="@color/black"
+        android:textColor="?attr/colorOnSurface"
         android:gravity="center_horizontal"
         android:textSize="16sp"
         android:layout_marginTop="20dp"
@@ -133,7 +133,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Belum ada riwayat jadwal temu."
-        android:textColor="@color/black"
+        android:textColor="?attr/colorOnSurface"
         android:gravity="center_horizontal"
         android:textSize="16sp"
         android:layout_marginTop="20dp"
