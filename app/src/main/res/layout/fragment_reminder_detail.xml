@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Reminder.ReminderDetailFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_margin="20dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:id="@+id/headerSection">
+
+            <ImageButton
+                android:layout_width="30dp"
+                android:layout_height="26dp"
+                android:background="@drawable/ic_back"
+                android:id="@+id/btnBack"
+                android:layout_gravity="center"
+                app:tint="@color/hover_pressed" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/tvHeaderNotif"
+                android:textStyle="bold"
+                android:textSize="22sp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:textColor="?attr/colorOnSurface"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@drawable/border_gradient"
+            android:layout_marginVertical="20dp"
+            android:layout_marginHorizontal="20dp">
+
+            <ImageView
+                android:id="@+id/imgType"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:src="@drawable/ic_invite"
+                android:layout_marginVertical="20dp"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/messageNotif"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="isi message"
+            android:paddingHorizontal="10dp"
+            android:textSize="16sp"
+            android:layout_marginBottom="5dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:layout_weight="1"
+                android:id="@+id/btnAcc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_selector"
+                app:backgroundTint="?attr/colorTertiary"
+                android:text="Terima"
+                android:textColor="?attr/colorPrimary"
+                android:textAllCaps="false"
+                android:layout_marginVertical="10dp"/>
+
+            <Space
+                android:layout_width="10dp"
+                android:layout_height="wrap_content"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnReject"
+                android:layout_weight="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_selector"
+                app:backgroundTint="?attr/colorAccent"
+                android:text="Tolak"
+                android:textColor="?attr/colorPrimary"
+                android:textAllCaps="false"
+                android:layout_marginVertical="10dp"/>
+
+        </LinearLayout>
+
+
+    </LinearLayout>
+
+</RelativeLayout>

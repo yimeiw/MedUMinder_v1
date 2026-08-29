@@ -6,17 +6,24 @@ import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
+import android.widget.Filter;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
@@ -27,14 +34,30 @@ import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
+import com.example.meduminderv1.Auth.SessionManager;
+import com.example.meduminderv1.Callback.RepoCallback;
+import com.example.meduminderv1.Model.Medication;
+import com.example.meduminderv1.Model.MedicationSchedules;
+import com.example.meduminderv1.Model.User;
+import com.example.meduminderv1.R;
+import com.example.meduminderv1.Repo.MedicationRepo;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.color.MaterialColors;
+import com.google.android.material.timepicker.MaterialTimePicker;
+import com.google.android.material.timepicker.TimeFormat;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MedicineReminderFragment extends Fragment {
 
@@ -47,6 +70,17 @@ public class MedicineReminderFragment extends Fragment {
     Calendar selectedCalendar;
     MaterialButton btnSaveReminder;
     boolean isDropdownOpen = false;
+    private final ArrayList<TextView> timeViews = new ArrayList<>();
+    private boolean endDateSelected = false;
+    SessionManager sessionManager;
+    MedicationRepo medicationRepo;
+    private String selectedCatalogId = null;
+    boolean isNewMed = false;
+    String selectedMed = "";
+    User user;
+    boolean isSelectingItem = false;
+    private Handler debounceHandler = new Handler(Looper.getMainLooper());
+    private Runnable debounceRunnable;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -62,30 +96,122 @@ public class MedicineReminderFragment extends Fragment {
         selectedCalendar = Calendar.getInstance();
         btnSaveReminder = view.findViewById(R.id.btnSaveReminder);
 
+        medicationRepo = new MedicationRepo();
+        sessionManager = SessionManager.getInstance();
+        db = FirebaseFirestore.getInstance();
+
         btnBack.setOnClickListener(v -> {
             NavHostFragment.findNavController(MedicineReminderFragment.this)
                     .navigateUp();
         });
 
-        db = FirebaseFirestore.getInstance();
+        user = sessionManager.getUser();
 
         ArrayList<String> medList = new ArrayList<>();
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), R.layout.item_suggestion, R.id.tvNamaObat, medList);
-        namaObat.setAdapter(adapter);
-        namaObat.setDropDownBackgroundDrawable(requireContext().getDrawable(R.drawable.border_wp));
-        namaObat.setDropDownVerticalOffset(20);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(requireContext(), R.layout.item_suggestion, R.id.tvNamaObat, new ArrayList<>()){
+            @NonNull
+            @Override
+            public Filter getFilter() {
+                return new Filter() {
+                    @Override
+                    protected FilterResults performFiltering(CharSequence charSequence) {
+                        return new FilterResults();
+                    }
 
-        db.collection("medicine_catalog").get().addOnSuccessListener(queryDocumentSnapshots -> {
-            medList.clear();
-            for (DocumentSnapshot doc : queryDocumentSnapshots) {
-                String namaObat = doc.getString("nama_obat");
-                if (namaObat != null) {
-                    medList.add(namaObat);
-                } else {
-                    medList.add("No Data");
-                }
-                adapter.notifyDataSetChanged();
+                    @Override
+                    protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
+
+                    }
+                };
             }
+        };
+        namaObat.setAdapter(adapter);
+        namaObat.setThreshold(0);
+        namaObat.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (isSelectingItem){
+                    isSelectingItem = false;
+                    return;
+                }
+                String keyword = editable.toString().trim();
+                if (keyword.startsWith("➕")){
+                    return;
+                } if (debounceRunnable != null){
+                    debounceHandler.removeCallbacks(debounceRunnable);
+                } debounceRunnable = () -> {
+                    adapter.clear();
+                    boolean exactMatch = false;
+                    for (String med : medList){
+                        if (keyword.isEmpty() || med.toLowerCase().contains(keyword.toLowerCase())){
+                            adapter.add(med);
+                        } if (med.equalsIgnoreCase(keyword)){
+                            exactMatch = true;
+                        }
+                    } if (!keyword.isEmpty() && !exactMatch){
+                        adapter.add("➕ Tambahkan \"" + toTitleCase(keyword) + "\"");
+                    } adapter.notifyDataSetChanged();
+                    namaObat.post(() -> {
+                        if (adapter.getCount() > 0){
+                            namaObat.showDropDown();
+                            namaObat.setDropDownBackgroundDrawable(requireContext().getDrawable(R.drawable.border_wp));
+                            namaObat.setDropDownVerticalOffset(20);
+                        } else {
+                            namaObat.dismissDropDown();
+                        }
+                    });
+                }; debounceHandler.postDelayed(debounceRunnable, 150);
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+        });
+
+        Map<String, String> catalogMap = new HashMap<>();
+        db.collection("medicine_catalog").orderBy("nama_obat").get().addOnSuccessListener(query -> {
+            medList.clear();
+            catalogMap.clear();
+            for (DocumentSnapshot doc: query){
+                String obat = doc.getString("nama_obat");
+                if (obat != null){
+                    medList.add(obat);
+                    catalogMap.put(obat, doc.getId());
+                }
+            } Log.d("MEDICINE", "Jumlah = " + medList.size());
+            adapter.notifyDataSetChanged();
+            namaObat.setDropDownBackgroundDrawable(requireContext().getDrawable(R.drawable.border_wp));
+            namaObat.setDropDownVerticalOffset(20);
+        });
+
+        namaObat.setOnItemClickListener((parent, v, position, id) -> {
+            if (position < 0 || position >= adapter.getCount()){
+                return;
+            }
+            String selected = parent.getItemAtPosition(position).toString();
+            String finalMedName;
+            if (selected.startsWith("➕")){
+                Matcher matcher = Pattern.compile("\"([^\"]*)\"").matcher(selected);
+                if (matcher.find()){
+                    finalMedName = matcher.group(1);
+                } else{
+                    finalMedName = selected.replace("➕ Tambahkan ", "").replace("\"", "").trim();
+                }
+                isNewMed = true;
+            } else {
+                finalMedName = selected;
+                isNewMed = false;
+            } selectedMed = finalMedName;
+            isSelectingItem = true;
+            namaObat.setText(finalMedName);
+            namaObat.setSelection(finalMedName.length());
+            namaObat.dismissDropDown();
         });
 
         String[] frequencies = {"Sekali sehari", "Dua kali sehari", "Tiga kali sehari", "Empat kali sehari", "Lima kali sehari", "Enam kali sehari"};
@@ -103,7 +229,6 @@ public class MedicineReminderFragment extends Fragment {
             }
         });
 
-
         freqMinumObat.setOnItemClickListener((parent, view1, position, id) -> {
             String selected = parent.getItemAtPosition(position).toString();
             int frequency = convertFrequencyToNumber(selected);
@@ -120,12 +245,13 @@ public class MedicineReminderFragment extends Fragment {
 
         endDateReminder.setOnClickListener(v -> {
             Calendar today = Calendar.getInstance();
-            DatePickerDialog dialog = new DatePickerDialog(requireContext(), (view1, year, month, day) -> {
+
+            DatePickerDialog dialog = new DatePickerDialog(requireContext(), (view1, year, month, day)->{
                 selectedCalendar.set(Calendar.YEAR, year);
                 selectedCalendar.set(Calendar.MONTH, month);
                 selectedCalendar.set(Calendar.DAY_OF_MONTH, day);
-                String date = day + "/" + (month + 1) + "/" + year;
-                endDateReminder.setText(date);
+                endDateSelected = true;
+                endDateReminder.setText(day + "/" + (month + 1) + "/" + year);
             }, today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH)
             );
             dialog.getDatePicker().setMinDate(System.currentTimeMillis());
@@ -159,195 +285,167 @@ public class MedicineReminderFragment extends Fragment {
     }
 
     private void saveReminder() {
-        Context context = getContext();
-
-        if (context == null) {
+        if (!validateReminder()){
             return;
         }
 
-        String nama = namaObat.getText().toString().trim();
+        if (user == null){
+            Toast.makeText(requireContext(), "User belum login", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String medName;
+        if (isNewMed){
+            medName = selectedMed;
+        } else {
+            medName = namaObat.getText().toString().trim();
+        }
+
         String freq = freqMinumObat.getText().toString().trim();
         String stok = stokObat.getText().toString().trim();
 
-        if (nama.isEmpty()) {
-            namaObat.setError("Nama obat wajib diisi");
-            return;
-        }
-
-        if (freq.isEmpty()) {
-            freqMinumObat.setError("Frekuensi wajib diisi");
-            return;
-        }
-
-        if (stok.isEmpty()) {
-            stokObat.setError("Stok wajib diisi");
-            return;
-        }
-
         int frequency = convertFrequencyToNumber(freq);
-
-        ArrayList<String> times = new ArrayList<>();
-
-        for (int i = 1; i < timeReminder.getChildCount(); i += 2) {
-
-            TextView tv = (TextView) timeReminder.getChildAt(i);
-
-            if (tv.getText().toString().equals("Pilih Jam")) {
-                Toast.makeText(requireContext(),
-                        "Semua jam minum harus dipilih",
-                        Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            times.add(tv.getText().toString());
-        }
-
-        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
-        Timestamp endDate = new Timestamp(selectedCalendar.getTime());
+        ArrayList<String> times = getSelectedTimes();
+        Collections.sort(times);
         Timestamp startDate = Timestamp.now();
+        Timestamp tempEndDate = null;
 
-        // ===============================
-        // Cari apakah obat ada di catalog
-        // ===============================
+        if (endDateSelected){
+            tempEndDate = new Timestamp(selectedCalendar.getTime());
+        } Timestamp endDate = tempEndDate;
 
-        db.collection("medicine_catalog")
-                .whereEqualTo("nama_obat", nama)
-                .limit(1)
-                .get()
-                .addOnSuccessListener(snapshot -> {
+        Map<String,Object> stockMap = new HashMap<>();
+        stockMap.put("stok_obat", Integer.parseInt(stok));
+        stockMap.put("initial_stok", Integer.parseInt(stok));
+        stockMap.put("minimum_stok", frequency);
 
-                    String catalogId = null;
-                    String customMedicineName = null;
+        db.collection("medicine_catalog").get()
+                .addOnSuccessListener(query -> {
+                    selectedCatalogId = null;
+                    for (DocumentSnapshot doc : query){
+                        String dbName = doc.getString("nama_obat");
+                        if (dbName != null && dbName.equalsIgnoreCase(medName)){
+                            selectedCatalogId = doc.getId();
+                            break;
+                        }
+                    } if (selectedCatalogId != null){ //ini kalau catalog sudah ada/nama obatnya sudah ada
+                        Medication med = new Medication(user.getAuth_uid(), selectedCatalogId, null, true, stockMap, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
+                        medicationRepo.saveMedication(med, new RepoCallback<String>() {
+                            @Override
+                            public void onSuccess(String medicationId) {
+                                MedicationSchedules schedules = new MedicationSchedules(user.getAuth_uid(), medicationId, frequency, times, startDate, endDate, true, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
+                                medicationRepo.saveMedSchedule(schedules, new RepoCallback<String>() {
+                                    @Override
+                                    public void onSuccess(String result) {
+                                        Toast.makeText(requireContext(), "Reminder berhasil dibuat", Toast.LENGTH_SHORT).show();
+                                        clearFields();
+                                        NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
+                                    }
 
-                    if (!snapshot.isEmpty()) {
-                        catalogId = snapshot.getDocuments().get(0).getId();
-                    } else {
-                        customMedicineName = nama;
-                    }
+                                    @Override
+                                    public void onFailure(Exception e) {
+                                        Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            }
 
-                    //-----------------------------------
-                    // Save medication
-                    //-----------------------------------
+                            @Override
+                            public void onFailure(Exception e) {
+                                Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    } else { //ini kalau obat nya belum ada di database
+                        Map<String, Object> catalog = new HashMap<>();
+                        catalog.put("nama_obat", toTitleCase(medName));
+                        catalog.put("created_at", Timestamp.now());
+                        db.collection("medicine_catalog").add(catalog).addOnSuccessListener(documentReference -> {
+                            selectedCatalogId = documentReference.getId();
+                            Medication med = new Medication(user.getAuth_uid(), selectedCatalogId, null, true, stockMap, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
+                            medicationRepo.saveMedication(med, new RepoCallback<String>() {
+                                @Override
+                                public void onSuccess(String medicationId) {
+                                    MedicationSchedules schedules = new MedicationSchedules(user.getAuth_uid(), medicationId, frequency, times, startDate, endDate, true, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
+                                    medicationRepo.saveMedSchedule(schedules, new RepoCallback<String>() {
+                                        @Override
+                                        public void onSuccess(String result) {
+                                            Toast.makeText(requireContext(), "Reminder berhasil dibuat", Toast.LENGTH_SHORT).show();
+                                            clearFields();
+                                            NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
+                                        }
 
-                    Map<String, Object> stock = new HashMap<>();
-                    stock.put("initial_stock", Integer.parseInt(stok));
-                    stock.put("minimum_stock", 5);
-                    stock.put("stok_obat", Integer.parseInt(stok));
+                                        @Override
+                                        public void onFailure(Exception e) {
+                                            Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                }
 
-                    Map<String, Object> medication = new HashMap<>();
-                    medication.put("users_id", uid);
-                    medication.put("catalog_id", catalogId);
-                    medication.put("custom_medicine_name", customMedicineName);
-                    medication.put("is_active", true);
-                    medication.put("stock", stock);
-                    medication.put("created_at", FieldValue.serverTimestamp());
-                    medication.put("updated_at", FieldValue.serverTimestamp());
-                    medication.put("deleted_at", null);
-                    medication.put("created_by", uid);
-                    medication.put("updated_by", uid);
-
-                    db.collection("medications")
-                            .add(medication)
-                            .addOnSuccessListener(medDoc -> {
-
-                                Map<String, Object> schedule = new HashMap<>();
-
-                                schedule.put("users_id", uid);
-                                schedule.put("medication_id", medDoc.getId());
-                                schedule.put("frequency", frequency);
-                                schedule.put("times_of_day", times);
-                                schedule.put("start_date", startDate);
-                                schedule.put("end_date", endDate);
-                                schedule.put("is_active", true);
-                                schedule.put("created_at", FieldValue.serverTimestamp());
-                                schedule.put("updated_at", FieldValue.serverTimestamp());
-                                schedule.put("deleted_at", null);
-                                schedule.put("created_by", uid);
-                                schedule.put("updated_by", uid);
-
-                                db.collection("medication_schedules")
-                                        .add(schedule)
-                                        .addOnSuccessListener(scheduleDoc -> {
-
-                                            new LogGenerator().ensureLogsGenerated(
-                                                    uid,
-                                                    scheduleDoc.getId(),
-                                                    times,
-                                                    startDate,
-                                                    endDate
-                                            );
-
-                                            Toast.makeText(
-                                                    context,
-                                                    "Pengingat berhasil disimpan",
-                                                    Toast.LENGTH_SHORT
-                                            ).show();
-
-                                            AlarmSchedulerHelper.scheduleAll(
-                                                    context,
-                                                    scheduleDoc.getId(),
-                                                    nama,
-                                                    times,
-                                                    endDate.toDate().getTime()
-                                            );
-
-//                                            clearFields();
-                                            if (isAdded()) {
-                                                NavHostFragment.findNavController(this).navigateUp();
-                                            }
-                                        })
-                                        .addOnFailureListener(e -> {
-                                            Toast.makeText(
-                                                    context,
-                                                    e.getMessage(),
-                                                    Toast.LENGTH_SHORT
-                                            ).show();
-                                        });
-
-                            })
-                            .addOnFailureListener(e -> {
-                                Toast.makeText(
-                                        context,
-                                        e.getMessage(),
-                                        Toast.LENGTH_SHORT
-                                ).show();
+                                @Override
+                                public void onFailure(Exception e) {
+                                    Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                                }
                             });
-
+                        });
+                    }
                 });
     }
 
     private void createTimeFields(int frequency) {
         timeReminder.removeAllViews();
-        TypedValue typedValue = new TypedValue();
-        requireContext().getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurface, typedValue, true);
+        timeViews.clear();
+
+        int labelColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface);
+        int hintColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorPrimaryInverse);
 
         for (int i = 1; i <= frequency; i++) {
             TextView label = new TextView(requireContext());
             label.setText("Jam Minum Obat " + i);
-            label.setPadding(20, 10, 20, 5);
-            label.setTextColor(typedValue.data);
+            label.setPadding(20,10,20,5);
+            label.setTextColor(labelColor);
+
             TextView tvTime = new TextView(requireContext());
             tvTime.setText("Pilih Jam");
-            tvTime.setPadding(50, 40, 50, 40);
-            tvTime.setTextColor(typedValue.data);
+            tvTime.setPadding(50,40,50,40);
+            tvTime.setTextColor(hintColor);
 
             tvTime.setBackgroundResource(R.drawable.border_hugcontent_nopadding);
             tvTime.setClickable(true);
             tvTime.setFocusable(false);
 
-            tvTime.setOnClickListener(v -> {
-                Calendar now = Calendar.getInstance();
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            );
 
-                TimePickerDialog dialog = new TimePickerDialog(requireContext(), (view, hour, minute) -> {
-                    String time = String.format("%02d:%02d", hour, minute);
-                    tvTime.setText(time);
-                }, now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE), true);
-                dialog.show();
-            });
+            tvTime.setLayoutParams(params);
+
+            tvTime.setOnClickListener(v -> showTimePicker(tvTime));
+            timeViews.add(tvTime);
             timeReminder.addView(label);
             timeReminder.addView(tvTime);
         }
+    }
+
+    private void showTimePicker(TextView selectedView) {
+        Log.d("TIME_PICKER", "showTimePicker sipanggil");
+        Calendar now = Calendar.getInstance();
+        int filledColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface);
+        MaterialTimePicker picker = new MaterialTimePicker.Builder().setTimeFormat(TimeFormat.CLOCK_24H)
+                .setHour(now.get(Calendar.HOUR_OF_DAY))
+                .setMinute(now.get(Calendar.MINUTE))
+                .setTitleText("Pilih Jam Minum Obat").build();
+
+        picker.addOnPositiveButtonClickListener(v -> {
+            String time = String.format(Locale.getDefault(), "%02d:%02d", picker.getHour(), picker.getMinute());
+            for (TextView tv : timeViews){
+                if (tv != selectedView && tv.getText().toString().equals(time)){
+                    Toast.makeText(requireContext(), "Jam tersebut sudah dipilih.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            } selectedView.setText(time);
+            selectedView.setTextColor(filledColor);
+        });
+        picker.show(getParentFragmentManager(), "time_picker");
     }
 
     private void clearFields() {
@@ -358,6 +456,58 @@ public class MedicineReminderFragment extends Fragment {
         timeReminder.removeAllViews();
         selectedCalendar = Calendar.getInstance();
         isDropdownOpen = false;
-        freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
+        endDateSelected = false;
+        freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_arrow_down,0);
+    }
+
+    private boolean validateReminder(){
+        boolean valid = true;
+
+        String name = namaObat.getText().toString().trim();
+        String freq = freqMinumObat.getText().toString().trim();
+        String stok = stokObat.getText().toString().trim();
+
+        if (name.isEmpty()){
+            namaObat.setError("Nama obat wajib diisi");
+            valid = false;
+        } if (freq.isEmpty()){
+            freqMinumObat.setError("Frekuensi minum obat wajib diisi");
+            valid = false;
+        } if (stok.isEmpty()){
+            stokObat.setError("Stok obat wajib diisi");
+            valid = false;
+        } int frequency = convertFrequencyToNumber(freq);
+        ArrayList<String> times = getSelectedTimes();
+        if (times.size() != frequency){
+            Toast.makeText(requireContext(), "Semua jam minum harus dipilih.", Toast.LENGTH_SHORT).show();
+            valid = false;
+        }
+        HashSet<String> unique = new HashSet<>(times);
+        if (unique.size() != times.size()){
+            Toast.makeText(requireContext(), "Jam minum tidak boleh sama.", Toast.LENGTH_SHORT).show();
+            valid = false;
+        }
+        return valid;
+    }
+
+    private ArrayList<String> getSelectedTimes() {
+        ArrayList<String> times = new ArrayList<>();
+        for (TextView tv : timeViews){
+            String value = tv.getText().toString().trim();
+            if (!value.equals("Pilih Jam")){
+                times.add(value);
+            }
+        } return times;
+    }
+
+    private String toTitleCase(String text){
+        if (text == null || text.trim().isEmpty()) return "";
+        StringBuilder builder = new StringBuilder();
+        String[] words = text.trim().split("\\s+");
+        for (String word : words){
+            builder.append(Character.toUpperCase(word.charAt(0)))
+                    .append(word.substring(1).toLowerCase())
+                    .append(" ");
+        } return builder.toString().trim();
     }
 }

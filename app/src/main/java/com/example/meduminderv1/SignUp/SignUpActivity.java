@@ -90,9 +90,9 @@ public class SignUpActivity extends AppCompatActivity {
         user.setAuthProvider(AuthProviderType.EMAIL);
         user.setPreferred_language("Indonesia");
         user.setTimezone("Asia/Jakarta");
-        user.setCreatedAt(Timestamp.now());
-        user.setUpdatedAt(Timestamp.now());
-        user.setDeletedAt(null);
+        user.setCreated_at(Timestamp.now());
+        user.setUpdated_at(Timestamp.now());
+        user.setDeleted_at(null);
 
         String password = passwordInput.getText().toString().trim();
 

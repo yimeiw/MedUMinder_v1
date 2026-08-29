@@ -14,9 +14,12 @@
     <string name="login_failed">"Login failed"</string>
     <string name="login_success">"Login success"</string>
     <string name="greetings_consumer">"Jangan lupa untuk minum obat Anda!"</string>
+    <string name="greetings_caregiver">"Tolong ingatkan Consumer untuk minum obat!"</string>
     <string name="desc_kepatuhan_tinggi">"Minggu ini kepatuhan Anda sangat bagus. Pertahankan!"</string>
     <string name="desc_kepatuhan_okela">"Minggu ini kepatuhan Anda cukup bagus. Ayo ditingkatkan!"</string>
     <string name="desc_kepatuhan_rendah">"Minggu ini kepatuhan Anda sangat kurang. Segera ditingkatkan!"</string>
+    <string name="alert_invite_consumer">"Menghubungkan consumer untuk memantau kepatuhan konsumsi obat dan menerima notifikasi obat terlewat."</string>
+    <string name="alert_invite_caregiver">"Menambahkan caregiver yang dapat menerima notifikasi dan mengirim pengingat obat."</string>
 
     <string-array name="role_array">
         <item>Consumer</item>

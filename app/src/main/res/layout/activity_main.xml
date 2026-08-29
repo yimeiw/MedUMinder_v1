@@ -33,6 +33,6 @@
         app:itemIconTint="@color/nav_item"
         app:itemTextColor="@android:color/transparent"
         app:labelVisibilityMode="unlabeled"
-        app:menu="@menu/bottom_nav" />
+        app:menu="@menu/bottom_nav_consumer" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

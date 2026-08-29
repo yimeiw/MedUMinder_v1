@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Model.User;
+import com.example.meduminderv1.Model.UserRole;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -55,10 +56,11 @@ public class UserRepository {
                 }).addOnFailureListener(callback::onFailure);
     }
     public void updateUser(User user, RepoCallback<Void> callback){
+        user.setUpdated_at(Timestamp.now());
         Map<String, Object> update = new HashMap<>();
         update.put("name", user.getName());
         update.put("email", user.getEmail());
-        update.put("updatedAt", user.getUpdatedAt());
+        update.put("updated_at", user.getUpdated_at());
 
         db.collection("users").document(user.getAuth_uid()).update(update)
                 .addOnSuccessListener(unused -> {
@@ -71,5 +73,25 @@ public class UserRepository {
                 .addOnSuccessListener(unused -> {
                     callback.onSuccess(null);
                 }).addOnFailureListener(callback::onFailure);
+    }
+
+    //untuk role
+    public void updateRole(String uid, UserRole role, RepoCallback<Void> callback){
+        Map<String, Object> update = new HashMap<>();
+        update.put("current_role", role.name());
+        update.put("updated_at", Timestamp.now());
+        db.collection("users").document(uid).update(update)
+                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onFailure);
+
+    }
+
+    public void enableCaregiver(String uid, RepoCallback<Void> callback){
+        Map<String, Object> update = new HashMap<>();
+        update.put("caregiver_enabled", true);
+        update.put("updated_at", Timestamp.now());
+        db.collection("users").document(uid).update(update)
+                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onFailure);
     }
 }
