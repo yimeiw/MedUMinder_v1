@@ -43,6 +43,15 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:textColor="?attr/colorOnSurface"/>
+
+            <ImageButton
+                android:layout_width="30dp"
+                android:layout_height="26dp"
+                android:background="@drawable/ic_more"
+                android:id="@+id/btnOption"
+                android:layout_gravity="center"
+                app:tint="@color/hover_pressed"
+                />
         </LinearLayout>
 
 <!--         bulat isi nama obat-->

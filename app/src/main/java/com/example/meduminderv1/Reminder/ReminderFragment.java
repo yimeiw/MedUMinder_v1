@@ -1,5 +1,11 @@
 package com.example.meduminderv1.Reminder;
 
+import static android.content.Context.LAYOUT_INFLATER_SERVICE;
+
+import static androidx.core.content.ContextCompat.getSystemService;
+
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
@@ -7,10 +13,16 @@ import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.PopupMenu;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,7 +57,7 @@ public class ReminderFragment extends Fragment {
     MaterialButton btnTundaReminder;
 
     LinearLayout circleNamaObat;
-    ImageButton btnBack;
+    ImageButton btnBack, btnOption;
 
     private String scheduleId;
     private String namaObat;
@@ -74,28 +86,16 @@ public class ReminderFragment extends Fragment {
         db = FirebaseFirestore.getInstance();
 
         btnBack = view.findViewById(R.id.btnBack);
+        btnOption = view.findViewById(R.id.btnOption);
         namaObatConfirmReminder = view.findViewById(R.id.namaObatConfirmReminder);
 
-        dateReminder =
-                view.findViewById(R.id.dateReminder);
-
-        timeReminder =
-                view.findViewById(R.id.timeReminder);
-
-        statusReminder =
-                view.findViewById(R.id.statusReminder);
-
-        btnIsTaken =
-                view.findViewById(R.id.btnIsTaken);
-
-        btnTundaReminder =
-                view.findViewById(R.id.btnTundaReminder);
-
-        circleNamaObat =
-                view.findViewById(R.id.circleNamaObat);
-
+        dateReminder = view.findViewById(R.id.dateReminder);
+        timeReminder = view.findViewById(R.id.timeReminder);
+        statusReminder = view.findViewById(R.id.statusReminder);
+        btnIsTaken = view.findViewById(R.id.btnIsTaken);
+        btnTundaReminder = view.findViewById(R.id.btnTundaReminder);
+        circleNamaObat = view.findViewById(R.id.circleNamaObat);
         btnBack.setOnClickListener(v -> {
-
             NavHostFragment
                     .findNavController(ReminderFragment.this)
                     .navigateUp();
@@ -103,25 +103,14 @@ public class ReminderFragment extends Fragment {
         });
 
         Bundle bundle = getArguments();
-
         if (bundle != null) {
-
-            scheduleId =
-                    bundle.getString("medication_schedules_id");
-
-            namaObat =
-                    bundle.getString("nama_obat");
-
-            scheduledAt =
-                    bundle.getLong("scheduled_at", 0L);
-
-            currentStatus =
-                    bundle.getString(
+            scheduleId = bundle.getString("medication_schedules_id");
+            namaObat = bundle.getString("nama_obat");
+            scheduledAt = bundle.getLong("scheduled_at", 0L);
+            currentStatus = bundle.getString(
                             "status",
                             "akan datang"
                     );
-
-
             Log.d(
                     "REMINDER_FRAGMENT",
                     "scheduleId = " + scheduleId
@@ -129,49 +118,58 @@ public class ReminderFragment extends Fragment {
                             + ", scheduledAt = " + scheduledAt
                             + ", status = " + currentStatus
             );
-
             namaObatConfirmReminder.setText(namaObat);
-
-
             Date scheduledDate =
                     new Date(scheduledAt);
-
-
-            dateReminder.setText(
-                    new SimpleDateFormat(
-                            "dd/MM/yyyy",
-                            Locale.getDefault()
-                    ).format(scheduledDate)
+            dateReminder.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                    .format(scheduledDate)
             );
-
-
-            timeReminder.setText(
-                    new SimpleDateFormat(
-                            "HH:mm",
-                            Locale.getDefault()
-                    ).format(scheduledDate)
+            timeReminder.setText(new SimpleDateFormat("HH:mm", Locale.getDefault())
+                    .format(scheduledDate)
             );
-
-
             updateStatusUI(currentStatus);
         }
-
         btnIsTaken.setOnClickListener(v -> {
-
             markAsTaken();
-
         });
-
         btnTundaReminder.setOnClickListener(v -> {
-
             snoozeReminder();
-
         });
-
-
+        btnOption.setOnClickListener(v -> {
+            PopupMenu popupMenu = new PopupMenu(requireContext(), btnOption);
+            popupMenu.getMenuInflater().inflate(R.menu.medicine_edit_menu, popupMenu.getMenu());
+            popupMenu.setOnMenuItemClickListener(menuItem -> {
+                if (menuItem.getItemId() == R.id.editMedicine) {
+                    NavHostFragment.findNavController(this)
+                            .navigate(R.id.editMedicineFragment);
+                    return true;
+                }
+                if (menuItem.getItemId() == R.id.deleteMedicine) {
+                    //pop up again? lol
+                    return true;
+                }
+                return false;
+            });
+            popupMenu.show();
+        });
         return view;
     }
 
+    private void showOptionPopup() {
+        View popUpView = LayoutInflater.from(requireContext()).inflate(R.layout.popup_edit_medicine, null);
+
+        PopupWindow optionPopup = new PopupWindow(
+                popUpView,
+                dpToPx(160),
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                true
+        );
+
+        optionPopup.setBackgroundDrawable(
+                new ColorDrawable(Color.TRANSPARENT)
+        );
+
+    }
     private void markAsTaken() {
 
         if (scheduleId == null || scheduleId.isEmpty()) {
@@ -236,8 +234,6 @@ public class ReminderFragment extends Fragment {
 
                 });
     }
-
-
     private void snoozeReminder() {
 
         if (scheduleId == null || scheduleId.isEmpty()) {
@@ -274,7 +270,6 @@ public class ReminderFragment extends Fragment {
                 .findNavController(ReminderFragment.this)
                 .navigateUp();
     }
-
     private void updateStatusUI(String rawStatus) {
 
         LogStatus logStatus =
@@ -294,11 +289,7 @@ public class ReminderFragment extends Fragment {
                 logStatus
         );
     }
-
-    private String buildLogId(
-            String scheduleId,
-            long scheduledAtMillis
-    ) {
+    private String buildLogId(String scheduleId, long scheduledAtMillis) {
 
         LocalDateTime dt =
                 LocalDateTime.ofInstant(
@@ -325,11 +316,7 @@ public class ReminderFragment extends Fragment {
                 + "_"
                 + cleanTime;
     }
-
-    private void applyCircleStatusColor(
-            View circleView,
-            LogStatus status
-    ) {
+    private void applyCircleStatusColor(View circleView, LogStatus status) {
 
         int statusColor =
                 ContextCompat.getColor(
@@ -365,8 +352,6 @@ public class ReminderFragment extends Fragment {
             );
         }
     }
-
-
     private int dpToPx(float dp) {
 
         return (int) TypedValue.applyDimension(
