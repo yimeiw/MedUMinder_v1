@@ -33,10 +33,12 @@ public class AlarmRingingService extends Service {
         }
         String scheduleId = intent.getStringExtra("schedule_id");
         String namaObat = intent.getStringExtra("nama_obat");
-        String soundUri = intent.getStringExtra("sound_uri");
+        String soundUri = intent.getStringExtra("sound");
         long scheduledAt = intent.getLongExtra("scheduled_at", 0L);
+        String type = intent.getStringExtra("type");
+        boolean isAppointment = "appointment".equals(type);
 
-        startForeground(safeId(scheduleId), buildNotification(scheduleId, namaObat, scheduledAt));
+        startForeground(safeId(scheduleId), buildNotification(scheduleId, namaObat, scheduledAt, isAppointment));
         startLoopingSound(soundUri);
 
         return START_STICKY;
@@ -70,55 +72,76 @@ public class AlarmRingingService extends Service {
         }
     }
 
-    private Notification buildNotification(String scheduleId, String namaObat, long scheduledAt) {
+    private Notification buildNotification(String scheduleId, String namaObat, long scheduledAt, boolean isAppointment) {
         createChannelIfNeeded();
 
         Intent contentIntent = new Intent(this, MainActivity.class)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                .putExtra("navigate_to", "reminder")
+                .putExtra("navigate_to", isAppointment ? "appointment_log" : "reminder")
                 .putExtra("schedule_id", scheduleId)
                 .putExtra("nama_obat", namaObat)
                 .putExtra("scheduled_at", scheduledAt)
-                .putExtra("status", "akan datang");
+                .putExtra("type", isAppointment ? "appointment" : "medicine");
         PendingIntent contentPending = PendingIntent.getActivity(
-                this,
-                safeId(scheduleId),
-                contentIntent,
+                this, safeId(scheduleId), contentIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
-        Intent takenIntent = new Intent(this, AlarmActionReceiver.class)
-                .setAction("ACTION_TAKEN")
-                .putExtra("schedule_id", scheduleId)
-                .putExtra("scheduled_at", scheduledAt);
-        PendingIntent takenPending = PendingIntent.getBroadcast(
-                this, safeId(scheduleId), takenIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
-
-        Intent snoozeIntent = new Intent(this, AlarmActionReceiver.class)
-                .setAction("ACTION_SNOOZE")
-                .putExtra("schedule_id", scheduleId)
-                .putExtra("nama_obat", namaObat)
-                .putExtra("scheduled_at", scheduledAt);
-        PendingIntent snoozePending = PendingIntent.getBroadcast(
-                this, safeId(scheduleId), snoozeIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
-
-        return new NotificationCompat.Builder(this, CHANNEL_ID)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_tablet)
-                .setContentTitle("Waktunya minum obat")
+                .setContentTitle(isAppointment ? "Waktunya appointment" : "Waktunya minum obat")
                 .setContentText(namaObat)
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setOnlyAlertOnce(true)
-                .setOngoing(true)
+                .setOngoing(false)
                 .setAutoCancel(false)
-                .setContentIntent(contentPending)
-                .addAction(0, "DIKONSUMSI", takenPending)
-                .addAction(0, "TUNDA", snoozePending)
-                .build();
+                .setContentIntent(contentPending);
+
+        if (isAppointment) {
+            Intent attendedIntent = new Intent(this, AlarmActionReceiver.class)
+                    .setAction("ACTION_APPOINTMENT_ATTENDED")
+                    .putExtra("schedule_id", scheduleId);
+            PendingIntent attendedPending = PendingIntent.getBroadcast(
+                    this, safeId(scheduleId), attendedIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+
+            Intent missedIntent = new Intent(this, AlarmActionReceiver.class)
+                    .setAction("ACTION_APPOINTMENT_MISSED")
+                    .putExtra("schedule_id", scheduleId);
+            PendingIntent missedPending = PendingIntent.getBroadcast(
+                    this, safeId(scheduleId), missedIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+
+            builder.addAction(0, "Dihadiri", attendedPending)
+                    .addAction(0, "Tidak Dihadiri", missedPending);
+        } else {
+            Intent takenIntent = new Intent(this, AlarmActionReceiver.class)
+                    .setAction("ACTION_TAKEN")
+                    .putExtra("schedule_id", scheduleId)
+                    .putExtra("scheduled_at", scheduledAt);
+            PendingIntent takenPending = PendingIntent.getBroadcast(
+                    this, safeId(scheduleId), takenIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+
+            Intent snoozeIntent = new Intent(this, AlarmActionReceiver.class)
+                    .setAction("ACTION_SNOOZE")
+                    .putExtra("schedule_id", scheduleId)
+                    .putExtra("nama_obat", namaObat)
+                    .putExtra("scheduled_at", scheduledAt);
+            PendingIntent snoozePending = PendingIntent.getBroadcast(
+                    this, safeId(scheduleId), snoozeIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+
+            builder.addAction(0, "DIKONSUMSI", takenPending)
+                    .addAction(0, "TUNDA", snoozePending);
+        }
+
+        return builder.build();
     }
 
     private void createChannelIfNeeded() {
@@ -134,6 +157,8 @@ public class AlarmRingingService extends Service {
         );
         channel.setDescription("Notifikasi alarm waktu minum obat");
         channel.enableVibration(true);
+        channel.setBypassDnd(true);
+        channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
 
         notificationManager.createNotificationChannel(channel);
     }

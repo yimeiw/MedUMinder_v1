@@ -2,11 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SYSTEM_EXEMPTED" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
 
     <application
         android:allowBackup="true"
@@ -17,7 +19,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MedUMinderV1"
         tools:targetApi="31">
-
         <activity
             android:name=".Login.LoginActivity"
             android:exported="false"
@@ -41,19 +42,24 @@
             android:exported="false"
             android:theme="@style/Theme.MedUMinderV1" />
 
-        <receiver android:name=".Reminder.MedicationAlarmReceiver" android:exported="false" />
-
-        <receiver android:name=".Reminder.AlarmActionReceiver" android:exported="false" />
-
-        <receiver android:name=".Reminder.BootReceiver" android:exported="false">
+        <receiver
+            android:name=".Reminder.MedicationAlarmReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".Reminder.AlarmActionReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".Reminder.BootReceiver"
+            android:exported="false">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
-        <service android:name=".Reminder.AlarmRingingService"
+        <service
+            android:name=".Reminder.AlarmRingingService"
             android:exported="false"
-            android:foregroundServiceType="mediaPlayback"/>
+            android:foregroundServiceType="systemExempted" />
     </application>
 
 </manifest>

@@ -30,37 +30,25 @@ public class LogGenerator {
         db = FirebaseFirestore.getInstance();
     }
 
-    /** Panggil ini sekali tiap app dibuka, buat semua schedule aktif milik user */
+    /**
+     * Panggil ini sekali tiap app dibuka, buat semua schedule aktif milik user
+     */
     public void generateForAllActiveSchedules(String userId) {
         db.collection("medication_schedules")
                 .whereEqualTo("users_id", userId)
                 .whereEqualTo("is_active", true)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
-
-                    Log.d("CHECK", "Jumlah schedule = " + querySnapshot.size());
-
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-
-                        Log.d("CHECK", "Doc ID = " + doc.getId());
-
-                        for (String key : doc.getData().keySet()) {
-                            Object value = doc.get(key);
-
-                            Log.d("CHECK",
-                                    key + " -> " +
-                                            value +
-                                            " (" +
-                                            (value == null ? "null" : value.getClass().getSimpleName()) +
-                                            ")");
-                        }
-
                         MedicationSchedules schedule = doc.toObject(MedicationSchedules.class);
+                        if (schedule != null) {
+                            ensureLogsGenerated(schedule, doc.getId()); // <- ini yang ditambahin
+                        }
                     }
-                });
+                })
+                .addOnFailureListener(e -> Log.e("LogGenerator", "Gagal fetch schedule", e));
     }
 
-    /** Generate log untuk satu schedule, aman dipanggil berkali-kali (idempotent) */
     public void ensureLogsGenerated(MedicationSchedules schedule, String scheduleId) {
         if (schedule.getStart_date() == null
                 || schedule.getTimes_of_day() == null
@@ -68,65 +56,44 @@ public class LogGenerator {
             return;
         }
 
-        LocalDate start = toLocalDate(schedule.getStart_date());
-        LocalDate today = LocalDate.now();
-
-        LocalDate genUntil = (schedule.getEnd_date() != null)
-                ? toLocalDate(schedule.getEnd_date())
-                : today.plusDays(DAYS_AHEAD_IF_NO_END);
-
-        if (start.isAfter(genUntil)) return; // schedule tidak valid / sudah lewat semua
-
-        WriteBatch batch = db.batch();
-        int count = 0;
-
-        for (LocalDate date = start; !date.isAfter(genUntil); date = date.plusDays(1)) {
-            for (String time : schedule.getTimes_of_day()) {
-                Timestamp scheduledAt = toTimestamp(date, time);
-                if (scheduledAt == null) continue;
-
-                String logId = buildLogId(scheduleId, date, time);
-
-                Map<String, Object> log = new HashMap<>();
-                log.put("users_id", schedule.getUsers_id());
-                log.put("medication_schedules_id", scheduleId);
-                log.put("scheduled_at", scheduledAt);
-                log.put("status", "akan datang");
-                log.put("created_at", Timestamp.now());
-
-                DocumentReference ref = db.collection("medication_logs").document(logId);
-
-                // merge=true -> kalau dokumen udah ada (misal status-nya udah "dikonsumsi"
-                // karena user sudah minum), field status TIDAK ketimpa balik ke "akan datang"
-                batch.set(ref, log, SetOptions.merge());
-                count++;
-
-                if (count >= BATCH_LIMIT) {
-                    batch.commit();
-                    batch = db.batch();
-                    count = 0;
-                }
-            }
-        }
-
-        if (count > 0) {
-            batch.commit()
-                    .addOnFailureListener(e -> Log.e("LogGenerator", "Gagal generate log", e));
-        }
+        db.collection("medication_logs")
+                .whereEqualTo("medication_schedules_id", scheduleId)
+                .get()
+                .addOnSuccessListener(existingSnapshot -> {
+                    java.util.Set<String> existingIds = new java.util.HashSet<>();
+                    for (DocumentSnapshot doc : existingSnapshot.getDocuments()) {
+                        existingIds.add(doc.getId());
+                    }
+                    writeLogs(schedule.getUsers_id(), scheduleId,
+                            schedule.getTimes_of_day(),
+                            schedule.getStart_date(), schedule.getEnd_date(),
+                            existingIds);
+                })
+                .addOnFailureListener(e -> Log.e("LogGenerator", "Gagal cek log existing", e));
     }
 
-    /** Overload: generate langsung dari data yang sudah ada di memory (habis create schedule),
-     *  tanpa perlu fetch ulang dokumen dari Firestore. */
     public void ensureLogsGenerated(String userId, String scheduleId,
                                     ArrayList<String> timesOfDay,
                                     Timestamp startDate, Timestamp endDate) {
-        if (startDate == null || timesOfDay == null || timesOfDay.isEmpty()) {
-            return;
-        }
+        if (startDate == null || timesOfDay == null || timesOfDay.isEmpty()) return;
 
+        db.collection("medication_logs")
+                .whereEqualTo("medication_schedules_id", scheduleId)
+                .get()
+                .addOnSuccessListener(existingSnapshot -> {
+                    java.util.Set<String> existingIds = new java.util.HashSet<>();
+                    for (DocumentSnapshot doc : existingSnapshot.getDocuments()) {
+                        existingIds.add(doc.getId());
+                    }
+                    writeLogs(userId, scheduleId, timesOfDay, startDate, endDate, existingIds);
+                })
+                .addOnFailureListener(e -> Log.e("LogGenerator", "Gagal cek log existing", e));
+    }
+
+    private void writeLogs(String userId, String scheduleId, java.util.List<String> timesOfDay,
+                           Timestamp startDate, Timestamp endDate, java.util.Set<String> existingIds) {
         LocalDate start = toLocalDate(startDate);
         LocalDate genUntil = (endDate != null) ? toLocalDate(endDate) : LocalDate.now().plusDays(DAYS_AHEAD_IF_NO_END);
-
         if (start.isAfter(genUntil)) return;
 
         WriteBatch batch = db.batch();
@@ -134,10 +101,13 @@ public class LogGenerator {
 
         for (LocalDate date = start; !date.isAfter(genUntil); date = date.plusDays(1)) {
             for (String time : timesOfDay) {
+                String logId = buildLogId(scheduleId, date, time);
+
+                if (existingIds.contains(logId))
+                    continue;
+
                 Timestamp scheduledAt = toTimestamp(date, time);
                 if (scheduledAt == null) continue;
-
-                String logId = buildLogId(scheduleId, date, time);
 
                 Map<String, Object> log = new HashMap<>();
                 log.put("users_id", userId);
@@ -147,7 +117,7 @@ public class LogGenerator {
                 log.put("created_at", Timestamp.now());
 
                 DocumentReference ref = db.collection("medication_logs").document(logId);
-                batch.set(ref, log, SetOptions.merge());
+                batch.set(ref, log);
                 count++;
 
                 if (count >= BATCH_LIMIT) {
@@ -159,8 +129,7 @@ public class LogGenerator {
         }
 
         if (count > 0) {
-            batch.commit()
-                    .addOnFailureListener(e -> Log.e("LogGenerator", "Gagal generate log", e));
+            batch.commit().addOnFailureListener(e -> Log.e("LogGenerator", "Gagal generate log", e));
         }
     }
 
@@ -183,5 +152,102 @@ public class LogGenerator {
     private String buildLogId(String scheduleId, LocalDate date, String time) {
         String cleanTime = time.replace(":", "");
         return scheduleId + "_" + date + "_" + cleanTime;
+    }
+
+    public void replaceFutureLogs(
+            String userId,
+            String scheduleId,
+            ArrayList<String> timesOfDay,
+            Timestamp startDate,
+            Timestamp endDate
+    ) {
+        if (scheduleId == null
+                || timesOfDay == null
+                || timesOfDay.isEmpty()
+                || startDate == null) {
+            return;
+        }
+
+        db.collection("medication_logs")
+                .whereEqualTo("medication_schedules_id", scheduleId)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+
+                    WriteBatch deleteBatch = db.batch();
+
+                    int deleteCount = 0;
+                    Timestamp now = Timestamp.now();
+
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+
+                        Timestamp scheduledAt =
+                                doc.getTimestamp("scheduled_at");
+
+                        if (scheduledAt == null) continue;
+
+                        // Hanya hapus log yang masih future.
+                        if (scheduledAt.toDate().after(now.toDate())) {
+
+                            deleteBatch.delete(doc.getReference());
+                            deleteCount++;
+
+                            if (deleteCount >= BATCH_LIMIT) {
+                                // Untuk kasus normal jumlah log tidak akan sebesar ini.
+                                Log.w(
+                                        "LogGenerator",
+                                        "Jumlah future logs melebihi BATCH_LIMIT"
+                                );
+                            }
+                        }
+                    }
+
+                    if (deleteCount > 0) {
+
+                        deleteBatch.commit()
+                                .addOnSuccessListener(unused -> {
+
+                                    Log.d(
+                                            "LogGenerator",
+                                            "Future logs berhasil dihapus untuk schedule "
+                                                    + scheduleId
+                                    );
+
+                                    // Setelah log lama dihapus,
+                                    // generate ulang berdasarkan waktu baru.
+                                    ensureLogsGenerated(
+                                            userId,
+                                            scheduleId,
+                                            timesOfDay,
+                                            startDate,
+                                            endDate
+                                    );
+                                })
+                                .addOnFailureListener(e ->
+                                        Log.e(
+                                                "LogGenerator",
+                                                "Gagal menghapus future logs",
+                                                e
+                                        )
+                                );
+
+                    } else {
+
+                        // Tidak ada future log.
+                        ensureLogsGenerated(
+                                userId,
+                                scheduleId,
+                                timesOfDay,
+                                startDate,
+                                endDate
+                        );
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Log.e(
+                                "LogGenerator",
+                                "Gagal mengambil medication_logs",
+                                e
+                        )
+                );
     }
 }
