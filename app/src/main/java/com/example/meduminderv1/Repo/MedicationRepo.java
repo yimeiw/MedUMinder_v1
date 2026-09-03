@@ -34,6 +34,14 @@ public class MedicationRepo {
                 }).addOnFailureListener(callback::onFailure);
     }
 
+    public void getScheduleById(String scheduleId, RepoCallback<MedicationSchedules> callback){
+        db.collection("medication_schedules").document(scheduleId).get()
+                .addOnSuccessListener(snapshot -> {
+                    MedicationSchedules schedule = snapshot.toObject(MedicationSchedules.class);
+                    callback.onSuccess(schedule);
+                }).addOnFailureListener(callback::onFailure);
+    }
+
     public void getMedicationByUser(String uid, RepoCallback<QuerySnapshot> callback){
         db.collection("medications").whereEqualTo("users_id", uid).whereEqualTo("is_active", true)
                 .get().addOnSuccessListener(callback::onSuccess).addOnFailureListener(callback::onFailure);

@@ -9,28 +9,40 @@ import android.util.Log;
 public class MedicationAlarmReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.e("RECEIVER", "====================");
-        Log.e("RECEIVER", "MASUK RECEIVER");
-        Log.e("RECEIVER", "====================");
+        Log.e(
+                "ALARM_TRACE",
+                "MedicationAlarmReceiver TERPANGGIL"
+                        + " scheduleId=" + intent.getStringExtra("schedule_id")
+                        + " type=" + intent.getStringExtra("type")
+                        + " trigger=" + intent.getLongExtra("trigger_at", 0L)
+        );
 
         String scheduleId = intent.getStringExtra("schedule_id");
         String namaObat = intent.getStringExtra("nama_obat");
-        long scheduledAt = intent.getLongExtra("scheduled_at", System.currentTimeMillis());
+        String soundUri = intent.getStringExtra("sound");
+        long scheduledAt = intent.getLongExtra(
+                "scheduled_at",
+                System.currentTimeMillis()
+        );
+        String type = intent.getStringExtra("type");
 
-        if (AppLifecycleTracker.isAppInForeground()) {
-            ReminderEventBus.notifyShowReminder(scheduleId, namaObat, scheduledAt);
+        Intent serviceIntent =
+                new Intent(context, AlarmRingingService.class);
+
+        serviceIntent.putExtra("schedule_id", scheduleId);
+        serviceIntent.putExtra("nama_obat", namaObat);
+        serviceIntent.putExtra("sound", soundUri);
+        serviceIntent.putExtra("scheduled_at", scheduledAt);
+        serviceIntent.putExtra("type", type);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Log.e("ALARM_TRACE", "startForegroundService dipanggil");
+
+            context.startForegroundService(serviceIntent);
         } else {
-            Intent serviceIntent = new Intent(context, AlarmRingingService.class);
-            serviceIntent.putExtra("schedule_id", scheduleId);
-            serviceIntent.putExtra("nama_obat", namaObat);
-            serviceIntent.putExtra("scheduled_at", scheduledAt);
+            Log.e("ALARM_TRACE", "startService dipanggil");
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(serviceIntent);
-            } else {
-                context.startService(serviceIntent);
-            }
+            context.startService(serviceIntent);
         }
-
     }
 }

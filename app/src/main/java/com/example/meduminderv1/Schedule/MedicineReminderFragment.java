@@ -131,7 +131,7 @@ public class MedicineReminderFragment extends Fragment {
         consumerPickerHelper.setup();
 
         ArrayList<String> medList = new ArrayList<>();
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(requireContext(), R.layout.item_suggestion, R.id.tvNamaObat, new ArrayList<>()){
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(requireContext(), R.layout.item_suggestion, R.id.tvNamaObat, new ArrayList<>()) {
             @NonNull
             @Override
             public Filter getFilter() {
@@ -153,29 +153,34 @@ public class MedicineReminderFragment extends Fragment {
         namaObat.addTextChangedListener(new TextWatcher() {
             @Override
             public void afterTextChanged(Editable editable) {
-                if (isSelectingItem){
+                if (isSelectingItem) {
                     isSelectingItem = false;
                     return;
                 }
                 String keyword = editable.toString().trim();
-                if (keyword.startsWith("➕")){
+                if (keyword.startsWith("➕")) {
                     return;
-                } if (debounceRunnable != null){
+                }
+                if (debounceRunnable != null) {
                     debounceHandler.removeCallbacks(debounceRunnable);
-                } debounceRunnable = () -> {
+                }
+                debounceRunnable = () -> {
                     adapter.clear();
                     boolean exactMatch = false;
-                    for (String med : medList){
-                        if (keyword.isEmpty() || med.toLowerCase().contains(keyword.toLowerCase())){
+                    for (String med : medList) {
+                        if (keyword.isEmpty() || med.toLowerCase().contains(keyword.toLowerCase())) {
                             adapter.add(med);
-                        } if (med.equalsIgnoreCase(keyword)){
+                        }
+                        if (med.equalsIgnoreCase(keyword)) {
                             exactMatch = true;
                         }
-                    } if (!keyword.isEmpty() && !exactMatch){
+                    }
+                    if (!keyword.isEmpty() && !exactMatch) {
                         adapter.add("➕ Tambahkan \"" + toTitleCase(keyword) + "\"");
-                    } adapter.notifyDataSetChanged();
+                    }
+                    adapter.notifyDataSetChanged();
                     namaObat.post(() -> {
-                        if (adapter.getCount() > 0){
+                        if (adapter.getCount() > 0) {
                             namaObat.showDropDown();
                             namaObat.setDropDownBackgroundDrawable(requireContext().getDrawable(R.drawable.border_wp));
                             namaObat.setDropDownVerticalOffset(20);
@@ -183,7 +188,8 @@ public class MedicineReminderFragment extends Fragment {
                             namaObat.dismissDropDown();
                         }
                     });
-                }; debounceHandler.postDelayed(debounceRunnable, 150);
+                };
+                debounceHandler.postDelayed(debounceRunnable, 150);
             }
 
             @Override
@@ -201,36 +207,38 @@ public class MedicineReminderFragment extends Fragment {
         db.collection("medicine_catalog").orderBy("nama_obat").get().addOnSuccessListener(query -> {
             medList.clear();
             catalogMap.clear();
-            for (DocumentSnapshot doc: query){
+            for (DocumentSnapshot doc : query) {
                 String obat = doc.getString("nama_obat");
-                if (obat != null){
+                if (obat != null) {
                     medList.add(obat);
                     catalogMap.put(obat, doc.getId());
                 }
-            } Log.d("MEDICINE", "Jumlah = " + medList.size());
+            }
+            Log.d("MEDICINE", "Jumlah = " + medList.size());
             adapter.notifyDataSetChanged();
             namaObat.setDropDownBackgroundDrawable(requireContext().getDrawable(R.drawable.border_wp));
             namaObat.setDropDownVerticalOffset(20);
         });
 
         namaObat.setOnItemClickListener((parent, v, position, id) -> {
-            if (position < 0 || position >= adapter.getCount()){
+            if (position < 0 || position >= adapter.getCount()) {
                 return;
             }
             String selected = parent.getItemAtPosition(position).toString();
             String finalMedName;
-            if (selected.startsWith("➕")){
+            if (selected.startsWith("➕")) {
                 Matcher matcher = Pattern.compile("\"([^\"]*)\"").matcher(selected);
-                if (matcher.find()){
+                if (matcher.find()) {
                     finalMedName = matcher.group(1);
-                } else{
+                } else {
                     finalMedName = selected.replace("➕ Tambahkan ", "").replace("\"", "").trim();
                 }
                 isNewMed = true;
             } else {
                 finalMedName = selected;
                 isNewMed = false;
-            } selectedMed = finalMedName;
+            }
+            selectedMed = finalMedName;
             isSelectingItem = true;
             namaObat.setText(finalMedName);
             namaObat.setSelection(finalMedName.length());
@@ -269,7 +277,7 @@ public class MedicineReminderFragment extends Fragment {
         endDateReminder.setOnClickListener(v -> {
             Calendar today = Calendar.getInstance();
 
-            DatePickerDialog dialog = new DatePickerDialog(requireContext(), (view1, year, month, day)->{
+            DatePickerDialog dialog = new DatePickerDialog(requireContext(), (view1, year, month, day) -> {
                 selectedCalendar.set(Calendar.YEAR, year);
                 selectedCalendar.set(Calendar.MONTH, month);
                 selectedCalendar.set(Calendar.DAY_OF_MONTH, day);
@@ -316,13 +324,13 @@ public class MedicineReminderFragment extends Fragment {
             return;
         }
 
-        if (user == null){
+        if (user == null) {
             Toast.makeText(requireContext(), "User belum login", Toast.LENGTH_SHORT).show();
             return;
         }
 
         String medName;
-        if (isNewMed){
+        if (isNewMed) {
             medName = selectedMed;
         } else {
             medName = namaObat.getText().toString().trim();
@@ -337,11 +345,12 @@ public class MedicineReminderFragment extends Fragment {
         Timestamp startDate = Timestamp.now();
         Timestamp tempEndDate = null;
 
-        if (endDateSelected){
+        if (endDateSelected) {
             tempEndDate = new Timestamp(selectedCalendar.getTime());
-        } Timestamp endDate = tempEndDate;
+        }
+        Timestamp endDate = tempEndDate;
 
-        Map<String,Object> stockMap = new HashMap<>();
+        Map<String, Object> stockMap = new HashMap<>();
         stockMap.put("stok_obat", Integer.parseInt(stok));
         stockMap.put("initial_stok", Integer.parseInt(stok));
         stockMap.put("minimum_stok", frequency);
@@ -349,14 +358,15 @@ public class MedicineReminderFragment extends Fragment {
         db.collection("medicine_catalog").get()
                 .addOnSuccessListener(query -> {
                     selectedCatalogId = null;
-                    for (DocumentSnapshot doc : query){
+                    for (DocumentSnapshot doc : query) {
                         String dbName = doc.getString("nama_obat");
-                        if (dbName != null && dbName.equalsIgnoreCase(medName)){
+                        if (dbName != null && dbName.equalsIgnoreCase(medName)) {
                             selectedCatalogId = doc.getId();
                             break;
                         }
-                    } if (selectedCatalogId != null){ //ini kalau catalog sudah ada/nama obatnya sudah ada
-                        Medication med = new Medication(targetUid, selectedCatalogId, null, true, stockMap, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
+                    }
+                    if (selectedCatalogId != null) { //ini kalau catalog sudah ada/nama obatnya sudah ada
+                        Medication med = new Medication(user.getAuth_uid(), selectedCatalogId, null, true, stockMap, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
                         medicationRepo.saveMedication(med, new RepoCallback<String>() {
                             @Override
                             public void onSuccess(String medicationId) {
@@ -364,9 +374,23 @@ public class MedicineReminderFragment extends Fragment {
                                 medicationRepo.saveMedSchedule(schedules, new RepoCallback<String>() {
                                     @Override
                                     public void onSuccess(String result) {
-                                        logGenerator.ensureLogsGenerated(user.getAuth_uid(), result, times, startDate, endDate);
-                                        AlarmSchedulerHelper.scheduleAll(requireContext(), result, medName, times, endDate != null ?
-                                                endDate.toDate().getTime() : 0L);
+                                        new LogGenerator().ensureLogsGenerated(
+                                                user.getAuth_uid(),
+                                                result,
+                                                times,
+                                                startDate,
+                                                endDate
+                                        );
+                                        // result = scheduleId dari Firestore
+                                        long endMillis = (endDate != null) ? endDate.toDate().getTime() : 0;
+                                        AlarmSchedulerHelper.scheduleAll(
+                                                requireContext(),
+                                                result,
+                                                medName,
+                                                times,
+                                                endMillis
+                                        );
+
                                         notifyReminderCreated(medName);
                                         Toast.makeText(requireContext(), "Reminder berhasil dibuat", Toast.LENGTH_SHORT).show();
                                         clearFields();
@@ -399,6 +423,19 @@ public class MedicineReminderFragment extends Fragment {
                                     medicationRepo.saveMedSchedule(schedules, new RepoCallback<String>() {
                                         @Override
                                         public void onSuccess(String result) {
+                                            new LogGenerator().ensureLogsGenerated(
+                                                    user.getAuth_uid(),
+                                                    result,
+                                                    times,
+                                                    startDate,
+                                                    endDate
+                                            );
+
+                                            AlarmSchedulerHelper.scheduleAll(
+                                                    requireContext(), result, medName, times,
+                                                    endDate != null ? endDate.toDate().getTime() : 0
+                                            );
+
                                             notifyReminderCreated(medName);
                                             Toast.makeText(requireContext(), "Reminder berhasil dibuat", Toast.LENGTH_SHORT).show();
                                             clearFields();
@@ -432,12 +469,12 @@ public class MedicineReminderFragment extends Fragment {
         for (int i = 1; i <= frequency; i++) {
             TextView label = new TextView(requireContext());
             label.setText("Jam Minum Obat " + i);
-            label.setPadding(20,10,20,5);
+            label.setPadding(20, 10, 20, 5);
             label.setTextColor(labelColor);
 
             TextView tvTime = new TextView(requireContext());
             tvTime.setText("Pilih Jam");
-            tvTime.setPadding(50,40,50,40);
+            tvTime.setPadding(50, 40, 50, 40);
             tvTime.setTextColor(hintColor);
 
             tvTime.setBackgroundResource(R.drawable.border_hugcontent_nopadding);
@@ -469,12 +506,13 @@ public class MedicineReminderFragment extends Fragment {
 
         picker.addOnPositiveButtonClickListener(v -> {
             String time = String.format(Locale.getDefault(), "%02d:%02d", picker.getHour(), picker.getMinute());
-            for (TextView tv : timeViews){
-                if (tv != selectedView && tv.getText().toString().equals(time)){
+            for (TextView tv : timeViews) {
+                if (tv != selectedView && tv.getText().toString().equals(time)) {
                     Toast.makeText(requireContext(), "Jam tersebut sudah dipilih.", Toast.LENGTH_SHORT).show();
                     return;
                 }
-            } selectedView.setText(time);
+            }
+            selectedView.setText(time);
             selectedView.setTextColor(filledColor);
         });
         picker.show(getParentFragmentManager(), "time_picker");
@@ -489,33 +527,36 @@ public class MedicineReminderFragment extends Fragment {
         selectedCalendar = Calendar.getInstance();
         isDropdownOpen = false;
         endDateSelected = false;
-        freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_arrow_down,0);
+        freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
     }
 
-    private boolean validateReminder(){
+    private boolean validateReminder() {
         boolean valid = true;
 
         String name = namaObat.getText().toString().trim();
         String freq = freqMinumObat.getText().toString().trim();
         String stok = stokObat.getText().toString().trim();
 
-        if (name.isEmpty()){
+        if (name.isEmpty()) {
             namaObat.setError("Nama obat wajib diisi");
             valid = false;
-        } if (freq.isEmpty()){
+        }
+        if (freq.isEmpty()) {
             freqMinumObat.setError("Frekuensi minum obat wajib diisi");
             valid = false;
-        } if (stok.isEmpty()){
+        }
+        if (stok.isEmpty()) {
             stokObat.setError("Stok obat wajib diisi");
             valid = false;
-        } int frequency = convertFrequencyToNumber(freq);
+        }
+        int frequency = convertFrequencyToNumber(freq);
         ArrayList<String> times = getSelectedTimes();
-        if (times.size() != frequency){
+        if (times.size() != frequency) {
             Toast.makeText(requireContext(), "Semua jam minum harus dipilih.", Toast.LENGTH_SHORT).show();
             valid = false;
         }
         HashSet<String> unique = new HashSet<>(times);
-        if (unique.size() != times.size()){
+        if (unique.size() != times.size()) {
             Toast.makeText(requireContext(), "Jam minum tidak boleh sama.", Toast.LENGTH_SHORT).show();
             valid = false;
         }
@@ -524,23 +565,25 @@ public class MedicineReminderFragment extends Fragment {
 
     private ArrayList<String> getSelectedTimes() {
         ArrayList<String> times = new ArrayList<>();
-        for (TextView tv : timeViews){
+        for (TextView tv : timeViews) {
             String value = tv.getText().toString().trim();
-            if (!value.equals("Pilih Jam")){
+            if (!value.equals("Pilih Jam")) {
                 times.add(value);
             }
-        } return times;
+        }
+        return times;
     }
 
-    private String toTitleCase(String text){
+    private String toTitleCase(String text) {
         if (text == null || text.trim().isEmpty()) return "";
         StringBuilder builder = new StringBuilder();
         String[] words = text.trim().split("\\s+");
-        for (String word : words){
+        for (String word : words) {
             builder.append(Character.toUpperCase(word.charAt(0)))
                     .append(word.substring(1).toLowerCase())
                     .append(" ");
-        } return builder.toString().trim();
+        }
+        return builder.toString().trim();
     }
     private void notifyReminderCreated(String medName) {
         boolean isForSelf = targetUid.equals(user.getAuth_uid());

@@ -5,18 +5,23 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.app.AlarmManager;
+import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Path;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewAnimationUtils;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 
@@ -69,9 +74,20 @@ public class SplashActivity extends AppCompatActivity {
 
         letterU.post(() -> {
 
-            float targetX = letterU.getX() + (letterU.getWidth() / 2f) - (pill.getWidth() / 2f);
+            View rootLayout = (View) letterU.getParent();
+            float screenCenterX = rootLayout.getWidth() / 2f;
 
+            float medWidth = med.getWidth();
+            float minderWidth = minder.getWidth();
+            float uWidth = letterU.getWidth();
+
+            float medTranslation = -(medWidth + uWidth) / 2f;
+
+            float minderTranslation = (uWidth + minderWidth) / 2f;
+
+            float targetX = letterU.getX() + (letterU.getWidth() / 2f) - (pill.getWidth() / 2f);
             float targetY = letterU.getY() + (letterU.getHeight() / 2f) - (pill.getHeight() / 2f) - 10f;
+
 
             pill.setX(-pill.getWidth());
             pill.setY(200);
@@ -174,13 +190,7 @@ public class SplashActivity extends AppCompatActivity {
                             1f
                     );
 
-            ObjectAnimator medSlide =
-                    ObjectAnimator.ofFloat(
-                            med,
-                            "translationX",
-                            0f,
-                            -20f
-                    );
+            ObjectAnimator medSlide = ObjectAnimator.ofFloat(med, "translationX", 0f, medTranslation);
 
             AnimatorSet medAnim = new AnimatorSet();
 
@@ -198,13 +208,7 @@ public class SplashActivity extends AppCompatActivity {
                             1f
                     );
 
-            ObjectAnimator minderSlide =
-                    ObjectAnimator.ofFloat(
-                            minder,
-                            "translationX",
-                            0f,
-                            285f
-                    );
+            ObjectAnimator minderSlide = ObjectAnimator.ofFloat(minder, "translationX", 0f, minderTranslation);
 
             AnimatorSet minderAnim = new AnimatorSet();
 
@@ -216,8 +220,6 @@ public class SplashActivity extends AppCompatActivity {
             ValueAnimator pause = ValueAnimator.ofInt(0, 1);
 
             pause.setDuration(1000);
-
-            // Circle muncul
 
             circle.setScaleX(0f);
             circle.setScaleY(0f);
@@ -337,13 +339,56 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private void openNextScreen() {
+        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+        boolean permissionsAsked = prefs.getBoolean("permissions_asked", false);
+
+        if (!permissionsAsked) {
+            prefs.edit().putBoolean("permissions_asked", true).apply();
+            requestAllPermissions();
+            return;
+        }
+
+        checkSessionAndNavigate();
+    }
+
+    private void requestAllPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notifPermLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS);
+        } else {
+            askExactAlarmPermission();
+        }
+    }
+
+    private final ActivityResultLauncher<String> notifPermLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+                askExactAlarmPermission();
+            });
+
+    private void askExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
+            if (!am.canScheduleExactAlarms()) {
+                startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM));
+            }
+        }
+        askDndPermission();
+    }
+
+    private void askDndPermission() {
+        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (!nm.isNotificationPolicyAccessGranted()) {
+            startActivity(new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS));
+        }
+        checkSessionAndNavigate();
+    }
+
+    private void checkSessionAndNavigate() {
         authManager.restoreSession(new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
                 startActivity(new Intent(SplashActivity.this, MainActivity.class));
                 finish();
             }
-
             @Override
             public void onFailure(String message) {
                 startActivity(new Intent(SplashActivity.this, LoginActivity.class));

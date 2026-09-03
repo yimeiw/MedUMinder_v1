@@ -22,9 +22,12 @@ import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationFragment;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.example.meduminderv1.Reminder.AppointmentAlertScheduler;
 import com.example.meduminderv1.Repo.NotificationRepo;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.timepicker.MaterialTimePicker;
+import com.google.android.material.timepicker.TimeFormat;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FieldValue;
@@ -32,6 +35,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class AppointmentReminderFragment extends Fragment {
@@ -99,14 +103,26 @@ public class AppointmentReminderFragment extends Fragment {
 
         tvTime.setOnClickListener(v -> {
             Calendar now = Calendar.getInstance();
-            TimePickerDialog dialog = new TimePickerDialog(requireContext(), (view, hour, minute)->{
-                selectedCalendar.set(Calendar.HOUR_OF_DAY, hour);
-                selectedCalendar.set(Calendar.MINUTE, minute);
-                String time = String.format("%02d:%02d", hour, minute);
+            MaterialTimePicker picker = new MaterialTimePicker.Builder()
+                    .setTimeFormat(TimeFormat.CLOCK_24H)
+                    .setHour(now.get(Calendar.HOUR_OF_DAY))
+                    .setMinute(now.get(Calendar.MINUTE))
+                    .setTitleText("Pilih Jam Appointment")
+                    .build();
+
+            picker.addOnPositiveButtonClickListener(v2 -> {
+                selectedCalendar.set(Calendar.HOUR_OF_DAY, picker.getHour());
+                selectedCalendar.set(Calendar.MINUTE, picker.getMinute());
+                selectedCalendar.set(Calendar.SECOND, 0);
+                selectedCalendar.set(Calendar.MILLISECOND, 0);
+
+                String time = String.format(Locale.getDefault(), "%02d:%02d", picker.getHour(), picker.getMinute());
                 tvTime.setText(time);
-                isTimePicked = true;
-            }, now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE), true );
-            dialog.show();
+            });
+            picker.show(getParentFragmentManager(), "time_picker");
+//                 isTimePicked = true;
+//             }, now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE), true );
+//             dialog.show();
         });
 
         btnSaveAppoint.setOnClickListener(v -> {
@@ -138,6 +154,9 @@ public class AppointmentReminderFragment extends Fragment {
             return;
         }
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        selectedCalendar.set(Calendar.SECOND, 0);
+        selectedCalendar.set(Calendar.MILLISECOND, 0);
         Timestamp appointmentAt = new Timestamp(selectedCalendar.getTime());
 
         Map<String, Object> appointment = new HashMap<>();
@@ -171,6 +190,13 @@ public class AppointmentReminderFragment extends Fragment {
             });
             AppointmentAlertScheduler.scheduleAlerts(requireContext(), documentReference.getId(), nameAppoint, selectedCalendar.getTimeInMillis());
             Toast.makeText(requireContext(), "Appointment berhasil disimpan", Toast.LENGTH_SHORT).show();
+            AlarmSchedulerHelper.scheduleAppointment(
+                    requireContext(),
+                    documentReference.getId(),
+                    nameAppoint,
+                    appointmentAt.toDate().getTime()
+            );
+
             NavHostFragment.findNavController(this).navigateUp();
         }).addOnFailureListener(e -> {
             Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();

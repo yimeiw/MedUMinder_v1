@@ -2,6 +2,7 @@ package com.example.meduminderv1.Log;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.graphics.drawable.GradientDrawable;
 import android.media.Image;
 import android.os.Bundle;
@@ -55,7 +56,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class LogFragment extends Fragment {
-
     private LinearLayout layoutFilter;
     TextView tvType, initialMedicine, initialAppoint;
     ImageView imgArrow;
@@ -134,6 +134,11 @@ public class LogFragment extends Fragment {
         updateFilterButtonLabels();
         loadMedicationLogs();
 
+        Bundle args = getArguments();
+        if (args != null && args.getBoolean("open_appointment_tab", false)) {
+            switchToAppointmentTab();
+        }
+
         return view;
     }
 
@@ -171,15 +176,7 @@ public class LogFragment extends Fragment {
             });
 
             itemAppointment.setOnClickListener(itemView -> {
-                tvType.setText("Riwayat Janji Temu");
-                currentType = LogType.APPOINTMENT;
-                updateFilterButtonLabels();
-                appointAdapter = new AppointmentLogAdapter(appointLog, requireContext());
-                appointAdapter.setOnAppointClickListener(this::showAppointmentStatusDialog);
-                rvLogs.setAdapter(appointAdapter);
-                initialMedicine.setVisibility(View.GONE);
-                initialAppoint.setVisibility(View.VISIBLE);
-                loadAppointmentLogs();
+                switchToAppointmentTab();
                 popupWindow.dismiss();
             });
 
@@ -394,6 +391,11 @@ public class LogFragment extends Fragment {
                 .addOnSuccessListener(unused -> {
                     appointment.setStatus(newStatus);
                     applyFilter();
+
+                    requireContext().stopService(
+                            new Intent(requireContext(), com.example.meduminderv1.Reminder.AlarmRingingService.class)
+                    );
+
                     Toast.makeText(requireContext(), "Status berhasil diperbarui", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e ->
@@ -415,5 +417,16 @@ public class LogFragment extends Fragment {
 
         NavHostFragment.findNavController(LogFragment.this)
                 .navigate(R.id.reminderFragment, bundle);
+    }
+
+    private void switchToAppointmentTab() {
+        tvType.setText("Riwayat Janji Temu");
+        currentType = LogType.APPOINTMENT;
+        updateFilterButtonLabels();
+        appointAdapter = new AppointmentLogAdapter(appointLog, requireContext());
+        appointAdapter.setOnAppointClickListener(this::showAppointmentStatusDialog);
+        rvLogs.setAdapter(appointAdapter);
+        initialMedicine.setVisibility(View.GONE);
+        loadAppointmentLogs();
     }
 }
