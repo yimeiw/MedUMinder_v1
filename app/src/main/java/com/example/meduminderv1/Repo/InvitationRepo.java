@@ -46,27 +46,26 @@ public class InvitationRepo {
                 .update(update).addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
     }
-    public void getPendingInvitationByEmail(String email, RepoCallback<List<Invitation>> callback){
-        db.collection("invitations").whereEqualTo("receiver_email", email)
-                .whereEqualTo("status", InvitationStatus.Pending.name()).get()
-                .addOnSuccessListener(query -> {
-                    List<Invitation> invitations = new ArrayList<>();
-                    for (DocumentSnapshot doc : query){
-                        Invitation invitation = doc.toObject(Invitation.class);
-                        if (invitation != null){
-                            invitation.setInvitation_id(doc.getId());
-                            invitations.add(invitation);
-                        }
-                    } callback.onSuccess(invitations);
+    public void getPendingInvitationForUser(String uid, String email, RepoCallback<Invitation> callback){
+        db.collection("invitations").whereEqualTo("receiver_uid", uid)
+                .whereEqualTo("status", InvitationStatus.Pending.name()).limit(1).get().addOnSuccessListener(query -> {
+                    if (!query.isEmpty()){
+                        callback.onSuccess(query.getDocuments().get(0).toObject(Invitation.class));
+                        return;
+                    }
+                    db.collection("invitations").whereEqualTo("receiver_email", email)
+                            .whereEqualTo("status", InvitationStatus.Pending.name()).limit(1).get().addOnSuccessListener(query2 -> {
+                                if (query2.isEmpty()){
+                                    callback.onSuccess(null);
+                                    return;
+                                } Invitation invitation = query2.getDocuments().get(0).toObject(Invitation.class);
+                                if (invitation.getReceiver_uid() == null){
+                                    callback.onSuccess(invitation);
+                                } else {
+                                    callback.onSuccess(null);
+                                }
+                            }).addOnFailureListener(callback::onFailure);
                 }).addOnFailureListener(callback::onFailure);
-    }
-    public void updateReceiverUid(String invitationId, String receiverUid, RepoCallback<Void> callback){
-        Map<String, Object> update = new HashMap<>();
-        update.put("receiver_uid", receiverUid);
-        update.put("updated_at", Timestamp.now());
-        db.collection("invitations").document(invitationId).update(update)
-                .addOnSuccessListener(unused -> callback.onSuccess(null))
-                .addOnFailureListener(callback::onFailure);
     }
     public void getInvitationById(String invitationId, RepoCallback<Invitation> callback){
         db.collection("invitations").document(invitationId).get()
@@ -77,5 +76,13 @@ public class InvitationRepo {
                     } Invitation invitation = doc.toObject(Invitation.class);
                     callback.onSuccess(invitation);
                 }).addOnFailureListener(callback::onFailure);
+    }
+    public void linkReceiver(String invitationId, String receiverUid, RepoCallback<Void> callback){
+        Map<String, Object> update = new HashMap<>();
+        update.put("receiver_uid", receiverUid);
+        update.put("updated_at", Timestamp.now());
+        db.collection("invitations").document(invitationId).update(update)
+                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onFailure);
     }
 }

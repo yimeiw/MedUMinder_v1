@@ -42,15 +42,17 @@
             android:exported="false"
             android:theme="@style/Theme.MedUMinderV1" />
 
-        <receiver
-            android:name=".Reminder.MedicationAlarmReceiver"
-            android:exported="false" />
-        <receiver
-            android:name=".Reminder.AlarmActionReceiver"
-            android:exported="false" />
-        <receiver
+<!--         <receiver
             android:name=".Reminder.BootReceiver"
-            android:exported="false">
+            android:exported="false"> -->
+        <receiver android:name=".Reminder.MedicationAlarmReceiver" android:exported="false" />
+        <receiver android:name=".Reminder.AlarmActionReceiver" android:exported="false" />
+        <receiver android:name=".Reminder.MedicationMissedNotifReceiver" android:exported="false" />
+        <receiver android:name=".Reminder.MedicationPreReminderNotifReceiver" android:exported="false" />
+        <receiver android:name=".Reminder.AppointmentMissedNotifReceiver" android:exported="false" />
+        <receiver android:name=".Reminder.AppointmentPreReminderNotifReceiver" android:exported="false" />
+
+        <receiver android:name=".Reminder.BootReceiver" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>

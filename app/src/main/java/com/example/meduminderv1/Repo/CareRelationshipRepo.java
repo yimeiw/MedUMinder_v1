@@ -3,7 +3,11 @@ package com.example.meduminderv1.Repo;
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Model.CareRelationship;
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class CareRelationshipRepo {
     private final FirebaseFirestore db;
@@ -34,5 +38,25 @@ public class CareRelationshipRepo {
                 .document(relationshipId).delete()
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
+    }
+    public void getConsumerForCaregiver(String caregiverUid, RepoCallback<List<CareRelationship>> callback){
+        db.collection("care_relationships").whereEqualTo("caregiver_uid", caregiverUid).get()
+                .addOnSuccessListener(query -> {
+                    List<CareRelationship> list = new ArrayList<>();
+                    for (DocumentSnapshot doc : query){
+                        CareRelationship relationship = doc.toObject(CareRelationship.class);
+                        if (relationship != null) list.add(relationship);
+                    } callback.onSuccess(list);
+                }).addOnFailureListener(callback::onFailure);
+    }
+    public void getCaregiverForConsumer(String consumerUid, RepoCallback<List<CareRelationship>> callback){
+        db.collection("care_relationships").whereEqualTo("consumer_uid", consumerUid).get()
+                .addOnSuccessListener(query -> {
+                    List<CareRelationship> list = new ArrayList<>();
+                    for (DocumentSnapshot doc : query){
+                        CareRelationship relationship = doc.toObject(CareRelationship.class);
+                        if (relationship != null) list.add(relationship);
+                    } callback.onSuccess(list);
+                }).addOnFailureListener(callback::onFailure);
     }
 }

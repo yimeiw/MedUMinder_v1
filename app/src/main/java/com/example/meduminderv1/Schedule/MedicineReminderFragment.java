@@ -28,9 +28,13 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.example.meduminderv1.Caregiver.ConsumerPickerHelper;
 import com.example.meduminderv1.Model.LogGenerator;
+import com.example.meduminderv1.Notification.Notification;
+import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
+import com.example.meduminderv1.Repo.NotificationRepo;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -65,15 +69,18 @@ public class MedicineReminderFragment extends Fragment {
     AutoCompleteTextView namaObat, freqMinumObat;
     EditText stokObat;
     TextView endDateReminder;
-    LinearLayout timeReminder;
+    LinearLayout timeReminder, formContent;
     FirebaseFirestore db;
     Calendar selectedCalendar;
     MaterialButton btnSaveReminder;
+    LogGenerator logGenerator;
+    ConsumerPickerHelper consumerPickerHelper;
     boolean isDropdownOpen = false;
     private final ArrayList<TextView> timeViews = new ArrayList<>();
     private boolean endDateSelected = false;
     SessionManager sessionManager;
     MedicationRepo medicationRepo;
+    NotificationRepo notificationRepo;
     private String selectedCatalogId = null;
     boolean isNewMed = false;
     String selectedMed = "";
@@ -81,6 +88,7 @@ public class MedicineReminderFragment extends Fragment {
     boolean isSelectingItem = false;
     private Handler debounceHandler = new Handler(Looper.getMainLooper());
     private Runnable debounceRunnable;
+    String targetUid;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -95,10 +103,13 @@ public class MedicineReminderFragment extends Fragment {
         endDateReminder = view.findViewById(R.id.endDateReminder);
         selectedCalendar = Calendar.getInstance();
         btnSaveReminder = view.findViewById(R.id.btnSaveReminder);
+        formContent = view.findViewById(R.id.formContent);
 
         medicationRepo = new MedicationRepo();
         sessionManager = SessionManager.getInstance();
         db = FirebaseFirestore.getInstance();
+        logGenerator = new LogGenerator();
+        notificationRepo = new NotificationRepo();
 
         btnBack.setOnClickListener(v -> {
             NavHostFragment.findNavController(MedicineReminderFragment.this)
@@ -106,6 +117,18 @@ public class MedicineReminderFragment extends Fragment {
         });
 
         user = sessionManager.getUser();
+
+        View pickerRoot = view.findViewById(R.id.consumerPicker);
+        consumerPickerHelper = new ConsumerPickerHelper(pickerRoot, requireContext(), uid -> {
+            targetUid = uid;
+            boolean hasConsumer = uid != null;
+            formContent.setVisibility(hasConsumer ? View.VISIBLE : View.GONE);
+            if (!hasConsumer) {
+                pickerRoot.setOnClickListener(v ->
+                        NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
+            }
+        });
+        consumerPickerHelper.setup();
 
         ArrayList<String> medList = new ArrayList<>();
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(requireContext(), R.layout.item_suggestion, R.id.tvNamaObat, new ArrayList<>()) {
@@ -293,7 +316,11 @@ public class MedicineReminderFragment extends Fragment {
     }
 
     private void saveReminder() {
-        if (!validateReminder()) {
+        if (targetUid == null){
+            Toast.makeText(requireContext(), "Pilih consumer terlebih dahulu", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!validateReminder()){
             return;
         }
 
@@ -343,7 +370,7 @@ public class MedicineReminderFragment extends Fragment {
                         medicationRepo.saveMedication(med, new RepoCallback<String>() {
                             @Override
                             public void onSuccess(String medicationId) {
-                                MedicationSchedules schedules = new MedicationSchedules(user.getAuth_uid(), medicationId, frequency, times, startDate, endDate, true, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
+                                MedicationSchedules schedules = new MedicationSchedules(targetUid, medicationId, frequency, times, startDate, endDate, true, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
                                 medicationRepo.saveMedSchedule(schedules, new RepoCallback<String>() {
                                     @Override
                                     public void onSuccess(String result) {
@@ -364,6 +391,7 @@ public class MedicineReminderFragment extends Fragment {
                                                 endMillis
                                         );
 
+                                        notifyReminderCreated(medName);
                                         Toast.makeText(requireContext(), "Reminder berhasil dibuat", Toast.LENGTH_SHORT).show();
                                         clearFields();
                                         NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
@@ -387,11 +415,11 @@ public class MedicineReminderFragment extends Fragment {
                         catalog.put("created_at", Timestamp.now());
                         db.collection("medicine_catalog").add(catalog).addOnSuccessListener(documentReference -> {
                             selectedCatalogId = documentReference.getId();
-                            Medication med = new Medication(user.getAuth_uid(), selectedCatalogId, null, true, stockMap, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
+                            Medication med = new Medication(targetUid, selectedCatalogId, null, true, stockMap, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
                             medicationRepo.saveMedication(med, new RepoCallback<String>() {
                                 @Override
                                 public void onSuccess(String medicationId) {
-                                    MedicationSchedules schedules = new MedicationSchedules(user.getAuth_uid(), medicationId, frequency, times, startDate, endDate, true, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
+                                    MedicationSchedules schedules = new MedicationSchedules(targetUid, medicationId, frequency, times, startDate, endDate, true, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
                                     medicationRepo.saveMedSchedule(schedules, new RepoCallback<String>() {
                                         @Override
                                         public void onSuccess(String result) {
@@ -408,6 +436,7 @@ public class MedicineReminderFragment extends Fragment {
                                                     endDate != null ? endDate.toDate().getTime() : 0
                                             );
 
+                                            notifyReminderCreated(medName);
                                             Toast.makeText(requireContext(), "Reminder berhasil dibuat", Toast.LENGTH_SHORT).show();
                                             clearFields();
                                             NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
@@ -555,5 +584,21 @@ public class MedicineReminderFragment extends Fragment {
                     .append(" ");
         }
         return builder.toString().trim();
+    }
+    private void notifyReminderCreated(String medName) {
+        boolean isForSelf = targetUid.equals(user.getAuth_uid());
+        Notification notif = new Notification();
+        notif.setReceiver_uid(targetUid);
+        notif.setSender_uid(user.getAuth_uid());
+        notif.setType(NotificationType.Medicine);
+        notif.setTitle("Jadwal Obat Baru");
+        notif.setMessage(isForSelf
+                ? "Anda menambahkan jadwal minum obat: " + medName
+                : user.getName() + " menambahkan jadwal minum obat " + medName + " untuk Anda");
+        notif.setIs_read(false);
+        notificationRepo.createNotification(notif, new RepoCallback<Void>() {
+            @Override public void onSuccess(Void result) { }
+            @Override public void onFailure(Exception e) { }
+        });
     }
 }

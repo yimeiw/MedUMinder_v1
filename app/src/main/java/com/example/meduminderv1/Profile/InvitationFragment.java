@@ -1,10 +1,10 @@
 package com.example.meduminderv1.Profile;
 
-import android.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 
-import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
@@ -24,6 +24,7 @@ import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.R;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class InvitationFragment extends Fragment {
     private ImageButton btnBack;
@@ -47,6 +48,8 @@ public class InvitationFragment extends Fragment {
         btnInvite = view.findViewById(R.id.btnInvite);
 
         authManager = AuthManager.getInstance(requireContext());
+
+        btnBack.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());
 
         setupPage();
 
@@ -91,7 +94,9 @@ public class InvitationFragment extends Fragment {
         if (email.isEmpty()){
             etEmail.setError("Email wajib diisi");
             return;
-        } authManager.sendInvitation(email, authManager.getCurrentUser().getCurrentRole(), new InvitationCallback() {
+        } UserRole currentRole = authManager.getCurrentUser().getCurrentRole();
+        UserRole inviteRole = (currentRole == UserRole.Consumer) ? UserRole.Caregiver : UserRole.Consumer;
+        authManager.sendInvitation(email, inviteRole, new InvitationCallback() {
             @Override
             public void onSuccess(boolean registered) {
                 if (registered){ // jika user sudah terdaftar
@@ -110,17 +115,27 @@ public class InvitationFragment extends Fragment {
     }
 
     private void showShareDialog(String email) {
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Undangan berhasil dibuat.")
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
+        builder.setTitle("Undangan berhasil dibuat.")
                 .setMessage("Tetapi email tersebut belum terdaftar pada aplikasi MedUMinder." +
                         "\nBagikan link aplikasi agar pengguna dapat mendaftar menggunakan email tersebut.")
                 .setNegativeButton("Nanti", null)
-                .setPositiveButton("Bagikan", (dialog, which) -> shareInvitation(email)).show();
+                .setPositiveButton("Bagikan", (dialog, which) -> {
+                    shareInvitation(email);
+                });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        if (dialog.getWindow() != null){
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.green));
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.pink));
+        }
     }
-
     private void shareInvitation(String email) {
+    //    String appLink = "https://play.google.com/store/apps/details?id=" + requireContext().getPackageName();
         String message = "Saya mengundang Anda bergabung di MedUMinder.\n\n" +
-                "Silahkan download aplikasi MedUMinder dan daftar menggunakan email: "
+                "Silahkan download aplikasi MedUMinder menggunakan link berikut:\n" +
+                /* appLink + */ "\n\nDaftar menggunakan email atau google dengan email: "
                 + email + "\n\nSetelah login menggunakan email tersebut, Invitation akan otomatis muncul pada menu Notification.";
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("text/plain");

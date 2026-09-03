@@ -40,13 +40,24 @@ public class LogGenerator {
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        Log.d("CHECK", "Doc ID = " + doc.getId());
+
+                        for (String key : doc.getData().keySet()) {
+                            Object value = doc.get(key);
+                            Log.d("CHECK",
+                                    key + " -> " +
+                                            value +
+                                            " (" +
+                                            (value == null ? "null" : value.getClass().getSimpleName()) +
+                                            ")");
+                        }
+
                         MedicationSchedules schedule = doc.toObject(MedicationSchedules.class);
-                        if (schedule != null) {
-                            ensureLogsGenerated(schedule, doc.getId()); // <- ini yang ditambahin
+                        if (schedule != null){
+                            ensureLogsGenerated(schedule, doc.getId());
                         }
                     }
-                })
-                .addOnFailureListener(e -> Log.e("LogGenerator", "Gagal fetch schedule", e));
+                }).addOnFailureListener(e -> Log.e("LogGenerator", "Gagal load schedule aktif", e));
     }
 
     public void ensureLogsGenerated(MedicationSchedules schedule, String scheduleId) {

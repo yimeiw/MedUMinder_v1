@@ -61,12 +61,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:background="@drawable/border"
-                android:layout_marginVertical="20dp">
+                android:layout_marginBottom="20dp"
+                android:background="@drawable/border">
 
                 <View
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_marginVertical="10dp"
+                    android:layout_marginHorizontal="10dp"
                     android:background="@drawable/ic_profile"
                     android:layout_gravity="center"
                     />
@@ -108,63 +110,83 @@
                     android:paddingHorizontal="12dp"
                     android:textSize="12sp"
                     android:textColor="?attr/colorOnSurface"
-                    android:layout_margin="5dp"/>
+                    android:layout_marginVertical="10dp"
+                    android:layout_marginHorizontal="5dp"/>
 
             </LinearLayout>
 
             <!--        shortcut statistik-->
             <LinearLayout
+                android:id="@+id/cardStatistik"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:orientation="vertical"
+                android:layout_marginBottom="20dp"
+                android:background="@drawable/border"
+                android:backgroundTint="?attr/colorOnSurface">
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="@drawable/border"
-                    android:backgroundTint="?attr/colorOnSurface"
-                    android:paddingVertical="14dp"
-                    android:paddingHorizontal="24dp">
+                    android:orientation="horizontal">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_weight="1"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="Tingkat Kepatuhan"
-                        android:textSize="24dp"
-                        android:textColor="?attr/colorPrimary"
-                        android:textStyle="bold"/>
+                        android:orientation="vertical"
+                        android:paddingVertical="14dp"
+                        android:paddingHorizontal="10dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="90%"
-                        android:textStyle="bold"
-                        android:textSize="24dp"
-                        android:textColor="?attr/colorTertiary"
-                        android:fontFamily="@font/inter_24pt_semibold"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Tingkat Kepatuhan"
+                            android:textSize="24dp"
+                            android:textColor="?attr/colorPrimary"
+                            android:textStyle="bold"/>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/desc_kepatuhan_tinggi"
-                        android:textSize="14dp"
-                        android:textColor="?attr/colorPrimary"/>
+                        <TextView
+                            android:id="@+id/adherencePercent"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="90%"
+                            android:textStyle="bold"
+                            android:textSize="24dp"
+                            android:textColor="?attr/colorTertiary"
+                            android:fontFamily="@font/inter_24pt_semibold"/>
 
-                    <com.google.android.material.button.MaterialButton
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:id="@+id/btnSeeStatistic"
-                        android:text="Lihat Selengkapnya"
-                        android:textStyle="bold"
-                        android:background="@drawable/border"
-                        android:textColor="?attr/colorOnSurface"
-                        app:backgroundTint="@null"
-                        android:textAllCaps="false"
-                        android:layout_marginVertical="10dp"/>
+                        <TextView
+                            android:id="@+id/adherenceDesc"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/desc_kepatuhan_tinggi"
+                            android:textSize="14dp"
+                            android:textColor="?attr/colorPrimary"/>
+
+                    </LinearLayout>
+
+                    <com.example.meduminderv1.Home.ProgressView
+                        android:id="@+id/adherenceRing"
+                        android:layout_width="140dp"
+                        android:layout_height="140dp"
+                        android:layout_marginVertical="10dp"
+                        android:layout_gravity="center"/>
 
                 </LinearLayout>
 
+                <com.google.android.material.button.MaterialButton
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/btnSeeStatistic"
+                    android:text="Lihat Selengkapnya"
+                    android:textStyle="bold"
+                    android:background="@drawable/border"
+                    android:textColor="?attr/colorOnSurface"
+                    app:backgroundTint="@null"
+                    android:textAllCaps="false"
+                    android:layout_marginVertical="10dp"
+                    android:layout_marginHorizontal="6dp"/>
             </LinearLayout>
 
             <!--        pengaturan-->
@@ -174,7 +196,6 @@
                 android:text="Pengaturan"
                 android:textStyle="bold"
                 android:textSize="16sp"
-                android:layout_marginTop="20dp"
                 android:layout_marginBottom="10dp"
                 />
 
@@ -251,6 +272,7 @@
 
                 <!--                pengaturan list caregiver-->
                 <LinearLayout
+                    android:id="@+id/btnRelationList"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -264,12 +286,12 @@
                         android:layout_margin="8dp"/>
 
                     <TextView
+                        android:id="@+id/txtListRelation"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="List Caregiver"
                         android:layout_weight="1"
                         android:layout_gravity="center"
-
                         android:fontFamily="@font/inter_24pt_bold"/>
 
                     <ImageView

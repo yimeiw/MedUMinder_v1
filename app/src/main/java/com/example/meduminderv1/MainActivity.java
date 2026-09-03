@@ -3,39 +3,39 @@ package com.example.meduminderv1;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.app.AlarmManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.FrameLayout;
 
-import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
-import androidx.navigation.ui.NavigationUI;
 
 import com.example.meduminderv1.Auth.SessionManager;
-import com.example.meduminderv1.Home.HomeFragment;
 import com.example.meduminderv1.Model.LogGenerator;
 
+import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.example.meduminderv1.Reminder.AppLifecycleTracker;
 import com.example.meduminderv1.Reminder.ReminderEventBus;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
 
-import com.example.meduminderv1.Schedule.ScheduleFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.navigation.NavigationBarView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -84,7 +84,10 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
                             || navDestination.getId() == R.id.profileFragment
                             || navDestination.getId() == R.id.appointmentReminderFragment
                             || navDestination.getId() == R.id.medicineReminderFragment
-                            || navDestination.getId() == R.id.documentFragment){
+                            || navDestination.getId() == R.id.documentFragment
+                            || navDestination.getId() == R.id.invitationFragment
+                            || navDestination.getId() == R.id.statistikFragment
+                            || navDestination.getId() == R.id.logFragment){
                         bottomNav.setVisibility(View.GONE);
                     } else {
                         bottomNav.setVisibility(View.VISIBLE);
@@ -108,6 +111,28 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         }
 
         handleReminderIntent(getIntent());
+
+        AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        boolean hasExactAlarmPermission = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
+                || (am != null && am.canScheduleExactAlarms());
+        if (!hasExactAlarmPermission){
+            SharedPreferences prefs = getSharedPreferences("alarm_perm", MODE_PRIVATE);
+            boolean alreadyAsked = prefs.getBoolean("asked_exact_alarm", false);
+            if (!alreadyAsked){
+                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+                builder.setTitle("Izin Alarm Dibutuhkan")
+                        .setMessage("Agar pengingat obat berbunyi tepat waktu, aktifkan izin alarm & pengingat untuk MedUMinder.")
+                        .setPositiveButton("Aktifkan", (d, w) -> AlarmSchedulerHelper.requestExactAlarmPermission(this))
+                        .setNegativeButton("Nanti", null);
+                AlertDialog dialog = builder.create();
+                dialog.show();
+                if (dialog.getWindow() != null){
+                    dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.green));
+                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(this, R.color.pink));
+                } prefs.edit().putBoolean("asked_exact_alarm", true).apply();
+            }
+        }
     }
 
     @Override
@@ -120,6 +145,27 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
     protected void onStop() {
         super.onStop();
         ReminderEventBus.setListener(null);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkAndRescheduleIfPermissionNewlyGranted();
+    }
+
+    private void checkAndRescheduleIfPermissionNewlyGranted() {
+        AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        boolean hasPermissionNow = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
+                || (am != null && am.canScheduleExactAlarms());
+        SharedPreferences prefs = getSharedPreferences("alarm_perm", MODE_PRIVATE);
+        boolean hadPermissionBefore = prefs.getBoolean("had_exact_alarm_permission", false);
+        if (hasPermissionNow && !hadPermissionBefore){
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            if (user != null){
+                AlarmSchedulerHelper.rescheduleAllActiveForUser(this, user.getUid());
+                Log.d("ALARM_PERM", "Permission baru granted, reschedule semua alarm aktif.");
+            }
+        } prefs.edit().putBoolean("has_exact_alarm_permmission", hasPermissionNow).apply();
     }
 
     @Override

@@ -31,14 +31,18 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.meduminderv1.Auth.SessionManager;
+import com.example.meduminderv1.Caregiver.ConsumerPickerHelper;
 import com.example.meduminderv1.Model.Appointment;
 import com.example.meduminderv1.Model.LogItem;
 import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.Model.MedicationLog;
 import com.example.meduminderv1.Model.MedicineCatalog;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Schedule.AppointmentReminderFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.color.MaterialColors;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -56,7 +60,8 @@ public class LogFragment extends Fragment {
     TextView tvType, initialMedicine, initialAppoint;
     ImageView imgArrow;
     private RecyclerView rvLogs;
-
+    ConsumerPickerHelper consumerPickerHelper;
+    String targetUid;
     //List semua data dari firestore
     private List<MedicationLog> allMedLog = new ArrayList<>();
     private List<Appointment> allAppointLog = new ArrayList<>();
@@ -69,6 +74,7 @@ public class LogFragment extends Fragment {
     private AppointmentLogAdapter appointAdapter;
     private FirebaseFirestore db;
     MaterialButton btnAll, btnUpcoming, btnTaken, btnMissed;
+    ImageButton btnBack;
 
     //Status filter aktif & tipe log aktif
     private enum FilterType { ALL, UPCOMING, TAKEN, MISSED }
@@ -93,8 +99,25 @@ public class LogFragment extends Fragment {
         btnUpcoming = view.findViewById(R.id.btnUpcoming);
         btnTaken = view.findViewById(R.id.btnTaken);
         btnMissed = view.findViewById(R.id.btnMissed);
+        btnBack = view.findViewById(R.id.btnBack);
 
-        filterDropdown();
+        btnBack.setOnClickListener(v -> {
+            NavHostFragment.findNavController(LogFragment.this)
+                    .navigateUp();
+        });
+
+        View pickerRoot = view.findViewById(R.id.consumerPicker);
+        consumerPickerHelper = new ConsumerPickerHelper(pickerRoot, requireContext(), uid -> {
+            targetUid = uid;
+            if (uid == null){
+                pickerRoot.setOnClickListener(v ->  NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
+                filterDropdown();
+                allMedLog.clear(); allAppointLog.clear();
+                applyFilter();
+                return;
+            } loadMedicationLogs();
+            filterDropdown();
+        }); consumerPickerHelper.setup();
 
         selectButton(btnAll);
         btnAll.setOnClickListener(v -> { currentFilter = FilterType.ALL; selectButton(btnAll); applyFilter(); });
@@ -125,16 +148,19 @@ public class LogFragment extends Fragment {
             View popupView = LayoutInflater.from(requireContext())
                     .inflate(R.layout.item_dropdown_log, null);
 
-            int width = dpToPx(345);
+            int width = dpToPx(365);
             PopupWindow popupWindow = new PopupWindow(popupView, width, ViewGroup.LayoutParams.WRAP_CONTENT, true);
-            int xOffset = (layoutFilter.getWidth() - width) / 2;
+            int xOffset = ((layoutFilter.getWidth() - width) / 2) - 50;
             popupWindow.showAsDropDown(layoutFilter, xOffset, dpToPx(8));
             popupWindow.setElevation(12f);
 
             TextView itemConsumption = popupView.findViewById(R.id.itemConsumption);
             TextView itemAppointment = popupView.findViewById(R.id.itemAppointment);
 
-            imgArrow.setColorFilter(ContextCompat.getColor(requireContext(), R.color.pink));
+            int itam = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface);
+            int pink = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorSecondary);
+
+            imgArrow.setColorFilter(pink);
             imgArrow.animate().rotation(180f).setDuration(150).start();
 
             itemConsumption.setOnClickListener(itemView -> {
@@ -143,6 +169,7 @@ public class LogFragment extends Fragment {
                 updateFilterButtonLabels();
                 medAdapter = new MedicationLogAdapter(medLog, requireContext());
                 rvLogs.setAdapter(medAdapter);
+                initialMedicine.setVisibility(View.VISIBLE);
                 initialAppoint.setVisibility(View.GONE);
                 applyFilter();
                 popupWindow.dismiss();
@@ -154,7 +181,7 @@ public class LogFragment extends Fragment {
             });
 
             popupWindow.setOnDismissListener(() -> {
-                imgArrow.setColorFilter(ContextCompat.getColor(requireContext(), R.color.black));
+                imgArrow.setColorFilter(itam);
                 imgArrow.animate().rotation(0f).setDuration(150).start();
             });
         });
@@ -237,7 +264,11 @@ public class LogFragment extends Fragment {
     }
     //Ambil data dari firestore
     private void loadMedicationLogs() {
-        String users_id = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String users_id = SessionManager.getInstance().getTargetUid();
+        if (users_id == null){
+            initialMedicine.setVisibility(View.VISIBLE);
+            return; //caregiver blm pilih consumer atau blm punya consumer
+        }
 
         Calendar startCal = Calendar.getInstance();
         startCal.set(Calendar.HOUR_OF_DAY, 0);
@@ -272,7 +303,11 @@ public class LogFragment extends Fragment {
                 .addOnFailureListener(e -> Log.e("Medication Log", "Gagal ambil data", e));
     }
     private void loadAppointmentLogs() {
-        String users_id = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String users_id = SessionManager.getInstance().getTargetUid();
+        if (users_id == null){
+            initialMedicine.setVisibility(View.VISIBLE);
+            return; //caregiver blm pilih consumer atau blm punya consumer
+        }
         Log.d("AUTH", users_id == null ? "NULL" : users_id);
         db.collection("appointments")
                 .whereEqualTo("users_id", users_id)
@@ -377,7 +412,7 @@ public class LogFragment extends Fragment {
         }
 
         LogStatus status = log.getStatusBasedOnDate();
-        bundle.putString("status", status.name());
+        bundle.putString("status", status.getValue());
         bundle.putString("nama_obat", namaObat);
 
         NavHostFragment.findNavController(LogFragment.this)

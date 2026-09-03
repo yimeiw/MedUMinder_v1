@@ -12,12 +12,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.meduminderv1.Callback.RepoCallback;
+import com.example.meduminderv1.Caregiver.ConsumerPickerHelper;
+import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationFragment;
+import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
+import com.example.meduminderv1.Reminder.AppointmentAlertScheduler;
+import com.example.meduminderv1.Repo.NotificationRepo;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
@@ -35,10 +42,17 @@ public class AppointmentReminderFragment extends Fragment {
     ImageButton btnBack;
     TextView tvDate, tvTime;
     EditText namaAppointment, location_input;
+    LinearLayout formContent;
     MaterialButton btnSaveAppoint;
     Calendar selectedCalendar;
     FirebaseAuth mAuth;
     FirebaseFirestore db;
+    ConsumerPickerHelper consumerPickerHelper;
+    String targetUid;
+    NotificationRepo notificationRepo;
+    private boolean isDatePicked = false;
+    private boolean isTimePicked = false;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -57,9 +71,21 @@ public class AppointmentReminderFragment extends Fragment {
         namaAppointment = viewF.findViewById(R.id.namaAppointment);
         location_input = viewF.findViewById(R.id.location_input);
         btnSaveAppoint = viewF.findViewById(R.id.btnSaveAppoint);
+        formContent = viewF.findViewById(R.id.formContent);
         selectedCalendar = Calendar.getInstance();
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
+        notificationRepo = new NotificationRepo();
+
+        View pickerRoot = viewF.findViewById(R.id.consumerPicker);
+        consumerPickerHelper = new ConsumerPickerHelper(pickerRoot, requireContext(), uid -> {
+            targetUid = uid;
+            boolean hasConsumer = uid  != null;
+            formContent.setVisibility(hasConsumer ? View.VISIBLE : View.GONE);
+            if (!hasConsumer){
+                pickerRoot.setOnClickListener(v ->  NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
+            }
+        }); consumerPickerHelper.setup();
 
         tvDate.setOnClickListener(v -> {
             Calendar today = Calendar.getInstance();
@@ -69,8 +95,8 @@ public class AppointmentReminderFragment extends Fragment {
                 selectedCalendar.set(Calendar.DAY_OF_MONTH, day);
                 String date = day + "/" + (month + 1) + "/" + year;
                 tvDate.setText(date);
-            }, today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH)
-            );
+                isDatePicked = true;
+            }, today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH));
             dialog.getDatePicker().setMinDate(System.currentTimeMillis());
             dialog.show();
         });
@@ -94,6 +120,9 @@ public class AppointmentReminderFragment extends Fragment {
                 tvTime.setText(time);
             });
             picker.show(getParentFragmentManager(), "time_picker");
+//                 isTimePicked = true;
+//             }, now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE), true );
+//             dialog.show();
         });
 
         btnSaveAppoint.setOnClickListener(v -> {
@@ -104,6 +133,10 @@ public class AppointmentReminderFragment extends Fragment {
     }
 
     private void saveAppointment() {
+        if (targetUid == null){
+            Toast.makeText(requireContext(), "Pilih consumer terlebih dahulu", Toast.LENGTH_SHORT).show();
+            return;
+        }
         String nameAppoint = namaAppointment.getText().toString().trim();
         String location = location_input.getText().toString().trim();
 
@@ -113,8 +146,13 @@ public class AppointmentReminderFragment extends Fragment {
         } if (location.isEmpty()){
             location_input.setError("Lokasi Appointment wajib diisi.");
             return;
+        } if (!isDatePicked) {
+            tvDate.setError("Tanggal Appointment wajib diisi.");
+            return;
+        } if (!isTimePicked){
+            tvTime.setError("Waktu Appointment wajib diisi.");
+            return;
         }
-
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         selectedCalendar.set(Calendar.SECOND, 0);
@@ -122,7 +160,7 @@ public class AppointmentReminderFragment extends Fragment {
         Timestamp appointmentAt = new Timestamp(selectedCalendar.getTime());
 
         Map<String, Object> appointment = new HashMap<>();
-        appointment.put("users_id", uid);
+        appointment.put("users_id", targetUid);
         appointment.put("title", nameAppoint);
         appointment.put("address", location);
         appointment.put("appointment_at", appointmentAt);
@@ -131,11 +169,26 @@ public class AppointmentReminderFragment extends Fragment {
         appointment.put("created_at", FieldValue.serverTimestamp());
         appointment.put("updated_at", FieldValue.serverTimestamp());
         appointment.put("deleted_at", null);
-        appointment.put("status", "upcoming");
+        appointment.put("status", "akan datang");
         appointment.put("created_by", uid);
         appointment.put("updated_by", uid);
 
         db.collection("appointments").add(appointment).addOnSuccessListener(documentReference -> {
+            boolean isForSelf = targetUid.equals(uid);
+            Notification notif = new Notification();
+            notif.setReceiver_uid(targetUid);
+            notif.setSender_uid(uid);
+            notif.setType(NotificationType.Appointment);
+            notif.setTitle("Jadwal Appointment Baru");
+            notif.setMessage(isForSelf
+                    ? "Anda menambahkan jadwal appointment: " + nameAppoint
+                    : "Caregiver menambahkan jadwal appointment " + nameAppoint + " untuk Anda");
+            notif.setIs_read(false);
+            notificationRepo.createNotification(notif, new RepoCallback<Void>() {
+                @Override public void onSuccess(Void result) { }
+                @Override public void onFailure(Exception e) { }
+            });
+            AppointmentAlertScheduler.scheduleAlerts(requireContext(), documentReference.getId(), nameAppoint, selectedCalendar.getTimeInMillis());
             Toast.makeText(requireContext(), "Appointment berhasil disimpan", Toast.LENGTH_SHORT).show();
             AlarmSchedulerHelper.scheduleAppointment(
                     requireContext(),
