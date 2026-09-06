@@ -137,6 +137,12 @@ public class NotificationDetailFragment extends Fragment {
     }
 
     private void showInvitation() {
+        if (notification.getInvitation_id() == null) {
+            titleNotif.setText("Undangan");
+            Toast.makeText(requireContext(), "Data undangan tidak lengkap.", Toast.LENGTH_SHORT).show();
+            layoutButton.setVisibility(View.GONE);
+            return;
+        }
         invitationRepo.getInvitationById(notification.getInvitation_id(), new RepoCallback<Invitation>() {
             @Override
             public void onSuccess(Invitation result) {

@@ -890,6 +890,7 @@ public class AuthManager {
         Notification notification = new Notification();
         notification.setNotification_id(UUID.randomUUID().toString());
         notification.setReceiver_uid(receiverUid);
+        notification.setInvitation_id(invitation.getInvitation_id());
         notification.setType(NotificationType.Invitation);
         notification.setTitle("Invitation " + invitation.getInvite_role().name());
         notification.setMessage(invitation.getSender_name()

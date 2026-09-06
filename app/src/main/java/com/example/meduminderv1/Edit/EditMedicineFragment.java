@@ -19,8 +19,13 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.meduminderv1.Notification.Notification;
+import com.example.meduminderv1.Notification.NotificationType;
+import com.example.meduminderv1.Repo.CareRelationshipRepo;
+import com.example.meduminderv1.Repo.NotificationRepo;
 import com.example.meduminderv1.Auth.SessionManager; // <-- ditambahin
 import com.example.meduminderv1.Callback.RepoCallback;
+import com.example.meduminderv1.Model.CareRelationship;
 import com.example.meduminderv1.Model.LogGenerator;
 import com.example.meduminderv1.Model.LogStatus; // <-- ditambahin
 import com.example.meduminderv1.Model.Medication;
@@ -58,14 +63,18 @@ public class EditMedicineFragment extends Fragment {
     Calendar selectedCalendar;
     MaterialButton btnUpdateReminder;
 
-    SessionManager sessionManager; // <-- ditambahin
-    User user;                     // <-- ditambahin
+    SessionManager sessionManager;
+    User user;
 
     private final ArrayList<TextView> timeViews = new ArrayList<>();
     private String scheduleId;
     private String medicationId;
     private boolean endDateSelected = false;
-    private int originalTimesCount = 0;
+    private List<String> originalTimesOfDay = new ArrayList<>();
+
+    NotificationRepo notificationRepo;
+    CareRelationshipRepo careRelationshipRepo;
+    private String targetUid;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -84,8 +93,9 @@ public class EditMedicineFragment extends Fragment {
 
         db = FirebaseFirestore.getInstance();
         medicationRepo = new MedicationRepo();
+        notificationRepo = new NotificationRepo();
+        careRelationshipRepo = new CareRelationshipRepo();
 
-        // <-- ditambahin: sama seperti di MedicineReminderFragment
         sessionManager = SessionManager.getInstance();
         user = sessionManager.getUser();
 
@@ -128,7 +138,11 @@ public class EditMedicineFragment extends Fragment {
                     return;
                 }
                 medicationId = schedule.getMedication_id();
-                originalTimesCount = schedule.getTimes_of_day() != null ? schedule.getTimes_of_day().size() : 0;
+                medicationId = schedule.getMedication_id();
+                targetUid = schedule.getUsers_id();
+                originalTimesOfDay = schedule.getTimes_of_day() != null
+                        ? new ArrayList<>(schedule.getTimes_of_day())
+                        : new ArrayList<>();
 
                 int frequency = schedule.getFrequency() != null ? schedule.getFrequency() : 0;
                 freqMinumObat.setText(convertNumberToFrequency(frequency), false);
@@ -159,7 +173,6 @@ public class EditMedicineFragment extends Fragment {
             return;
         }
 
-        // <-- ditambahin: guard, biar kalau session kosong ga NPE pas ensureLogsGenerated
         if (user == null) {
             Toast.makeText(requireContext(), "Sesi user tidak ditemukan, coba login ulang", Toast.LENGTH_SHORT).show();
             return;
@@ -192,31 +205,12 @@ public class EditMedicineFragment extends Fragment {
                             )
                             .addOnSuccessListener(unused2 -> {
                                 // batalin alarm lama (pakai jumlah times LAMA), pasang alarm baru
-                                AlarmSchedulerHelper.cancelAll(requireContext(), scheduleId, originalTimesCount);
+                                AlarmSchedulerHelper.cancelAll(requireContext(), scheduleId, originalTimesOfDay);
                                 AlarmSchedulerHelper.cancelSnooze(requireContext(), scheduleId); // <-- ditambahin: lihat catatan di bawah
 
                                 long endMillis = (endDate != null) ? endDate.toDate().getTime() : 0;
                                 AlarmSchedulerHelper.scheduleAll(requireContext(), scheduleId, medName, times, endMillis);
 
-                                // FIX: sebelumnya di sini kita query
-                                // medication_logs whereEqualTo("status", "akan datang")
-                                // lalu hapus semuanya dan regenerate. Masalahnya field
-                                // "status" mentah di Firestore TIDAK PERNAH diisi
-                                // "terlewatkan" (nilai itu murni hasil hitungan
-                                // getStatusBasedOnDate() di sisi client) — jadi log
-                                // yang sudah lewat pun raw status-nya tetap "akan
-                                // datang", dan ikut kehapus + ketimpa oleh log baru
-                                // yang mulai regenerate dari hari ini. Riwayat log
-                                // yang sudah lewat jadi hilang, dan setiap edit jam
-                                // selalu bikin document id baru (karena buildLogId
-                                // menyertakan jam ke dalam id-nya).
-                                //
-                                // LogGenerator.replaceFutureLogs() menghapus &
-                                // regenerate log berdasarkan scheduled_at yang
-                                // BENERAN akan datang (dibanding waktu sekarang,
-                                // bukan berdasarkan field status), jadi riwayat log
-                                // yang sudah lewat tetap aman, dan hanya occurrence
-                                // ke depan yang diperbarui ke jam baru.
                                 new LogGenerator().replaceFutureLogs(
                                         user.getAuth_uid(),
                                         scheduleId,
@@ -224,6 +218,8 @@ public class EditMedicineFragment extends Fragment {
                                         Timestamp.now(),
                                         endDate
                                 );
+
+                                notifyReminderUpdated(medName);
 
                                 Toast.makeText(requireContext(), "Reminder berhasil diperbarui", Toast.LENGTH_SHORT).show();
                                 NavHostFragment.findNavController(EditMedicineFragment.this).navigateUp();
@@ -233,6 +229,53 @@ public class EditMedicineFragment extends Fragment {
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+
+    private void notifyReminderUpdated(String medName) {
+        if (targetUid == null || user == null) return;
+        String actorUid = user.getAuth_uid();
+        boolean isForSelf = targetUid.equals(actorUid);
+
+        if (!isForSelf) {
+            Notification notifToConsumer = new Notification();
+            notifToConsumer.setReceiver_uid(targetUid);
+            notifToConsumer.setSender_uid(actorUid);
+            notifToConsumer.setType(NotificationType.Medicine);
+            notifToConsumer.setTitle("Jadwal Obat Diperbarui");
+            notifToConsumer.setMessage(user.getName() + " mengubah jadwal minum obat " + medName + " Anda");
+            notifToConsumer.setIs_read(false);
+            notificationRepo.createNotification(notifToConsumer, new RepoCallback<Void>() {
+                @Override public void onSuccess(Void result) { }
+                @Override public void onFailure(Exception e) { }
+            });
+        }
+
+        careRelationshipRepo.getCaregiverForConsumer(targetUid, new RepoCallback<List<CareRelationship>>() {
+            @Override
+            public void onSuccess(List<CareRelationship> relations) {
+                for (CareRelationship relation : relations) {
+                    String caregiverUid = relation.getCaregiver_uid();
+                    if (caregiverUid == null || caregiverUid.equals(actorUid)) continue;
+
+                    Notification notifToCaregiver = new Notification();
+                    notifToCaregiver.setReceiver_uid(caregiverUid);
+                    notifToCaregiver.setSender_uid(actorUid);
+                    notifToCaregiver.setType(NotificationType.Medicine);
+                    notifToCaregiver.setTitle("Jadwal Obat Diperbarui");
+                    notifToCaregiver.setMessage(isForSelf
+                            ? user.getName() + " mengubah jadwal minum obat: " + medName
+                            : "Jadwal minum obat " + medName + " untuk consumer telah diperbarui");
+                    notifToCaregiver.setIs_read(false);
+                    notificationRepo.createNotification(notifToCaregiver, new RepoCallback<Void>() {
+                        @Override public void onSuccess(Void result) { }
+                        @Override public void onFailure(Exception e) { }
+                    });
+                }
+            }
+
+            @Override
+            public void onFailure(Exception e) { }
+        });
     }
 
     private boolean validateReminder() {

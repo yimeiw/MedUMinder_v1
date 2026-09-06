@@ -9,6 +9,8 @@ public class LogItem {
     private String status;
     private int stock;
     private String location;
+    private String refId;
+    private long scheduledAtMillis;
 
     public LogItem(){}
 
@@ -51,5 +53,21 @@ public class LogItem {
 
     public String getLocation() {
         return location;
+    }
+
+    public String getRefId() {
+        return refId;
+    }
+
+    public void setRefId(String refId) {
+        this.refId = refId;
+    }
+
+    public long getScheduledAtMillis() {
+        return scheduledAtMillis;
+    }
+
+    public void setScheduledAtMillis(long scheduledAtMillis) {
+        this.scheduledAtMillis = scheduledAtMillis;
     }
 }

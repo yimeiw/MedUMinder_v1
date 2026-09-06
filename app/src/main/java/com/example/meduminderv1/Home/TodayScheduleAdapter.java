@@ -19,10 +19,19 @@ public class TodayScheduleAdapter extends RecyclerView.Adapter<TodayScheduleAdap
 
     private final List<LogItem> items;
     private final Context context;
+    private OnScheduleItemClickListener listener;
+
+    public interface OnScheduleItemClickListener {
+        void onItemClick(LogItem item);
+    }
 
     public TodayScheduleAdapter(List<LogItem> items, Context context) {
         this.items = items;
         this.context = context;
+    }
+
+    public void setOnScheduleItemClickListener(OnScheduleItemClickListener listener) {
+        this.listener = listener;
     }
 
     @NonNull
@@ -41,6 +50,10 @@ public class TodayScheduleAdapter extends RecyclerView.Adapter<TodayScheduleAdap
         holder.nama.setText(item.getNamaJadwal());
         holder.time.setText(item.getTime());
         holder.info.setText(item.getInformasiJadwal());
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) listener.onItemClick(item);
+        });
     }
 
     @Override

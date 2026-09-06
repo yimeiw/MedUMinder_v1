@@ -28,4 +28,17 @@ public class AppointmentAlertScheduler {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, appointmentAtMillis + MISSED_DELAY_MS, missedPi);
     }
+
+    public static void cancelAlerts(Context context, String appointmentId) {
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (am == null) return;
+
+        Intent preIntent = new Intent(context, AppointmentPreReminderNotifReceiver.class);
+        am.cancel(PendingIntent.getBroadcast(context, (appointmentId + "_pre").hashCode(), preIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+
+        Intent missedIntent = new Intent(context, AppointmentMissedNotifReceiver.class);
+        am.cancel(PendingIntent.getBroadcast(context, (appointmentId + "_missed").hashCode(), missedIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+    }
 }

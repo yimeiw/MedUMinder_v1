@@ -45,6 +45,7 @@ import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Reminder.AlarmRingingService;
 import com.example.meduminderv1.Repo.InvitationRepo;
 import com.example.meduminderv1.Repo.MedicationRepo;
 import com.example.meduminderv1.Repo.StatistikRepo;
@@ -97,6 +98,14 @@ public class HomeFragment extends Fragment {
     private long displayedScheduleAtMillis = -1;
     private final Runnable refreshRunnable = this::checkNextScheduleFreshness;
 
+    // FIX: retry singkat kalau authManager.getCurrentUser() masih null pas
+    // Fragment ini pertama kali dibuka (race condition: onCreateView jalan
+    // synchronous, tapi data user via AuthManager/Firebase biasanya butuh
+    // waktu buat siap, apalagi kalau baru cold start / baru login).
+    private static final int LOAD_STATS_MAX_RETRY = 5;
+    private static final long LOAD_STATS_RETRY_DELAY_MS = 500L;
+    private int loadStatsRetryCount = 0;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -135,7 +144,7 @@ public class HomeFragment extends Fragment {
         AppCompatDelegate.setDefaultNightMode(isDark ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
 
         btnNotif.setOnClickListener(v -> {
-        //    btnNotif.setImageDrawable(requireContext().getDrawable(R.drawable.ic_notif_hover));
+            //    btnNotif.setImageDrawable(requireContext().getDrawable(R.drawable.ic_notif_hover));
             NavHostFragment.findNavController(this)
                     .navigate(R.id.notificationFragment);
         });
@@ -169,6 +178,7 @@ public class HomeFragment extends Fragment {
 
         lineChart = view.findViewById(R.id.lineChart);
         statistikRepo = new StatistikRepo();
+        loadStatsRetryCount = 0;
         loadStats();
 
         return view;
@@ -272,6 +282,11 @@ public class HomeFragment extends Fragment {
         medicationRepo.markLogAsTaken(nextLogId, new RepoCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
+                if (isAdded() && getContext() != null) {
+                    requireContext().stopService(
+                            new Intent(requireContext(), AlarmRingingService.class)
+                    );
+                }
                 if (nextMedId != null){
                     medicationRepo.decrementStock(nextMedId, new RepoCallback<Void>() {
                         @Override
@@ -367,9 +382,12 @@ public class HomeFragment extends Fragment {
                         MedicationLog log = doc.toObject(MedicationLog.class);
                         if (log == null) { remaining[0]--; continue; }
                         resolveMedName(log.getMedication_schedules_id(), (medName, stock, medId) -> {
-                            combined.add(new LogItem("medicine", medName,
+                            LogItem item = new LogItem("medicine", medName,
                                     sdf.format(log.getScheduled_at().toDate()),
-                                    "Sisa stok: " + stock, log.getStatus()));
+                                    "Sisa stok: " + stock, log.getStatus());
+                            item.setRefId(log.getMedication_schedules_id());
+                            item.setScheduledAtMillis(log.getScheduled_at().toDate().getTime());
+                            combined.add(item);
                             remaining[0]--;
                             if (remaining[0] <= 0) mergeAppointments(uid, combined, startOfDay, startOfTomorrow);
                         });
@@ -391,14 +409,19 @@ public class HomeFragment extends Fragment {
                     for (DocumentSnapshot doc : apptQuery.getDocuments()) {
                         Appointment appt = doc.toObject(Appointment.class);
                         if (appt == null) continue;
-                        combined.add(new LogItem("appointment", appt.getTitle(),
+                        LogItem item = new LogItem("appointment", appt.getTitle(),
                                 sdf.format(appt.getAppointment_at().toDate()),
-                                appt.getAddress(), appt.getStatus()));
+                                appt.getAddress(), appt.getStatus());
+                        item.setRefId(doc.getId());
+                        item.setScheduledAtMillis(appt.getAppointment_at().toDate().getTime());
+                        combined.add(item);
                     }
                     Collections.sort(combined, (a, b) -> a.getTime().compareTo(b.getTime()));
                     if (!isAdded() || getContext() == null) return;
                     List<LogItem> displayList = combined.size() > 3 ? combined.subList(0,3) :combined;
-                    rvTodaySchedule.setAdapter(new TodayScheduleAdapter(displayList, requireContext()));
+                    TodayScheduleAdapter adapter = new TodayScheduleAdapter(displayList, requireContext());
+                    adapter.setOnScheduleItemClickListener(this::navigateToReminder);
+                    rvTodaySchedule.setAdapter(adapter);
                     if (combined.isEmpty()){
                         emptyTodaySchedule.setVisibility(View.VISIBLE);
                         rvTodaySchedule.setVisibility(View.GONE);
@@ -415,8 +438,46 @@ public class HomeFragment extends Fragment {
                     btnLihatSemua.setVisibility(View.GONE);
                 });
     }
+    // buka Reminder view dari Home. source="schedule" -> tombol titik tiga (edit/hapus) ditampilkan.
+    private void navigateToReminder(LogItem item) {
+        if (item.getRefId() == null) return;
+
+        Bundle bundle = new Bundle();
+        bundle.putString("medication_schedules_id", item.getRefId());
+        bundle.putString("nama_obat", item.getNamaJadwal());
+        bundle.putLong("scheduled_at", item.getScheduledAtMillis());
+        bundle.putString("status", item.getStatus());
+        bundle.putString("type", item.getType());
+        bundle.putString("source", "schedule");
+
+        NavHostFragment.findNavController(this)
+                .navigate(R.id.reminderFragment, bundle);
+    }
+
+    // FIX: dulu langsung authManager.getCurrentUser().getAuth_uid() tanpa
+    // null check sama sekali -> NullPointerException fatal kalau
+    // getCurrentUser() masih null (mis. dipanggil pas cold start / fragment
+    // ini dibuka sebelum data user selesai di-load dari Firebase/Firestore).
+    // Sekarang: kalau null, retry beberapa kali dengan jeda singkat (biasanya
+    // cukup, karena datanya cuma butuh sedikit waktu buat siap). Kalau tetap
+    // null setelah beberapa kali coba, chart cuma dilewati (bukan crash) --
+    // user masih bisa pakai fitur lain di Home.
     private void loadStats() {
-        String uid = authManager.getCurrentUser().getAuth_uid();
+        if (!isAdded() || getContext() == null) return;
+
+        User user = authManager.getCurrentUser();
+        if (user == null || user.getAuth_uid() == null) {
+            if (loadStatsRetryCount < LOAD_STATS_MAX_RETRY) {
+                loadStatsRetryCount++;
+                Log.d("HOME_STATS", "User belum siap, retry loadStats() ke-" + loadStatsRetryCount);
+                refreshHandler.postDelayed(this::loadStats, LOAD_STATS_RETRY_DELAY_MS);
+            } else {
+                Log.e("HOME_STATS", "User tetap null setelah " + LOAD_STATS_MAX_RETRY + "x retry, chart dilewati.");
+            }
+            return;
+        }
+
+        String uid = user.getAuth_uid();
         statistikRepo.getWeeklyAdherence(uid, new StatistikRepo.StatsCallback() {
             @Override
             public void onResult(List<StatistikRepo.DayStat> weekStats) {
@@ -525,6 +586,7 @@ public class HomeFragment extends Fragment {
         lineChart.invalidate();
     }
 
+
     @Override
     public void onResume() {
         super.onResume();
@@ -546,5 +608,6 @@ public class HomeFragment extends Fragment {
         super.onDestroyView();
         if (nextScheduleListener != null) nextScheduleListener.remove();
         if (todayScheduleListener != null) todayScheduleListener.remove();
+        refreshHandler.removeCallbacksAndMessages(null);
     }
 }

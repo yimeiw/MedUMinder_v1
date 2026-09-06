@@ -32,13 +32,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.meduminderv1.Auth.SessionManager;
+import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Caregiver.ConsumerPickerHelper;
 import com.example.meduminderv1.Model.Appointment;
+import com.example.meduminderv1.Model.CareRelationship;
 import com.example.meduminderv1.Model.LogItem;
 import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.Model.MedicationLog;
 import com.example.meduminderv1.Model.MedicineCatalog;
+import com.example.meduminderv1.Notification.Notification;
+import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Repo.CareRelationshipRepo;
+import com.example.meduminderv1.Repo.NotificationRepo;
 import com.example.meduminderv1.Schedule.AppointmentReminderFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
@@ -56,6 +62,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class LogFragment extends Fragment {
+    NotificationRepo notificationRepo;
+    CareRelationshipRepo careRelationshipRepo;
     private LinearLayout layoutFilter;
     TextView tvType, initialMedicine, initialAppoint;
     ImageView imgArrow;
@@ -88,6 +96,8 @@ public class LogFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_log, container, false);
 
         db = FirebaseFirestore.getInstance();
+        notificationRepo = new NotificationRepo();
+        careRelationshipRepo = new CareRelationshipRepo();
 
         layoutFilter = view.findViewById(R.id.layoutFilter);
         tvType = view.findViewById(R.id.tvType);
@@ -130,6 +140,9 @@ public class LogFragment extends Fragment {
         medAdapter = new MedicationLogAdapter(medLog, requireContext());
         rvLogs.setAdapter(medAdapter);
         medAdapter.setOnMedLogClickListener(this::navigateToReminder);
+
+        appointAdapter = new AppointmentLogAdapter(appointLog, requireContext());
+        appointAdapter.setOnAppointClickListener(this::navigateToReminderAppointment);
 
         updateFilterButtonLabels();
         loadMedicationLogs();
@@ -396,11 +409,47 @@ public class LogFragment extends Fragment {
                             new Intent(requireContext(), com.example.meduminderv1.Reminder.AlarmRingingService.class)
                     );
 
+                    if ("dihadiri".equals(newStatus)) {
+                        notifyCaregiverAppointmentAttended(appointment);
+                    }
+
                     Toast.makeText(requireContext(), "Status berhasil diperbarui", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(requireContext(), "Gagal update status: " + e.getMessage(), Toast.LENGTH_SHORT).show()
                 );
+    }
+
+    private void notifyCaregiverAppointmentAttended(Appointment appointment) {
+        String consumerUid = appointment.getUsers_id();
+        if (consumerUid == null) return;
+
+        db.collection("users").document(consumerUid).get().addOnSuccessListener(userDoc -> {
+            String consumerName = userDoc.exists() ? userDoc.getString("name") : "Consumer";
+
+            careRelationshipRepo.getCaregiverForConsumer(consumerUid, new RepoCallback<List<CareRelationship>>() {
+                @Override
+                public void onSuccess(List<CareRelationship> relations) {
+                    for (CareRelationship relation : relations) {
+                        Notification notif = new Notification();
+                        notif.setReceiver_uid(relation.getCaregiver_uid());
+                        notif.setSender_uid(consumerUid);
+                        notif.setType(NotificationType.Appointment);
+                        notif.setTitle("Consumer Sudah Menghadiri Appointment");
+                        notif.setMessage(consumerName + " telah menghadiri appointment " + appointment.getTitle() + ".");
+                        notif.setReference_id(appointment.getDocId());
+                        notif.setConsumer_name(consumerName);
+                        notif.setIs_read(false);
+                        notificationRepo.createNotification(notif, new RepoCallback<Void>() {
+                            @Override public void onSuccess(Void result) { }
+                            @Override public void onFailure(Exception e) { }
+                        });
+                    }
+                }
+                @Override
+                public void onFailure(Exception e) { }
+            });
+        });
     }
 
     private void navigateToReminder(MedicationLog log, String namaObat) {
@@ -414,6 +463,20 @@ public class LogFragment extends Fragment {
         LogStatus status = log.getStatusBasedOnDate();
         bundle.putString("status", status.getValue());
         bundle.putString("nama_obat", namaObat);
+        bundle.putString("source", "log");
+
+        NavHostFragment.findNavController(LogFragment.this)
+                .navigate(R.id.reminderFragment, bundle);
+    }
+
+    private void navigateToReminderAppointment(Appointment appointment) {
+        Bundle bundle = new Bundle();
+        bundle.putString("medication_schedules_id", appointment.getDocId());
+        bundle.putLong("scheduled_at", appointment.getAppointment_at().toDate().getTime());
+        bundle.putString("status", appointment.getStatusBasedOnDate().getValue());
+        bundle.putString("nama_obat", appointment.getTitle());
+        bundle.putString("type", "appointment");
+        bundle.putString("source", "log");
 
         NavHostFragment.findNavController(LogFragment.this)
                 .navigate(R.id.reminderFragment, bundle);
@@ -421,12 +484,23 @@ public class LogFragment extends Fragment {
 
     private void switchToAppointmentTab() {
         tvType.setText("Riwayat Janji Temu");
+
         currentType = LogType.APPOINTMENT;
+
         updateFilterButtonLabels();
-        appointAdapter = new AppointmentLogAdapter(appointLog, requireContext());
-        appointAdapter.setOnAppointClickListener(this::showAppointmentStatusDialog);
+
+        appointAdapter =
+                new AppointmentLogAdapter(
+                        appointLog,
+                        requireContext()
+                );
+
+        appointAdapter.setOnAppointClickListener(this::navigateToReminderAppointment);
+
         rvLogs.setAdapter(appointAdapter);
+
         initialMedicine.setVisibility(View.GONE);
+
         loadAppointmentLogs();
     }
 }

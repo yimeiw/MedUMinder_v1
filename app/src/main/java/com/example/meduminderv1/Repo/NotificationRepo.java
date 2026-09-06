@@ -52,6 +52,9 @@ public class NotificationRepo {
                         callback.onFailure(new Exception("Notifikasi tidak ditemukan."));
                         return;
                     } Notification notification = document.toObject(Notification.class);
+                    if (notification != null){
+                        notification.setNotification_id(document.getId());
+                    }
                     callback.onSuccess(notification);
                 }).addOnFailureListener(callback::onFailure);
     }
@@ -61,8 +64,18 @@ public class NotificationRepo {
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
     }
+
+    // FIX: dulu query pakai whereEqualTo("users_id", userUid), padahal field
+    // yang beneran diisi di createNotification() (dan di semua tempat lain
+    // yang bikin notifikasi, termasuk ReminderFragment/AlarmActionReceiver/
+    // EditAppointmentFragment/EditMedicineFragment) adalah "receiver_uid",
+    // BUKAN "users_id". Field "users_id" nggak pernah ada di collection
+    // "notifications" sama sekali. Akibatnya query ini nyaris selalu balikin
+    // 0 hasil, jadi badge notif (ikon lonceng) kelihatannya nggak pernah
+    // nyala meskipun ada notifikasi belum dibaca. Sekarang dibetulin ke
+    // "receiver_uid" biar konsisten sama field yang beneran dipakai.
     public void countUnread(String userUid, RepoCallback<Integer> callback){
-        db.collection("notifications").whereEqualTo("users_id", userUid)
+        db.collection("notifications").whereEqualTo("receiver_uid", userUid)
                 .whereEqualTo("is_read", false).addSnapshotListener((snapshot, e) -> {
                     if (e != null){
                         callback.onFailure(e);

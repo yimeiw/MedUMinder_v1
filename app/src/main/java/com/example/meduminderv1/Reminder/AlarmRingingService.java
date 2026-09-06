@@ -121,6 +121,7 @@ public class AlarmRingingService extends Service {
             Intent takenIntent = new Intent(this, AlarmActionReceiver.class)
                     .setAction("ACTION_TAKEN")
                     .putExtra("schedule_id", scheduleId)
+                    .putExtra("nama_obat", namaObat)
                     .putExtra("scheduled_at", scheduledAt);
             PendingIntent takenPending = PendingIntent.getBroadcast(
                     this, safeId(scheduleId), takenIntent,

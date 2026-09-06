@@ -51,6 +51,7 @@ import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
@@ -281,6 +282,15 @@ public class MedicineReminderFragment extends Fragment {
                 selectedCalendar.set(Calendar.YEAR, year);
                 selectedCalendar.set(Calendar.MONTH, month);
                 selectedCalendar.set(Calendar.DAY_OF_MONTH, day);
+                // Set ke akhir hari (23:59:59.999), bukan cuma tanggalnya doang. Kalau
+                // gak gini, jam yang kepakai adalah jam waktu selectedCalendar pertama
+                // kali di-init (Calendar.getInstance() di onCreateView), yang bisa lebih
+                // awal dari startDate = Timestamp.now() yang diambil pas tombol Simpan
+                // ditekan -> end_date jadi tercatat SEBELUM start_date.
+                selectedCalendar.set(Calendar.HOUR_OF_DAY, 23);
+                selectedCalendar.set(Calendar.MINUTE, 59);
+                selectedCalendar.set(Calendar.SECOND, 59);
+                selectedCalendar.set(Calendar.MILLISECOND, 999);
                 endDateSelected = true;
                 endDateReminder.setText(day + "/" + (month + 1) + "/" + year);
             }, today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH)
@@ -324,6 +334,11 @@ public class MedicineReminderFragment extends Fragment {
             return;
         }
 
+        // Ambil ulang dari SessionManager, jangan cuma andalkan field `user` yang
+        // di-capture sekali di onCreateView. Kalau session baru selesai ke-load
+        // SETELAH fragment ini dibuka, `user` bakal null selamanya walau sebenarnya
+        // user sudah login -> reminder gagal disimpan tanpa alasan yang jelas.
+        user = sessionManager.getUser();
         if (user == null) {
             Toast.makeText(requireContext(), "User belum login", Toast.LENGTH_SHORT).show();
             return;
@@ -370,38 +385,7 @@ public class MedicineReminderFragment extends Fragment {
                         medicationRepo.saveMedication(med, new RepoCallback<String>() {
                             @Override
                             public void onSuccess(String medicationId) {
-                                MedicationSchedules schedules = new MedicationSchedules(targetUid, medicationId, frequency, times, startDate, endDate, true, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
-                                medicationRepo.saveMedSchedule(schedules, new RepoCallback<String>() {
-                                    @Override
-                                    public void onSuccess(String result) {
-                                        new LogGenerator().ensureLogsGenerated(
-                                                user.getAuth_uid(),
-                                                result,
-                                                times,
-                                                startDate,
-                                                endDate
-                                        );
-                                        // result = scheduleId dari Firestore
-                                        long endMillis = (endDate != null) ? endDate.toDate().getTime() : 0;
-                                        AlarmSchedulerHelper.scheduleAll(
-                                                requireContext(),
-                                                result,
-                                                medName,
-                                                times,
-                                                endMillis
-                                        );
-
-                                        notifyReminderCreated(medName);
-                                        Toast.makeText(requireContext(), "Reminder berhasil dibuat", Toast.LENGTH_SHORT).show();
-                                        clearFields();
-                                        NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
-                                    }
-
-                                    @Override
-                                    public void onFailure(Exception e) {
-                                        Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-                                    }
-                                });
+                                saveScheduleForMedication(medicationId, medName, frequency, times, startDate, endDate);
                             }
 
                             @Override
@@ -419,34 +403,7 @@ public class MedicineReminderFragment extends Fragment {
                             medicationRepo.saveMedication(med, new RepoCallback<String>() {
                                 @Override
                                 public void onSuccess(String medicationId) {
-                                    MedicationSchedules schedules = new MedicationSchedules(targetUid, medicationId, frequency, times, startDate, endDate, true, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
-                                    medicationRepo.saveMedSchedule(schedules, new RepoCallback<String>() {
-                                        @Override
-                                        public void onSuccess(String result) {
-                                            new LogGenerator().ensureLogsGenerated(
-                                                    user.getAuth_uid(),
-                                                    result,
-                                                    times,
-                                                    startDate,
-                                                    endDate
-                                            );
-
-                                            AlarmSchedulerHelper.scheduleAll(
-                                                    requireContext(), result, medName, times,
-                                                    endDate != null ? endDate.toDate().getTime() : 0
-                                            );
-
-                                            notifyReminderCreated(medName);
-                                            Toast.makeText(requireContext(), "Reminder berhasil dibuat", Toast.LENGTH_SHORT).show();
-                                            clearFields();
-                                            NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
-                                        }
-
-                                        @Override
-                                        public void onFailure(Exception e) {
-                                            Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-                                        }
-                                    });
+                                    saveScheduleForMedication(medicationId, medName, frequency, times, startDate, endDate);
                                 }
 
                                 @Override
@@ -454,9 +411,98 @@ public class MedicineReminderFragment extends Fragment {
                                     Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                                 }
                             });
+                        }).addOnFailureListener(e -> {
+                            // SEBELUMNYA: gak ada failure listener di sini sama sekali.
+                            // Kalau .add() ini gagal (mis. gak ada internet & belum pernah
+                            // ke-cache), sisa proses save gak akan pernah jalan, dan user
+                            // gak lihat apa-apa: gak ada toast, gak ada error, tombol
+                            // "Simpan" kelihatan diem aja padahal gagal total.
+                            Toast.makeText(requireContext(),
+                                    "Gagal menyimpan obat ke katalog: " + e.getMessage(),
+                                    Toast.LENGTH_LONG).show();
                         });
                     }
+                })
+                .addOnFailureListener(e -> {
+                    // SEBELUMNYA: query paling awal di seluruh alur simpan reminder ini
+                    // gak punya failure listener. Kalau query ini gagal (paling sering
+                    // karena gak ada koneksi internet & belum ada cache lokal), method
+                    // saveReminder() berhenti total di titik ini TANPA pemberitahuan apa
+                    // pun ke user — persis gejala "tombol Simpan gak ngapa-ngapain".
+                    Toast.makeText(requireContext(),
+                            "Gagal memuat katalog obat, cek koneksi internet: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
                 });
+    }
+
+    /**
+     * Nonaktifkan dulu schedule aktif LAMA untuk obat yang sama (kalau ada), baru bikin
+     * schedule baru. Tanpa ini, tiap kali reminder untuk obat yang sama disimpan ulang
+     * (mis. waktu testing), schedule lama tetap is_active=true selamanya dan numpuk terus
+     * di Firestore, bikin LogGenerator generate log dobel dari schedule-schedule usang.
+     */
+    private void saveScheduleForMedication(String medicationId, String medName, int frequency,
+                                           ArrayList<String> times, Timestamp startDate, Timestamp endDate) {
+        medicationRepo.getActiveSchedulesForMedication(targetUid, medicationId, new RepoCallback<QuerySnapshot>() {
+            @Override
+            public void onSuccess(QuerySnapshot oldSchedules) {
+                for (DocumentSnapshot oldDoc : oldSchedules.getDocuments()) {
+                    medicationRepo.deactivateSchedule(oldDoc.getId(), new RepoCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void result) { /* no-op */ }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            Log.e("MedicineReminder", "Gagal nonaktifkan schedule lama " + oldDoc.getId(), e);
+                        }
+                    });
+                }
+                createSchedule(medicationId, medName, frequency, times, startDate, endDate);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                // Gagal cek schedule lama gak boleh nge-block user nyimpen reminder baru.
+                Log.e("MedicineReminder", "Gagal cek schedule aktif lama", e);
+                createSchedule(medicationId, medName, frequency, times, startDate, endDate);
+            }
+        });
+    }
+
+    private void createSchedule(String medicationId, String medName, int frequency,
+                                ArrayList<String> times, Timestamp startDate, Timestamp endDate) {
+        MedicationSchedules schedules = new MedicationSchedules(targetUid, medicationId, frequency, times, startDate, endDate, true, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
+        medicationRepo.saveMedSchedule(schedules, new RepoCallback<String>() {
+            @Override
+            public void onSuccess(String result) {
+                new LogGenerator().ensureLogsGenerated(
+                        user.getAuth_uid(),
+                        result,
+                        times,
+                        startDate,
+                        endDate
+                );
+                // result = scheduleId dari Firestore
+                long endMillis = (endDate != null) ? endDate.toDate().getTime() : 0;
+                AlarmSchedulerHelper.scheduleAll(
+                        requireContext(),
+                        result,
+                        medName,
+                        times,
+                        endMillis
+                );
+
+                notifyReminderCreated(medName);
+                Toast.makeText(requireContext(), "Reminder berhasil dibuat", Toast.LENGTH_SHORT).show();
+                clearFields();
+                NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void createTimeFields(int frequency) {

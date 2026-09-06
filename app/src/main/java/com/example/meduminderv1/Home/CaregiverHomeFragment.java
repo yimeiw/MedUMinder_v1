@@ -371,7 +371,10 @@ public class CaregiverHomeFragment extends Fragment {
                             remaining[0]--;
                             continue;
                         } resolveMedName(log.getMedication_schedules_id(), (medName, stock) -> {
-                            combined.add(new LogItem("medicine", medName, sdf.format(log.getScheduled_at().toDate()), "Sisa stok: " + stock, log.getStatus()));
+                            LogItem item = new LogItem("medicine", medName, sdf.format(log.getScheduled_at().toDate()), "Sisa stok: " + stock, log.getStatus());
+                            item.setRefId(log.getMedication_schedules_id());
+                            item.setScheduledAtMillis(log.getScheduled_at().toDate().getTime());
+                            combined.add(item);
                             remaining[0]--;
                             if (remaining[0] <= 0){
                                 mergeAppointments(consumerUid, combined, startOfDay, startOfTomorrow);
@@ -392,13 +395,18 @@ public class CaregiverHomeFragment extends Fragment {
                     for (DocumentSnapshot doc : apptQuery.getDocuments()) {
                         Appointment appt = doc.toObject(Appointment.class);
                         if (appt == null) continue;
-                        combined.add(new LogItem("appointment", appt.getTitle(),
+                        LogItem item = new LogItem("appointment", appt.getTitle(),
                                 sdf.format(appt.getAppointment_at().toDate()),
-                                appt.getAddress(), appt.getStatus()));
+                                appt.getAddress(), appt.getStatus());
+                        item.setRefId(doc.getId());
+                        item.setScheduledAtMillis(appt.getAppointment_at().toDate().getTime());
+                        combined.add(item);
                     }
                     Collections.sort(combined, (a, b) -> a.getTime().compareTo(b.getTime()));
                     List<LogItem> displayList = combined.size() > 3 ? combined.subList(0,3) : combined;
-                    rvTodaySchedule.setAdapter(new TodayScheduleAdapter(displayList, requireContext()));
+                    TodayScheduleAdapter adapter = new TodayScheduleAdapter(displayList, requireContext());
+                    adapter.setOnScheduleItemClickListener(this::navigateToReminder);
+                    rvTodaySchedule.setAdapter(adapter);
                     if (combined.isEmpty()){
                         emptyTodaySchedule.setVisibility(View.VISIBLE);
                         rvTodaySchedule.setVisibility(View.GONE);
@@ -409,6 +417,22 @@ public class CaregiverHomeFragment extends Fragment {
                         btnLihatSemua.setVisibility(View.VISIBLE);
                     }
                 });
+    }
+
+    // buka Reminder view dari Home (caregiver). source="schedule" -> tombol titik tiga (edit/hapus) ditampilkan.
+    private void navigateToReminder(LogItem item) {
+        if (item.getRefId() == null) return;
+
+        Bundle bundle = new Bundle();
+        bundle.putString("medication_schedules_id", item.getRefId());
+        bundle.putString("nama_obat", item.getNamaJadwal());
+        bundle.putLong("scheduled_at", item.getScheduledAtMillis());
+        bundle.putString("status", item.getStatus());
+        bundle.putString("type", item.getType());
+        bundle.putString("source", "schedule");
+
+        NavHostFragment.findNavController(this)
+                .navigate(R.id.reminderFragment, bundle);
     }
 
     private void loadAdherenceAndStats(String consumerUid) {

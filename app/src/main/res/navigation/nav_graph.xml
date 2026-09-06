@@ -110,4 +110,10 @@
         android:label="Edit Medicine"
         />
 
+    <fragment
+        android:id="@+id/editAppointmentFragment"
+        android:name="com.example.meduminderv1.Edit.EditAppointmentFragment"
+        android:label="Edit Appointment"
+        />
+
 </navigation>

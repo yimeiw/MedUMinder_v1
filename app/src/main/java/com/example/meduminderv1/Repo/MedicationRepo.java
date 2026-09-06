@@ -58,6 +58,30 @@ public class MedicationRepo {
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
     }
+
+    /**
+     * Cari schedule yang masih is_active=true untuk kombinasi user+medication tertentu.
+     * Dipakai sebelum bikin schedule baru, supaya schedule lama untuk obat yang sama
+     * bisa dinonaktifkan dulu (mencegah numpuk banyak schedule aktif untuk 1 obat).
+     */
+    public void getActiveSchedulesForMedication(String targetUid, String medicationId, RepoCallback<QuerySnapshot> callback){
+        db.collection("medication_schedules")
+                .whereEqualTo("users_id", targetUid)
+                .whereEqualTo("medication_id", medicationId)
+                .whereEqualTo("is_active", true)
+                .get()
+                .addOnSuccessListener(callback::onSuccess)
+                .addOnFailureListener(callback::onFailure);
+    }
+
+    public void deactivateSchedule(String scheduleId, RepoCallback<Void> callback){
+        Map<String, Object> update = new HashMap<>();
+        update.put("is_active", false);
+        update.put("updated_at", Timestamp.now());
+        db.collection("medication_schedules").document(scheduleId).update(update)
+                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onFailure);
+    }
     public void getMedBySchedule(String medicationId, RepoCallback<MedicationSchedules> schedulesRepoCallback){
         db.collection("medication_schedules").document(medicationId).get()
                 .addOnSuccessListener(doc -> schedulesRepoCallback.onSuccess(doc.toObject(MedicationSchedules.class)))
