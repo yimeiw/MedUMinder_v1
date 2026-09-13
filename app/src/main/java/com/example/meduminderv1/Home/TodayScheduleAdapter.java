@@ -40,7 +40,12 @@ public class TodayScheduleAdapter extends RecyclerView.Adapter<TodayScheduleAdap
         );
         holder.nama.setText(item.getNamaJadwal());
         holder.time.setText(item.getTime());
-        holder.info.setText(item.getInformasiJadwal());
+        if (item.getInformasiJadwal() == null || item.getInformasiJadwal().trim().isEmpty()) {
+            holder.info.setVisibility(View.GONE);
+        } else {
+            holder.info.setVisibility(View.VISIBLE);
+            holder.info.setText(item.getInformasiJadwal());
+        }
     }
 
     @Override

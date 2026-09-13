@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header -->
+        <LinearLayout
+            android:id="@+id/headerSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="30dp">
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="30dp"
+                android:layout_height="26dp"
+                android:layout_gravity="center"
+                android:background="@drawable/ic_back"
+                app:tint="@color/hover_pressed" />
+
+            <TextView
+                android:id="@+id/tvHeaderNotif"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="@string/isiUlangObat"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- Icon Stock -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@drawable/border_wp"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginVertical="20dp">
+
+            <ImageView
+                android:id="@+id/imgType"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:layout_marginVertical="20dp"
+                android:src="@drawable/ic_reminder_stock" />
+
+        </LinearLayout>
+
+        <!-- Pesan -->
+        <TextView
+            android:id="@+id/messageNotif"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="10dp"
+            android:layout_marginBottom="10dp"
+            android:text="Obat Anda sudah mau habis, segera isi ulang obat Anda!"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="16sp" />
+
+        <!-- Tombol Isi Ulang -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRefillStock"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="10dp"
+                android:background="@drawable/button_selector"
+                app:backgroundTint="?attr/colorTertiary"
+                android:text="Isi ulang obat"
+                android:textColor="?attr/colorPrimary"
+                android:textAllCaps="false"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>

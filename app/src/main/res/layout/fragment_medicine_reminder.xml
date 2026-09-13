@@ -87,6 +87,52 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/sectionJenisObat"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginVertical="10dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/jenisObat"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:layout_marginHorizontal="10dp"
+                        android:layout_marginBottom="10dp"
+                        android:textColor="?attr/colorOnSurface"/>
+
+                    <RadioGroup
+                        android:id="@+id/radioGroupJenisObat"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="10dp">
+
+                        <com.google.android.material.radiobutton.MaterialRadioButton
+                            android:id="@+id/radioPil"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/obatPil"
+                            android:textSize="14sp"
+                            android:textColor="?attr/colorOnSurface"
+                            android:buttonTint="?attr/colorPrimary"
+                            android:checked="true"/>
+
+                        <com.google.android.material.radiobutton.MaterialRadioButton
+                            android:id="@+id/radioCair"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="30dp"
+                            android:text="@string/obatCair"
+                            android:textSize="14sp"
+                            android:textColor="?attr/colorOnSurface"
+                            android:buttonTint="?attr/colorPrimary"/>
+                    </RadioGroup>
+                </LinearLayout>
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
@@ -130,7 +176,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:id="@+id/sectionStokObat"
+                    android:id="@+id/sectionTanggalSelesai"
                     android:layout_marginVertical="10dp">
 
                     <TextView
@@ -174,6 +220,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/sectionStockObat"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
@@ -182,7 +229,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Stok Obat"
+                        android:text="@string/stockObat"
                         android:textStyle="bold"
                         android:textSize="16sp"
                         android:layout_marginBottom="10dp"

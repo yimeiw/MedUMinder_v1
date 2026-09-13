@@ -181,6 +181,33 @@ public class NotificationDetailFragment extends Fragment {
     }
 
     private void showLowStock() {
+        layoutButton.setVisibility(View.GONE);
 
+        btnAcc.setVisibility(View.GONE);
+        btnReject.setVisibility(View.GONE);
+
+        btnAction.setVisibility(View.VISIBLE);
+        btnAction.setText(getString(R.string.isiUlangObat));
+
+        btnAction.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+
+            bundle.putString(
+                    "medication_id",
+                    notification.getReference_id()
+            );
+
+            bundle.putString(
+                    "notification_id",
+                    notification.getNotification_id()
+            );
+
+            NavHostFragment.findNavController(
+                    NotificationDetailFragment.this
+            ).navigate(
+                    R.id.reminderStockFragment,
+                    bundle
+            );
+        });
     }
 }

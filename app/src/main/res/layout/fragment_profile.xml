@@ -26,7 +26,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/tvProfilePage"
-            android:text="Profile"
+            android:text="@string/profile"
             android:textStyle="bold"
             android:textSize="24sp"
             android:layout_weight="1"
@@ -136,7 +136,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Tingkat Kepatuhan"
+                            android:text="@string/kepatuhan"
                             android:textSize="24dp"
                             android:textColor="?attr/colorPrimary"
                             android:textStyle="bold"/>
@@ -145,7 +145,7 @@
                             android:id="@+id/adherencePercent"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="90%"
+                            android:text="0%"
                             android:textStyle="bold"
                             android:textSize="24dp"
                             android:textColor="?attr/colorTertiary"
@@ -174,7 +174,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:id="@+id/btnSeeStatistic"
-                    android:text="Lihat Selengkapnya"
+                    android:text="@string/selengkapnya"
                     android:textStyle="bold"
                     android:background="@drawable/border"
                     android:textColor="?attr/colorOnSurface"
@@ -188,7 +188,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Pengaturan"
+                android:text="@string/pengaturan"
                 android:textStyle="bold"
                 android:textSize="16sp"
                 android:layout_marginTop="20dp"
@@ -202,6 +202,7 @@
 
                 <!--                pengaturan notifikasi-->
                 <LinearLayout
+                    android:id="@+id/btnNotificationSetting"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -218,7 +219,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Notifikasi"
+                        android:text="@string/notifikasi"
                         android:layout_marginStart="10dp"
                         android:layout_weight="1"
                         android:layout_gravity="center"
@@ -253,7 +254,7 @@
                         android:id="@+id/txtAktivasi"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Aktivasi Caregiver"
+                        android:text="@string/activateCaregiver"
                         android:layout_weight="1"
                         android:layout_gravity="center"
                         android:fontFamily="@font/inter_24pt_bold"/>
@@ -285,7 +286,7 @@
                         android:id="@+id/txtListRelation"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="List Caregiver"
+                        android:text="@string/caregiverList"
                         android:layout_weight="1"
                         android:layout_gravity="center"
                         android:fontFamily="@font/inter_24pt_bold"/>
@@ -317,7 +318,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Edit Profile"
+                        android:text="@string/editProfile"
                         android:layout_weight="1"
                         android:layout_gravity="center"
 
@@ -333,6 +334,7 @@
 
                 <!--                pengaturan bahasa-->
                 <LinearLayout
+                    android:id="@+id/btnChangeLanguage"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -348,7 +350,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Bahasa"
+                        android:text="@string/bahasa"
                         android:layout_weight="1"
                         android:layout_marginStart="3dp"
                         android:layout_gravity="center"
@@ -380,7 +382,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Tampilan"
+                        android:text="@string/theme"
                         android:layout_weight="1"
                         android:layout_gravity="center"
 

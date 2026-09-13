@@ -35,11 +35,13 @@ import com.example.meduminderv1.Model.MedicationLog;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Repo.StatistikRepo;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.Calendar;
+import java.util.List;
 
 public class ProfileFragment extends Fragment {
 
@@ -52,7 +54,7 @@ public class ProfileFragment extends Fragment {
     RelativeLayout themeSwitch;
     ImageView iconToggle, imgAktivasi;
     SharedPreferences prefs;
-    LinearLayout btnEditProfile, btnAktivasi, btnListRelation;
+    LinearLayout btnEditProfile, btnAktivasi, btnListRelation, btnChangeLanguage, btnNotificationSetting;
     ProgressView adherenceRing;
 
     @Override
@@ -85,6 +87,8 @@ public class ProfileFragment extends Fragment {
         txtAktivasi = view.findViewById(R.id.txtAktivasi);
         txtListRelation = view.findViewById(R.id.txtListRelation);
         btnListRelation = view.findViewById(R.id.btnRelationList);
+        btnChangeLanguage = view.findViewById(R.id.btnChangeLanguage);
+        btnNotificationSetting = view.findViewById(R.id.btnNotificationSetting);
 
         if (user != null){
             loadUser();
@@ -132,12 +136,69 @@ public class ProfileFragment extends Fragment {
             }
         });
 
+        btnChangeLanguage.setOnClickListener(v -> {
+            NavHostFragment.findNavController(this).navigate(R.id.languageFragment);
+        } );
+
+        btnNotificationSetting.setOnClickListener(v -> {
+            NavHostFragment.findNavController(this).navigate(R.id.notificationSettingsFragment);
+        });
+
         adherenceDesc = view.findViewById(R.id.adherenceDesc);
         adherencePercent = view.findViewById(R.id.adherencePercent);
         adherenceRing = view.findViewById(R.id.adherenceRing);
+        loadAdherence();
+
+        view.findViewById(R.id.btnSeeStatistic).setOnClickListener(v -> {
+            NavHostFragment.findNavController(ProfileFragment.this).navigate(R.id.statistikFragment);
+        });
 
         return view;
     }
+
+    private void loadAdherence() {
+        String uid = SessionManager.getInstance().getTargetUid();
+
+        if (uid == null || uid.isEmpty()) {
+            return;
+        }
+
+        StatistikRepo statistikRepo = new StatistikRepo();
+
+        statistikRepo.getAdherence(uid, "weekly", new StatistikRepo.StatsCallback() {
+                    @Override
+                    public void onResult(List<StatistikRepo.DayStat> stats) {
+                        if (!isAdded()) return;
+
+                        int totalSeharusnya = 0;
+                        int totalDikonsumsi = 0;
+
+                        for (StatistikRepo.DayStat stat : stats) {
+                            totalSeharusnya += stat.seharusnya;
+                            totalDikonsumsi += stat.dikonsumsi;
+                        }
+
+                        int percent = totalSeharusnya == 0 ? 0 : (int) (totalDikonsumsi * 100f / totalSeharusnya);
+
+                        adherencePercent.setText(percent + "%");
+                        adherenceRing.setProgress(percent);
+                        adherenceDesc.setText(getAdherenceDescription(percent));
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        if (!isAdded()) return;
+
+                        Toast.makeText(
+                                requireContext(),
+                                "Gagal mengambil statistik",
+                                Toast.LENGTH_SHORT
+                        ).show();
+                    }
+                }
+        );
+    }
+
     private void showLogoutDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle("Logout");
@@ -311,7 +372,9 @@ public class ProfileFragment extends Fragment {
         setUpCaregiverButton();
 
         boolean isConsumer = user.getCurrentRole() == UserRole.Consumer;
-        txtListRelation.setText(isConsumer ? "List Caregiver" : "List Consumer");
+        txtListRelation.setText(
+                isConsumer ? getString(R.string.caregiverList) : getString(R.string.consumerList)
+        );
         btnListRelation.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
             bundle.putString(RelationListFragment.ARG_MODE, isConsumer ? "Caregiver" : "Consumer");
@@ -330,24 +393,30 @@ public class ProfileFragment extends Fragment {
 
     private void setUpCaregiverButton() {
         if (!user.isCaregiver_enabled()){
-            txtAktivasi.setText("Aktivasi Caregiver");
+            txtAktivasi.setText(R.string.activateCaregiver);
             imgAktivasi.setImageResource(R.drawable.ic_activate);
             btnAktivasi.setOnClickListener(v -> showEnableCaregiver(false));
         } if (user.getCurrentRole() == UserRole.Consumer){
-            txtAktivasi.setText("Invite Caregiver");
+            txtAktivasi.setText(R.string.invCaregiver);
             imgAktivasi.setImageResource(R.drawable.ic_add_people);
             btnAktivasi.setOnClickListener(v -> NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
         } else {
-            txtAktivasi.setText("Invite Consumer");
+            txtAktivasi.setText(R.string.invConsumer);
             imgAktivasi.setImageResource(R.drawable.ic_add_people);
             btnAktivasi.setOnClickListener(v -> NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
         }
     }
 
-    private String adherenceDesc(int percent) {
-        if (percent >= 80) return "@string/desc_kepatuhan_tinggi";
-        if (percent >= 50) return "@string/desc_kepatuhan_okela";
-        return "@string/desc_kepatuhan_rendah";
+    private String getAdherenceDescription(int percent) {
+        if (percent >= 80) {
+            return getString(R.string.desc_kepatuhan_tinggi);
+        }
+
+        if (percent >= 50) {
+            return getString(R.string.desc_kepatuhan_okela);
+        }
+
+        return getString(R.string.desc_kepatuhan_rendah);
     }
 
 }

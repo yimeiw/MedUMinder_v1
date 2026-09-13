@@ -48,6 +48,7 @@ import com.example.meduminderv1.Repo.MedicationRepo;
 import com.example.meduminderv1.Repo.StatistikRepo;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -70,7 +71,7 @@ import java.util.UUID;
 
 public class HomeFragment extends Fragment {
 
-    TextView tvGreeting, tvtitleCard, tvTime, tvTotalStok, btnLihatSemua, emptyTodaySchedule;
+    TextView tvGreeting, tvtitleCard, tvTime, tvStokObat, tvTotalStok, btnLihatSemua, emptyTodaySchedule;
     ImageButton btnNotif, btnProfile;
     MaterialButton addNoSchedule, btnKonfirmasi;
     RecyclerView rvTodaySchedule;
@@ -93,7 +94,8 @@ public class HomeFragment extends Fragment {
         tvGreeting = view.findViewById(R.id.greeting);
         tvtitleCard = view.findViewById(R.id.tvtitleCard);
         tvTime = view.findViewById(R.id.tvTime);
-        tvTotalStok = view.findViewById(R.id.tvStokObat);
+        tvStokObat = view.findViewById(R.id.tvStokObat);
+        tvTotalStok = view.findViewById(R.id.tvTotalStok);
         btnNotif = view.findViewById(R.id.btnNotif);
         btnProfile = view.findViewById(R.id.btnProfile);
         addMed = view.findViewById(R.id.layoutAddMed);
@@ -168,6 +170,7 @@ public class HomeFragment extends Fragment {
         checkUnreadNotif();
         loadNextSchedule();
         loadTodaySchedule();
+        loadStats();
     }
 
     private void checkUnreadNotif() {
@@ -209,10 +212,18 @@ public class HomeFragment extends Fragment {
                     noSchedule.setVisibility(View.GONE);
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                     tvTime.setText(sdf.format(log.getScheduled_at().toDate()));
-                    resolveMedName(log.getMedication_schedules_id(), (medName, stock, medId) -> {
+                    resolveMedName(log.getMedication_schedules_id(), (medName, stock, medId, medType) -> {
                         nextMedId = medId;
                         tvtitleCard.setText(medName);
-                        tvTotalStok.setText("Sisa stok: " + stock);
+
+                        if ("CAIR".equals(medType)) {
+                            tvStokObat.setVisibility(View.GONE);
+                            tvTotalStok.setVisibility(View.GONE);
+                        } else {
+                            tvStokObat.setVisibility(View.VISIBLE);
+                            tvTotalStok.setVisibility(View.VISIBLE);
+                            tvTotalStok.setText(String.valueOf(stock));
+                        }
                     });
                     btnKonfirmasi.setOnClickListener(v -> confirmTaken());
                 }).addOnFailureListener(e -> {
@@ -228,6 +239,7 @@ public class HomeFragment extends Fragment {
         medicationRepo.markLogAsTaken(nextLogId, new RepoCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
+                loadStats();
                 if (nextMedId != null){
                     medicationRepo.decrementStock(nextMedId, new RepoCallback<Void>() {
                         @Override
@@ -240,6 +252,7 @@ public class HomeFragment extends Fragment {
 
                         @Override
                         public void onFailure(Exception e) {
+                            if(!isAdded() || getContext() == null) { return; }
                             Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     });
@@ -251,6 +264,7 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onFailure(Exception e) {
+                if (!isAdded() || getContext() == null) return;
                 Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
@@ -268,27 +282,30 @@ public class HomeFragment extends Fragment {
                                 Medication med = medSnap.toObject(Medication.class);
                                 if (med == null) return;
                                 int stock = 0;
+
+                                String medType = med.getMed_type();
+
                                 if (med.getStock() != null && med.getStock().get("stok_obat") != null){
                                     stock = ((Number) med.getStock().get("stok_obat")).intValue();
                                 } int finalStock = stock;
                                 if (med.getCustom_medicine_name() != null){
-                                    callback.onResolved(med.getCustom_medicine_name(), finalStock, medId);
+                                    callback.onResolved(med.getCustom_medicine_name(), finalStock, medId, medType);
                                 } else if (med.getCatalog_id() != null) {
                                     db.collection("medicine_catalog").document(med.getCatalog_id()).get()
                                             .addOnSuccessListener(catSnap -> {
                                                 MedicineCatalog catalog = catSnap.toObject(MedicineCatalog.class);
-                                                callback.onResolved(catalog != null ? catalog.getNama_obat() : "Obat", finalStock, medId);
+                                                callback.onResolved(catalog != null ? catalog.getNama_obat() : "Obat", finalStock, medId, medType);
                                             });
 
                                 } else {
-                                    callback.onResolved("Obat", finalStock, medId);
+                                    callback.onResolved("Obat", finalStock, medId, medType);
                                 }
                             });
                 });
     }
 
     private interface MedResolveCallback{
-        void onResolved(String name, int stock, String medicationId);
+        void onResolved(String name, int stock, String medicationId, String medType);
     }
 
     private void loadTodaySchedule() {
@@ -322,10 +339,21 @@ public class HomeFragment extends Fragment {
                     for (DocumentSnapshot doc : medDocs) {
                         MedicationLog log = doc.toObject(MedicationLog.class);
                         if (log == null) { remaining[0]--; continue; }
-                        resolveMedName(log.getMedication_schedules_id(), (medName, stock, medId) -> {
+                        resolveMedName(log.getMedication_schedules_id(), (medName, stock, medId, medType) -> {
+                            Log.d("STOCK_DEBUG",
+                                    "Obat: " + medName +
+                                            " | Type: " + medType +
+                                            " | Stock: " + stock);
+
+
+                            String info = "";
+
+                            if("PIL".equals(medType)) {
+                                info = "Sisa stok: " + stock;
+                            }
+
                             combined.add(new LogItem("medicine", medName,
-                                    sdf.format(log.getScheduled_at().toDate()),
-                                    "Sisa stok: " + stock, log.getStatus()));
+                                    sdf.format(log.getScheduled_at().toDate()), info, log.getStatus()));
                             remaining[0]--;
                             if (remaining[0] <= 0) mergeAppointments(uid, combined, startOfDay, startOfTomorrow);
                         });
@@ -390,6 +418,7 @@ public class HomeFragment extends Fragment {
         List<Entry> dikonsumsi = new ArrayList<>();
         List<Entry> persentase = new ArrayList<>();
         List<String> labels = new ArrayList<>();
+
         for (int i = 0; i < weekStats.size(); i++){
             StatistikRepo.DayStat s = weekStats.get(i);
             seharusnya.add(new Entry(i, s.seharusnya));
@@ -397,17 +426,30 @@ public class HomeFragment extends Fragment {
             persentase.add(new Entry(i, s.persentase));
             labels.add(s.label);
         }
+
+        // dosis seharusnya
         LineDataSet dsSeharusnya = new LineDataSet(seharusnya, "Dosis seharusnya");
         dsSeharusnya.setColor(requireContext().getColor(R.color.dark_bckg));
         dsSeharusnya.setCircleColor(requireContext().getColor(R.color.dark_bckg));
+        dsSeharusnya.setLineWidth(2f);
+        dsSeharusnya.setCircleRadius(4f);
+        dsSeharusnya.setAxisDependency(YAxis.AxisDependency.LEFT);
 
+        // dosis dikonsumsi
         LineDataSet dsDikonsumsi = new LineDataSet(dikonsumsi, "Dosis dikonsumsi");
         dsDikonsumsi.setColor(requireContext().getColor(R.color.green));
         dsDikonsumsi.setCircleColor(requireContext().getColor(R.color.green));
+        dsDikonsumsi.setLineWidth(2f);
+        dsDikonsumsi.setCircleRadius(4f);
+        dsDikonsumsi.setAxisDependency(YAxis.AxisDependency.LEFT);
 
+        // persentase kepatuhan
         LineDataSet dsPersentase = new LineDataSet(persentase, "Persentase Kepatuhan");
         dsPersentase.setColor(requireContext().getColor(R.color.pink));
         dsPersentase.setCircleColor(requireContext().getColor(R.color.pink));
+        dsPersentase.setLineWidth(2f);
+        dsPersentase.setCircleRadius(4f);
+        dsPersentase.setAxisDependency(YAxis.AxisDependency.RIGHT);
         dsPersentase.setDrawFilled(true);
 
         LineData data = new LineData(dsSeharusnya, dsDikonsumsi, dsPersentase);
@@ -418,7 +460,30 @@ public class HomeFragment extends Fragment {
         xAxis.setGranularity(1f);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
 
+        YAxis leftAxis = lineChart.getAxisLeft();
+        leftAxis.setAxisMinimum(0f);
+
+        int maxDosis = 0;
+
+        for(StatistikRepo.DayStat s : weekStats){
+            maxDosis = Math.max(maxDosis, s.seharusnya);
+        }
+
+        leftAxis.setGranularity(1f);
+
+        YAxis rightAxis = lineChart.getAxisRight();
+        rightAxis.setEnabled(true);
+
+        rightAxis.setAxisMinimum(0f);
+        rightAxis.setAxisMaximum(100f);
+        rightAxis.setGranularity(20f);
+
         lineChart.getDescription().setEnabled(false);
+        lineChart.getLegend().setEnabled(true);
+        lineChart.setTouchEnabled(true);
+        lineChart.setDragEnabled(true);
+        lineChart.setScaleEnabled(false);
+
         lineChart.animateX(600);
         lineChart.invalidate();
     }

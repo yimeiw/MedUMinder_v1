@@ -14,6 +14,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
+import com.example.meduminderv1.Callback.RepoCallback;
+import com.example.meduminderv1.Repo.MedicationRepo;
+
 public class AlarmActionReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -38,15 +41,72 @@ public class AlarmActionReceiver extends BroadcastReceiver {
     private void markAsTaken(String scheduleId, long scheduledAtMillis) {
         String logId = buildLogId(scheduleId, scheduledAtMillis);
 
-        FirebaseFirestore.getInstance()
-                .collection("medication_logs")
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // tandai log sebagai dikonsumsi
+        db.collection("medication_logs")
                 .document(logId)
                 .update(
                         "status", "dikonsumsi",
                         "taken_at", Timestamp.now()
                 )
+                .addOnSuccessListener(unused -> {
+
+                    // ambil medication_id dari schedule
+                    db.collection("medication_schedules")
+                            .document(scheduleId)
+                            .get()
+                            .addOnSuccessListener(scheduleDoc -> {
+
+                                        String medicationId =
+                                                scheduleDoc.getString("medication_id");
+
+                                        if (medicationId == null) {
+                                            Log.e(
+                                                    "AlarmActionReceiver",
+                                                    "medication_id tidak ditemukan"
+                                            );
+                                            return;
+                                        }
+
+                                        MedicationRepo medicationRepo = new MedicationRepo();
+
+                                        medicationRepo.decrementStock(
+                                                medicationId,
+                                                new RepoCallback<Void>() {
+                                                    @Override
+                                                    public void onSuccess(Void result) {
+                                                        Log.d(
+                                                                "AlarmActionReceiver",
+                                                                "Stock berhasil diproses"
+                                                        );
+                                                    }
+
+                                                    @Override
+                                                    public void onFailure(Exception e) {
+                                                        Log.e(
+                                                                "AlarmActionReceiver",
+                                                                "Gagal memproses stock",
+                                                                e
+                                                        );
+                                                    }
+                                                }
+                                        );
+                                    }).addOnFailureListener(e ->
+                                    Log.e(
+                                            "AlarmActionReceiver",
+                                            "Gagal mengambil medication schedule",
+                                            e
+                                    )
+                            );
+                })
                 .addOnFailureListener(e ->
-                        Log.e("AlarmActionReceiver", "Gagal update status log", e));
+                        Log.e(
+                                "AlarmActionReceiver",
+                                "Gagal update status log",
+                                e
+                        )
+                );
     }
 
     // Harus persis sama formatnya dengan LogGenerator.buildLogId()

@@ -12,6 +12,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
+import android.content.SharedPreferences;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -32,8 +33,20 @@ public class AlarmRingingService extends Service {
             return START_NOT_STICKY;
         }
         String scheduleId = intent.getStringExtra("schedule_id");
+
         String namaObat = intent.getStringExtra("nama_obat");
+
         String soundUri = intent.getStringExtra("sound_uri");
+
+        SharedPreferences pref = getSharedPreferences(
+                "notification_settings",
+                MODE_PRIVATE
+        );
+
+        if(soundUri == null || soundUri.isEmpty()) {
+            soundUri = pref.getString("ringtone_uri", null);
+        }
+
         long scheduledAt = intent.getLongExtra("scheduled_at", 0L);
 
         startForeground(safeId(scheduleId), buildNotification(scheduleId, namaObat, scheduledAt));
@@ -106,9 +119,19 @@ public class AlarmRingingService extends Service {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
+        SharedPreferences pref = getSharedPreferences(
+                "notification_settings",
+                MODE_PRIVATE
+        );
+
+        String reminderMessage = pref.getString(
+                "reminder_message",
+                "Jangan lupa minum obat"
+        );
+
         return new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_tablet)
-                .setContentTitle("Waktunya minum obat")
+                .setContentTitle(reminderMessage)
                 .setContentText(namaObat)
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setPriority(NotificationCompat.PRIORITY_MAX)

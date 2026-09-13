@@ -12,6 +12,7 @@ public class Medication {
     private String custom_medicine_name;
     private Boolean is_active;
     private Map<String, Object> stock;
+    private String med_type;
     private Timestamp created_at;
     private String created_by;
     private Timestamp updated_at;
@@ -20,12 +21,13 @@ public class Medication {
 
     public Medication() {}
 
-    public Medication(String users_id, String catalog_id, String custom_medicine_name, Boolean is_active, Map<String, Object> stock, Timestamp created_at, String created_by, Timestamp updated_at, String updated_by, Timestamp deleted_at){
+    public Medication(String users_id, String catalog_id, String custom_medicine_name, Boolean is_active, String med_type, Map<String, Object> stock, Timestamp created_at, String created_by, Timestamp updated_at, String updated_by, Timestamp deleted_at){
         super();
         this.users_id = users_id;
         this.catalog_id = catalog_id;
         this.custom_medicine_name = custom_medicine_name;
         this.is_active = is_active;
+        this.med_type = med_type;
         this.stock = stock;
         this.created_at = created_at;
         this.created_by = created_by;
@@ -48,6 +50,7 @@ public class Medication {
     public Map<String, Object> getStock() {
         return stock;
     }
+    public String getMed_type() { return med_type; }
     public Timestamp getCreated_at() {
         return created_at;
     }

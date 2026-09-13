@@ -10,7 +10,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +19,8 @@ import android.widget.EditText;
 import android.widget.Filter;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,13 +41,10 @@ import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Model.Medication;
 import com.example.meduminderv1.Model.MedicationSchedules;
 import com.example.meduminderv1.Model.User;
-import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.MedicationRepo;
-import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
-import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -64,9 +62,11 @@ public class MedicineReminderFragment extends Fragment {
 
     ImageButton btnBack;
     AutoCompleteTextView namaObat, freqMinumObat;
+    RadioGroup radioGroupJenisObat;
+    RadioButton radioPil, radioCair;
     EditText stokObat;
     TextView endDateReminder;
-    LinearLayout timeReminder, formContent;
+    LinearLayout timeReminder, formContent, sectionStockObat;
     FirebaseFirestore db;
     Calendar selectedCalendar;
     MaterialButton btnSaveReminder;
@@ -96,6 +96,10 @@ public class MedicineReminderFragment extends Fragment {
         freqMinumObat = view.findViewById(R.id.freqMinumObat);
         timeReminder = view.findViewById(R.id.timeReminder);
         stokObat = view.findViewById(R.id.stokObat);
+        radioGroupJenisObat = view.findViewById(R.id.radioGroupJenisObat);
+        radioPil = view.findViewById(R.id.radioPil);
+        radioCair = view.findViewById(R.id.radioCair);
+        sectionStockObat = view.findViewById(R.id.sectionStockObat);
         endDateReminder = view.findViewById(R.id.endDateReminder);
         selectedCalendar = Calendar.getInstance();
         btnSaveReminder = view.findViewById(R.id.btnSaveReminder);
@@ -109,6 +113,15 @@ public class MedicineReminderFragment extends Fragment {
         btnBack.setOnClickListener(v -> {
             NavHostFragment.findNavController(MedicineReminderFragment.this)
                     .navigateUp();
+        });
+
+        radioGroupJenisObat.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.radioCair) {
+                sectionStockObat.setVisibility(View.GONE);
+                stokObat.setText("");
+            } else if (checkedId == R.id.radioPil) {
+                sectionStockObat.setVisibility(View.VISIBLE);
+            }
         });
 
         user = sessionManager.getUser();
@@ -325,6 +338,7 @@ public class MedicineReminderFragment extends Fragment {
 
         String freq = freqMinumObat.getText().toString().trim();
         String stok = stokObat.getText().toString().trim();
+        String medType = radioPil.isChecked() ? "PIL" : "CAIR";
 
         int frequency = convertFrequencyToNumber(freq);
         ArrayList<String> times = getSelectedTimes();
@@ -336,10 +350,15 @@ public class MedicineReminderFragment extends Fragment {
             tempEndDate = new Timestamp(selectedCalendar.getTime());
         } Timestamp endDate = tempEndDate;
 
+        // biar apply ke tipe obat pil aja
         Map<String,Object> stockMap = new HashMap<>();
-        stockMap.put("stok_obat", Integer.parseInt(stok));
-        stockMap.put("initial_stok", Integer.parseInt(stok));
-        stockMap.put("minimum_stok", frequency);
+        if (radioPil.isChecked()) {
+            int stock = Integer.parseInt(stok);
+
+            stockMap.put("stok_obat", stock);
+            stockMap.put("initial_stok", stock);
+            stockMap.put("minimum_stok", frequency);
+        }
 
         db.collection("medicine_catalog").get()
                 .addOnSuccessListener(query -> {
@@ -351,7 +370,7 @@ public class MedicineReminderFragment extends Fragment {
                             break;
                         }
                     } if (selectedCatalogId != null){ //ini kalau catalog sudah ada/nama obatnya sudah ada
-                        Medication med = new Medication(targetUid, selectedCatalogId, null, true, stockMap, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
+                        Medication med = new Medication(targetUid, selectedCatalogId, null, true, medType, stockMap, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
                         medicationRepo.saveMedication(med, new RepoCallback<String>() {
                             @Override
                             public void onSuccess(String medicationId) {
@@ -385,7 +404,7 @@ public class MedicineReminderFragment extends Fragment {
                         catalog.put("created_at", Timestamp.now());
                         db.collection("medicine_catalog").add(catalog).addOnSuccessListener(documentReference -> {
                             selectedCatalogId = documentReference.getId();
-                            Medication med = new Medication(targetUid, selectedCatalogId, null, true, stockMap, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
+                            Medication med = new Medication(targetUid, selectedCatalogId, null, true, medType, stockMap, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
                             medicationRepo.saveMedication(med, new RepoCallback<String>() {
                                 @Override
                                 public void onSuccess(String medicationId) {
@@ -479,6 +498,8 @@ public class MedicineReminderFragment extends Fragment {
         stokObat.setText("");
         endDateReminder.setText("");
         timeReminder.removeAllViews();
+        radioPil.setChecked(true);
+        sectionStockObat.setVisibility(View.VISIBLE);
         selectedCalendar = Calendar.getInstance();
         isDropdownOpen = false;
         endDateSelected = false;
@@ -498,7 +519,7 @@ public class MedicineReminderFragment extends Fragment {
         } if (freq.isEmpty()){
             freqMinumObat.setError("Frekuensi minum obat wajib diisi");
             valid = false;
-        } if (stok.isEmpty()){
+        } if (radioPil.isChecked() && stok.isEmpty()){
             stokObat.setError("Stok obat wajib diisi");
             valid = false;
         } int frequency = convertFrequencyToNumber(freq);
