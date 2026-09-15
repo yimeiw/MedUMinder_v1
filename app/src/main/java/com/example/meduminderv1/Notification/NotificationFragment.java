@@ -25,8 +25,6 @@ import java.util.List;
 public class NotificationFragment extends Fragment {
 
     ImageButton btnBack;
-    ImageView typeNotif;
-    TextView titleNotif, messageNotif, timeNotif;
     AuthManager authManager;
     NotificationAdapter adapter;
     RecyclerView rvNotif;

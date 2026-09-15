@@ -22,7 +22,9 @@ import com.example.meduminderv1.R;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Locale;
 
 public class AppointmentLogAdapter extends RecyclerView.Adapter<AppointmentLogAdapter.ViewHolder> {
 
@@ -53,6 +55,12 @@ public class AppointmentLogAdapter extends RecyclerView.Adapter<AppointmentLogAd
         Appointment appointment = appointmentLog.get(position);
         holder.namaAppointment.setText(appointment.getTitle());
         holder.namaLokasi.setText(appointment.getAddress());
+        if (appointment.getAppointment_at() != null) {
+            Locale localeId = new Locale("id", "ID");
+            SimpleDateFormat sdf = new SimpleDateFormat("EEEE, dd MMM - HH:mm", localeId);
+            String dateTimeText = sdf.format(appointment.getAppointment_at().toDate());
+            holder.timeAppointment.setText(dateTimeText);
+        }
 
         LogStatus status = appointment.getStatusBasedOnDate();
         holder.currStatus.setText(status.displayLabel(true));
@@ -70,12 +78,13 @@ public class AppointmentLogAdapter extends RecyclerView.Adapter<AppointmentLogAd
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
-        TextView namaAppointment, namaLokasi, currStatus;
+        TextView namaAppointment, namaLokasi, timeAppointment, currStatus;
         View capsuleAppointLog;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             namaAppointment = itemView.findViewById(R.id.nama_appointment_log);
             namaLokasi = itemView.findViewById(R.id.nama_lokasi);
+            timeAppointment = itemView.findViewById(R.id.timeAppointment);
             currStatus = itemView.findViewById(R.id.curr_status_appoint);
             capsuleAppointLog = itemView.findViewById(R.id.capsule_appointment_log);
         }

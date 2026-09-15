@@ -61,12 +61,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:background="@drawable/border"
-                android:layout_marginVertical="20dp">
+                android:layout_marginBottom="20dp"
+                android:background="@drawable/border">
 
                 <View
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_marginVertical="10dp"
+                    android:layout_marginHorizontal="10dp"
                     android:background="@drawable/ic_profile"
                     android:layout_gravity="center"
                     />
@@ -108,15 +110,18 @@
                     android:paddingHorizontal="12dp"
                     android:textSize="12sp"
                     android:textColor="?attr/colorOnSurface"
-                    android:layout_margin="5dp"/>
+                    android:layout_marginVertical="10dp"
+                    android:layout_marginHorizontal="5dp"/>
 
             </LinearLayout>
 
             <!--        shortcut statistik-->
             <LinearLayout
+                android:id="@+id/cardStatistik"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
+                android:layout_marginBottom="20dp"
                 android:background="@drawable/border"
                 android:backgroundTint="?attr/colorOnSurface">
 
@@ -191,7 +196,6 @@
                 android:text="@string/pengaturan"
                 android:textStyle="bold"
                 android:textSize="16sp"
-                android:layout_marginTop="20dp"
                 android:layout_marginBottom="10dp"
                 />
 

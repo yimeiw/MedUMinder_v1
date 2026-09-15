@@ -22,8 +22,10 @@ import com.example.meduminderv1.Model.MedicineCatalog;
 import com.example.meduminderv1.R;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdapter.ViewHolder> {
@@ -64,7 +66,12 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
             loadNamaObat(medication_schedules_id, holder);
         }
         holder.currStatus.setText(statusLog.displayLabel(false));
-        holder.scheduledAt.setText(medicationLog.getScheduled_at().toDate().toString());
+        if (medicationLog.getScheduled_at() != null) {
+            Locale localeId = new Locale("id", "ID");
+            SimpleDateFormat sdf = new SimpleDateFormat("EEEE, dd MMM - HH:mm", localeId);
+            String dateTimeText = sdf.format(medicationLog.getScheduled_at().toDate());
+            holder.scheduledAt.setText(dateTimeText);
+        }
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {

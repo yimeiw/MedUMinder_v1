@@ -49,6 +49,8 @@ public class InvitationFragment extends Fragment {
 
         authManager = AuthManager.getInstance(requireContext());
 
+        btnBack.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());
+
         setupPage();
 
         return view;
@@ -92,7 +94,9 @@ public class InvitationFragment extends Fragment {
         if (email.isEmpty()){
             etEmail.setError("Email wajib diisi");
             return;
-        } authManager.sendInvitation(email, authManager.getCurrentUser().getCurrentRole(), new InvitationCallback() {
+        } UserRole currentRole = authManager.getCurrentUser().getCurrentRole();
+        UserRole inviteRole = (currentRole == UserRole.Consumer) ? UserRole.Caregiver : UserRole.Consumer;
+        authManager.sendInvitation(email, inviteRole, new InvitationCallback() {
             @Override
             public void onSuccess(boolean registered) {
                 if (registered){ // jika user sudah terdaftar

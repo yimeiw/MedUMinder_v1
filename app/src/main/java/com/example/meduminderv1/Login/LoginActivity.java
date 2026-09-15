@@ -57,6 +57,12 @@ public class LoginActivity extends AppCompatActivity {
         sessionManager = SessionManager.getInstance();
         authManager = AuthManager.getInstance(getApplicationContext());
 
+        String prefillEmail = getIntent().getStringExtra("prefill_email");
+        if (prefillEmail != null){
+            emailInput.setText(prefillEmail);
+            Toast.makeText(this, "Registrasi berhasil! Silahkan verifikasi email lalu login.", Toast.LENGTH_SHORT).show();
+        }
+
         login.setOnClickListener(v -> {
             loginUser();
         });

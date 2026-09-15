@@ -39,7 +39,7 @@ public class BootReceiver extends BroadcastReceiver {
                         for (QueryDocumentSnapshot doc : task.getResult()) {
                             String scheduleId = doc.getId();
                             String namaObat = doc.getString("nama_obat");
-                            List<String> times = (List<String>) doc.get("times");
+                            List<String> times = (List<String>) doc.get("times_of_day");
                             Long endDate = doc.getLong("end_date");
 
                             AlarmSchedulerHelper.scheduleAll(

@@ -158,10 +158,14 @@ public class NotificationRepo {
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
     }
-    public void countUnread(String receiverUid, RepoCallback<Integer> callback){
-        db.collection("notifications").whereEqualTo("receiver_uid", receiverUid)
-                .whereEqualTo("is_read", false).get()
-                .addOnSuccessListener(query -> callback.onSuccess(query.size()))
-                .addOnFailureListener(callback::onFailure);
+    public void countUnread(String userUid, RepoCallback<Integer> callback){
+        db.collection("notifications").whereEqualTo("users_id", userUid)
+                .whereEqualTo("is_read", false).addSnapshotListener((snapshot, e) -> {
+                    if (e != null){
+                        callback.onFailure(e);
+                        return;
+                    } int count = (snapshot != null) ? snapshot.size() : 0;
+                    callback.onSuccess(count);
+                });
     }
 }

@@ -12,6 +12,8 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -46,32 +48,37 @@ import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.InvitationRepo;
 import com.example.meduminderv1.Repo.MedicationRepo;
 import com.example.meduminderv1.Repo.StatistikRepo;
+import com.example.meduminderv1.Statistik.ChartMakerView;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
 public class HomeFragment extends Fragment {
-
-    TextView tvGreeting, tvtitleCard, tvTime, tvStokObat, tvTotalStok, btnLihatSemua, emptyTodaySchedule;
+    TextView tvGreeting, tvtitleCard, tvTime, tvDay, tvStokObat, tvTotalStok, btnLihatSemua, emptyTodaySchedule;
     ImageButton btnNotif, btnProfile;
     MaterialButton addNoSchedule, btnKonfirmasi;
     RecyclerView rvTodaySchedule;
@@ -84,6 +91,10 @@ public class HomeFragment extends Fragment {
     private String nextMedId;
     LineChart lineChart;
     StatistikRepo statistikRepo;
+    private ListenerRegistration nextScheduleListener;
+    private final Handler refreshHandler = new Handler(Looper.getMainLooper());
+    private long displayedScheduleAtMillis = -1;
+    private final Runnable refreshRunnable = this::checkNextScheduleFreshness;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -94,6 +105,7 @@ public class HomeFragment extends Fragment {
         tvGreeting = view.findViewById(R.id.greeting);
         tvtitleCard = view.findViewById(R.id.tvtitleCard);
         tvTime = view.findViewById(R.id.tvTime);
+        tvDay = view.findViewById(R.id.tvDay);
         tvStokObat = view.findViewById(R.id.tvStokObat);
         tvTotalStok = view.findViewById(R.id.tvTotalStok);
         btnNotif = view.findViewById(R.id.btnNotif);
@@ -149,6 +161,11 @@ public class HomeFragment extends Fragment {
                     .navigate(R.id.scheduleFragment);
         });
         rvTodaySchedule.setLayoutManager(new LinearLayoutManager(requireContext()));
+        btnLihatSemua.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putLong("selected_date", System.currentTimeMillis());
+            NavHostFragment.findNavController(this).navigate(R.id.scheduleFragment, bundle);
+        });
 
         lineChart = view.findViewById(R.id.lineChart);
         statistikRepo = new StatistikRepo();
@@ -166,24 +183,35 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+
         InvitationPopupHelper.checkAndShow(this, authManager);
         checkUnreadNotif();
         loadNextSchedule();
         loadTodaySchedule();
         loadStats();
+
+       refreshHandler.postDelayed(refreshRunnable, 30_000L);
     }
 
     private void checkUnreadNotif() {
         authManager.unreadNotif(new AuthCallback<Integer>() {
             @Override
             public void onSuccess(Integer result) {
+                //cegah crash kalau fragment sdh tdk aktif
                 if (!isAdded() || getContext() == null) return;
-                btnNotif.setImageDrawable(requireContext()
-                        .getDrawable(result > 0 ? R.drawable.ic_notif_hover : R.drawable.ic_notif));
+                //pastikan result tidak null dan bernilai > 0
+                boolean hasUnread = (result != null && result > 0);
+                if (hasUnread){
+                    btnNotif.setImageResource(R.drawable.ic_notif_hover);
+                } else {
+                    btnNotif.setImageResource(R.drawable.ic_notif);
+                }
             }
 
             @Override
             public void onFailure(String message) {
+                if (!isAdded() || getContext() == null) return;
+                btnNotif.setImageResource(R.drawable.ic_notif);
             }
         });
     }
@@ -193,26 +221,32 @@ public class HomeFragment extends Fragment {
         if (firebaseUser == null) return;
         String uid = firebaseUser.getUid();
         Timestamp now = Timestamp.now();
-        db.collection("medication_logs").whereEqualTo("users_id", uid)
+        if (nextScheduleListener != null) nextScheduleListener.remove();
+        nextScheduleListener = db.collection("medication_logs").whereEqualTo("users_id", uid)
                 .whereEqualTo("status", "akan datang").whereGreaterThanOrEqualTo("scheduled_at", now)
-                .orderBy("scheduled_at").limit(1).get().addOnSuccessListener(query -> {
-                    if (query.isEmpty()){
+                .orderBy("scheduled_at").limit(1).addSnapshotListener((query, error) -> {
+                    if (error != null || query == null || !isAdded()) return;
+                    MedicationLog targetLog = null;
+                    DocumentSnapshot target = null;
+                    for (DocumentSnapshot doc : query.getDocuments()){
+                        MedicationLog log = doc.toObject(MedicationLog.class);
+                        if (log != null && log.getStatusBasedOnDate() == LogStatus.AKAN_DATANG){
+                            target = doc;
+                            targetLog = log;
+                            break;
+                        }
+                    } if (targetLog == null){
                         haveSchedule.setVisibility(View.GONE);
                         noSchedule.setVisibility(View.VISIBLE);
                         return;
-                    }
-                    DocumentSnapshot doc = query.getDocuments().get(0);
-                    MedicationLog log = doc.toObject(MedicationLog.class);
-                    if (log == null){
-                        haveSchedule.setVisibility(View.GONE);
-                        noSchedule.setVisibility(View.VISIBLE);
-                        return;
-                    } nextLogId = doc.getId();
+                    } nextLogId = target.getId();
                     haveSchedule.setVisibility(View.VISIBLE);
+                    displayedScheduleAtMillis = targetLog.getScheduled_at().toDate().getTime();
                     noSchedule.setVisibility(View.GONE);
+                    tvDay.setText(formatDayLabel(targetLog.getScheduled_at().toDate()));
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                    tvTime.setText(sdf.format(log.getScheduled_at().toDate()));
-                    resolveMedName(log.getMedication_schedules_id(), (medName, stock, medId, medType) -> {
+                    tvTime.setText(sdf.format(targetLog.getScheduled_at().toDate()));
+                    resolveMedName(targetLog.getMedication_schedules_id(), (medName, stock, medId, medType) -> {
                         nextMedId = medId;
                         tvtitleCard.setText(medName);
 
@@ -226,14 +260,34 @@ public class HomeFragment extends Fragment {
                         }
                     });
                     btnKonfirmasi.setOnClickListener(v -> confirmTaken());
-                }).addOnFailureListener(e -> {
-                    if (!isAdded() || getContext() == null) return;
-                    haveSchedule.setVisibility(View.GONE);
-                    noSchedule.setVisibility(View.VISIBLE);
-                    Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
+    private String formatDayLabel(Date date) {
+        Calendar target = Calendar.getInstance();
+        target.setTime(date);
+        Calendar today = Calendar.getInstance();
+        Calendar tomorrow = (Calendar) today.clone();
+        tomorrow.add(Calendar.DAY_OF_YEAR, 1);
+        Locale localeId = new Locale("id", "ID");
+        SimpleDateFormat sdfDay = new SimpleDateFormat("EEEE", localeId);
+
+        if (isSameDay(target, today)) return "Hari ini";
+        if (isSameDay(target, tomorrow)) return "Besok";
+        return sdfDay.format(date);
+    }
+
+    private boolean isSameDay(Calendar target, Calendar today) {
+        return target.get(Calendar.YEAR) == today.get(Calendar.YEAR)
+                && target.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR);
+    }
+
+    private void checkNextScheduleFreshness(){
+        if (!isAdded()) return;
+        if (displayedScheduleAtMillis > 0 && displayedScheduleAtMillis <= System.currentTimeMillis()){
+            loadNextSchedule();
+        } refreshHandler.postDelayed(refreshRunnable, 30_000L);
+    }
     private void confirmTaken() {
         if (nextLogId == null) return;
         medicationRepo.markLogAsTaken(nextLogId, new RepoCallback<Void>() {
@@ -359,8 +413,9 @@ public class HomeFragment extends Fragment {
                         });
                     }
                 }).addOnFailureListener(e -> {
-                    rvTodaySchedule.setVisibility(View.VISIBLE);
-                    rvTodaySchedule.setVisibility(View.GONE);
+                      emptyTodaySchedule.setVisibility(View.VISIBLE);
+                      rvTodaySchedule.setVisibility(View.GONE);
+                      btnLihatSemua.setVisibility(View.GONE);
                 });
     }
 
@@ -381,7 +436,8 @@ public class HomeFragment extends Fragment {
                     }
                     Collections.sort(combined, (a, b) -> a.getTime().compareTo(b.getTime()));
                     if (!isAdded() || getContext() == null) return;
-                    rvTodaySchedule.setAdapter(new TodayScheduleAdapter(combined, requireContext()));
+                    List<LogItem> displayList = combined.size() > 3 ? combined.subList(0,3) :combined;
+                    rvTodaySchedule.setAdapter(new TodayScheduleAdapter(displayList, requireContext()));
                     if (combined.isEmpty()){
                         emptyTodaySchedule.setVisibility(View.VISIBLE);
                         rvTodaySchedule.setVisibility(View.GONE);
@@ -399,21 +455,29 @@ public class HomeFragment extends Fragment {
                 });
     }
     private void loadStats() {
-        String uid = authManager.getCurrentUser().getAuth_uid();
+        String uid = SessionManager.getInstance().getTargetUid();
+
+        if (uid == null || uid.isEmpty()) {
+            return;
+        }
+
         statistikRepo.getWeeklyAdherence(uid, new StatistikRepo.StatsCallback() {
             @Override
             public void onResult(List<StatistikRepo.DayStat> weekStats) {
-                if (!isAdded()) return;
+            if (!isAdded()) return;
                 renderChart(weekStats);
             }
 
             @Override
             public void onFailure(Exception e) {
+                Log.e("HOME_STATS", "Gagal load statistik", e);
             }
         });
     }
 
     private void renderChart(List<StatistikRepo.DayStat> weekStats) {
+        int itam = MaterialColors.getColor(lineChart, com.google.android.material.R.attr.colorOnSurface);
+      
         List<Entry> seharusnya = new ArrayList<>();
         List<Entry> dikonsumsi = new ArrayList<>();
         List<Entry> persentase = new ArrayList<>();
@@ -426,65 +490,106 @@ public class HomeFragment extends Fragment {
             persentase.add(new Entry(i, s.persentase));
             labels.add(s.label);
         }
-
-        // dosis seharusnya
+  
         LineDataSet dsSeharusnya = new LineDataSet(seharusnya, "Dosis seharusnya");
         dsSeharusnya.setColor(requireContext().getColor(R.color.dark_bckg));
         dsSeharusnya.setCircleColor(requireContext().getColor(R.color.dark_bckg));
         dsSeharusnya.setLineWidth(2f);
         dsSeharusnya.setCircleRadius(4f);
         dsSeharusnya.setAxisDependency(YAxis.AxisDependency.LEFT);
+        dsSeharusnya.setDrawValues(false);
+        dsSeharusnya.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 
         // dosis dikonsumsi
         LineDataSet dsDikonsumsi = new LineDataSet(dikonsumsi, "Dosis dikonsumsi");
+  
         dsDikonsumsi.setColor(requireContext().getColor(R.color.green));
         dsDikonsumsi.setCircleColor(requireContext().getColor(R.color.green));
-        dsDikonsumsi.setLineWidth(2f);
-        dsDikonsumsi.setCircleRadius(4f);
+        dsDikonsumsi.setLineWidth(3f);
+        dsDikonsumsi.setCircleRadius(4.5f);
         dsDikonsumsi.setAxisDependency(YAxis.AxisDependency.LEFT);
+        dsDikonsumsi.setDrawFilled(true);
+        dsDikonsumsi.setFillColor(requireContext().getColor(R.color.green));
+        dsDikonsumsi.setFillAlpha(60);
+        dsDikonsumsi.setDrawValues(false);
+        dsDikonsumsi.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 
         // persentase kepatuhan
         LineDataSet dsPersentase = new LineDataSet(persentase, "Persentase Kepatuhan");
         dsPersentase.setColor(requireContext().getColor(R.color.pink));
         dsPersentase.setCircleColor(requireContext().getColor(R.color.pink));
-        dsPersentase.setLineWidth(2f);
-        dsPersentase.setCircleRadius(4f);
+        dsPersentase.setLineWidth(3f);
+        dsPersentase.setCircleRadius(4.5f);
         dsPersentase.setAxisDependency(YAxis.AxisDependency.RIGHT);
         dsPersentase.setDrawFilled(true);
+        dsPersentase.setFillColor(requireContext().getColor(R.color.pink));
+        dsPersentase.setFillAlpha(60);
+        dsPersentase.setDrawValues(false);
+        dsPersentase.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 
         LineData data = new LineData(dsSeharusnya, dsDikonsumsi, dsPersentase);
         lineChart.setData(data);
 
+        ChartMakerView marker = new ChartMakerView(requireContext(), weekStats);
+        marker.setChartView(lineChart);
+        lineChart.setMarker(marker);
+        lineChart.setTouchEnabled(true);
+        lineChart.setHighlightPerTapEnabled(true);
+
         XAxis xAxis = lineChart.getXAxis();
         xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
         xAxis.setGranularity(1f);
+        xAxis.setGranularityEnabled(true);
+        xAxis.setLabelCount(labels.size(), false);
+        xAxis.setAxisMinimum(0f);
+        xAxis.setAxisMaximum(labels.size() - 1);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setTextColor(itam);
+        xAxis.setDrawGridLines(false);
 
         YAxis leftAxis = lineChart.getAxisLeft();
-        leftAxis.setAxisMinimum(0f);
-
-        int maxDosis = 0;
-
-        for(StatistikRepo.DayStat s : weekStats){
-            maxDosis = Math.max(maxDosis, s.seharusnya);
-        }
-
         leftAxis.setGranularity(1f);
+        leftAxis.setGranularityEnabled(true);
+        leftAxis.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                return String.valueOf((int) value);
+            }
+        });
+        leftAxis.setAxisMinimum(0f);
+        leftAxis.setDrawGridLines(false);
 
         YAxis rightAxis = lineChart.getAxisRight();
         rightAxis.setEnabled(true);
-
         rightAxis.setAxisMinimum(0f);
         rightAxis.setAxisMaximum(100f);
         rightAxis.setGranularity(20f);
 
+        Legend legend = lineChart.getLegend();
+        legend.setTextColor(itam);
+        legend.setForm(Legend.LegendForm.LINE);
+
+        lineChart.setExtraOffsets(5f, 12f, 8f, 8f);
         lineChart.getDescription().setEnabled(false);
-        lineChart.getLegend().setEnabled(true);
+        lineChart.setNoDataText("Belum ada data konsumsi obat.");
+        lineChart.setNoDataTextColor(itam);
+
         lineChart.setTouchEnabled(true);
         lineChart.setDragEnabled(true);
         lineChart.setScaleEnabled(false);
-
         lineChart.animateX(600);
         lineChart.invalidate();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        refreshHandler.removeCallbacks(refreshRunnable);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (nextScheduleListener != null) nextScheduleListener.remove();
     }
 }

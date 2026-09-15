@@ -35,6 +35,14 @@ public class MedicationRepo {
                 }).addOnFailureListener(callback::onFailure);
     }
 
+    public void getScheduleById(String scheduleId, RepoCallback<MedicationSchedules> callback){
+        db.collection("medication_schedules").document(scheduleId).get()
+                .addOnSuccessListener(snapshot -> {
+                    MedicationSchedules schedule = snapshot.toObject(MedicationSchedules.class);
+                    callback.onSuccess(schedule);
+                }).addOnFailureListener(callback::onFailure);
+    }
+
     public void getMedicationByUser(String uid, RepoCallback<QuerySnapshot> callback){
         db.collection("medications").whereEqualTo("users_id", uid).whereEqualTo("is_active", true)
                 .get().addOnSuccessListener(callback::onSuccess).addOnFailureListener(callback::onFailure);
@@ -191,5 +199,21 @@ public class MedicationRepo {
                 medicineName,
                 callback
         );
+    }
+    public void markTakenAndDecrement(String logId, String medId, RepoCallback<Void> callback){
+        markLogAsTaken(logId, new RepoCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                if (medId == null){
+                    callback.onSuccess(null);
+                    return;
+                } decrementStock(medId, callback);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e);
+            }
+        });
     }
 }

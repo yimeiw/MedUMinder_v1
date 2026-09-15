@@ -1,36 +1,41 @@
 package com.example.meduminderv1;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.app.AlarmManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.FrameLayout;
 
-import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
-import androidx.navigation.ui.NavigationUI;
 
 import com.example.meduminderv1.Auth.SessionManager;
-import com.example.meduminderv1.Home.HomeFragment;
 import com.example.meduminderv1.Model.LogGenerator;
 
+import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.example.meduminderv1.Reminder.AppLifecycleTracker;
 import com.example.meduminderv1.Reminder.ReminderEventBus;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
 
-import com.example.meduminderv1.Schedule.ScheduleFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.navigation.NavigationBarView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -94,11 +99,40 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
                     }
                 });
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1001);
+            }
+        }
         if (user != null) {
             new LogGenerator().generateForAllActiveSchedules(user.getUid());
         }
 
         handleReminderIntent(getIntent());
+
+        AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        boolean hasExactAlarmPermission = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
+                || (am != null && am.canScheduleExactAlarms());
+        if (!hasExactAlarmPermission){
+            SharedPreferences prefs = getSharedPreferences("alarm_perm", MODE_PRIVATE);
+            boolean alreadyAsked = prefs.getBoolean("asked_exact_alarm", false);
+            if (!alreadyAsked){
+                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+                builder.setTitle("Izin Alarm Dibutuhkan")
+                        .setMessage("Agar pengingat obat berbunyi tepat waktu, aktifkan izin alarm & pengingat untuk MedUMinder.")
+                        .setPositiveButton("Aktifkan", (d, w) -> AlarmSchedulerHelper.requestExactAlarmPermission(this))
+                        .setNegativeButton("Nanti", null);
+                AlertDialog dialog = builder.create();
+                dialog.show();
+                if (dialog.getWindow() != null){
+                    dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.green));
+                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(this, R.color.pink));
+                } prefs.edit().putBoolean("asked_exact_alarm", true).apply();
+            }
+        }
     }
 
     @Override
@@ -114,6 +148,27 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        checkAndRescheduleIfPermissionNewlyGranted();
+    }
+
+    private void checkAndRescheduleIfPermissionNewlyGranted() {
+        AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        boolean hasPermissionNow = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
+                || (am != null && am.canScheduleExactAlarms());
+        SharedPreferences prefs = getSharedPreferences("alarm_perm", MODE_PRIVATE);
+        boolean hadPermissionBefore = prefs.getBoolean("had_exact_alarm_permission", false);
+        if (hasPermissionNow && !hadPermissionBefore){
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            if (user != null){
+                AlarmSchedulerHelper.rescheduleAllActiveForUser(this, user.getUid());
+                Log.d("ALARM_PERM", "Permission baru granted, reschedule semua alarm aktif.");
+            }
+        } prefs.edit().putBoolean("has_exact_alarm_permmission", hasPermissionNow).apply();
+    }
+
+    @Override
     public void onShowReminder(String scheduleId, String namaObat, long scheduledAt) {
         Log.d("TEST", "MainActivity menerima reminder");
 
@@ -122,7 +177,15 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         bundle.putString("nama_obat", namaObat);
         bundle.putLong("scheduled_at", scheduledAt);
         bundle.putLong("taken_at", 0L);
-        bundle.putString("status", "AKAN_DATANG");
+
+        // FIX: sebelumnya "AKAN_DATANG" (nama enum, pakai underscore) yang
+        // gagal di-parse LogStatus.fromRaw() (lihat perbaikan di LogStatus.java).
+        // Sekarang pakai bentuk raw yang benar. Tapi ini cuma nilai PLACEHOLDER
+        // sementara — ReminderFragment akan langsung fetch status asli dari
+        // Firestore begitu fragment-nya kebuka (lihat ReminderFragment.java),
+        // supaya kalau ada aksi lain (taken/snooze dari notifikasi) yang race
+        // dengan alarm ini, status yang ditampilkan tetap akurat.
+        bundle.putString("status", "akan datang");
 
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.nav_host_fragment);
@@ -137,24 +200,37 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
     }
 
     private void handleReminderIntent(Intent intent) {
-        if (intent == null || !"reminder".equals(intent.getStringExtra("navigate_to"))) return;
+        if (intent == null) return;
 
-        Bundle bundle = new Bundle();
-        bundle.putString("medication_schedules_id", intent.getStringExtra("schedule_id"));
-        bundle.putString("nama_obat", intent.getStringExtra("nama_obat"));
-        bundle.putLong("scheduled_at", intent.getLongExtra("scheduled_at", 0L));
-        bundle.putString("status", intent.getStringExtra("status"));
+        String navigateTo = intent.getStringExtra("navigate_to");
+        if (navigateTo == null) return;
 
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.nav_host_fragment);
-        navHostFragment.getNavController().navigate(R.id.reminderFragment, bundle);
+
+        if ("reminder".equals(navigateTo)) {
+            Bundle bundle = new Bundle();
+            bundle.putString("medication_schedules_id", intent.getStringExtra("schedule_id"));
+            bundle.putString("nama_obat", intent.getStringExtra("nama_obat"));
+            bundle.putLong("scheduled_at", intent.getLongExtra("scheduled_at", 0L));
+            bundle.putString("status", intent.getStringExtra("status"));
+            bundle.putString("type", intent.getStringExtra("type")); // <- baru, sebelumnya gak diterusin
+
+            navHostFragment.getNavController().navigate(R.id.reminderFragment, bundle);
+
+        } else if ("appointment_log".equals(navigateTo)) {
+            Bundle bundle = new Bundle();
+            bundle.putBoolean("open_appointment_tab", true);
+
+            navHostFragment.getNavController().navigate(R.id.logFragment, bundle);
+        }
     }
 
     private NavigationBarView.OnItemSelectedListener getBottomNavListener() {
         return item -> {
             int itemId = item.getItemId();
             if (navController.getCurrentDestination() != null &&
-            navController.getCurrentDestination().getId() == itemId) return true;
+                    navController.getCurrentDestination().getId() == itemId) return true;
 
             NavOptions options = new NavOptions.Builder()
                     .setPopUpTo(navController.getGraph().getStartDestinationId(), false)
@@ -203,9 +279,9 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         } else {
             destination = R.id.caregiverHomeFragment;
         } if (navController.getCurrentDestination() == null ||
-        navController.getCurrentDestination().getId() != destination){
+                navController.getCurrentDestination().getId() != destination){
             NavOptions options = new NavOptions.Builder().setPopUpTo(
-                    navController.getGraph().getStartDestinationId(), true)
+                            navController.getGraph().getStartDestinationId(), true)
                     .setLaunchSingleTop(true).build();
             navController.navigate(destination, null, options);
         }

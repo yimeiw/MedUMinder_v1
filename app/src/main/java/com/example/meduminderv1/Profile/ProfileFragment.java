@@ -36,6 +36,7 @@ import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.StatistikRepo;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -54,8 +55,12 @@ public class ProfileFragment extends Fragment {
     RelativeLayout themeSwitch;
     ImageView iconToggle, imgAktivasi;
     SharedPreferences prefs;
-    LinearLayout btnEditProfile, btnAktivasi, btnListRelation, btnChangeLanguage, btnNotificationSetting;
+
+    LinearLayout btnEditProfile, btnAktivasi, btnListRelation, btnChangeLanguage, btnNotificationSetting, cardStatistik;
+
+MaterialButton btnSeeStatistic;
     ProgressView adherenceRing;
+    StatistikRepo statistikRepo;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -125,7 +130,7 @@ public class ProfileFragment extends Fragment {
                 if (isAdded() && getActivity() != null) {
                     getActivity().recreate();
                 }
-                }, 300);
+            }, 300);
         });
 
         btnAktivasi.setOnClickListener(v -> {
@@ -137,20 +142,28 @@ public class ProfileFragment extends Fragment {
         });
 
         btnChangeLanguage.setOnClickListener(v -> {
-            NavHostFragment.findNavController(this).navigate(R.id.languageFragment);
-        } );
+            NavHostFragment.findNavController(this)
+                    .navigate(R.id.languageFragment);
+        });
 
         btnNotificationSetting.setOnClickListener(v -> {
-            NavHostFragment.findNavController(this).navigate(R.id.notificationSettingsFragment);
+            NavHostFragment.findNavController(this)
+                    .navigate(R.id.notificationSettingsFragment);
         });
+
+        cardStatistik = view.findViewById(R.id.cardStatistik);
+        btnSeeStatistic = view.findViewById(R.id.btnSeeStatistic);
 
         adherenceDesc = view.findViewById(R.id.adherenceDesc);
         adherencePercent = view.findViewById(R.id.adherencePercent);
         adherenceRing = view.findViewById(R.id.adherenceRing);
+
+        statistikRepo = new StatistikRepo();
         loadAdherence();
 
-        view.findViewById(R.id.btnSeeStatistic).setOnClickListener(v -> {
-            NavHostFragment.findNavController(ProfileFragment.this).navigate(R.id.statistikFragment);
+        btnSeeStatistic.setOnClickListener(v -> {
+            NavHostFragment.findNavController(this)
+                    .navigate(R.id.statistikFragment);
         });
 
         return view;
@@ -162,8 +175,6 @@ public class ProfileFragment extends Fragment {
         if (uid == null || uid.isEmpty()) {
             return;
         }
-
-        StatistikRepo statistikRepo = new StatistikRepo();
 
         statistikRepo.getAdherence(uid, "weekly", new StatistikRepo.StatsCallback() {
                     @Override
@@ -380,7 +391,10 @@ public class ProfileFragment extends Fragment {
             bundle.putString(RelationListFragment.ARG_MODE, isConsumer ? "Caregiver" : "Consumer");
             NavHostFragment.findNavController(this).navigate(R.id.relationListFragment, bundle);
         });
+
+        cardStatistik.setVisibility(isConsumer ? View.VISIBLE : View.GONE);
     }
+
 
     private String formatRole(UserRole role) {
         switch (role){
@@ -396,7 +410,7 @@ public class ProfileFragment extends Fragment {
             txtAktivasi.setText(R.string.activateCaregiver);
             imgAktivasi.setImageResource(R.drawable.ic_activate);
             btnAktivasi.setOnClickListener(v -> showEnableCaregiver(false));
-        } if (user.getCurrentRole() == UserRole.Consumer){
+        } else if (user.getCurrentRole() == UserRole.Consumer){
             txtAktivasi.setText(R.string.invCaregiver);
             imgAktivasi.setImageResource(R.drawable.ic_add_people);
             btnAktivasi.setOnClickListener(v -> NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));

@@ -4,10 +4,11 @@
 <!--        Background Windows Color-->
         <item name="colorSurface">@color/bckg</item>
         <item name="colorOnSurface">@color/black</item> <!--hitam jadi pink-->
-        <item name="colorPrimary">@color/white</item> <!--putih jadi pink untuk text-->
+        <item name="colorPrimary">@color/white</item> <!--putih jadi hitam-->
         <item name="colorSecondary">@color/pink</item>  <!--pink jadi darkpink-->
         <item name="colorTertiary">@color/green</item> <!--hijo jadi putih-->
         <item name="colorAccent">@color/pink</item> <!--pink jadi putih-->
+        <item name="colorOnPrimary">@color/black</item> <!--itam jadi putih-->
         <item name="colorPrimaryFixed">@color/white</item>
         <item name="colorPrimaryFixedDim">@color/black</item>
         <item name="colorTertiaryFixed">@color/green</item>

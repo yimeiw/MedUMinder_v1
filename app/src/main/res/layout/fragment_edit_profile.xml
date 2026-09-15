@@ -74,7 +74,8 @@
                 android:gravity="end|center"
                 android:layout_gravity="center"
                 android:layout_marginEnd="10dp"
-                android:layout_marginStart="10dp"/>
+                android:layout_marginStart="10dp"
+                android:textColor="?attr/colorOnSurface"/>
 
         </LinearLayout>
 
@@ -134,7 +135,8 @@
                 android:textSize="16sp"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:layout_marginStart="10dp"/>
+                android:layout_marginStart="10dp"
+                android:textColor="?attr/colorOnPrimary"/>
 
         </LinearLayout>
 

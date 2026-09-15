@@ -130,4 +130,10 @@
         android:label="Reminder"
         />
 
+    <fragment
+        android:id="@+id/editMedicineFragment"
+        android:name="com.example.meduminderv1.Edit.EditMedicineFragment"
+        android:label="Edit Medicine"
+        />
+
 </navigation>

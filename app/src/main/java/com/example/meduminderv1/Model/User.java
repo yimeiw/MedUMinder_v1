@@ -1,6 +1,7 @@
 package com.example.meduminderv1.Model;
 
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.Exclude;
 
 public class User {
     private String auth_uid;
@@ -98,6 +99,7 @@ public class User {
     public void setDeleted_at(Timestamp deleted_at) {
         this.deleted_at = deleted_at;
     }
+    @Exclude
     public UserRole getCurrentRole(){
         return UserRole.valueOf(current_role);
     }

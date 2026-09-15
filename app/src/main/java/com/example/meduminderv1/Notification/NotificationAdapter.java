@@ -80,7 +80,6 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     }
 
     static class NotificationViewHolder extends RecyclerView.ViewHolder{
-        ConstraintLayout layoutNotif;
         ImageView typeNotif;
         TextView titleNotif;
         TextView messageNotif;

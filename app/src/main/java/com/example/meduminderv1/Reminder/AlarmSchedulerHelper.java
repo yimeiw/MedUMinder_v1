@@ -4,10 +4,16 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
+import android.provider.Settings;
 import android.util.Log;
 
+import com.example.meduminderv1.Model.Medication;
 import com.example.meduminderv1.Model.MedicationSchedules;
+import com.example.meduminderv1.Model.MedicineCatalog;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -30,6 +36,8 @@ public class AlarmSchedulerHelper {
     private static final String TIME_FORMAT = "HH:mm";
     // Cap default kalau end_date null, biar ga daftar alarm sampai selama-lamanya dalam satu panggilan
     private static final long DEFAULT_WINDOW_MILLIS = 7L * 24 * 60 * 60 * 1000;
+    private static final long PRE_REMINDER_OFFSET_MS = 5 * 60 * 1000L;
+    private static final long MISSED_CHECK_DELAY_MS = 15 * 60 * 1000L;
 
     /**
      * Menjadwalkan semua occurrence (satu per entry di times_of_day) untuk satu MedicationSchedules.
@@ -70,7 +78,19 @@ public class AlarmSchedulerHelper {
             if (triggerMillis == -1) continue;
             if (triggerMillis > endMillis) continue;
 
-            scheduleSingleAlarm(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
+            scheduleSingleAlarm(
+                    context,
+                    scheduleId,
+                    scheduleId,
+                    namaObat,
+                    triggerMillis,
+                    triggerMillis,
+                    occurrenceIndex,
+                    "medicine"
+            );
+//             scheduleSingleAlarm(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
+            scheduleMedicinePreReminder(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
+            scheduleMedicineMissedCheck(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
             occurrenceIndex++;
 
             Log.d("ALARM", "Scheduling alarm");
@@ -80,15 +100,6 @@ public class AlarmSchedulerHelper {
         }
     }
 
-    /**
-     * Overload untuk kasus di mana kamu belum punya objek MedicationSchedules siap pakai —
-     * misal langsung sesudah nyimpen Map manual ke Firestore (contoh: MedicineReminderFragment).
-     *
-     * @param scheduleId     doc.getId() dari dokumen yang baru disimpan
-     * @param namaObat       nama obat (buat notifikasi)
-     * @param timesOfDay     list waktu format "HH:mm", misal ["08:00", "20:00"]
-     * @param endDateMillis  end_date dalam epoch millis (0 atau nilai lampau = pakai window default 7 hari)
-     */
     public static void scheduleAll(Context context, String scheduleId, String namaObat,
                                    List<String> timesOfDay, long endDateMillis) {
         if (timesOfDay == null || timesOfDay.isEmpty()) return;
@@ -118,7 +129,19 @@ public class AlarmSchedulerHelper {
             if (triggerMillis == -1) continue;
             if (triggerMillis > endMillis) continue;
 
-            scheduleSingleAlarm(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
+            scheduleSingleAlarm(
+                    context,
+                    scheduleId,
+                    scheduleId,
+                    namaObat,
+                    triggerMillis,
+                    triggerMillis,
+                    occurrenceIndex,
+                    "medicine"
+            );
+//             scheduleSingleAlarm(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
+            scheduleMedicinePreReminder(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
+            scheduleMedicineMissedCheck(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
             occurrenceIndex++;
 
             Log.d("ALARM", "Scheduling alarm");
@@ -127,7 +150,30 @@ public class AlarmSchedulerHelper {
             Log.d("ALARM", "time = " + new Date(triggerMillis));
         }
     }
+    private static void scheduleMedicinePreReminder(Context context, String scheduleId, String namaObat, long mainTrigger, int idx) {
+        long preTrigger = mainTrigger - PRE_REMINDER_OFFSET_MS;
+        if (preTrigger <= System.currentTimeMillis()) return;
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (am == null || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms())) return;
+        Intent intent = new Intent(context, MedicationPreReminderNotifReceiver.class);
+        intent.putExtra("schedule_id", scheduleId);
+        intent.putExtra("nama_obat", namaObat);
+        PendingIntent pi = PendingIntent.getBroadcast(context, (scheduleId + "_pre_" + idx).hashCode(), intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, preTrigger, pi);
+    }
 
+    private static void scheduleMedicineMissedCheck(Context context, String scheduleId, String namaObat, long mainTrigger, int idx) {
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (am == null || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms())) return;
+        Intent intent = new Intent(context, MedicationMissedNotifReceiver.class);
+        intent.putExtra("schedule_id", scheduleId);
+        intent.putExtra("nama_obat", namaObat);
+        intent.putExtra("scheduled_at", mainTrigger);
+        PendingIntent pi = PendingIntent.getBroadcast(context, (scheduleId + "_missed_" + idx).hashCode(), intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, mainTrigger + MISSED_CHECK_DELAY_MS, pi);
+    }
     /** Hitung trigger time berikutnya (hari ini kalau belum lewat, besok kalau sudah lewat) untuk "HH:mm". */
     private static long nextTriggerMillisForTime(String timeStr, SimpleDateFormat timeFormat) {
         try {
@@ -153,56 +199,87 @@ public class AlarmSchedulerHelper {
         }
     }
 
-    private static void scheduleSingleAlarm(Context context, String scheduleId, String namaObat,
-                                            long triggerMillis, int occurrenceIndex) {
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+    private static void scheduleSingleAlarm(
+            Context context,
+            String alarmId,
+            String logScheduleId,
+            String namaObat,
+            long triggerMillis,
+            long logScheduledAtMillis,
+            int occurrenceIndex,
+            String type
+    ) {
+        AlarmManager alarmManager =
+                (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+
         if (alarmManager == null) return;
 
-        // Android 12+ : exact alarms butuh izin SCHEDULE_EXACT_ALARM, dan pengguna bisa cabut izin ini
-        // dari Settings kapan aja. Selalu cek sebelum schedule, terutama abis app di-update/reinstall.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (!alarmManager.canScheduleExactAlarms()) {
-                // TODO: arahkan user ke Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
                 return;
             }
         }
 
         Intent intent = new Intent(context, MedicationAlarmReceiver.class);
-        intent.putExtra("schedule_id", scheduleId);
+
+        intent.putExtra("schedule_id", logScheduleId);
         intent.putExtra("nama_obat", namaObat);
-        intent.putExtra("scheduled_at", triggerMillis);
+        intent.putExtra("scheduled_at", logScheduledAtMillis);
+        intent.putExtra("trigger_at", triggerMillis);
+        intent.putExtra("type", type);
 
-        int requestCode = (scheduleId + "_" + occurrenceIndex).hashCode();
+        int requestCode =
+                (alarmId + "_" + occurrenceIndex).hashCode();
 
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                context, requestCode, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent pendingIntent =
+                PendingIntent.getBroadcast(
+                        context,
+                        requestCode,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                                | PendingIntent.FLAG_IMMUTABLE
+                );
 
-        // PendingIntent buat "tap ikon jam alarm" di status bar -> buka aplikasi.
-        Intent showIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
-        PendingIntent showPendingIntent = PendingIntent.getActivity(
-                context, requestCode, showIntent != null ? showIntent : new Intent(),
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        Intent showIntent =
+                context.getPackageManager()
+                        .getLaunchIntentForPackage(
+                                context.getPackageName()
+                        );
 
-        // setAlarmClock() dipilih (bukan setExactAndAllowWhileIdle) supaya:
-        // - exempt dari Doze/App Standby (presisi terjamin)
-        // - dianggap sistem sebagai "alarm clock", ikut aturan bypass yang sama kayak app Clock bawaan
+        PendingIntent showPendingIntent =
+                PendingIntent.getActivity(
+                        context,
+                        requestCode,
+                        showIntent != null
+                                ? showIntent
+                                : new Intent(),
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                                | PendingIntent.FLAG_IMMUTABLE
+                );
+
         AlarmManager.AlarmClockInfo alarmClockInfo =
-                new AlarmManager.AlarmClockInfo(triggerMillis, showPendingIntent);
-        alarmManager.setAlarmClock(alarmClockInfo, pendingIntent);
+                new AlarmManager.AlarmClockInfo(
+                        triggerMillis,
+                        showPendingIntent
+                );
+
+        alarmManager.setAlarmClock(
+                alarmClockInfo,
+                pendingIntent
+        );
 
         Log.d("ALARM", "Scheduling alarm");
-        Log.d("ALARM", "scheduleId = " + scheduleId);
-        Log.d("ALARM", "trigger = " + triggerMillis);
-        Log.d("ALARM", "time = " + new Date(triggerMillis));
+        Log.d("ALARM", "alarmId = " + alarmId);
+        Log.d("ALARM", "logScheduleId = " + logScheduleId);
+        Log.d("ALARM", "trigger = " + new Date(triggerMillis));
+        Log.d("ALARM", "logScheduledAt = " + new Date(logScheduledAtMillis));
     }
 
-    /**
-     * Batalkan semua alarm yang terjadwal untuk satu scheduleId.
-     * NOTE: AlarmManager tidak punya cara "cari semua alarm by tag" — kamu perlu tahu berapa
-     * occurrence yang pernah dijadwalkan (misal simpan count-nya bareng schedule di Firestore)
-     * supaya requestCode yang dipakai buat cancel() persis sama dengan waktu schedule.
-     */
+    public static void scheduleAppointment(Context context, String appointmentId, String title, long triggerMillis) {
+        if (triggerMillis <= System.currentTimeMillis()) return;
+        scheduleSingleAlarm(context, appointmentId, appointmentId, title, triggerMillis, triggerMillis, 0, "appointment");
+    }
+
     public static void cancelAll(Context context, String scheduleId, int totalOccurrencesScheduled) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) return;
@@ -218,9 +295,75 @@ public class AlarmSchedulerHelper {
     }
 
     /** Dipanggil AlarmActionReceiver ketika user menekan tombol "Tunda". */
-    public static void scheduleSnooze(Context context, String scheduleId, String namaObat, int snoozeMinutes) {
-        long triggerMillis = System.currentTimeMillis() + (snoozeMinutes * 60L * 1000);
-        // occurrenceIndex khusus (bukan angka biasa) biar requestCode-nya ga bentrok sama alarm asli
-        scheduleSingleAlarm(context, scheduleId + "_snooze", namaObat, triggerMillis, 0);
+    public static void scheduleSnooze(
+            Context context,
+            String scheduleId,
+            String namaObat,
+            long originalScheduledAt,
+            int snoozeMinutes
+    ) {
+        long triggerMillis =
+                System.currentTimeMillis()
+                        + (snoozeMinutes * 60L * 1000);
+
+        scheduleSingleAlarm(
+                context,
+                scheduleId + "_snooze",
+                scheduleId,
+                namaObat,
+                triggerMillis,
+                originalScheduledAt,
+                0,
+                "medicine"
+        );
+    }
+    public static void cancelSnooze(Context context, String scheduleId) {
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (alarmManager == null) return;
+        int requestCode = (scheduleId + "_snooze").hashCode();
+        Intent intent = new Intent(context, MedicationAlarmReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                context, requestCode, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        alarmManager.cancel(pendingIntent);
+    }
+    public static void requestExactAlarmPermission(Context context){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
+            Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+            intent.setData(Uri.parse("package:" + context.getPackageName()));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        }
+    }
+    public static void rescheduleAllActiveForUser(Context context, String uid){
+        FirebaseFirestore.getInstance().collection("medication_schedules").whereEqualTo("users_id", uid)
+                .whereEqualTo("is_active", true).get().addOnSuccessListener(query -> {
+                    for (DocumentSnapshot doc : query.getDocuments()){
+                        MedicationSchedules schedules = doc.toObject(MedicationSchedules.class);
+                        if (schedules == null) continue;
+                        String scheduleId = doc.getId();
+                        resolveNamaObatThenSchedule(context, scheduleId, schedules);
+                    }
+                });
+    }
+
+    private static void resolveNamaObatThenSchedule(Context context, String scheduleId, MedicationSchedules schedules) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("medications").document(schedules.getMedication_id()).get().addOnSuccessListener(medSnap -> {
+            Medication med = medSnap.toObject(Medication.class);
+            if (med == null){
+                scheduleAll(context, scheduleId, "Obat", schedules);
+                return;
+            } if (med.getCustom_medicine_name() != null){
+                scheduleAll(context, scheduleId, med.getCustom_medicine_name(), schedules);
+            } else if (med.getCatalog_id() != null){
+                db.collection("medicine_catalog").document(med.getCatalog_id()).get().addOnSuccessListener(catSnap -> {
+                    MedicineCatalog cat = catSnap.toObject(MedicineCatalog.class);
+                    scheduleAll(context, scheduleId, cat != null ? cat.getNama_obat() : "Obat", schedules);
+                });
+            } else {
+                scheduleAll(context, scheduleId, "Obat", schedules);
+            }
+        });
     }
 }
