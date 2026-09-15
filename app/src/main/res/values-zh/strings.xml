@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="current_language">当前语言</string>
+    <string name="language_options">语言选项</string>
+    <string name="profile">个人资料</string>
+    <string name="nama">姓名</string>
+    <string name="email">电子邮件</string>
+    <string name="googleAcc">Google 账户</string>
+    <string name="deleteAcc">删除账户</string>
+    <string name="kepatuhan">服药依从度</string>
+    <string name="selengkapnya">查看更多</string>
+    <string name="pengaturan">设置</string>
+    <string name="bahasa">语言</string>
+    <string name="notifikasi">通知</string>
+    <string name="activateCaregiver">激活照护者</string>
+    <string name="invCaregiver">邀请照护者</string>
+    <string name="invConsumer">邀请消费者</string>
+    <string name="caregiverList">照护者列表</string>
+    <string name="consumerList">消费者列表</string>
+    <string name="editProfile">编辑个人资料</string>
+    <string name="theme">外观</string>
+    <string name="langSetting">语言设置</string>
+    <string name="currentLanguage">当前语言</string>
+    <string name="langOption">语言选项</string>
+
+    <string name="notifSetting">通知设置</string>
+    <string name="ringtone">铃声</string>
+    <string name="customMsg">提醒消息设置</string>
+    <string name="reminderMsg">提醒消息</string>
+    <string name="time_to_consume_med">该吃药了</string>
+    <string name="snoozeDuration">延迟时长</string>
+    <string name="fiveMin">5 分钟</string>
+    <string name="appointmentReminder">预约提醒时间</string>
+    <string name="remindMeBefore">提前提醒我</string>
+    <string name="thirtyMin">30 分钟</string>
+    <string name="remindUntilConfirm">重复提醒直到确认</string>
+
+    <string name="jenisObat">药物类型</string>
+    <string name="obatPil">药片</string>
+    <string name="obatCair">液体</string>
+    <string name="stockObat">药品库存</string>
+    <string name="isiUlangObat">补充药品库存</string>
+
+    <string name="download">下载</string>
+    <string name="analisisRespon">响应分析</string>
+    <string name="persentaseKepatuhan">依从率</string>
+    <string name="grafikKepatuhan">依从率图表</string>
+    <string name="totalObatDiabaikan">忽略的药物总数</string>
+    <string name="totalObatDikonsumsi">已服用药物总数</string>
+    <string name="totalObatSnooze">再次提醒总数</string>
+    <string name="noConsumptionData">暂无药物服用数据</string>
+    <string name="tingkatKepatuhan">药物服用依从率</string>
+    <string name="mingguan">每周</string>
+    <string name="bulanan">每月</string>
+    <string name="tahunan">每年</string>
+    <string name="laporanStatistik">统计报告</string>
+
+    <string name="saveChanges">保存更改</string>
+    <string name="ubahPengingat">编辑提醒</string>
+</resources>

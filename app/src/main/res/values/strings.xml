@@ -28,4 +28,69 @@
     <string name="title_activity_schedule">ScheduleActivity</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <!-- Pengaturan Bahasa Indonesia -->
+    <string name="current_language">Bahasa Saat Ini</string>
+    <string name="language_options">Pilihan Bahasa</string>
+
+    <string name="english">English</string>
+    <string name="indonesia">Indonesia</string>
+    <string name="chinese">中文</string>
+
+    <string name="profile">Profil</string>
+    <string name="nama">Nama</string>
+    <string name="email">Email</string>
+    <string name="googleAcc">Akun Google</string>
+    <string name="deleteAcc">Hapus Akun</string>
+    <string name="kepatuhan">Tingkat Kepatuhan</string>
+    <string name="selengkapnya">Lihat Selengkapnya</string>
+    <string name="pengaturan">Pengaturan</string>
+    <string name="bahasa">Bahasa</string>
+    <string name="notifikasi">Notifikasi</string>
+    <string name="activateCaregiver">Aktivasi Caregiver</string>
+    <string name="invCaregiver">Undang Caregiver</string>
+    <string name="invConsumer">Undang Consumer</string>
+    <string name="caregiverList">List Caregiver</string>
+    <string name="consumerList">List Consumer</string>
+    <string name="editProfile">Edit Profile</string>
+    <string name="theme">Tampilan</string>
+    <string name="langSetting">Pengaturan Bahasa</string>
+    <string name="currentLanguage">Bahasa Saat Ini</string>
+    <string name="langOption">Pilihan Bahasa</string>
+
+    <string name="notifSetting">Pengaturan Notifikasi</string>
+    <string name="ringtone">Nada Dering</string>
+    <string name="customMsg">Kustomisasi Pesan Pengingat</string>
+    <string name="reminderMsg">Pesan Pengingat</string>
+    <string name="time_to_consume_med">Saatnya Minum Obat</string>
+    <string name="snoozeDuration">Durasi Tunda</string>
+    <string name="fiveMin">5 Menit</string>
+    <string name="appointmentReminder">Waktu Pengingat Janji Temu</string>
+    <string name="remindMeBefore">Ingatkan Saya Sebelum</string>
+    <string name="thirtyMin">30 Menit</string>
+    <string name="remindUntilConfirm">Pengingat Berulang Hingga Konfirmasi</string>
+
+    <string name="jenisObat">Jenis Obat</string>
+    <string name="obatPil">Pil</string>
+    <string name="obatCair">Cair</string>
+    <string name="stockObat">Stok Obat</string>
+    <string name="isiUlangObat">Isi Ulang Stok Obat</string>
+
+    <string name="download">Unduh</string>
+    <string name="analisisRespon">Analisis Respon</string>
+    <string name="persentaseKepatuhan">Persentase Kepatuhan</string>
+    <string name="grafikKepatuhan">Grafik Kepatuhan</string>
+    <string name="totalObatDiabaikan">Total Obat Diabaikan</string>
+    <string name="totalObatDikonsumsi">Total Obat Dikonsumsi</string>
+    <string name="totalObatSnooze">Total Ingatkan Kembali</string>
+    <string name="noConsumptionData">Belum Ada Data Konsumsi Obat</string>
+    <string name="tingkatKepatuhan">Tingkat Kepatuhan Konsumsi Obat</string>
+    <string name="mingguan">Mingguan</string>
+    <string name="bulanan">Bulanan</string>
+    <string name="tahunan">Tahunan</string>
+    <string name="laporanStatistik">Laporan Statistik</string>
+
+    <string name="saveChanges">Simpan Perubahan</string>
+    <string name="ubahPengingat">Ubah Pengingat</string>
+
 </resources>

@@ -14,6 +14,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
+import com.example.meduminderv1.Callback.RepoCallback;
+import com.example.meduminderv1.Repo.MedicationRepo;
+
 public class AlarmActionReceiver extends BroadcastReceiver {
 
     @Override
@@ -92,8 +95,10 @@ public class AlarmActionReceiver extends BroadcastReceiver {
                         scheduledAtMillis
                 );
 
-        FirebaseFirestore.getInstance()
-                .collection("medication_logs")
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // tandai log sebagai dikonsumsi
+        db.collection("medication_logs")
                 .document(logId)
                 .update(
                         "status",
@@ -101,26 +106,113 @@ public class AlarmActionReceiver extends BroadcastReceiver {
                         "taken_at",
                         Timestamp.now()
                 )
-                .addOnCompleteListener(task -> {
 
-                    if (!task.isSuccessful()) {
-                        Log.e(
-                                "AlarmActionReceiver",
-                                "Gagal update status log. logId="
-                                        + logId,
-                                task.getException()
-                        );
-                    }
+               .addOnSuccessListener(unused -> {
 
-                    context.stopService(
-                            new Intent(
-                                    context,
-                                    AlarmRingingService.class
-                            )
-                    );
+                // ambil medication_id dari schedule
+                db.collection("medication_schedules")
+                        .document(scheduleId)
+                        .get()
+                        .addOnSuccessListener(scheduleDoc -> {
 
-                    pendingResult.finish();
-                });
+                            String medicationId =
+                                    scheduleDoc.getString("medication_id");
+
+                            if (medicationId == null || medicationId.isEmpty()) {
+                                Log.e(
+                                        "AlarmActionReceiver",
+                                        "medication_id tidak ditemukan"
+                                );
+
+                                context.stopService(
+                                        new Intent(
+                                                context,
+                                                AlarmRingingService.class
+                                        )
+                                );
+
+                                pendingResult.finish();
+                                return;
+                            }
+
+                            MedicationRepo medicationRepo =
+                                    new MedicationRepo();
+
+                            medicationRepo.decrementStock(
+                                    medicationId,
+                                    new RepoCallback<Void>() {
+                                        @Override
+                                        public void onSuccess(Void result) {
+                                            Log.d(
+                                                    "AlarmActionReceiver",
+                                                    "Stock berhasil diproses"
+                                            );
+
+                                            context.stopService(
+                                                    new Intent(
+                                                            context,
+                                                            AlarmRingingService.class
+                                                    )
+                                            );
+
+                                            pendingResult.finish();
+                                        }
+
+                                        @Override
+                                        public void onFailure(Exception e) {
+                                            Log.e(
+                                                    "AlarmActionReceiver",
+                                                    "Gagal memproses stock",
+                                                    e
+                                            );
+
+                                            context.stopService(
+                                                    new Intent(
+                                                            context,
+                                                            AlarmRingingService.class
+                                                    )
+                                            );
+
+                                            pendingResult.finish();
+                                        }
+                                    }
+                            );
+                        })
+                        .addOnFailureListener(e -> {
+
+                            Log.e(
+                                    "AlarmActionReceiver",
+                                    "Gagal mengambil medication schedule",
+                                    e
+                            );
+
+                            context.stopService(
+                                    new Intent(
+                                            context,
+                                            AlarmRingingService.class
+                                    )
+                            );
+
+                            pendingResult.finish();
+                        });
+            })
+            .addOnFailureListener(e -> {
+
+                Log.e(
+                        "AlarmActionReceiver",
+                        "Gagal update status log. logId=" + logId,
+                        e
+                );
+
+                context.stopService(
+                        new Intent(
+                                context,
+                                AlarmRingingService.class
+                        )
+                );
+
+                pendingResult.finish();
+            });
     }
 
     private String buildLogId(

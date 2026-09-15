@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="current_language">Current Language</string>
+    <string name="language_options">Language Options</string>
+    <string name="profile">Profile</string>
+    <string name="nama">Name</string>
+    <string name="email">Email</string>
+    <string name="googleAcc">Google Account</string>
+    <string name="deleteAcc">Delete Account</string>
+    <string name="kepatuhan">Adherence Level</string>
+    <string name="selengkapnya">See More</string>
+    <string name="pengaturan">Settings</string>
+    <string name="bahasa">Language</string>
+    <string name="notifikasi">Notifications</string>
+    <string name="activateCaregiver">Activate Caregiver</string>
+    <string name="invCaregiver">Invite Caregiver</string>
+    <string name="invConsumer">Invite Consumer</string>
+    <string name="caregiverList">Caregiver List</string>
+    <string name="consumerList">Consumer List</string>
+    <string name="editProfile">Edit Profile</string>
+    <string name="theme">Appearance</string>
+    <string name="langSetting">Language Settings</string>
+    <string name="currentLanguage">Current Language</string>
+    <string name="langOption">Language Options</string>
+
+    <string name="notifSetting">Notification Settings</string>
+    <string name="ringtone">Ringtone</string>
+    <string name="customMsg">Reminder Message Customization</string>
+    <string name="reminderMsg">Reminder Message</string>
+    <string name="time_to_consume_med">Time to Take Medicine</string>
+    <string name="snoozeDuration">Snooze Duration</string>
+    <string name="fiveMin">5 Minutes</string>
+    <string name="appointmentReminder">Appointment Reminder Time</string>
+    <string name="remindMeBefore">Remind Me Before</string>
+    <string name="thirtyMin">30 Minutes</string>
+    <string name="remindUntilConfirm">Repeat Reminder Until Confirmed</string>
+
+    <string name="jenisObat">Medicine Type</string>
+    <string name="obatPil">Pill</string>
+    <string name="obatCair">Liquid</string>
+    <string name="stockObat">Medicine Stock</string>
+    <string name="isiUlangObat">Refill Medicine Stock</string>
+
+    <string name="download">Download</string>
+    <string name="analisisRespon">Response Analysis</string>
+    <string name="persentaseKepatuhan">Adherence Percentage</string>
+    <string name="grafikKepatuhan">Adherence Chart</string>
+    <string name="totalObatDiabaikan">Total Medication Ignored</string>
+    <string name="totalObatDikonsumsi">Total Medication Taken</string>
+    <string name="totalObatSnooze">Total Remind Me Later</string>
+    <string name="noConsumptionData">No Medication Consumption Data Yet</string>
+    <string name="tingkatKepatuhan">Medication Adherence Level</string>
+    <string name="mingguan">Weekly</string>
+    <string name="bulanan">Monthly</string>
+    <string name="tahunan">Yearly</string>
+    <string name="laporanStatistik">Statistical Report</string>
+
+    <string name="saveChanges">Save Changes</string>
+    <string name="ubahPengingat">Edit Reminder</string>
+
+</resources>

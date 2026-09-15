@@ -319,13 +319,39 @@ public class NotificationDetailFragment extends Fragment {
             SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", new Locale("id", "ID"));
             SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
             Date appointmentDate = appointment.getAppointment_at().toDate();
-            tvScheduleDayTime.setText(dayFormat.format(appointmentDate) + " • " + timeFormat.format(timeFormat));
+            tvScheduleDayTime.setText(dayFormat.format(appointmentDate) + " • " + timeFormat.format(appointmentDate));
             tvStockInfo.setVisibility(View.GONE);
         }).addOnFailureListener(e ->  scheduleDetail.setVisibility(View.GONE));
     }
 
     private void showLowStock() {
         layoutButton.setVisibility(View.GONE);
-        btnAction.setVisibility(View.GONE);
+
+        btnAcc.setVisibility(View.GONE);
+        btnReject.setVisibility(View.GONE);
+
+        btnAction.setVisibility(View.VISIBLE);
+        btnAction.setText(getString(R.string.isiUlangObat));
+
+        btnAction.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+
+            bundle.putString(
+                    "medication_id",
+                    notification.getReference_id()
+            );
+
+            bundle.putString(
+                    "notification_id",
+                    notification.getNotification_id()
+            );
+
+            NavHostFragment.findNavController(
+                    NotificationDetailFragment.this
+            ).navigate(
+                    R.id.reminderStockFragment,
+                    bundle
+            );
+        });
     }
 }

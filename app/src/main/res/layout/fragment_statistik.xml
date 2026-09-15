@@ -1,14 +1,454 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/statistikFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".Statistik.StatistikFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <LinearLayout
+        android:id="@+id/headerSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="20dp">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="30dp"
+            android:layout_height="26dp"
+            android:background="@drawable/ic_back"
+            android:layout_gravity="center"
+            app:tint="@color/hover_pressed" />
+
+        <TextView
+            android:id="@+id/tvStatistikPage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/laporanStatistik"
+            android:textStyle="bold"
+            android:textSize="24sp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:textColor="?attr/colorOnSurface" />
+
+        <View
+            android:layout_width="30dp"
+            android:layout_height="26dp" />
+
+    </LinearLayout>
+
+
+    <!-- Isi Konten Statistik -->
+    <ScrollView
+        android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:layout_below="@id/headerSection"
+        android:layout_marginHorizontal="20dp">
 
-</FrameLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="30dp">
+
+            <!-- filter mingguan, bulanan, tahunan -->
+            <LinearLayout
+                android:id="@+id/filterContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="20dp"
+                android:weightSum="3">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnWeekly"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:text="@string/mingguan"
+                    android:textAllCaps="false"
+                    android:textSize="12sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:background="@drawable/border"
+                    app:backgroundTint="@null" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMonthly"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginHorizontal="4dp"
+                    android:text="@string/bulanan"
+                    android:textAllCaps="false"
+                    android:textSize="12sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:background="@drawable/border"
+                    app:backgroundTint="@null" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnYearly"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:text="@string/tahunan"
+                    android:textAllCaps="false"
+                    android:textSize="12sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:background="@drawable/border"
+                    app:backgroundTint="@null" />
+            </LinearLayout>
+
+
+            <!-- Adherance -->
+            <TextView
+                android:id="@+id/tvAdherenceTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/tingkatKepatuhan"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:textColor="?attr/colorOnSurface"
+                android:layout_marginBottom="10dp" />
+
+            <LinearLayout
+                android:id="@+id/adherenceCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/border"
+                android:padding="15dp"
+                android:layout_marginBottom="15dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:paddingEnd="10dp">
+
+                    <TextView
+                        android:id="@+id/tvAdherenceRate"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0%"
+                        android:textSize="28sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorTertiary" />
+
+                    <TextView
+                        android:id="@+id/tvAdherenceLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/kepatuhan"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorOnSurface"
+                        android:layout_marginTop="2dp" />
+
+                    <TextView
+                        android:id="@+id/tvAdherenceDescription"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/noConsumptionData"
+                        android:textSize="13sp"
+                        android:textColor="?attr/colorOnSurface"
+                        android:layout_marginTop="8dp" />
+                </LinearLayout>
+
+                <com.example.meduminderv1.Home.ProgressView
+                    android:id="@+id/adherenceRing"
+                    android:layout_width="140dp"
+                    android:layout_height="140dp"
+                    android:layout_gravity="center" />
+            </LinearLayout>
+
+
+            <!-- Obat yang Taken + Ignored -->
+            <LinearLayout
+                android:id="@+id/takenIgnoredContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:weightSum="2"
+                android:layout_marginBottom="10dp">
+
+                <!-- Taken -->
+                <LinearLayout
+                    android:id="@+id/cardTaken"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="5dp"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:background="@drawable/border"
+                    android:backgroundTint="@color/green"
+                    android:padding="15dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/totalObatDikonsumsi"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <TextView
+                        android:id="@+id/tvTotalTaken"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="0 Obat"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:shadowColor="#80000000"
+                        android:shadowDx="0"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"
+                        android:gravity="center"
+                        android:textColor="?attr/colorOnSurface"
+                        android:layout_marginTop="7dp" />
+                </LinearLayout>
+
+
+                <!-- Ignored -->
+                <LinearLayout
+                    android:id="@+id/cardIgnored"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="5dp"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:background="@drawable/border"
+                    android:backgroundTint="@color/pink"
+                    android:padding="15dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/totalObatDiabaikan"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:shadowColor="#80000000"
+                        android:shadowDx="0"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"
+                        android:gravity="center"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <TextView
+                        android:id="@+id/tvTotalIgnored"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="0 Obat"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:shadowColor="#80000000"
+                        android:shadowDx="0"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"
+                        android:gravity="center"
+                        android:textColor="?attr/colorOnSurface"
+                        android:layout_marginTop="7dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+
+            <!-- Remind me later -->
+            <LinearLayout
+                android:id="@+id/cardSnooze"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/border"
+                android:backgroundTint="@color/gray"
+                android:padding="15dp"
+                android:layout_marginBottom="25dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/totalObatSnooze"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:shadowColor="#80000000"
+                    android:shadowDx="0"
+                    android:shadowDy="1"
+                    android:shadowRadius="2"
+                    android:textColor="?attr/colorOnSurface" />
+
+                <TextView
+                    android:id="@+id/tvTotalSnooze"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0 Obat"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+
+
+            <!-- Grafik Kepatuhan -->
+
+            <TextView
+                android:id="@+id/tvChartTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/grafikKepatuhan"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:textColor="?attr/colorOnSurface"
+                android:layout_marginBottom="10dp" />
+
+            <LinearLayout
+                android:id="@+id/cardDailyChart"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:orientation="vertical"
+                android:background="@drawable/border"
+                android:padding="15dp"
+                android:layout_marginBottom="25dp">
+
+                <!-- Container grafik kepatuhan -->
+                <FrameLayout
+                    android:id="@+id/dailyChartContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1">
+
+                    <TextView
+                        android:id="@+id/tvChartPlaceholder"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="Grafik Kepatuhan"
+                        android:textSize="14sp"
+                        android:textColor="?attr/colorOnSurface" />
+                </FrameLayout>
+
+                <!-- Legend -->
+                <LinearLayout
+                    android:id="@+id/chartLegend"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="8dp">
+
+                    <View
+                        android:id="@+id/legendColor"
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:background="@color/green" />
+
+                    <TextView
+                        android:id="@+id/tvChartLegend"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/persentaseKepatuhan"
+                        android:textSize="12sp"
+                        android:textColor="?attr/colorOnSurface"
+                        android:layout_marginStart="6dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+
+            <!-- Analisis Response Pengingat -->
+            <TextView
+                android:id="@+id/tvResponseAnalysisTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/analisisRespon"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:textColor="?attr/colorOnSurface"
+                android:layout_marginBottom="10dp" />
+
+            <LinearLayout
+                android:id="@+id/cardResponseAnalysis"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/border"
+                android:padding="20dp"
+                android:layout_marginBottom="25dp">
+
+                <!-- Chart Bulat -->
+                <FrameLayout
+                    android:id="@+id/responsePieContainer"
+                    android:layout_width="220dp"
+                    android:layout_height="220dp">
+
+                    <TextView
+                        android:id="@+id/tvPiePlaceholder"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="Analisis Respon"
+                        android:textSize="14sp"
+                        android:textColor="?attr/colorOnSurface" />
+                </FrameLayout>
+
+                <!-- Legend Taken -->
+                <TextView
+                    android:id="@+id/tvLegendTaken"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="● Dikonsumsi"
+                    android:textSize="12sp"
+                    android:textColor="@color/green"
+                    android:layout_marginTop="10dp" />
+
+                <!-- Legend Snooze -->
+                <TextView
+                    android:id="@+id/tvLegendSnooze"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="● Remind Me Later"
+                    android:textSize="12sp"
+                    android:textColor="@color/gray" />
+
+                <!-- Legend Ignored -->
+                <TextView
+                    android:id="@+id/tvLegendIgnored"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="● Diabaikan"
+                    android:textSize="12sp"
+                    android:textColor="@color/pink" />
+            </LinearLayout>
+
+
+            <!-- button Download -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDownloadReport"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="@string/download"
+                android:textAllCaps="false"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface"
+                android:background="@drawable/border"
+                app:backgroundTint="@null"
+                android:paddingHorizontal="35dp"
+                android:layout_marginBottom="30dp" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</RelativeLayout>

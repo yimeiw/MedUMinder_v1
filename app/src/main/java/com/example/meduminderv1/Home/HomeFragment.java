@@ -78,8 +78,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 public class HomeFragment extends Fragment {
-
-    TextView tvGreeting, tvtitleCard, tvTime, tvDay, tvTotalStok, btnLihatSemua, emptyTodaySchedule;
+    TextView tvGreeting, tvtitleCard, tvTime, tvDay, tvStokObat, tvTotalStok, btnLihatSemua, emptyTodaySchedule;
     ImageButton btnNotif, btnProfile;
     MaterialButton addNoSchedule, btnKonfirmasi;
     RecyclerView rvTodaySchedule;
@@ -92,7 +91,7 @@ public class HomeFragment extends Fragment {
     private String nextMedId;
     LineChart lineChart;
     StatistikRepo statistikRepo;
-    private ListenerRegistration nextScheduleListener, todayScheduleListener;
+    private ListenerRegistration nextScheduleListener;
     private final Handler refreshHandler = new Handler(Looper.getMainLooper());
     private long displayedScheduleAtMillis = -1;
     private final Runnable refreshRunnable = this::checkNextScheduleFreshness;
@@ -107,7 +106,8 @@ public class HomeFragment extends Fragment {
         tvtitleCard = view.findViewById(R.id.tvtitleCard);
         tvTime = view.findViewById(R.id.tvTime);
         tvDay = view.findViewById(R.id.tvDay);
-        tvTotalStok = view.findViewById(R.id.tvStokObat);
+        tvStokObat = view.findViewById(R.id.tvStokObat);
+        tvTotalStok = view.findViewById(R.id.tvTotalStok);
         btnNotif = view.findViewById(R.id.btnNotif);
         btnProfile = view.findViewById(R.id.btnProfile);
         addMed = view.findViewById(R.id.layoutAddMed);
@@ -180,6 +180,19 @@ public class HomeFragment extends Fragment {
             tvGreeting.setText("Halo, " + user.getName() + "!");
         }
     }
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        InvitationPopupHelper.checkAndShow(this, authManager);
+        checkUnreadNotif();
+        loadNextSchedule();
+        loadTodaySchedule();
+        loadStats();
+
+       refreshHandler.postDelayed(refreshRunnable, 30_000L);
+    }
+
     private void checkUnreadNotif() {
         authManager.unreadNotif(new AuthCallback<Integer>() {
             @Override
@@ -228,15 +241,23 @@ public class HomeFragment extends Fragment {
                         return;
                     } nextLogId = target.getId();
                     haveSchedule.setVisibility(View.VISIBLE);
+                    displayedScheduleAtMillis = targetLog.getScheduled_at().toDate().getTime();
                     noSchedule.setVisibility(View.GONE);
                     tvDay.setText(formatDayLabel(targetLog.getScheduled_at().toDate()));
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                     tvTime.setText(sdf.format(targetLog.getScheduled_at().toDate()));
-                    MedicationLog finalLog = targetLog;
-                    resolveMedName(targetLog.getMedication_schedules_id(), (medName, stock, medId) -> {
+                    resolveMedName(targetLog.getMedication_schedules_id(), (medName, stock, medId, medType) -> {
                         nextMedId = medId;
                         tvtitleCard.setText(medName);
-                        tvTotalStok.setText("Sisa stok: " + stock);
+
+                        if ("CAIR".equals(medType)) {
+                            tvStokObat.setVisibility(View.GONE);
+                            tvTotalStok.setVisibility(View.GONE);
+                        } else {
+                            tvStokObat.setVisibility(View.VISIBLE);
+                            tvTotalStok.setVisibility(View.VISIBLE);
+                            tvTotalStok.setText(String.valueOf(stock));
+                        }
                     });
                     btnKonfirmasi.setOnClickListener(v -> confirmTaken());
                 });
@@ -272,6 +293,7 @@ public class HomeFragment extends Fragment {
         medicationRepo.markLogAsTaken(nextLogId, new RepoCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
+                loadStats();
                 if (nextMedId != null){
                     medicationRepo.decrementStock(nextMedId, new RepoCallback<Void>() {
                         @Override
@@ -284,6 +306,7 @@ public class HomeFragment extends Fragment {
 
                         @Override
                         public void onFailure(Exception e) {
+                            if(!isAdded() || getContext() == null) { return; }
                             Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     });
@@ -295,6 +318,7 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onFailure(Exception e) {
+                if (!isAdded() || getContext() == null) return;
                 Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
@@ -312,27 +336,30 @@ public class HomeFragment extends Fragment {
                                 Medication med = medSnap.toObject(Medication.class);
                                 if (med == null) return;
                                 int stock = 0;
+
+                                String medType = med.getMed_type();
+
                                 if (med.getStock() != null && med.getStock().get("stok_obat") != null){
                                     stock = ((Number) med.getStock().get("stok_obat")).intValue();
                                 } int finalStock = stock;
                                 if (med.getCustom_medicine_name() != null){
-                                    callback.onResolved(med.getCustom_medicine_name(), finalStock, medId);
+                                    callback.onResolved(med.getCustom_medicine_name(), finalStock, medId, medType);
                                 } else if (med.getCatalog_id() != null) {
                                     db.collection("medicine_catalog").document(med.getCatalog_id()).get()
                                             .addOnSuccessListener(catSnap -> {
                                                 MedicineCatalog catalog = catSnap.toObject(MedicineCatalog.class);
-                                                callback.onResolved(catalog != null ? catalog.getNama_obat() : "Obat", finalStock, medId);
+                                                callback.onResolved(catalog != null ? catalog.getNama_obat() : "Obat", finalStock, medId, medType);
                                             });
 
                                 } else {
-                                    callback.onResolved("Obat", finalStock, medId);
+                                    callback.onResolved("Obat", finalStock, medId, medType);
                                 }
                             });
                 });
     }
 
     private interface MedResolveCallback{
-        void onResolved(String name, int stock, String medicationId);
+        void onResolved(String name, int stock, String medicationId, String medType);
     }
 
     private void loadTodaySchedule() {
@@ -366,17 +393,29 @@ public class HomeFragment extends Fragment {
                     for (DocumentSnapshot doc : medDocs) {
                         MedicationLog log = doc.toObject(MedicationLog.class);
                         if (log == null) { remaining[0]--; continue; }
-                        resolveMedName(log.getMedication_schedules_id(), (medName, stock, medId) -> {
+                        resolveMedName(log.getMedication_schedules_id(), (medName, stock, medId, medType) -> {
+                            Log.d("STOCK_DEBUG",
+                                    "Obat: " + medName +
+                                            " | Type: " + medType +
+                                            " | Stock: " + stock);
+
+
+                            String info = "";
+
+                            if("PIL".equals(medType)) {
+                                info = "Sisa stok: " + stock;
+                            }
+
                             combined.add(new LogItem("medicine", medName,
-                                    sdf.format(log.getScheduled_at().toDate()),
-                                    "Sisa stok: " + stock, log.getStatus()));
+                                    sdf.format(log.getScheduled_at().toDate()), info, log.getStatus()));
                             remaining[0]--;
                             if (remaining[0] <= 0) mergeAppointments(uid, combined, startOfDay, startOfTomorrow);
                         });
                     }
                 }).addOnFailureListener(e -> {
-                    rvTodaySchedule.setVisibility(View.VISIBLE);
-                    rvTodaySchedule.setVisibility(View.GONE);
+                      emptyTodaySchedule.setVisibility(View.VISIBLE);
+                      rvTodaySchedule.setVisibility(View.GONE);
+                      btnLihatSemua.setVisibility(View.GONE);
                 });
     }
 
@@ -416,25 +455,34 @@ public class HomeFragment extends Fragment {
                 });
     }
     private void loadStats() {
-        String uid = authManager.getCurrentUser().getAuth_uid();
+        String uid = SessionManager.getInstance().getTargetUid();
+
+        if (uid == null || uid.isEmpty()) {
+            return;
+        }
+
         statistikRepo.getWeeklyAdherence(uid, new StatistikRepo.StatsCallback() {
             @Override
             public void onResult(List<StatistikRepo.DayStat> weekStats) {
-                if (!isAdded()) return;
+            if (!isAdded()) return;
                 renderChart(weekStats);
             }
 
             @Override
             public void onFailure(Exception e) {
+                Log.e("HOME_STATS", "Gagal load statistik", e);
             }
         });
     }
 
     private void renderChart(List<StatistikRepo.DayStat> weekStats) {
+        int itam = MaterialColors.getColor(lineChart, com.google.android.material.R.attr.colorOnSurface);
+      
         List<Entry> seharusnya = new ArrayList<>();
         List<Entry> dikonsumsi = new ArrayList<>();
         List<Entry> persentase = new ArrayList<>();
         List<String> labels = new ArrayList<>();
+
         for (int i = 0; i < weekStats.size(); i++){
             StatistikRepo.DayStat s = weekStats.get(i);
             seharusnya.add(new Entry(i, s.seharusnya));
@@ -442,41 +490,42 @@ public class HomeFragment extends Fragment {
             persentase.add(new Entry(i, s.persentase));
             labels.add(s.label);
         }
-
-        int itamputih = MaterialColors.getColor(lineChart, com.google.android.material.R.attr.colorOnPrimary);
-        int itam = MaterialColors.getColor(lineChart, com.google.android.material.R.attr.colorOnSurface);
-        int pink = MaterialColors.getColor(lineChart, com.google.android.material.R.attr.colorSecondary);
-        int ijo = MaterialColors.getColor(lineChart, com.google.android.material.R.attr.colorTertiaryFixed);
-
+  
         LineDataSet dsSeharusnya = new LineDataSet(seharusnya, "Dosis seharusnya");
-        dsSeharusnya.setColor(pink);
-        dsSeharusnya.setCircleColor(pink);
+        dsSeharusnya.setColor(requireContext().getColor(R.color.dark_bckg));
+        dsSeharusnya.setCircleColor(requireContext().getColor(R.color.dark_bckg));
         dsSeharusnya.setLineWidth(2f);
         dsSeharusnya.setCircleRadius(4f);
+        dsSeharusnya.setAxisDependency(YAxis.AxisDependency.LEFT);
         dsSeharusnya.setDrawValues(false);
         dsSeharusnya.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 
+        // dosis dikonsumsi
         LineDataSet dsDikonsumsi = new LineDataSet(dikonsumsi, "Dosis dikonsumsi");
-        dsDikonsumsi.setColor(ijo);
-        dsDikonsumsi.setCircleColor(ijo);
+  
+        dsDikonsumsi.setColor(requireContext().getColor(R.color.green));
+        dsDikonsumsi.setCircleColor(requireContext().getColor(R.color.green));
         dsDikonsumsi.setLineWidth(3f);
         dsDikonsumsi.setCircleRadius(4.5f);
+        dsDikonsumsi.setAxisDependency(YAxis.AxisDependency.LEFT);
         dsDikonsumsi.setDrawFilled(true);
-        dsDikonsumsi.setFillColor(ijo);
+        dsDikonsumsi.setFillColor(requireContext().getColor(R.color.green));
         dsDikonsumsi.setFillAlpha(60);
         dsDikonsumsi.setDrawValues(false);
         dsDikonsumsi.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 
+        // persentase kepatuhan
         LineDataSet dsPersentase = new LineDataSet(persentase, "Persentase Kepatuhan");
-        dsPersentase.setColor(itamputih);
-        dsPersentase.setCircleColor(itamputih);
-        dsDikonsumsi.setLineWidth(3f);
-        dsDikonsumsi.setCircleRadius(4.5f);
-        dsDikonsumsi.setDrawFilled(true);
-        dsDikonsumsi.setFillColor(ijo);
-        dsDikonsumsi.setFillAlpha(60);
-        dsDikonsumsi.setDrawValues(false);
-        dsDikonsumsi.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        dsPersentase.setColor(requireContext().getColor(R.color.pink));
+        dsPersentase.setCircleColor(requireContext().getColor(R.color.pink));
+        dsPersentase.setLineWidth(3f);
+        dsPersentase.setCircleRadius(4.5f);
+        dsPersentase.setAxisDependency(YAxis.AxisDependency.RIGHT);
+        dsPersentase.setDrawFilled(true);
+        dsPersentase.setFillColor(requireContext().getColor(R.color.pink));
+        dsPersentase.setFillAlpha(60);
+        dsPersentase.setDrawValues(false);
+        dsPersentase.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 
         LineData data = new LineData(dsSeharusnya, dsDikonsumsi, dsPersentase);
         lineChart.setData(data);
@@ -508,31 +557,28 @@ public class HomeFragment extends Fragment {
             }
         });
         leftAxis.setAxisMinimum(0f);
+        leftAxis.setDrawGridLines(false);
 
-        lineChart.getAxisLeft().setTextColor(itam);
-        lineChart.getAxisLeft().setDrawGridLines(false);
-        lineChart.getAxisRight().setEnabled(false);
+        YAxis rightAxis = lineChart.getAxisRight();
+        rightAxis.setEnabled(true);
+        rightAxis.setAxisMinimum(0f);
+        rightAxis.setAxisMaximum(100f);
+        rightAxis.setGranularity(20f);
 
         Legend legend = lineChart.getLegend();
         legend.setTextColor(itam);
         legend.setForm(Legend.LegendForm.LINE);
 
-        lineChart.setExtraOffsets(5f, 12f, 8f, 8f); //left, top, right, bottom
+        lineChart.setExtraOffsets(5f, 12f, 8f, 8f);
         lineChart.getDescription().setEnabled(false);
         lineChart.setNoDataText("Belum ada data konsumsi obat.");
         lineChart.setNoDataTextColor(itam);
+
+        lineChart.setTouchEnabled(true);
+        lineChart.setDragEnabled(true);
+        lineChart.setScaleEnabled(false);
         lineChart.animateX(600);
         lineChart.invalidate();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        checkUnreadNotif();
-        loadNextSchedule();
-        loadTodaySchedule();
-        refreshHandler.postDelayed(refreshRunnable, 30_000L);
-        checkUnreadNotif();
     }
 
     @Override
@@ -545,6 +591,5 @@ public class HomeFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         if (nextScheduleListener != null) nextScheduleListener.remove();
-        if (todayScheduleListener != null) todayScheduleListener.remove();
     }
 }

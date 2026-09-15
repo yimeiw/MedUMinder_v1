@@ -45,6 +45,103 @@ public class NotificationRepo {
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
     }
+
+    public void createStockNotification(String receiverUid, String medicationId, String medicineName, RepoCallback<Void> callback) {
+        createSingleStockNotification(receiverUid, medicationId, medicineName, new RepoCallback<Void>() {
+
+                    @Override
+                    public void onSuccess(Void result) {
+
+                        // 2. Cari caregiver yang terhubung dengan consumer
+                        db.collection("care_relationships")
+                                .whereEqualTo(
+                                        "consumer_uid",
+                                        receiverUid
+                                )
+                                .get()
+                                .addOnSuccessListener(query -> {
+
+                                    // Tidak punya caregiver
+                                    if (query.isEmpty()) {
+                                        callback.onSuccess(null);
+                                        return;
+                                    }
+
+                                    // Hitung jumlah caregiver
+                                    final int totalCaregiver = query.size();
+                                    final int[] completed = {0};
+
+                                    // Buat notif untuk setiap caregiver
+                                    for (DocumentSnapshot doc : query) {
+
+                                        String caregiverUid =
+                                                doc.getString(
+                                                        "caregiver_uid"
+                                                );
+
+                                        if (caregiverUid == null
+                                                || caregiverUid.isEmpty()) {
+
+                                            completed[0]++;
+
+                                            if (completed[0]
+                                                    == totalCaregiver) {
+                                                callback.onSuccess(null);
+                                            }
+
+                                            continue;
+                                        }
+
+                                        createSingleStockNotification(caregiverUid, medicationId, medicineName, new RepoCallback<Void>() {
+
+                                                    @Override
+                                                    public void onSuccess(Void result) {
+                                                        completed[0]++;
+
+                                                        if (completed[0] == totalCaregiver) { callback.onSuccess(null); }
+                                                    }
+
+                                                    @Override
+                                                    public void onFailure(Exception e) {
+                                                        callback.onFailure(e);
+                                                    }
+                                                }
+                                        );
+                                    }
+                                })
+                                .addOnFailureListener(
+                                        callback::onFailure
+                                );
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        callback.onFailure(e);
+                    }
+                }
+        );
+    }
+
+
+    private void createSingleStockNotification(String receiverUid, String medicationId, String medicineName, RepoCallback<Void> callback) {
+        Notification notification = new Notification();
+
+        notification.setReceiver_uid(receiverUid);
+        notification.setSender_uid(null);
+        notification.setReference_id(medicationId);
+        notification.setInvitation_id(null);
+        notification.setTitle("ISI ULANG OBAT (" + medicineName + ")");
+        notification.setMessage("Obat Anda sudah mau habis, segera isi ulang obat Anda!");
+        notification.setType(NotificationType.Stock);
+        notification.setIs_read(false);
+        notification.setCreated_at(Timestamp.now());
+
+        createNotification(
+                notification,
+                callback
+        );
+    }
+
     public void getNotifbyId(String notificationId, RepoCallback<Notification> callback){
         db.collection("notifications").document(notificationId).get()
                 .addOnSuccessListener(document -> {

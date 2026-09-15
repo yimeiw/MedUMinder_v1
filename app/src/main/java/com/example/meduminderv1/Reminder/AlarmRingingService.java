@@ -12,6 +12,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
+import android.content.SharedPreferences;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -32,8 +33,20 @@ public class AlarmRingingService extends Service {
             return START_NOT_STICKY;
         }
         String scheduleId = intent.getStringExtra("schedule_id");
+
         String namaObat = intent.getStringExtra("nama_obat");
-        String soundUri = intent.getStringExtra("sound");
+
+        String soundUri = intent.getStringExtra("sound_uri");
+
+        SharedPreferences pref = getSharedPreferences(
+                "notification_settings",
+                MODE_PRIVATE
+        );
+
+        if(soundUri == null || soundUri.isEmpty()) {
+            soundUri = pref.getString("ringtone_uri", null);
+        }
+
         long scheduledAt = intent.getLongExtra("scheduled_at", 0L);
         String type = intent.getStringExtra("type");
         boolean isAppointment = "appointment".equals(type);
@@ -87,9 +100,48 @@ public class AlarmRingingService extends Service {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+        Intent takenIntent = new Intent(this, AlarmActionReceiver.class)
+              .setAction("ACTION_TAKEN")
+              .putExtra("schedule_id", scheduleId)
+              .putExtra("scheduled_at", scheduledAt);     
+
+        PendingIntent takenPending = PendingIntent.getBroadcast(
+                this,
+                safeId(scheduleId),
+                takenIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        Intent snoozeIntent = new Intent(this, AlarmActionReceiver.class)
+                .setAction("ACTION_SNOOZE")
+                .putExtra("schedule_id", scheduleId)
+                .putExtra("nama_obat", namaObat)
+                .putExtra("scheduled_at", scheduledAt);
+
+        PendingIntent snoozePending = PendingIntent.getBroadcast(
+                this,
+                safeId(scheduleId),
+                snoozeIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        SharedPreferences pref = getSharedPreferences(
+                "notification_settings",
+                MODE_PRIVATE
+        );
+
+        String reminderMessage = pref.getString(
+                "reminder_message",
+                "Jangan lupa minum obat"
+        );
+
+        NotificationCompat.Builder builder =new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_tablet)
-                .setContentTitle(isAppointment ? "Waktunya appointment" : "Waktunya minum obat")
+                .setContentTitle(
+                        isAppointment
+                                ? "Waktunya appointment"
+                                : reminderMessage
+                )
                 .setContentText(namaObat)
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
@@ -118,25 +170,6 @@ public class AlarmRingingService extends Service {
             builder.addAction(0, "Dihadiri", attendedPending)
                     .addAction(0, "Tidak Dihadiri", missedPending);
         } else {
-            Intent takenIntent = new Intent(this, AlarmActionReceiver.class)
-                    .setAction("ACTION_TAKEN")
-                    .putExtra("schedule_id", scheduleId)
-                    .putExtra("scheduled_at", scheduledAt);
-            PendingIntent takenPending = PendingIntent.getBroadcast(
-                    this, safeId(scheduleId), takenIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-            );
-
-            Intent snoozeIntent = new Intent(this, AlarmActionReceiver.class)
-                    .setAction("ACTION_SNOOZE")
-                    .putExtra("schedule_id", scheduleId)
-                    .putExtra("nama_obat", namaObat)
-                    .putExtra("scheduled_at", scheduledAt);
-            PendingIntent snoozePending = PendingIntent.getBroadcast(
-                    this, safeId(scheduleId), snoozeIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-            );
-
             builder.addAction(0, "DIKONSUMSI", takenPending)
                     .addAction(0, "TUNDA", snoozePending);
         }
