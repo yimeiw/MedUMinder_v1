@@ -267,7 +267,13 @@ public class AuthManager {
                 return;
             }
             checkGoogleProfile(firebaseUser, callback);
-        }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+        }).addOnFailureListener(e -> {
+            if (e instanceof FirebaseAuthUserCollisionException) {
+                callback.onFailure("EMAIL_ALREADY_IN_USE_DIFFERENT_PROVIDER");
+            } else {
+                callback.onFailure(e.getMessage());
+            }
+        });
     }
     private void checkGoogleProfile(FirebaseUser firebaseUser,  AuthCallback<User> callback) {
         userRepository.getUserbyUid(firebaseUser.getUid(), new RepoCallback<User>() {

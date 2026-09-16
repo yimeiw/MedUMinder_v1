@@ -76,7 +76,22 @@ public class SignUpActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(String message) {
-                Toast.makeText(SignUpActivity.this, message, Toast.LENGTH_SHORT).show();
+                if ("EMAIL_ALREADY_IN_USE_DIFFERENT_PROVIDER".equals(message)) {
+
+                    new MaterialAlertDialogBuilder(SignUpActivity.this)
+                            .setTitle("Email Sudah Terdaftar")
+                            .setMessage("Email ini sudah terdaftar dengan password. Silakan login menggunakan email dan password.")
+                            .setPositiveButton("Login", (dialog, which) -> {
+                                Intent intent = new Intent(SignUpActivity.this, LoginActivity.class);
+                                intent.putExtra("prefill_email", emailInput.getText().toString().trim());
+                                startActivity(intent);
+                            })
+                            .setNegativeButton("Batal", null)
+                            .show();
+
+                } else {
+                    Toast.makeText(SignUpActivity.this, message, Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
