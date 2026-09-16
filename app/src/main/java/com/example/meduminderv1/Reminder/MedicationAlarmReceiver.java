@@ -25,13 +25,19 @@ public class MedicationAlarmReceiver extends BroadcastReceiver {
                 System.currentTimeMillis()
         );
         String type = intent.getStringExtra("type");
+        int occurrenceIndex = intent.getIntExtra("occurrence_index", 0);
+        long endMillis = intent.getLongExtra("end_millis", 0L);
+        long triggerAt = intent.getLongExtra("trigger_at", System.currentTimeMillis());
 
+        if ("medicine".equals(type)){
+            AlarmSchedulerHelper.rescheduleNextDay(context, scheduleId, namaObat, triggerAt, occurrenceIndex, endMillis);
+        }
         Intent serviceIntent =
                 new Intent(context, AlarmRingingService.class);
 
         serviceIntent.putExtra("schedule_id", scheduleId);
         serviceIntent.putExtra("nama_obat", namaObat);
-        serviceIntent.putExtra("sound", soundUri);
+        serviceIntent.putExtra("sound_uri", soundUri);
         serviceIntent.putExtra("scheduled_at", scheduledAt);
         serviceIntent.putExtra("type", type);
 
@@ -39,6 +45,7 @@ public class MedicationAlarmReceiver extends BroadcastReceiver {
             Log.e("ALARM_TRACE", "startForegroundService dipanggil");
 
             context.startForegroundService(serviceIntent);
+
         } else {
             Log.e("ALARM_TRACE", "startService dipanggil");
 

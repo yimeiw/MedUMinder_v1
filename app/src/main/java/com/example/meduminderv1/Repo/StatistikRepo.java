@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.Model.MedicationLog;
+import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -119,6 +120,10 @@ public class StatistikRepo {
                         if (log == null || log.getScheduled_at() == null) {
                             continue;
                         }
+                        //skip kalau belum due (masih akan datang)
+                        if (log.getScheduled_at().toDate().getTime() + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS > System.currentTimeMillis()){
+                            continue;
+                        }
 
                         Calendar logDate = Calendar.getInstance();
                         logDate.setTime(log.getScheduled_at().toDate());
@@ -146,6 +151,10 @@ public class StatistikRepo {
                         } else if (log.getScheduled_at() != null
                                 && log.getScheduled_at().toDate().before(new Date())) {
                             ignored[index]++;
+                        }
+                        //snooze count (null-safe, treat null sebagai 0)
+                        if (log.getSnooze_count() != null && log.getSnooze_count() > 0){
+                            snoozed[index]++;
                         }
                     }
 

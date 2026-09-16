@@ -2,6 +2,7 @@ package com.example.meduminderv1.Model;
 
 import android.util.Log;
 
+import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.google.firebase.Timestamp;
 
 import java.util.Date;
@@ -79,7 +80,7 @@ public class Appointment {
             return stored;
         }
 
-        if (appointment_at != null && appointment_at.toDate().before(new Date())) {
+        if (appointment_at != null && appointment_at.toDate().getTime() + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS < System.currentTimeMillis()) {
             return LogStatus.TERLEWATKAN;
         }
         return LogStatus.AKAN_DATANG;

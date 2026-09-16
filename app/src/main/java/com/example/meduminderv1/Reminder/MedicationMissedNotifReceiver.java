@@ -62,6 +62,7 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
                                 db.collection("notifications").add(notifCaregiver);
                             }
                         });
+                context.stopService(new Intent(context, AlarmRingingService.class));
             });
         });
     }

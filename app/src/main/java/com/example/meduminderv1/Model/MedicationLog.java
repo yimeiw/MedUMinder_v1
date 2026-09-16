@@ -1,5 +1,6 @@
 package com.example.meduminderv1.Model;
 
+import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.google.firebase.Timestamp;
 
 import java.sql.Time;
@@ -16,6 +17,11 @@ public class MedicationLog {
         return LogStatus.fromRaw(status);
     }
     private Timestamp created_at;
+    private Long snooze_count;
+
+    public Long getSnooze_count() {
+        return snooze_count;
+    }
 
     public MedicationLog() {}
 
@@ -53,7 +59,7 @@ public class MedicationLog {
             return stored;
         }
 
-        if (scheduled_at != null && scheduled_at.toDate().before(new Date())) {
+        if (scheduled_at != null && scheduled_at.toDate().getTime() + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS < System.currentTimeMillis()) {
             return LogStatus.TERLEWATKAN;
         }
         return LogStatus.AKAN_DATANG;

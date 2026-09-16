@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.util.Log;
 
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.time.Instant;
@@ -13,9 +14,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Repo.MedicationRepo;
+import com.google.firebase.firestore.SetOptions;
 
 public class AlarmActionReceiver extends BroadcastReceiver {
 
@@ -40,6 +44,9 @@ public class AlarmActionReceiver extends BroadcastReceiver {
         } else if ("ACTION_SNOOZE".equals(action)) {
             PendingResult pendingResult = goAsync();
 
+            //Increment snooze_count, dijalankan independen, tidak menunggu/blocking
+            //proses reschedule alarm dibawah. Kalau gagal, cukup dilog saja, tdk menggagalkan fungsi utama snooze
+            incrementSnoozeCount(scheduleId, scheduledAtMillis);
             FirebaseFirestore.getInstance()
                     .collection("medication_schedules")
                     .document(scheduleId)
@@ -81,6 +88,21 @@ public class AlarmActionReceiver extends BroadcastReceiver {
                         pendingResult.finish();
                     });
         }
+    }
+    /**
+     * Naikkan counter snooze_count di dokumen medication_logs yang bersangkutan.
+     * Pakai set() + SetOptions.merge() (bukan update()) karena update() akan
+     * throw exception kalau dokumen belum ada — sedangkan set+merge otomatis
+     * membuat field itu kalau belum ada, atau menambahkannya kalau sudah ada.
+     */
+    private void incrementSnoozeCount(String scheduleId, long scheduledAtMillis) {
+        String logId = buildLogId(scheduleId, scheduledAtMillis);
+        Map<String, Object> incrementUpdate = new HashMap<>();
+        incrementUpdate.put("snooze_count", FieldValue.increment(1));
+        FirebaseFirestore.getInstance().collection("medication_logs")
+                .document(logId).set(incrementUpdate, SetOptions.merge())
+                .addOnSuccessListener(unused -> Log.d("AlarmActionReceiver", "snooze_count diincrement untuk logId=" + logId))
+                .addOnFailureListener(e -> Log.e("AlarmActionReceiver", "Gagal increment snooze_count untuk logId= " + logId));
     }
 
     private void markAsTaken(

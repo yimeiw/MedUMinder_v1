@@ -59,11 +59,6 @@ public class MedicationRepo {
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
     }
-    public void getMedBySchedule(String medicationId, RepoCallback<MedicationSchedules> schedulesRepoCallback){
-        db.collection("medication_schedules").document(medicationId).get()
-                .addOnSuccessListener(doc -> schedulesRepoCallback.onSuccess(doc.toObject(MedicationSchedules.class)))
-                .addOnFailureListener(schedulesRepoCallback::onFailure);
-    }
     public void markLogAsTaken(String logId, RepoCallback<Void> callback){
         Map<String, Object> update = new HashMap<>();
         update.put("status", "dikonsumsi");

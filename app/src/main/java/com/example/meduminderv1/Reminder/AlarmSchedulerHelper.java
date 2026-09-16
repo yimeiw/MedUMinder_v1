@@ -37,7 +37,7 @@ public class AlarmSchedulerHelper {
     // Cap default kalau end_date null, biar ga daftar alarm sampai selama-lamanya dalam satu panggilan
     private static final long DEFAULT_WINDOW_MILLIS = 7L * 24 * 60 * 60 * 1000;
     private static final long PRE_REMINDER_OFFSET_MS = 5 * 60 * 1000L;
-    private static final long MISSED_CHECK_DELAY_MS = 15 * 60 * 1000L;
+    public static final long MISSED_CHECK_DELAY_MS = 5 * 60 * 1000L;
 
     /**
      * Menjadwalkan semua occurrence (satu per entry di times_of_day) untuk satu MedicationSchedules.
@@ -86,9 +86,9 @@ public class AlarmSchedulerHelper {
                     triggerMillis,
                     triggerMillis,
                     occurrenceIndex,
-                    "medicine"
+                    "medicine",
+                    endMillis
             );
-//             scheduleSingleAlarm(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
             scheduleMedicinePreReminder(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
             scheduleMedicineMissedCheck(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
             occurrenceIndex++;
@@ -137,9 +137,9 @@ public class AlarmSchedulerHelper {
                     triggerMillis,
                     triggerMillis,
                     occurrenceIndex,
-                    "medicine"
+                    "medicine",
+                    endMillis
             );
-//             scheduleSingleAlarm(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
             scheduleMedicinePreReminder(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
             scheduleMedicineMissedCheck(context, scheduleId, namaObat, triggerMillis, occurrenceIndex);
             occurrenceIndex++;
@@ -198,7 +198,7 @@ public class AlarmSchedulerHelper {
             return -1;
         }
     }
-
+    // Signature LAMA — dibiarkan, sekarang cuma delegasi ke versi baru dengan endMillis=0
     private static void scheduleSingleAlarm(
             Context context,
             String alarmId,
@@ -209,6 +209,11 @@ public class AlarmSchedulerHelper {
             int occurrenceIndex,
             String type
     ) {
+        scheduleSingleAlarm(context, alarmId, logScheduleId, namaObat, triggerMillis, logScheduledAtMillis, occurrenceIndex, type, 0L);
+    }
+    // Signature BARU — endMillis=0 berarti "tidak perlu self-reschedule" (dipakai appointment/snooze)
+    private static void scheduleSingleAlarm(Context context, String alarmId, String logScheduleId, String namaObat,
+                                            long triggerMillis, long logScheduledAtMillis, int occurrenceIndex, String type, long endMillis){
         AlarmManager alarmManager =
                 (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
@@ -227,9 +232,10 @@ public class AlarmSchedulerHelper {
         intent.putExtra("scheduled_at", logScheduledAtMillis);
         intent.putExtra("trigger_at", triggerMillis);
         intent.putExtra("type", type);
+        intent.putExtra("occurrence_index", occurrenceIndex); //dipakai buat reschedule besok
+        intent.putExtra("end_millis", endMillis); //bata reschedule
 
-        int requestCode =
-                (alarmId + "_" + occurrenceIndex).hashCode();
+        int requestCode = (alarmId + "_" + occurrenceIndex).hashCode();
 
         PendingIntent pendingIntent =
                 PendingIntent.getBroadcast(
@@ -365,5 +371,18 @@ public class AlarmSchedulerHelper {
                 scheduleAll(context, scheduleId, "Obat", schedules);
             }
         });
+    }
+
+    public static void rescheduleNextDay(Context context, String scheduleId, String namaObat, long previousTriggerMillis, int occurrenceIndex, long endMillis){
+        long nextTrigger = previousTriggerMillis + AlarmManager.INTERVAL_DAY;
+        if (endMillis > 0 && nextTrigger > endMillis) return; //sudah lewat end_date, stop
+        scheduleSingleAlarm(context, scheduleId, scheduleId, namaObat, nextTrigger, nextTrigger, occurrenceIndex, "medicine");
+        // jgn lupa reschedule pre-reminder & missed-check jg untuk occurrence ini
+        scheduleMedicinePreReminder(context, scheduleId, namaObat, nextTrigger, occurrenceIndex);
+        scheduleMedicineMissedCheck(context, scheduleId, namaObat, nextTrigger, occurrenceIndex);
+    }
+
+    public static void resolveAndScheduleForBoot(Context context, String scheduleId, MedicationSchedules schedules){
+        resolveNamaObatThenSchedule(context, scheduleId, schedules);
     }
 }
