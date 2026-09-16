@@ -128,7 +128,20 @@ public class SignUpActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(String message) {
-                Toast.makeText(SignUpActivity.this, message, Toast.LENGTH_SHORT).show();
+                if ("EMAIL_ALREADY_IN_USE".equals(message)) {
+                    new MaterialAlertDialogBuilder(SignUpActivity.this)
+                            .setTitle("Email Sudah Terdaftar")
+                            .setMessage("Email ini sudah digunakan. Silakan login atau gunakan email lain.")
+                            .setPositiveButton("Login", (dialog, which) -> {
+                                Intent intent = new Intent(SignUpActivity.this, LoginActivity.class);
+                                intent.putExtra("prefill_email", emailInput.getText().toString().trim());
+                                startActivity(intent);
+                            })
+                            .setNegativeButton("Batal", null)
+                            .show();
+                } else {
+                    Toast.makeText(SignUpActivity.this, message, Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
@@ -144,6 +157,14 @@ public class SignUpActivity extends AppCompatActivity {
     private boolean validateInput(String name, String email, String password) {
         if(TextUtils.isEmpty(name)){
             nameInput.setError("Nama harus diisi");
+            return false;
+        }
+        if (name.length() < 2) {
+            nameInput.setError("Nama minimal 2 karakter");
+            return false;
+        }
+        if (name.length() > 50) {
+            nameInput.setError("Nama maksimal 50 karakter");
             return false;
         }
         if (TextUtils.isEmpty(email)){

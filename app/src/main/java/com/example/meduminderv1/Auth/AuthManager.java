@@ -41,6 +41,7 @@ import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.auth.UserInfo;
@@ -135,7 +136,13 @@ public class AuthManager {
                     callback.onFailure(message);
                 }
             });
-        }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+        }).addOnFailureListener(e -> {
+            if (e instanceof FirebaseAuthUserCollisionException) {
+                callback.onFailure("EMAIL_ALREADY_IN_USE");
+            } else {
+                callback.onFailure(e.getMessage());
+            }
+        });
     }
     public void loginWithEmail(String email, String password, AuthCallback<User> callback){
         if (email == null || email.trim().isEmpty()){

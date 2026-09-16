@@ -30,6 +30,48 @@ public class StatistikRepo {
         void onFailure(Exception e);
     }
 
+    public interface OverallStatsCallback {
+        void onResult(int totalSeharusnya, int totalDikonsumsi, int percent);
+        void onFailure(Exception e);
+    }
+
+    public void getOverallAdherence(String uid, OverallStatsCallback callback) {
+        if (uid == null) {
+            callback.onResult(0, 0, 0);
+            return;
+        }
+
+        db.collection("medication_logs")
+                .whereEqualTo("users_id", uid)
+                .get()
+                .addOnSuccessListener(query -> {
+                    int totalSeharusnya = 0;
+                    int totalDikonsumsi = 0;
+
+                    for (DocumentSnapshot doc : query) {
+                        MedicationLog log = doc.toObject(MedicationLog.class);
+                        if (log == null || log.getScheduled_at() == null) continue;
+
+                        // skip yang belum due (masih akan datang)
+                        if (log.getScheduled_at().toDate().getTime()
+                                + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS > System.currentTimeMillis()) {
+                            continue;
+                        }
+
+                        totalSeharusnya++;
+                        if (log.getTaken_at() != null) {
+                            totalDikonsumsi++;
+                        }
+                    }
+
+                    int percent = totalSeharusnya == 0 ? 0
+                            : (int) (totalDikonsumsi * 100f / totalSeharusnya);
+
+                    callback.onResult(totalSeharusnya, totalDikonsumsi, percent);
+                })
+                .addOnFailureListener(callback::onFailure);
+    }
+
     public void getAdherence(String uid, String period, StatsCallback callback) {
         if (uid == null) {
             callback.onResult(new ArrayList<>());
