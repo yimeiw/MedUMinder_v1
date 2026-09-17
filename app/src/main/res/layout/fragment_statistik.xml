@@ -407,7 +407,7 @@
                     android:id="@+id/tvLegendTaken"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="● Dikonsumsi"
+                    android:text="@string/legend_dikonsumsi"
                     android:textSize="12sp"
                     android:textColor="@color/green"
                     android:layout_marginTop="10dp" />
@@ -417,7 +417,7 @@
                     android:id="@+id/tvLegendSnooze"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="● Remind Me Later"
+                    android:text="@string/legend_snooze"
                     android:textSize="12sp"
                     android:textColor="@color/gray" />
 
@@ -426,7 +426,7 @@
                     android:id="@+id/tvLegendIgnored"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="● Diabaikan"
+                    android:text="@string/legend_ignored"
                     android:textSize="12sp"
                     android:textColor="@color/pink" />
             </LinearLayout>

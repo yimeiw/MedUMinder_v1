@@ -59,6 +59,7 @@ import java.util.UUID;
 
 public class AuthManager {
     private static AuthManager instance;
+    private final Context context;
     private final FirebaseAuth mAuth;
     private final UserRepository userRepository;
     private final SessionManager sessionManager;
@@ -68,6 +69,7 @@ public class AuthManager {
     private final CareRelationshipRepo relationshipRepo;
 
     public AuthManager(Context context){
+        this.context = context.getApplicationContext();
         mAuth = FirebaseAuth.getInstance();
         credentialManager = CredentialManager.create(context);
         userRepository = UserRepository.getInstance();

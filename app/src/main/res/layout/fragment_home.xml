@@ -118,7 +118,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Tambah Pengingat"
+                        android:text="@string/tambah_pengingat"
                         android:textAlignment="center"
                         android:fontFamily="@font/inter_18pt_semibold"
                         android:textColor="?attr/colorOnSurface"
@@ -148,7 +148,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:fontFamily="@font/inter_18pt_semibold"
-                        android:text="Tambah Appointment"
+                        android:text="@string/tambah_appointment"
                         android:textAlignment="center"
                         android:textColor="?attr/colorOnSurface"
                         android:background="@android:color/transparent"/>
@@ -176,7 +176,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Dokumen Kesehatan"
+                        android:text="@string/dokumen_kesehatan"
                         android:textAlignment="center"
                         android:fontFamily="@font/inter_18pt_semibold"
                         android:textColor="?attr/colorOnSurface"
@@ -206,7 +206,7 @@
                     android:id="@+id/tvcard"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Jadwal Berikutnya"
+                    android:text="@string/jadwal_berikutnya"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:layout_gravity="center"
@@ -290,7 +290,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:id="@+id/tvStokObat"
-                            android:text="Stok Obat: "
+                            android:text="@string/stok_obat"
                             android:textSize="12sp"
                             android:textColor="?attr/colorPrimary"/>
 
@@ -308,7 +308,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:id="@+id/btnKonfirmasi"
-                        android:text="Sudah Dikonsumsi"
+                        android:text="@string/sudah_dikonsumsi"
                         android:background="@drawable/border"
                         app:backgroundTint="@null"
                         android:textAllCaps="false"
@@ -331,7 +331,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Belum ada jadwal"
+                        android:text="@string/belum_ada_jadwal"
                         android:textSize="14sp"
                         android:textColor="?attr/colorPrimary"
                         android:layout_marginBottom="20dp"/>
@@ -340,7 +340,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:id="@+id/addNoSchedule"
-                        android:text="Tambahkan Jadwal"
+                        android:text="@string/tambahkan_jadwal"
                         android:textAllCaps="false"
                         android:textColor="?attr/colorOnSurface"
                         android:background="@drawable/border"
@@ -372,7 +372,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Jadwal Hari Ini"
+                        android:text="@string/jadwal_hari_ini"
                         android:textSize="20dp"
                         android:textColor="?attr/colorOnSurface"
                         android:textStyle="bold"/>
@@ -387,7 +387,7 @@
                             android:id="@+id/viewAll"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Lihat Selengkapnya"
+                            android:text="@string/lihat_selengkapnya"
                             android:clickable="true"
                             android:focusable="true"
                             android:paddingEnd="0dp"
@@ -415,7 +415,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:text="Tidak ada jadwal hari ini."
+                    android:text="@string/tidak_ada_jadwal_hari_ini"
                     android:gravity="center"
                     android:visibility="visible"/>
             </LinearLayout>
@@ -436,7 +436,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Ringkasan Statistik"
+                    android:text="@string/ringkasan_statistik"
                     android:textSize="20dp"
                     android:textColor="?attr/colorOnSurface"
                     android:textStyle="bold"/>

@@ -1,5 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">MedUMinder</string>
+    <string name="sign_up_here"><u>Sign Up here!</u></string>
+    <string name="reset_password">Forgot password?</string>
+    <string name="login_here"><u>Login here!</u></string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string><string name="action_sign_in">Sign in or register</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="welcome">Welcome !</string>
+    <string name="invalid_username">Not a valid username</string>
+    <string name="invalid_password">Password must be &gt;5 characters</string>
+    <string name="login_failed">"Login failed"</string>
+    <string name="login_success">"Login successful"</string>
+    <string name="greetings_consumer">"Don&apos;t forget to take your medicine!"</string>
+    <string name="greetings_caregiver">"Please remind the Consumer to take their medicine!"</string>
+    <string name="desc_kepatuhan_tinggi">"Your adherence this week is very good. Keep it up!"</string>
+    <string name="desc_kepatuhan_okela">"Your adherence this week is quite good. Let&apos;s improve it!"</string>
+    <string name="desc_kepatuhan_rendah">"Your adherence this week is very low. Let&apos;s improve it soon!"</string>
+    <string name="alert_invite_consumer">"Connect with a consumer to monitor their medication adherence and receive notifications for missed medications."</string>
+    <string name="alert_invite_caregiver">"Add a caregiver who can receive notifications and send medication reminders."</string>
+
+    <string-array name="role_array">
+        <item>Consumer</item>
+        <item>Caregiver</item>
+    </string-array>
+
+    <string name="title_activity_schedule">ScheduleActivity</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
     <string name="current_language">Current Language</string>
     <string name="language_options">Language Options</string>
     <string name="profile">Profile</string>
@@ -34,7 +63,6 @@
     <string name="remindMeBefore">Remind Me Before</string>
     <string name="thirtyMin">30 Minutes</string>
     <string name="remindUntilConfirm">Repeat Reminder Until Confirmed</string>
-
     <string name="jenisObat">Medicine Type</string>
     <string name="obatPil">Pill</string>
     <string name="obatCair">Liquid</string>
@@ -58,4 +86,189 @@
     <string name="saveChanges">Save Changes</string>
     <string name="ubahPengingat">Edit Reminder</string>
 
+    <!-- Home Page -->
+    <string name="home_greeting">Hello, %1$s!</string>
+    <string name="home_greeting_caregiver">Hello, %1$s</string>
+    <string name="obat_default">Medication</string>
+    <string name="jumlah_obat">%1$d Medication(s)</string>
+    <string name="add_consumer">Add Consumer</string>
+    <string name="remind_consumer">Remind Consumer</string>
+    <string name="consumer_belum_ada_jadwal">Consumer has no schedule</string>
+    <string name="adherence_rate">Adherence Rate</string>
+    <string name="total_obat_terlewat">Total Medication Missed</string>
+    <string name="total_obat_akan_datang">Total Upcoming Medication</string>
+    <string name="general">General</string>
+    <string name="document">Documents</string>
+    <string name="riwayat">History</string>
+    <string name="statistik">Statistics</string>
+    <string name="list_consumer">Consumer List</string>
+
+    <string name="tambah_pengingat">Add Reminder</string>
+    <string name="tambah_appointment">Add Appointment</string>
+    <string name="dokumen_kesehatan">Health Documents</string>
+
+    <string name="jadwal_berikutnya">Next Schedule</string>
+    <string name="stok_obat">Medicine Stock: </string>
+    <string name="sudah_dikonsumsi">Already Taken</string>
+    <string name="belum_ada_jadwal">No schedule yet</string>
+    <string name="tambahkan_jadwal">Add Schedule</string>
+
+    <string name="jadwal_hari_ini">Today Schedule</string>
+    <string name="lihat_selengkapnya">See More</string>
+    <string name="tidak_ada_jadwal_hari_ini">No schedule today.</string>
+
+    <string name="ringkasan_statistik">Statistics Summary</string>
+    <string name="belum_ada_data_konsumsi">No medication consumption data yet.</string>
+
+    <string name="dosis_seharusnya">Scheduled Dose</string>
+    <string name="dosis_dikonsumsi">Dose Taken</string>
+    <string name="persentase_kepatuhan">Adherence Percentage</string>
+
+    <string name="hari_ini">Today</string>
+    <string name="besok">Tomorrow</string>
+    <string name="sisa_stok">Remaining stock: %1$d</string>
+
+    <string name="berhasil_dicatat">Recorded successfully</string>
+    <string name="pengingat_terkirim">Reminder sent.</string>
+
+    <string name="legend_dikonsumsi">● Taken</string>
+    <string name="legend_snooze">● Remind Me Later</string>
+    <string name="legend_ignored">● Ignored</string>
+
+    <string name="mengingatkan_minum_obat">%1$s reminded you to take %2$s</string>
+
+    <!-- Switch Role -->
+    <string name="caregiver">Caregiver</string>
+    <string name="caregiver_description">Helps monitor Consumer adherence.</string>
+    <string name="consumer">Consumer</string>
+    <string name="consumer_description">Manages health reminders.</string>
+
+    <!-- popup edit -->
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+
+    <!-- item_relation -->
+    <string name="loading">Loading...</string>
+
+    <!-- item_notification -->
+    <string name="reminder_what">What reminder</string>
+    <string name="message_placeholder">Message</string>
+
+    <!-- item_medicinelog -->
+    <string name="sisa_stok_label">Remaining stock: </string>
+    <string name="waktu">Time:</string>
+    <string name="dikonsumsi">Taken</string>
+
+    <!-- dropdown -->
+    <string name="riwayat_konsumsi">Consumption History</string>
+
+    <!-- item appointment log -->
+    <string name="nama_appointment">Appointment Name</string>
+    <string name="dihadiri">Attended</string>
+
+    <!-- schedule -->
+    <string name="medicine">Medicine</string>
+    <string name="schedule">Schedule</string>
+    <string name="appointment">Appointment</string>
+
+    <!-- reminder -->
+    <string name="stok_hampir_habis">Your medicine is running low, please refill it soon!</string>
+    <string name="terima">Accept</string>
+    <string name="tolak">Reject</string>
+    <string name="konfirmasi_pengingat">Reminder Confirmation</string>
+    <string name="nama_obat">Medicine Name</string>
+    <string name="status">Status</string>
+    <string name="nama_lokasi">Location Name</string>
+    <string name="sudah_diminum">Already Taken</string>
+    <string name="tunda_pengingat">Snooze Reminder</string>
+
+    <!-- medicine reminder -->
+    <string name="masukkan_nama_obat">Enter your medicine name</string>
+    <string name="frekuensi_minum_obat">Medication Frequency</string>
+    <string name="pilih_frekuensi_minum_obat">Select your medication frequency</string>
+    <string name="tanggal_selesai_minum_obat">Medication End Consumption Date</string>
+    <string name="masukkan_jumlah_stok_obat">Enter your medicine stock quantity</string>
+    <string name="save_reminder">Save Reminder</string>
+
+    <!-- relation -->
+    <string name="belum_ada_relasi">No relationships yet.</string>
+
+    <!-- log -->
+
+    <string name="belum_ada_riwayat_konsumsi">No consumption history yet.</string>
+    <string name="terlewatkan">Missed</string>
+    <string name="belum_ada_riwayat_jadwal_temu">No appointment history yet.</string>
+    <string name="semua">All</string>
+    <string name="akan_datang">Upcoming</string>
+
+    <!-- invitation -->
+    <string name="email_user">User Email</string>
+    <string name="masukkan_email">Enter Email</string>
+    <string name="kirim_undangan">Send Invitation</string>
+
+    <!-- edit medicine -->
+    <string name="frekuensi">Frequency</string>
+    <string name="perbarui_pengingat">Update Reminder</string>
+
+    <!-- delete account -->
+    <string name="enter_password">Enter your password</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- appointment reminder -->
+    <string name="masukkan_nama_appointment">Enter your appointment name</string>
+    <string name="lokasi_appointment">Appointment Location</string>
+    <string name="masukkan_lokasi_appointment">Enter your appointment location</string>
+    <string name="tanggal_appointment">Appointment Date</string>
+    <string name="jam_appointment">Appointment Time</string>
+
+    <!-- pilih consumer -->
+    <string name="pilih_consumer">Select Consumer</string>
+
+    <!-- signup -->
+    <string name="welcome_signup">Welcome! Please Sign Up Here</string>
+    <string name="enter_full_name">Enter your full name</string>
+    <string name="enter_email">Enter your email</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="or_sign_up_with">Or Sign Up with</string>
+    <string name="already_have_account">Already have an account?</string>
+
+    <!-- login -->
+    <string name="welcome_login">Welcome! Please Login Here</string>
+    <string name="login">Login</string>
+    <string name="or_login_with">Or Login with</string>
+    <string name="dont_have_account">Dont have an account yet?</string>
+
+    <!-- izin -->
+    <string name="izin_alarm_dibutuhkan">Alarm Permission Required</string>
+    <string name="izin_alarm_message">To ensure medicine reminders sound on time, enable alarm &amp; reminder permission for MedUMinder.</string>
+    <string name="aktifkan">Enable</string>
+    <string name="nanti">Later</string>
+
+    <!-- auth -->
+    <string name="data_user_tidak_boleh_kosong">User data cannot be empty.</string>
+    <string name="email_tidak_boleh_kosong">Email cannot be empty.</string>
+    <string name="format_email_tidak_valid">Invalid email format.</string>
+    <string name="password_minimal">Password must be at least 6 characters.</string>
+    <string name="gagal_membuat_akun">Failed to create account.</string>
+    <string name="login_gagal_user_tidak_ditemukan">Login failed, user not found.</string>
+    <string name="email_atau_password_salah">Incorrect email or password.</string>
+    <string name="email_belum_terdaftar">Email is not registered.</string>
+    <string name="akun_google_login">If your account was created using Google, please log in using Google.</string>
+    <string name="password_salah">Incorrect password.</string>
+    <string name="credential_tidak_valid">Invalid credential.</string>
+    <string name="google_credential_tidak_valid">Invalid Google credential.</string>
+    <string name="user_tidak_ditemukan">User not found.</string>
+    <string name="user_belum_login">User is not logged in.</string>
+    <string name="google_sudah_terhubung">Google is already connected.</string>
+    <string name="email_google_harus_sama">The Google email must match your MedUMinder account email.</string>
+    <string name="belum_login">Not logged in.</string>
+    <string name="provider_tidak_didukung">Provider is not supported.</string>
+    <string name="nama_minimal">Name must be at least 4 characters.</string>
+    <string name="data_user_tidak_ditemukan">User data not found.</string>
+    <string name="email_wajib_diisi">Email is required.</string>
+    <string name="tidak_dapat_mengundang_diri">You cannot invite your own account.</string>
+    <string name="user_sudah_terhubung">User is already connected.</string>
+    <string name="invitation_pending">Invitation is still pending.</string>
+    <string name="undangan_diterima">Your invitation was accepted.</string>
+    <string name="undangan_ditolak">Your invitation was rejected.</string>
 </resources>

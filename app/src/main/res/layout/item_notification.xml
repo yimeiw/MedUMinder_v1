@@ -38,7 +38,7 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/titleNotif"
                 android:textSize="16sp"
-                android:text="Reminder apa"/>
+                android:text="@string/reminder_what"/>
 
             <TextView
                 android:layout_width="match_parent"
@@ -46,7 +46,7 @@
                 android:id="@+id/messageNotif"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                android:text="isi message"/>
+                android:text="@string/message_placeholder"/>
 
         </LinearLayout>
 

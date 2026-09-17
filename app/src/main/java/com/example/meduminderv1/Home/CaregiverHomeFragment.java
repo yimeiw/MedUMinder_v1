@@ -157,7 +157,7 @@ public class CaregiverHomeFragment extends Fragment {
         });
 
         User caregiver = sessionManager.getUser();
-        if (caregiver != null) tvGreeting.setText("Halo, " + caregiver.getName());
+        if (caregiver != null) tvGreeting.setText(getString(R.string.home_greeting_caregiver, caregiver.getName()));
 
         View pickerRoot = view.findViewById(R.id.consumerPicker);
         consumerPicker = new ConsumerPickerHelper( pickerRoot, requireContext(), uid -> {
@@ -263,7 +263,7 @@ public class CaregiverHomeFragment extends Fragment {
                         if (!isAdded()) return;
                         nextScheduleMedName = medName;
                         tvtitleCard.setText(medName);
-                        tvStokNext.setText("Sisa stok: " + stock);
+                        tvStokNext.setText(getString(R.string.sisa_stok, stock));
                         btnRemindConsumer.setOnClickListener(v -> sendReminder(consumerUid, medName));
                     });
                 });
@@ -277,8 +277,8 @@ public class CaregiverHomeFragment extends Fragment {
         Locale localeId = new Locale("id", "ID");
         SimpleDateFormat sdfDay = new SimpleDateFormat("EEEE", localeId);
 
-        if (isSameDay(target, today)) return "Hari ini";
-        if (isSameDay(target, tomorrow)) return "Besok";
+        if (isSameDay(target, today)) return getString(R.string.hari_ini);
+        if (isSameDay(target, tomorrow)) return getString(R.string.besok);
         return sdfDay.format(date);
     }
 
@@ -293,12 +293,12 @@ public class CaregiverHomeFragment extends Fragment {
         notification.setReceiver_uid(consumerUid);
         notification.setSender_uid(caregiver.getAuth_uid());
         notification.setType(NotificationType.Medicine);
-        notification.setMessage(caregiver.getName() + " mengingatkan Anda untuk minum obat " + medName);
+        notification.setMessage(getString(R.string.mengingatkan_minum_obat, caregiver.getName(), medName));
         notification.setIs_read(false);
         notificationRepo.createNotification(notification, new RepoCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                Toast.makeText(requireContext(), "Pengingat terkirim.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), getString(R.string.pengingat_terkirim), Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -327,11 +327,11 @@ public class CaregiverHomeFragment extends Fragment {
                                     db.collection("medicine_catalog").document(med.getCatalog_id()).get()
                                             .addOnSuccessListener(catSnap -> {
                                                 MedicineCatalog catalog = catSnap.toObject(MedicineCatalog.class);
-                                                callback.onResolved(catalog != null ? catalog.getNama_obat() : "Obat", finalStock);
+                                                callback.onResolved(catalog != null ? catalog.getNama_obat() : getString(R.string.obat_default), finalStock);
                                             });
 
                                 } else {
-                                    callback.onResolved("Obat", finalStock);
+                                    callback.onResolved(getString(R.string.obat_default), finalStock);
                                 }
                             });
                 });
@@ -371,7 +371,7 @@ public class CaregiverHomeFragment extends Fragment {
                             remaining[0]--;
                             continue;
                         } resolveMedName(log.getMedication_schedules_id(), (medName, stock) -> {
-                            combined.add(new LogItem("medicine", medName, sdf.format(log.getScheduled_at().toDate()), "Sisa stok: " + stock, log.getStatus()));
+                            combined.add(new LogItem("medicine", medName, sdf.format(log.getScheduled_at().toDate()), getString(R.string.sisa_stok, stock), log.getStatus()));
                             remaining[0]--;
                             if (remaining[0] <= 0){
                                 mergeAppointments(consumerUid, combined, startOfDay, startOfTomorrow);
@@ -440,9 +440,9 @@ public class CaregiverHomeFragment extends Fragment {
                         if (status == LogStatus.DIKONSUMSI) taken++;
                         else if (status == LogStatus.TERLEWATKAN) missed++;
                         else if (status == LogStatus.AKAN_DATANG) upcoming++;
-                    } tvTotalDikonsumsi.setText(taken + " Obat");
-                    tvTotalTerlewat.setText(missed + " Obat");
-                    tvTotalAkanDatang.setText(upcoming + " Obat");
+                    } tvTotalDikonsumsi.setText(getString(R.string.jumlah_obat, taken));
+                    tvTotalTerlewat.setText(getString(R.string.jumlah_obat, missed));
+                    tvTotalAkanDatang.setText(getString(R.string.jumlah_obat, upcoming));
                 });
     }
 

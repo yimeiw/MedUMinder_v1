@@ -35,7 +35,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Caregiver"
+                    android:text="@string/caregiver"
                     android:gravity="center"
                     android:textSize="18sp"
                     android:textStyle="bold"
@@ -45,7 +45,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Membantu mengawasi kepatuhan Consumer."
+                    android:text="@string/caregiver_description"
                     android:gravity="center"
                     android:textSize="12sp"
                     android:textColor="?attr/colorOnSurface"
@@ -78,7 +78,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Consumer"
+                    android:text="@string/consumer"
                     android:gravity="center"
                     android:textSize="18sp"
                     android:textStyle="bold"
@@ -88,7 +88,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Mengelola pengingat untuk kesehatan."
+                    android:text="@string/consumer_description"
                     android:gravity="center"
                     android:textSize="12sp"
                     android:textColor="?attr/colorOnSurface"

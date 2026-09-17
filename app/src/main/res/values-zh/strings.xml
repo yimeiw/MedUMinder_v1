@@ -1,5 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">MedUMinder</string>
+    <string name="sign_up_here"><u>在这里注册！</u></string>
+    <string name="reset_password">忘记密码？</string>
+    <string name="login_here"><u>在这里登录！</u></string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="prompt_email">电子邮箱</string>
+    <string name="prompt_password">密码</string>
+    <string name="action_sign_in">登录或注册</string>
+    <string name="action_sign_in_short">登录</string>
+    <string name="welcome">欢迎 !</string>
+    <string name="invalid_username">用户名无效</string>
+    <string name="invalid_password">密码必须超过5个字符</string>
+    <string name="login_failed">"登录失败"</string>
+    <string name="login_success">"登录成功"</string>
+    <string name="greetings_consumer">"别忘了服药！"</string>
+    <string name="greetings_caregiver">"请提醒 Consumer 服药！"</string>
+    <string name="desc_kepatuhan_tinggi">"您本周的服药依从性非常好。请继续保持！"</string>
+    <string name="desc_kepatuhan_okela">"您本周的服药依从性还不错。让我们继续提高！"</string>
+    <string name="desc_kepatuhan_rendah">"您本周的服药依从性较低。请尽快改善！"</string>
+    <string name="alert_invite_consumer">"连接 Consumer 以监测其服药依从性，并接收漏服药物的通知。"</string>
+    <string name="alert_invite_caregiver">"添加可以接收通知并发送服药提醒的 Caregiver。"</string>
+
+    <string-array name="role_array">
+        <item>Consumer</item>
+        <item>Caregiver</item>
+    </string-array>
+
     <string name="current_language">当前语言</string>
     <string name="language_options">语言选项</string>
     <string name="profile">个人资料</string>
@@ -57,4 +84,190 @@
 
     <string name="saveChanges">保存更改</string>
     <string name="ubahPengingat">编辑提醒</string>
+
+    <!-- Home Page -->
+    <string name="home_greeting">你好，%1$s！</string>
+    <string name="home_greeting_caregiver">你好，%1$s</string>
+    <string name="obat_default">药物</string>
+    <string name="jumlah_obat">%1$d 种药物</string>
+    <string name="add_consumer">添加 Consumer</string>
+    <string name="remind_consumer">提醒 Consumer</string>
+    <string name="consumer_belum_ada_jadwal">Consumer 暂无日程</string>
+    <string name="adherence_rate">服药依从率</string>
+    <string name="total_obat_terlewat">错过的药物总数</string>
+    <string name="total_obat_akan_datang">即将服用的药物总数</string>
+    <string name="general">一般</string>
+    <string name="document">文档</string>
+    <string name="riwayat">历史记录</string>
+    <string name="statistik">统计</string>
+    <string name="list_consumer">Consumer 列表</string>
+
+    <string name="tambah_pengingat">添加提醒</string>
+    <string name="tambah_appointment">添加预约</string>
+    <string name="dokumen_kesehatan">健康文件</string>
+
+    <string name="jadwal_berikutnya">下一项日程</string>
+    <string name="stok_obat">药品库存： </string>
+    <string name="sudah_dikonsumsi">已服用</string>
+    <string name="belum_ada_jadwal">暂无日程</string>
+    <string name="tambahkan_jadwal">添加日程</string>
+
+    <string name="jadwal_hari_ini">今日安排</string>
+    <string name="lihat_selengkapnya">查看更多</string>
+    <string name="tidak_ada_jadwal_hari_ini">今天没有日程。</string>
+
+    <string name="ringkasan_statistik">统计摘要</string>
+    <string name="belum_ada_data_konsumsi">暂无药物服用数据。</string>
+
+    <string name="dosis_seharusnya">应服剂量</string>
+    <string name="dosis_dikonsumsi">已服剂量</string>
+    <string name="persentase_kepatuhan">依从率</string>
+
+    <string name="hari_ini">今天</string>
+    <string name="besok">明天</string>
+    <string name="sisa_stok">剩余库存：%1$d</string>
+
+    <string name="berhasil_dicatat">记录成功</string>
+    <string name="pengingat_terkirim">提醒已发送。</string>
+
+    <string name="legend_dikonsumsi">● 已服用</string>
+    <string name="legend_snooze">● 稍后提醒</string>
+    <string name="legend_ignored">● 已忽略</string>
+
+    <string name="mengingatkan_minum_obat">%1$s 提醒您服用 %2$s</string>
+
+    <!-- Switch Role -->
+    <string name="caregiver">Caregiver</string>
+    <string name="caregiver_description">帮助监督 Consumer 的服药依从性。</string>
+    <string name="consumer">Consumer</string>
+    <string name="consumer_description">管理健康提醒。</string>
+
+    <!-- popup edit -->
+    <string name="edit">编辑</string>
+    <string name="delete">删除</string>
+
+    <!-- item_relation -->
+    <string name="loading">加载中...</string>
+
+    <!-- item_notification -->
+    <string name="reminder_what">什么提醒</string>
+    <string name="message_placeholder">消息内容</string>
+
+    <!-- item_medicinelog -->
+    <string name="sisa_stok_label">剩余库存： </string>
+    <string name="waktu">时间：</string>
+    <string name="dikonsumsi">已服用</string>
+
+    <!-- dropdown -->
+    <string name="riwayat_konsumsi">服药记录</string>
+
+    <!-- item appointment log -->
+    <string name="nama_appointment">预约名称</string>
+    <string name="dihadiri">已参加</string>
+
+    <!-- schedule -->
+    <string name="medicine">药物</string>
+    <string name="schedule">日程</string>
+    <string name="appointment">预约</string>
+
+    <!-- reminder -->
+    <string name="stok_hampir_habis">您的药物快用完了，请尽快补充药物！</string>
+    <string name="tolak">拒绝</string>
+    <string name="terima">接受</string>
+    <string name="konfirmasi_pengingat">提醒确认</string>
+    <string name="nama_obat">药物名称</string>
+    <string name="status">状态</string>
+    <string name="nama_lokasi">地点名称</string>
+    <string name="sudah_diminum">已服用</string>
+    <string name="tunda_pengingat">推迟提醒</string>
+
+    <!-- medicine reminder -->
+    <string name="masukkan_nama_obat">请输入您的药物名称</string>
+    <string name="frekuensi_minum_obat">服药频率</string>
+    <string name="pilih_frekuensi_minum_obat">请选择您的服药频率</string>
+    <string name="tanggal_selesai_minum_obat">停止服药日期</string>
+    <string name="masukkan_jumlah_stok_obat">请输入您的药物库存数量</string>
+    <string name="save_reminder">保存提醒</string>
+
+    <!-- relation -->
+    <string name="belum_ada_relasi">暂无关系。</string>
+
+    <!-- log -->
+    <string name="terlewatkan">已错过</string>
+    <string name="belum_ada_riwayat_konsumsi">暂无服药记录。</string>
+    <string name="belum_ada_riwayat_jadwal_temu">暂无预约记录。</string>
+    <string name="akan_datang">即将到来</string>
+    <string name="semua">全部</string>
+
+    <!-- invitation -->
+    <string name="email_user">用户邮箱</string>
+    <string name="masukkan_email">请输入邮箱</string>
+    <string name="kirim_undangan">发送邀请</string>
+
+    <!-- edit medicine -->
+    <string name="frekuensi">频率</string>
+    <string name="perbarui_pengingat">更新提醒</string>
+
+    <!-- delete account -->
+    <string name="enter_password">请输入您的密码</string>
+    <string name="cancel">取消</string>
+
+    <!-- appointment reminder -->
+    <string name="simpan_appointment">保存预约</string>
+    <string name="jam_appointment">预约时间</string>
+    <string name="tanggal_appointment">预约日期</string>
+    <string name="masukkan_lokasi_appointment">请输入预约地点</string>
+    <string name="lokasi_appointment">预约地点</string>
+    <string name="masukkan_nama_appointment">请输入预约名称</string>
+
+    <!-- pilih consumer -->
+    <string name="pilih_consumer">选择 Consumer</string>
+
+    <!-- signup -->
+    <string name="already_have_account">已经有账号？</string>
+    <string name="or_sign_up_with">或使用以下方式注册</string>
+    <string name="sign_up">注册</string>
+    <string name="enter_email">请输入您的邮箱</string>
+    <string name="enter_full_name">请输入您的全名</string>
+    <string name="welcome_signup">欢迎！请在此注册</string>
+
+    <!-- login -->
+    <string name="dont_have_account">还没有账号？</string>
+    <string name="or_login_with">或使用以下方式登录</string>
+    <string name="login">登录</string>
+    <string name="welcome_login">欢迎！请在此登录</string>
+
+    <!-- izin -->
+    <string name="izin_alarm_dibutuhkan">需要闹钟权限</string>
+    <string name="izin_alarm_message">为了确保药物提醒按时响起，请为 MedUMinder 启用闹钟和提醒权限。</string>
+    <string name="aktifkan">启用</string>
+    <string name="nanti">稍后</string>
+
+    <!-- auth -->
+    <string name="data_user_tidak_boleh_kosong">用户数据不能为空。</string>
+    <string name="email_tidak_boleh_kosong">电子邮箱不能为空。</string>
+    <string name="format_email_tidak_valid">电子邮箱格式无效。</string>
+    <string name="password_minimal">密码至少需要6个字符。</string>
+    <string name="gagal_membuat_akun">创建账户失败。</string>
+    <string name="login_gagal_user_tidak_ditemukan">登录失败，未找到用户。</string>
+    <string name="email_atau_password_salah">电子邮箱或密码错误。</string>
+    <string name="email_belum_terdaftar">电子邮箱尚未注册。</string>
+    <string name="akun_google_login">如果您的账户是使用 Google 创建的，请使用 Google 登录。</string>
+    <string name="password_salah">密码错误。</string>
+    <string name="credential_tidak_valid">凭证无效。</string>
+    <string name="google_credential_tidak_valid">Google 凭证无效。</string>
+    <string name="user_tidak_ditemukan">未找到用户。</string>
+    <string name="user_belum_login">用户尚未登录。</string>
+    <string name="google_sudah_terhubung">Google 已经连接。</string>
+    <string name="email_google_harus_sama">Google 电子邮箱必须与您的 MedUMinder 账户邮箱相同。</string>
+    <string name="belum_login">尚未登录。</string>
+    <string name="provider_tidak_didukung">不支持此登录方式。</string>
+    <string name="nama_minimal">姓名至少需要4个字符。</string>
+    <string name="data_user_tidak_ditemukan">未找到用户数据。</string>
+    <string name="email_wajib_diisi">请输入电子邮箱。</string>
+    <string name="tidak_dapat_mengundang_diri">您不能邀请自己的账户。</string>
+    <string name="user_sudah_terhubung">用户已经连接。</string>
+    <string name="invitation_pending">邀请仍处于待处理状态。</string>
+    <string name="undangan_diterima">您的邀请已被接受。</string>
+    <string name="undangan_ditolak">您的邀请已被拒绝。</string>
 </resources>

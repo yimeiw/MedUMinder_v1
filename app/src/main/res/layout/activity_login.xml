@@ -31,7 +31,7 @@
         android:id="@+id/welcome"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Welcome! Please Login Here"
+        android:text="@string/welcome_login"
         android:textColor="?attr/colorOnSurface"
         android:layout_below="@id/logo"
         android:layout_marginTop="10dp"
@@ -52,7 +52,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Email"
+            android:text="@string/email"
             android:fontFamily="@font/inter_18pt_semibold"
             android:layout_marginStart="15dp"
             android:layout_marginBottom="5dp"
@@ -63,7 +63,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/edittext_border"
-            android:hint="Enter your email"
+            android:hint="@string/enter_email"
             android:paddingStart="20dp"
             android:textColorHint="?attr/colorPrimaryInverse"
             android:textColor="?attr/colorPrimary"
@@ -86,7 +86,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Password"
+            android:text="@string/prompt_password"
             android:textColor="?attr/colorOnSurface"
             android:fontFamily="@font/inter_18pt_semibold"
             android:layout_marginStart="15dp"
@@ -99,7 +99,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/edittext_border"
-            android:hint="Enter your password"
+            android:hint="@string/enter_password"
             android:paddingStart="20dp"
             android:textColorHint="?attr/colorPrimaryInverse"
             android:textColor="?attr/colorPrimary"
@@ -111,7 +111,7 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/login_button"
-        android:text="Login"
+        android:text="@string/login"
         android:textColor="?attr/colorPrimaryFixed"
         android:layout_width="100dp"
         android:layout_height="40dp"
@@ -160,7 +160,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Or Login with"
+            android:text="@string/or_login_with"
             android:layout_gravity="center"
             android:paddingHorizontal="20dp"
             android:textColor="?attr/colorOnSurface"
@@ -202,7 +202,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Don’t have an accout yet?"
+            android:text="@string/dont_have_account"
             android:fontFamily="@font/inter_18pt_medium"
             android:textColor="?attr/colorOnSurface"
             />

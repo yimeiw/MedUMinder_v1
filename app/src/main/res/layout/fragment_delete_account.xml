@@ -24,7 +24,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/tvDelAcc"
-            android:text="Hapus Akun"
+            android:text="@string/deleteAcc"
             android:textStyle="bold"
             android:textSize="21sp"
             android:layout_weight="1"
@@ -57,7 +57,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Password"
+                android:text="@string/prompt_password"
                 android:textColor="?attr/colorOnSurface"
                 android:fontFamily="@font/inter_18pt_semibold"
                 android:layout_marginStart="15dp"
@@ -70,7 +70,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/edittext_border"
-                android:hint="Enter your password"
+                android:hint="@string/enter_password"
                 android:paddingStart="20dp"
                 android:textColorHint="?attr/colorPrimaryInverse"
                 android:textColor="?attr/colorPrimary"
@@ -88,7 +88,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCancel"
-                android:text="Cancel"
+                android:text="@string/cancel"
                 android:textColor="?attr/colorPrimary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -108,7 +108,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDeleteAcc"
-                android:text="Delete"
+                android:text="@string/delete"
                 android:textColor="?attr/colorPrimary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

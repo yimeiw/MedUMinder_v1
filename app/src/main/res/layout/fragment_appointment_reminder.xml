@@ -32,7 +32,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/tvAddReminderMed"
-                android:text="Tambahkan Appointment"
+                android:text="@string/tambah_appointment"
                 android:textStyle="bold"
                 android:textSize="22sp"
                 android:layout_weight="1"
@@ -59,7 +59,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Nama Appointment"
+                    android:text="@string/nama_appointment"
                     android:textStyle="bold"
                     android:textSize="14sp"
                     android:layout_marginVertical="10dp"
@@ -71,7 +71,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@drawable/border"
-                    android:hint="Masukkan nama Appointment Anda"
+                    android:hint="@string/masukkan_nama_appointment"
                     android:textColorHint="@color/placeholder"
                     android:paddingHorizontal="25dp"
                     android:paddingVertical="16dp"
@@ -88,7 +88,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Lokasi Appointment"
+                    android:text="@string/lokasi_appointment"
                     android:textStyle="bold"
                     android:textSize="14sp"
                     android:layout_marginBottom="10dp"
@@ -104,7 +104,7 @@
                     android:paddingVertical="16dp"
                     android:textSize="12sp"
                     android:textColor="?attr/colorOnSurface"
-                    android:hint="Masukkan lokasi Appointment Anda"
+                    android:hint="@string/masukkan_lokasi_appointment"
                     android:textColorHint="@color/placeholder"
                     android:drawableStart="@drawable/ic_location"
                     android:drawablePadding="10dp"/>
@@ -132,7 +132,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Tanggal Appointment"
+                        android:text="@string/tanggal_appointment"
                         android:layout_marginHorizontal="10dp"
                         android:textSize="14sp"
                         android:textStyle="bold"
@@ -179,7 +179,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Jam Appointment"
+                        android:text="@string/jam_appointment"
                         android:layout_marginHorizontal="10dp"
                         android:textSize="14sp"
                         android:textStyle="bold"
@@ -231,7 +231,7 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/button_selector"
                 app:backgroundTint="@null"
-                android:text="Save Appointment"
+                android:text="@string/simpan_appointment"
                 android:textColor="?attr/colorPrimary"
                 android:textAllCaps="false"
                 android:layout_marginVertical="10dp"/>

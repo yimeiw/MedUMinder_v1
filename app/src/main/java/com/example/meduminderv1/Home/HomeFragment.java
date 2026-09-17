@@ -177,7 +177,7 @@ public class HomeFragment extends Fragment {
     private void checkCurrentUser() {
         User user = authManager.getCurrentUser();
         if (user != null){
-            tvGreeting.setText("Halo, " + user.getName() + "!");
+            tvGreeting.setText(getString(R.string.home_greeting, user.getName()));
         }
     }
     @Override
@@ -272,8 +272,8 @@ public class HomeFragment extends Fragment {
         Locale localeId = new Locale("id", "ID");
         SimpleDateFormat sdfDay = new SimpleDateFormat("EEEE", localeId);
 
-        if (isSameDay(target, today)) return "Hari ini";
-        if (isSameDay(target, tomorrow)) return "Besok";
+        if (isSameDay(target, today)) return getString(R.string.hari_ini);
+        if (isSameDay(target, tomorrow)) return getString(R.string.besok);
         return sdfDay.format(date);
     }
 
@@ -299,7 +299,7 @@ public class HomeFragment extends Fragment {
                         @Override
                         public void onSuccess(Void result) {
                             if (!isAdded() || getContext() == null) return;
-                            Toast.makeText(requireContext(),"Berhasil dicatat", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(requireContext(),getString(R.string.berhasil_dicatat), Toast.LENGTH_SHORT).show();
                             loadNextSchedule();
                             loadTodaySchedule();
                         }
@@ -348,11 +348,11 @@ public class HomeFragment extends Fragment {
                                     db.collection("medicine_catalog").document(med.getCatalog_id()).get()
                                             .addOnSuccessListener(catSnap -> {
                                                 MedicineCatalog catalog = catSnap.toObject(MedicineCatalog.class);
-                                                callback.onResolved(catalog != null ? catalog.getNama_obat() : "Obat", finalStock, medId, medType);
+                                                callback.onResolved(catalog != null ? catalog.getNama_obat() : getString(R.string.obat_default), finalStock, medId, medType);
                                             });
 
                                 } else {
-                                    callback.onResolved("Obat", finalStock, medId, medType);
+                                    callback.onResolved(getString(R.string.obat_default), finalStock, medId, medType);
                                 }
                             });
                 });
@@ -403,7 +403,7 @@ public class HomeFragment extends Fragment {
                             String info = "";
 
                             if("PIL".equals(medType)) {
-                                info = "Sisa stok: " + stock;
+                                info = getString(R.string.sisa_stok, stock);
                             }
 
                             combined.add(new LogItem("medicine", medName,
@@ -491,7 +491,7 @@ public class HomeFragment extends Fragment {
             labels.add(s.label);
         }
   
-        LineDataSet dsSeharusnya = new LineDataSet(seharusnya, "Dosis seharusnya");
+        LineDataSet dsSeharusnya = new LineDataSet(seharusnya, getString(R.string.dosis_seharusnya));
         dsSeharusnya.setColor(requireContext().getColor(R.color.dark_bckg));
         dsSeharusnya.setCircleColor(requireContext().getColor(R.color.dark_bckg));
         dsSeharusnya.setLineWidth(2f);
@@ -501,7 +501,7 @@ public class HomeFragment extends Fragment {
         dsSeharusnya.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 
         // dosis dikonsumsi
-        LineDataSet dsDikonsumsi = new LineDataSet(dikonsumsi, "Dosis dikonsumsi");
+        LineDataSet dsDikonsumsi = new LineDataSet(dikonsumsi, getString(R.string.dosis_dikonsumsi));
   
         dsDikonsumsi.setColor(requireContext().getColor(R.color.green));
         dsDikonsumsi.setCircleColor(requireContext().getColor(R.color.green));
@@ -515,7 +515,7 @@ public class HomeFragment extends Fragment {
         dsDikonsumsi.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 
         // persentase kepatuhan
-        LineDataSet dsPersentase = new LineDataSet(persentase, "Persentase Kepatuhan");
+        LineDataSet dsPersentase = new LineDataSet(persentase, getString(R.string.persentase_kepatuhan));
         dsPersentase.setColor(requireContext().getColor(R.color.pink));
         dsPersentase.setCircleColor(requireContext().getColor(R.color.pink));
         dsPersentase.setLineWidth(3f);
@@ -571,7 +571,7 @@ public class HomeFragment extends Fragment {
 
         lineChart.setExtraOffsets(5f, 12f, 8f, 8f);
         lineChart.getDescription().setEnabled(false);
-        lineChart.setNoDataText("Belum ada data konsumsi obat.");
+        lineChart.setNoDataText(getString(R.string.noConsumptionData));
         lineChart.setNoDataTextColor(itam);
 
         lineChart.setTouchEnabled(true);

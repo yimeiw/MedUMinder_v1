@@ -60,7 +60,7 @@
             android:id="@+id/messageNotif"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="isi message"
+            android:text="@string/message_placeholder"
             android:paddingHorizontal="10dp"
             android:textSize="16sp"
             android:layout_marginBottom="5dp"/>
@@ -77,7 +77,7 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/button_selector"
                 app:backgroundTint="?attr/colorTertiary"
-                android:text="Terima"
+                android:text="@string/terima"
                 android:textColor="?attr/colorPrimary"
                 android:textAllCaps="false"
                 android:layout_marginVertical="10dp"/>
@@ -93,7 +93,7 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/button_selector"
                 app:backgroundTint="?attr/colorAccent"
-                android:text="Tolak"
+                android:text="@string/tolak"
                 android:textColor="?attr/colorPrimary"
                 android:textAllCaps="false"
                 android:layout_marginVertical="10dp"/>

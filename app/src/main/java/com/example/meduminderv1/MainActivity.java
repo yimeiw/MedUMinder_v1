@@ -124,10 +124,10 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
             boolean alreadyAsked = prefs.getBoolean("asked_exact_alarm", false);
             if (!alreadyAsked){
                 MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-                builder.setTitle("Izin Alarm Dibutuhkan")
-                        .setMessage("Agar pengingat obat berbunyi tepat waktu, aktifkan izin alarm & pengingat untuk MedUMinder.")
-                        .setPositiveButton("Aktifkan", (d, w) -> AlarmSchedulerHelper.requestExactAlarmPermission(this))
-                        .setNegativeButton("Nanti", null);
+                builder.setTitle(getString(R.string.izin_alarm_dibutuhkan))
+                        .setMessage(getString(R.string.izin_alarm_message))
+                        .setPositiveButton(getString(R.string.aktifkan), (d, w) -> AlarmSchedulerHelper.requestExactAlarmPermission(this))
+                        .setNegativeButton(getString(R.string.nanti), null);
                 AlertDialog dialog = builder.create();
                 dialog.show();
                 if (dialog.getWindow() != null){

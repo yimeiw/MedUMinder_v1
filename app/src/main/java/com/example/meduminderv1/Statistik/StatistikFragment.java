@@ -73,6 +73,7 @@ public class StatistikFragment extends Fragment {
     private FrameLayout responsePieContainer;
     private Button btnDownloadReport;
     private View statistikContent;
+    private TextView tvAdherenceDescription;
 
     public StatistikFragment() {
         // Required empty public constructor
@@ -154,6 +155,7 @@ public class StatistikFragment extends Fragment {
         btnDownloadReport = view.findViewById(R.id.btnDownloadReport);
         ViewGroup scrollContent = (ViewGroup) view.findViewById(R.id.scrollView);
         statistikContent = scrollContent.getChildAt(0);
+        tvAdherenceDescription = view.findViewById(R.id.tvAdherenceDescription);
 
         btnDownloadReport.setOnClickListener(v -> {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
@@ -215,6 +217,14 @@ public class StatistikFragment extends Fragment {
 
                 tvAdheranceRate.setText(persentase + "%");
                 adherenceRing.setProgress(persentase);
+
+                if (persentase >= 80) {
+                    tvAdherenceDescription.setText(R.string.desc_kepatuhan_tinggi);
+                } else if (persentase >= 50) {
+                    tvAdherenceDescription.setText(R.string.desc_kepatuhan_okela);
+                } else {
+                    tvAdherenceDescription.setText(R.string.desc_kepatuhan_rendah);
+                }
 
                 tvTotalTaken.setText(totalDikonsumsi + " Obat");
                 tvTotalIgnored.setText(totalDiabaikan + " Obat");

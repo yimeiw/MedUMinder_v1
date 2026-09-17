@@ -61,7 +61,7 @@
                     android:layout_weight="1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Reminder apa"
+                    android:text="@string/reminder_what"
                     android:textSize="18sp"
                     android:textStyle="bold"/>
 
@@ -78,7 +78,7 @@
                 android:id="@+id/messageNotif"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="isi message"
+                android:text="@string/message_placeholder"
                 android:textSize="14sp"
                 android:layout_marginBottom="10dp"/>
 
@@ -106,7 +106,7 @@
                     android:layout_height="wrap_content"
                     android:background="@drawable/button_selector"
                     app:backgroundTint="?attr/colorTertiary"
-                    android:text="Terima"
+                    android:text="@string/terima"
                     android:textColor="?attr/colorPrimary"
                     android:textAllCaps="false"/>
 
@@ -121,7 +121,7 @@
                     android:layout_height="wrap_content"
                     android:background="@drawable/button_selector"
                     app:backgroundTint="?attr/colorAccent"
-                    android:text="Tolak"
+                    android:text="@string/tolak"
                     android:textColor="?attr/colorPrimary"
                     android:textAllCaps="false"/>
 

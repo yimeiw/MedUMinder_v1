@@ -117,7 +117,7 @@
                             android:background="@android:color/transparent"
                             android:paddingHorizontal="12dp"
                             android:paddingTop="10dp"
-                            android:text="Jadwal Berikutnya"
+                            android:text="@string/jadwal_berikutnya"
                             android:textColor="?attr/colorPrimaryFixed"
                             android:textSize="16sp" />
 
@@ -191,7 +191,7 @@
                                     android:id="@+id/tvStokObat"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Stok Obat: "
+                                    android:text="@string/stok_obat"
                                     android:textColor="?attr/colorPrimary"
                                     android:textSize="12sp" />
 
@@ -211,7 +211,7 @@
                                 android:layout_margin="10dp"
                                 android:background="@drawable/border"
                                 android:paddingHorizontal="12dp"
-                                android:text="Remind Consumer"
+                                android:text="@string/remind_consumer"
                                 android:textAllCaps="false"
                                 android:textColor="?attr/colorOnSurface"
                                 android:textSize="14sp"
@@ -230,7 +230,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Consumer belum memiliki jadwal."
+                                android:text="@string/consumer_belum_ada_jadwal"
                                 android:textColor="?attr/colorPrimaryFixed"
                                 android:textSize="14sp" />
                         </LinearLayout>
@@ -248,7 +248,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Jadwal Hari Ini"
+                            android:text="@string/jadwal_hari_ini"
                             android:textColor="?attr/colorOnSurface"
                             android:textSize="20sp"
                             android:textStyle="bold" />
@@ -265,7 +265,7 @@
                                 android:layout_height="wrap_content"
                                 android:clickable="true"
                                 android:focusable="true"
-                                android:text="Lihat Semua"
+                                android:text="@string/lihat_selengkapnya"
                                 android:textColor="?attr/colorOnSurface"
                                 android:textSize="14sp"
                                 android:visibility="gone" />
@@ -278,7 +278,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:gravity="center"
-                        android:text="Belum ada jadwal hari ini."
+                        android:text="@string/tidak_ada_jadwal_hari_ini"
                         android:textColor="?attr/colorOnSurface"
                         android:visibility="visible" />
 
@@ -300,7 +300,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Tingkat Kepatuhan Minum Obat"
+                        android:text="@string/tingkatKepatuhan"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -316,7 +316,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Adherence Rate"
+                            android:text="@string/adherence_rate"
                             android:textStyle="bold" />
 
                         <com.example.meduminderv1.Home.ProgressView
@@ -354,7 +354,7 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Total Obat Dikonsumsi"
+                                android:text="@string/totalObatDikonsumsi"
                                 android:textSize="12sp"
                                 android:textStyle="bold"
                                 android:textColor="?attr/colorOnPrimary"/>
@@ -381,7 +381,7 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Total Obat Terlewat"
+                                android:text="@string/total_obat_terlewat"
                                 android:textSize="12sp"
                                 android:textStyle="bold"
                                 android:textColor="?attr/colorOnPrimary"/>
@@ -408,7 +408,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Total Obat Akan Datang"
+                            android:text="@string/total_obat_akan_datang"
                             android:textSize="12sp"
                             android:textStyle="bold"
                             android:textColor="?attr/colorOnPrimary"/>
@@ -472,7 +472,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="General"
+                        android:text="@string/general"
                         android:textStyle="bold"
                         android:textSize="16sp"
                         android:textColor="?attr/colorOnSurface"
@@ -502,7 +502,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Document"
+                            android:text="@string/document"
                             android:textSize="14sp"/>
                     </LinearLayout>
 
@@ -529,7 +529,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Riwayat"
+                            android:text="@string/riwayat"
                             android:textSize="14sp"/>
                     </LinearLayout>
 
@@ -556,7 +556,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Statistik"
+                            android:text="@string/statistik"
                             android:textSize="14sp"/>
                     </LinearLayout>
 
@@ -567,7 +567,7 @@
                     android:id="@+id/labelListConsumer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="List Consumer"
+                    android:text="@string/list_consumer"
                     android:textStyle="bold"
                     android:textSize="16sp"
                     android:textColor="?attr/colorOnSurface"
@@ -602,7 +602,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Add Consumer"
+                        android:text="@string/add_consumer"
                         android:textSize="14sp"
                         android:textStyle="bold"/>
                 </LinearLayout>
