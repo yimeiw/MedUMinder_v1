@@ -3,6 +3,7 @@ package com.example.meduminderv1.Repo;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.meduminderv1.Callback.RepoCallback;
+import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
@@ -24,8 +25,8 @@ public class NotificationRepo {
         db = FirebaseFirestore.getInstance();
     }
 
-    public void loadNotification(String uid, RepoCallback<List<Notification>> callback){
-        db.collection("notifications").whereEqualTo("receiver_uid", uid)
+    public void loadNotification(String uid, UserRole role, RepoCallback<List<Notification>> callback){
+        db.collection("notifications").whereEqualTo("receiver_uid", uid).whereEqualTo("target_role", role.name())
                 .orderBy("created_at", Query.Direction.DESCENDING).get().addOnSuccessListener(queryDocumentSnapshots -> {
                     List<Notification> list = new ArrayList<>();
                     for (DocumentSnapshot doc : queryDocumentSnapshots){
@@ -133,6 +134,7 @@ public class NotificationRepo {
         notification.setTitle("ISI ULANG OBAT (" + medicineName + ")");
         notification.setMessage("Obat Anda sudah mau habis, segera isi ulang obat Anda!");
         notification.setType(NotificationType.Stock);
+        notification.setTarget_role(notification.getTarget_role());
         notification.setIs_read(false);
         notification.setCreated_at(Timestamp.now());
 
@@ -161,8 +163,8 @@ public class NotificationRepo {
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
     }
-    public void countUnread(String userUid, RepoCallback<Integer> callback){
-        db.collection("notifications").whereEqualTo("users_id", userUid)
+    public void countUnread(String userUid, UserRole role, RepoCallback<Integer> callback){
+        db.collection("notifications").whereEqualTo("receiver_id", userUid).whereEqualTo("target_role", role.name())
                 .whereEqualTo("is_read", false).addSnapshotListener((snapshot, e) -> {
                     if (e != null){
                         callback.onFailure(e);
@@ -170,5 +172,10 @@ public class NotificationRepo {
                     } int count = (snapshot != null) ? snapshot.size() : 0;
                     callback.onSuccess(count);
                 });
+    }
+    public void deleteNotif(String notificationId, RepoCallback<Void> callback){
+        db.collection("notifications").document(notificationId).delete()
+                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onFailure);
     }
 }

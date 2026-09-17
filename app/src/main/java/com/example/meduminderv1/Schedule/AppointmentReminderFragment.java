@@ -18,6 +18,7 @@ import android.widget.Toast;
 
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Caregiver.ConsumerPickerHelper;
+import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationFragment;
 import com.example.meduminderv1.Notification.NotificationType;
@@ -184,11 +185,27 @@ public class AppointmentReminderFragment extends Fragment {
             notif.setMessage(isForSelf
                     ? "Anda menambahkan jadwal appointment: " + nameAppoint
                     : "Caregiver menambahkan jadwal appointment " + nameAppoint + " untuk Anda");
+            notif.setTarget_role(UserRole.Consumer.name());
             notif.setIs_read(false);
             notificationRepo.createNotification(notif, new RepoCallback<Void>() {
                 @Override public void onSuccess(Void result) { }
                 @Override public void onFailure(Exception e) { }
             });
+            if (!isForSelf) {
+                Notification selfNotif = new Notification();
+                selfNotif.setReceiver_uid(uid);
+                selfNotif.setSender_uid(uid);
+                selfNotif.setReference_id(documentReference.getId());
+                selfNotif.setType(NotificationType.Appointment);
+                selfNotif.setTitle("Appointment Ditambahkan");
+                selfNotif.setMessage("Anda menambahkan jadwal appointment " + nameAppoint + " untuk consumer Anda.");
+                selfNotif.setTarget_role(UserRole.Caregiver.name());
+                selfNotif.setIs_read(false);
+                notificationRepo.createNotification(selfNotif, new RepoCallback<Void>() {
+                    @Override public void onSuccess(Void result) { }
+                    @Override public void onFailure(Exception e) { }
+                });
+            }
             AppointmentAlertScheduler.scheduleAlerts(requireContext(), documentReference.getId(), nameAppoint, selectedCalendar.getTimeInMillis());
             Toast.makeText(requireContext(), "Appointment berhasil disimpan", Toast.LENGTH_SHORT).show();
             AlarmSchedulerHelper.scheduleAppointment(

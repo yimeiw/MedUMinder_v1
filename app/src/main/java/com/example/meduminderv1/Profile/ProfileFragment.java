@@ -316,11 +316,13 @@ MaterialButton btnSeeStatistic;
         authManager.switchRole(targetRole, new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
+                if (!isAdded()) return;
                 bindUser(result);
             }
 
             @Override
             public void onFailure(String message) {
+                if (!isAdded()) return;
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
@@ -347,6 +349,7 @@ MaterialButton btnSeeStatistic;
         authManager.enableCaregiver(new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
+                if (!isAdded()) return;
                 bindUser(result);
                 Toast.makeText(requireContext(), "Role caregiver berhasil diaktifkan.", Toast.LENGTH_SHORT).show();
                 if (continueSwitchRole){
@@ -356,6 +359,7 @@ MaterialButton btnSeeStatistic;
 
             @Override
             public void onFailure(String message) {
+                if (!isAdded()) return;
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
@@ -365,11 +369,13 @@ MaterialButton btnSeeStatistic;
         authManager.loadCurrentUserProfile(new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
+                if (!isAdded()) return;
                 bindUser(result);
             }
 
             @Override
             public void onFailure(String message) {
+                if (!isAdded()) return;
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
         });

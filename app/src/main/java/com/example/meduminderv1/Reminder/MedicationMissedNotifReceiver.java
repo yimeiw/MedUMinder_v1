@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.example.meduminderv1.Model.User;
+import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -38,6 +39,7 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
                 notifConsumer.put("type", NotificationType.Medicine);
                 notifConsumer.put("title", "Jadwal Terlewat");
                 notifConsumer.put("message", "Jadwal minum obat " + namaObat + " Anda terlewat.");
+                notifConsumer.put("target_role", UserRole.Consumer);
                 notifConsumer.put("reference_id", logId);
                 notifConsumer.put("is_read", false);
                 notifConsumer.put("created_at", Timestamp.now());
@@ -54,6 +56,7 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
                                 notifCaregiver.put("type", NotificationType.Medicine);
                                 notifCaregiver.put("title", "Consumer Melewatkan Jadwal");
                                 notifCaregiver.put("message", consumerName + " melewatkan jadwal minum obat " + namaObat + ".");
+                                notifCaregiver.put("target_role", UserRole.Caregiver);
                                 notifCaregiver.put("reference_id", logId);
                                 notifCaregiver.put("consumer_uid", consumerUid); //dipakai untuk tombol ingatkan
                                 notifCaregiver.put("consumer_name", consumerName);

@@ -890,6 +890,7 @@ public class AuthManager {
         notif.setInvitation_id(invitation.getInvitation_id());
         notif.setType(NotificationType.Invitation);
         notif.setMessage(accepted ? "Undangan Anda diterima." : "Undangan Anda ditolak.");
+        notif.setTarget_role(UserRole.Consumer.name());
         notif.setIs_read(false);
         notificationRepo.createNotification(notif, new RepoCallback<Void>() {
             @Override
@@ -909,6 +910,7 @@ public class AuthManager {
         notification.setTitle("Invitation " + invitation.getInvite_role().name());
         notification.setMessage(invitation.getSender_name()
         + " mengundang Anda menjadi " + invitation.getInvite_role().name());
+        notification.setTarget_role(UserRole.Consumer.name());
         notification.setIs_read(false);
         notification.setCreated_at(Timestamp.now());
         notification.setUpdated_at(Timestamp.now());
@@ -929,7 +931,12 @@ public class AuthManager {
         if (firebaseUser == null){
             callback.onFailure("User belum login.");
             return;
-        } notificationRepo.loadNotification(firebaseUser.getUid(), new RepoCallback<List<Notification>>() {
+        } User user = sessionManager.getUser();
+        if (user == null){
+            callback.onFailure("User tidak ditemukan.");
+            return;
+        }
+        notificationRepo.loadNotification(firebaseUser.getUid(), user.getCurrentRole(), new RepoCallback<List<Notification>>() {
             @Override
             public void onSuccess(List<Notification> result) {
                 callback.onSuccess(result);
@@ -1018,7 +1025,12 @@ public class AuthManager {
         if (firebaseUser == null){
             callback.onFailure("User belum login.");
             return;
-        } notificationRepo.countUnread(firebaseUser.getUid(), new RepoCallback<Integer>() {
+        } User user = sessionManager.getUser();
+        if (user == null){
+            callback.onFailure("User tidak ditemukan.");
+            return;
+        }
+            notificationRepo.countUnread(firebaseUser.getUid(), user.getCurrentRole(), new RepoCallback<Integer>() {
             @Override
             public void onSuccess(Integer result) {
                 callback.onSuccess(result);

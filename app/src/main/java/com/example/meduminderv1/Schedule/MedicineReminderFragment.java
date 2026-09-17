@@ -31,6 +31,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.meduminderv1.Caregiver.ConsumerPickerHelper;
 import com.example.meduminderv1.Model.LogGenerator;
+import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
@@ -617,10 +618,34 @@ public class MedicineReminderFragment extends Fragment {
         notif.setMessage(isForSelf
                 ? "Anda menambahkan jadwal minum obat: " + medName
                 : user.getName() + " menambahkan jadwal minum obat " + medName + " untuk Anda");
+        notif.setTarget_role(UserRole.Consumer.name());
         notif.setIs_read(false);
         notificationRepo.createNotification(notif, new RepoCallback<Void>() {
             @Override public void onSuccess(Void result) { }
             @Override public void onFailure(Exception e) { }
         });
+        //aktivitas caregiver sendiri
+        if (!isForSelf){
+            Notification selfNotif = new Notification();
+            selfNotif.setReceiver_uid(user.getAuth_uid());
+            selfNotif.setSender_uid(user.getAuth_uid());
+            selfNotif.setReference_id(scheduleId);
+            selfNotif.setType(NotificationType.Medicine);
+            selfNotif.setTitle("Jadwal Obat Ditambahkan");
+            selfNotif.setMessage("Anda menambahkan jadwal minum obat " + medName);
+            selfNotif.setTarget_role(UserRole.Caregiver.name());
+            selfNotif.setIs_read(false);
+            notificationRepo.createNotification(selfNotif, new RepoCallback<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+
+                }
+            });
+        }
     }
 }
