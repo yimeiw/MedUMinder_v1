@@ -47,15 +47,6 @@
                         android:layout_height="wrap_content"
                         android:src="@drawable/ic_notif"
                         android:background="@null"
-                        android:layout_gravity="center"
-                        android:paddingRight="20dp"/>
-
-                    <ImageButton
-                        android:id="@+id/btnProfile"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@drawable/ic_profile"
-                        android:background="@null"
                         android:layout_gravity="center"/>
 
                 </LinearLayout>
@@ -169,14 +160,14 @@
                     <ImageView
                         android:layout_width="40dp"
                         android:layout_height="40dp"
-                        android:src="@drawable/ic_doc"
+                        android:src="@drawable/ic_log"
                         android:background="@android:color/transparent"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="@string/dokumen_kesehatan"
+                        android:text="@string/log_jadwal"
                         android:textAlignment="center"
                         android:fontFamily="@font/inter_18pt_semibold"
                         android:textColor="?attr/colorOnSurface"

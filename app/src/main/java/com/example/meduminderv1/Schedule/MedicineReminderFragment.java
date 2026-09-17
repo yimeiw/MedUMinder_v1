@@ -411,7 +411,7 @@ public class MedicineReminderFragment extends Fragment {
                                                 endMillis
                                         );
 
-                                        notifyReminderCreated(medName);
+                                        notifyReminderCreated(medName, result);
                                         Toast.makeText(requireContext(), "Reminder berhasil dibuat", Toast.LENGTH_SHORT).show();
                                         clearFields();
                                         NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
@@ -456,7 +456,7 @@ public class MedicineReminderFragment extends Fragment {
                                                     endDate != null ? endDate.toDate().getTime() : 0
                                             );
 
-                                            notifyReminderCreated(medName);
+                                            notifyReminderCreated(medName, result);
                                             Toast.makeText(requireContext(), "Reminder berhasil dibuat", Toast.LENGTH_SHORT).show();
                                             clearFields();
                                             NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
@@ -606,11 +606,12 @@ public class MedicineReminderFragment extends Fragment {
         }
         return builder.toString().trim();
     }
-    private void notifyReminderCreated(String medName) {
+    private void notifyReminderCreated(String medName, String scheduleId) {
         boolean isForSelf = targetUid.equals(user.getAuth_uid());
         Notification notif = new Notification();
         notif.setReceiver_uid(targetUid);
         notif.setSender_uid(user.getAuth_uid());
+        notif.setReference_id(scheduleId);
         notif.setType(NotificationType.Medicine);
         notif.setTitle("Jadwal Obat Baru");
         notif.setMessage(isForSelf

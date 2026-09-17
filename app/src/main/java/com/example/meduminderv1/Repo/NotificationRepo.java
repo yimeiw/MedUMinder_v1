@@ -149,6 +149,9 @@ public class NotificationRepo {
                         callback.onFailure(new Exception("Notifikasi tidak ditemukan."));
                         return;
                     } Notification notification = document.toObject(Notification.class);
+                    if (notification != null){
+                        notification.setNotification_id(document.getId());
+                    }
                     callback.onSuccess(notification);
                 }).addOnFailureListener(callback::onFailure);
     }

@@ -105,7 +105,7 @@
 
     <string name="tambah_pengingat">Add Reminder</string>
     <string name="tambah_appointment">Add Appointment</string>
-    <string name="dokumen_kesehatan">Health Documents</string>
+    <string name="log_jadwal">Schedule Log</string>
 
     <string name="jadwal_berikutnya">Next Schedule</string>
     <string name="stok_obat">Medicine Stock: </string>

@@ -10,7 +10,7 @@
         android:icon="@drawable/ic_calendar" />
 
     <item
-        android:id="@+id/logFragment"
-        android:icon="@drawable/ic_log"/>
+        android:id="@+id/profileFragment"
+        android:icon="@drawable/ic_profile"/>
 
 </menu>

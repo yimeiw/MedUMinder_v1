@@ -104,7 +104,6 @@ public class CaregiverHomeFragment extends Fragment {
         groupGeneralMenu = view.findViewById(R.id.groupGeneralMenu);
         labelListConsumer = view.findViewById(R.id.labelListConsumer);
         rvDrawerConsumer = view.findViewById(R.id.rvDrawerConsumer);
-        navDocument = view.findViewById(R.id.navDocument);
         navRiwayat = view.findViewById(R.id.navRiwayat);
         navStatistik = view.findViewById(R.id.navStatistik);
         btnNotif = view.findViewById(R.id.btnNotif);
@@ -217,10 +216,6 @@ public class CaregiverHomeFragment extends Fragment {
     }
 
     private void setupSideNavInteractions(View view) {
-        view.findViewById(R.id.navDocument).setOnClickListener(v -> {
-            drawerLayout.closeDrawer(GravityCompat.START);
-            NavHostFragment.findNavController(this).navigate(R.id.documentFragment);
-        });
         view.findViewById(R.id.navRiwayat).setOnClickListener(v -> {
             drawerLayout.closeDrawer(GravityCompat.START);
             NavHostFragment.findNavController(this).navigate(R.id.logFragment);

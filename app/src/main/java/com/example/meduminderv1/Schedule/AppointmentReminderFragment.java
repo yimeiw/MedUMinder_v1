@@ -178,6 +178,7 @@ public class AppointmentReminderFragment extends Fragment {
             Notification notif = new Notification();
             notif.setReceiver_uid(targetUid);
             notif.setSender_uid(uid);
+            notif.setReference_id(documentReference.getId());
             notif.setType(NotificationType.Appointment);
             notif.setTitle("Jadwal Appointment Baru");
             notif.setMessage(isForSelf

@@ -29,6 +29,7 @@ import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.InvitationRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
+import com.example.meduminderv1.Repo.UserRepository;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -38,7 +39,7 @@ import java.util.Date;
 import java.util.Locale;
 
 public class NotificationDetailFragment extends Fragment {
-    LinearLayout layoutButton, notifDetail, scheduleDetail;
+    LinearLayout layoutButton, notifDetail;
     TextView titleNotif, messageNotif, timeNotif, headerNotif,
             tvConsumerName, tvScheduleName, tvScheduleDayTime, tvStockInfo;
     MaterialButton btnAction, btnAcc, btnReject;
@@ -65,9 +66,6 @@ public class NotificationDetailFragment extends Fragment {
         layoutButton = view.findViewById(R.id.layoutButton);
 
         notifDetail = view.findViewById(R.id.notifDetail);
-        scheduleDetail = view.findViewById(R.id.scheduleDetail);
-        tvConsumerName = view.findViewById(R.id.tvConsumerName);
-        tvScheduleName = view.findViewById(R.id.tvScheduleName);
         tvScheduleDayTime = view.findViewById(R.id.tvScheduleDayTime);
         tvStockInfo = view.findViewById(R.id.tvStockInfo);
 
@@ -142,8 +140,10 @@ public class NotificationDetailFragment extends Fragment {
             public void onSuccess(Invitation result) {
                 invitation = result;
                 boolean isPending = invitation.getStatus() == InvitationStatus.Pending;
-                boolean isForMe = notification.getReceiver_uid() != null;
-                if (isPending && isForMe){
+                if (isPending){
+                    headerNotif.setText("Undangan Baru");
+                    titleNotif.setText("Undangan " + invitation.getInvite_role().name());
+                    messageNotif.setText(invitation.getSender_name() + " mengundang Anda menjadi " + roleLabel(invitation.getInvite_role()) + ".");
                     layoutButton.setVisibility(View.VISIBLE);
                     btnAction.setVisibility(View.GONE);
                     btnAcc.setOnClickListener(v -> acceptInvitation());
@@ -151,9 +151,25 @@ public class NotificationDetailFragment extends Fragment {
                 } else {
                     //notif status invitation diacc/reject
                     layoutButton.setVisibility(View.GONE);
-                    titleNotif.setText(invitation.getStatus() == InvitationStatus.Accepted ?
+                    headerNotif.setText(invitation.getStatus() == InvitationStatus.Accepted ?
                             "Undangan Diterima" : invitation.getStatus() == InvitationStatus.Rejected ?
                             "Undangan Ditolak" : "Undangan");
+                    titleNotif.setText(headerNotif.getText());
+                    //responder = pihak yg jawab undangan (bkn pengirim)
+                    String responderUid = notification.getSender_uid();
+                    UserRepository.getInstance().getUserbyUid(responderUid, new RepoCallback<User>() {
+                        @Override
+                        public void onSuccess(User result) {
+                            if (!isAdded()) return;
+                            messageNotif.setText(buildInvitationResultMessage(result.getName(), invitation.getStatus() == InvitationStatus.Accepted));
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            if (!isAdded()) return;
+                            messageNotif.setText(invitation.getStatus() == InvitationStatus.Accepted ? "Undangan Anda diterima." : "Undangan Anda ditolak.");
+                        }
+                    });
                 }
             }
 
@@ -162,6 +178,19 @@ public class NotificationDetailFragment extends Fragment {
                 Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private String roleLabel(UserRole role) {
+        return role == UserRole.Caregiver ? "Caregiver" : "Consumer";
+    }
+
+    private String buildInvitationResultMessage(String responderName, boolean accepted) {
+        //invite role = role yang diterima oleh responder
+        boolean responderJadiCaregiver = invitation.getInvite_role() == UserRole.Caregiver;
+        String roleText = responderJadiCaregiver ? "Caregiver" : "Consumer";
+        String relasiText = responderJadiCaregiver ? "mengawasi Anda" : "diawasi Anda";
+        String aksi = accepted ? "menerima" : "menolak";
+        return responderName + " " + aksi + " undangan sebagai " + roleText + (accepted ? " untuk " + relasiText + "." : ".");
     }
 
     private void rejectInvitation() {
@@ -199,19 +228,70 @@ public class NotificationDetailFragment extends Fragment {
 
     private void showMedicine() {
         showMissedActionIfCaregiver();
-        loadMedicationDetail();
+        if (notification.getTitle() != null && notification.getTitle().contains("Baru")){
+            loadNewMedicationScheduleDetail();
+        } else {
+            loadMedicationDetail();
+        }
+    }
+
+    private void loadNewMedicationScheduleDetail() {
+        String scheduleId = notification.getReference_id();
+        if (scheduleId == null){
+            return;
+        } FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("medication_schedules").document(scheduleId).get().addOnSuccessListener(scheduleSnap -> {
+            if (!isAdded() || !scheduleSnap.exists()){
+                return;
+            } MedicationSchedules schedules = scheduleSnap.toObject(MedicationSchedules.class);
+            if (schedules == null) return;
+            db.collection("medications").document(schedules.getMedication_id()).get().addOnSuccessListener(medSnap -> {
+                if (!isAdded()) return;
+                Medication med = medSnap.toObject(Medication.class);
+                int stock = (med != null && med.getStock() != null && med.getStock().get("stok_obat") != null)
+                        ? ((Number) med.getStock().get("stokk_obat")).intValue() : 0;
+                Runnable render = (() -> {
+                    notifDetail.setVisibility(View.VISIBLE);
+                    String frekuensi = (schedules.getFrequency() != null ? schedules.getFrequency() : 0) + "x sehari";
+                    String jam = schedules.getTimes_of_day() != null ? String.join(", ", schedules.getTimes_of_day()) : "-";
+                    tvScheduleDayTime.setText(frekuensi + " • " +  jam);
+
+                    if (med != null && "PIL".equalsIgnoreCase(med.getMed_type())){
+                        tvStockInfo.setVisibility(View.VISIBLE);
+                        tvStockInfo.setText("Sisa stok: " + stock);
+                    } else {
+                        tvStockInfo.setVisibility(View.GONE);
+                    }
+                });
+
+                if (med != null && med.getCustom_medicine_name() != null){
+                    tvScheduleName.setText("Obat: " + med.getCustom_medicine_name());
+                    render.run();
+                } else if (med != null && med.getCatalog_id() != null) {
+                    db.collection("medicine_catalog").document(med.getCatalog_id()).get().addOnSuccessListener(catSnap -> {
+                        if (!isAdded()) return;
+                        MedicineCatalog cat = catSnap.toObject(MedicineCatalog.class);
+                        tvScheduleName.setText("Obat: " + (cat != null ? cat.getNama_obat() : "Obat"));
+                        render.run();
+                    });
+                } else {
+                    tvScheduleName.setText("Obat: -");
+                    render.run();
+                }
+            });
+        }).addOnFailureListener(e -> notifDetail.setVisibility(View.GONE));
     }
 
     private void loadMedicationDetail() {
         String logId = notification.getReference_id();
         if (logId == null){
-            scheduleDetail.setVisibility(View.GONE);
+            notifDetail.setVisibility(View.GONE);
             return;
         }
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("medication_logs").document(logId).get().addOnSuccessListener(logDoc -> {
             if (!isAdded() || !logDoc.exists()){
-                scheduleDetail.setVisibility(View.GONE);
+                notifDetail.setVisibility(View.GONE);
                 return;
             }
             MedicationLog log = logDoc.toObject(MedicationLog.class);
@@ -228,10 +308,7 @@ public class NotificationDetailFragment extends Fragment {
                         stock = ((Number) med.getStock().get("stok_obat")).intValue();
                     } int finalStock = stock;
                     Runnable render = () -> {
-                        scheduleDetail.setVisibility(View.VISIBLE);
-                        String consumerName = notification.getConsumer_name();
-                        tvConsumerName.setText(consumerName != null ? consumerName : "");
-                        tvConsumerName.setVisibility(consumerName != null ? View.VISIBLE : View.GONE);
+                        notifDetail.setVisibility(View.VISIBLE);
                         Locale locale = new Locale("id", "ID");
                         SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", locale);
                         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
@@ -255,7 +332,7 @@ public class NotificationDetailFragment extends Fragment {
                     }
                 });
             });
-        }).addOnFailureListener(e -> scheduleDetail.setVisibility(View.GONE));
+        }).addOnFailureListener(e -> notifDetail.setVisibility(View.GONE));
     }
 
     private void showMissedActionIfCaregiver() {
@@ -302,31 +379,25 @@ public class NotificationDetailFragment extends Fragment {
     private void loadAppointmentDetail() {
         String appointId = notification.getReference_id();
         if (appointId == null){
-            scheduleDetail.setVisibility(View.GONE);
             return;
         } FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("appointments").document(appointId).get().addOnSuccessListener(doc -> {
             if (!isAdded() || !doc.exists()){
-                scheduleDetail.setVisibility(View.GONE);
                 return;
             } Appointment appointment = doc.toObject(Appointment.class);
             if (appointment == null) return;
-            scheduleDetail.setVisibility(View.VISIBLE);
-            String consumerName = notification.getConsumer_name();
-            tvConsumerName.setText(consumerName != null ? consumerName : "");
-            tvConsumerName.setVisibility(consumerName != null ? View.VISIBLE : View.GONE);
+            notifDetail.setVisibility(View.VISIBLE);
             tvScheduleName.setText("Appointment: " + appointment.getTitle() + " (" + appointment.getAddress() + ")");
             SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", new Locale("id", "ID"));
             SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
             Date appointmentDate = appointment.getAppointment_at().toDate();
             tvScheduleDayTime.setText(dayFormat.format(appointmentDate) + " • " + timeFormat.format(appointmentDate));
             tvStockInfo.setVisibility(View.GONE);
-        }).addOnFailureListener(e ->  scheduleDetail.setVisibility(View.GONE));
+        }).addOnFailureListener(e ->  notifDetail.setVisibility(View.GONE));
     }
 
     private void showLowStock() {
         layoutButton.setVisibility(View.GONE);
-
         btnAcc.setVisibility(View.GONE);
         btnReject.setVisibility(View.GONE);
 

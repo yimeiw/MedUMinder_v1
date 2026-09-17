@@ -112,7 +112,7 @@
 
     <string name="tambah_pengingat">Tambah Pengingat</string>
     <string name="tambah_appointment">Tambah Appointment</string>
-    <string name="dokumen_kesehatan">Dokumen Kesehatan</string>
+    <string name="log_jadwal">Riwayat Jadwal</string>
 
     <string name="jadwal_berikutnya">Jadwal Berikutnya</string>
     <string name="stok_obat">Stok Obat: </string>

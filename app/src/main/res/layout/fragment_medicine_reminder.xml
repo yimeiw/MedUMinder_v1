@@ -107,8 +107,7 @@
                         android:id="@+id/radioGroupJenisObat"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="10dp">
+                        android:orientation="horizontal">
 
                         <com.google.android.material.radiobutton.MaterialRadioButton
                             android:id="@+id/radioPil"
@@ -117,7 +116,7 @@
                             android:text="@string/obatPil"
                             android:textSize="14sp"
                             android:textColor="?attr/colorOnSurface"
-                            android:buttonTint="?attr/colorPrimary"
+                            android:buttonTint="?attr/colorOnSurface"
                             android:checked="true"/>
 
                         <com.google.android.material.radiobutton.MaterialRadioButton
@@ -128,7 +127,7 @@
                             android:text="@string/obatCair"
                             android:textSize="14sp"
                             android:textColor="?attr/colorOnSurface"
-                            android:buttonTint="?attr/colorPrimary"/>
+                            android:buttonTint="?attr/colorOnSurface"/>
                     </RadioGroup>
                 </LinearLayout>
 

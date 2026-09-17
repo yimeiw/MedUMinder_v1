@@ -52,7 +52,7 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
                                 Map<String, Object> notifCaregiver = new HashMap<>();
                                 notifCaregiver.put("receiver_uid", caregiverUid);
                                 notifCaregiver.put("type", NotificationType.Medicine);
-                                notifCaregiver.put("title", "Consumer Melewatkan Jdwal");
+                                notifCaregiver.put("title", "Consumer Melewatkan Jadwal");
                                 notifCaregiver.put("message", consumerName + " melewatkan jadwal minum obat " + namaObat + ".");
                                 notifCaregiver.put("reference_id", logId);
                                 notifCaregiver.put("consumer_uid", consumerUid); //dipakai untuk tombol ingatkan

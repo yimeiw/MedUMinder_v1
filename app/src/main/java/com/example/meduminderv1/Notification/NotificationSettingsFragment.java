@@ -19,6 +19,7 @@ import androidx.appcompat.widget.SwitchCompat;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
@@ -49,6 +50,7 @@ public class NotificationSettingsFragment extends Fragment {
     private static final String KEY_SNOOZE_DURATION = "snooze_duration";
     private static final String KEY_APPOINTMENT_REMINDER = "appointment_reminder";
     private static final String KEY_REPEAT_REMINDER = "repeat_reminder";
+    boolean isDropdownOpen = false;
 
     @Nullable
     @Override
@@ -195,12 +197,14 @@ public class NotificationSettingsFragment extends Fragment {
 
             dropdownRingtone.setAdapter(adapter);
 
-            dropdownRingtone.setDropDownBackgroundResource(
-                    R.drawable.bg_log_dropdown
-            );
-
             dropdownRingtone.setOnClickListener(v -> {
-                dropdownRingtone.showDropDown();
+                if (!isDropdownOpen) {
+                    dropdownRingtone.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_up, 0);
+                    dropdownRingtone.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
+                    dropdownRingtone.setDropDownVerticalOffset(20);
+                    dropdownRingtone.showDropDown();
+                    isDropdownOpen = true;
+                }
             });
 
             dropdownRingtone.setOnItemClickListener(
@@ -216,9 +220,16 @@ public class NotificationSettingsFragment extends Fragment {
 
                         // preview ringtone yang dipilih oleh user
                         playRingtonePreview(Uri.parse(selectedUri));
+                        dropdownRingtone.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
                     }
             );
 
+            dropdownRingtone.setOnDismissListener(() -> {
+                dropdownRingtone.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
+                dropdownRingtone.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
+                dropdownRingtone.setDropDownVerticalOffset(20);
+                isDropdownOpen = false;
+            });
 
         }
 
@@ -236,12 +247,14 @@ public class NotificationSettingsFragment extends Fragment {
 
             dropdownReminderMessage.setAdapter(adapter);
 
-            dropdownReminderMessage.setDropDownBackgroundResource(
-                    R.drawable.bg_log_dropdown
-            );
-
             dropdownReminderMessage.setOnClickListener(v -> {
-                dropdownReminderMessage.showDropDown();
+                if (!isDropdownOpen) {
+                    dropdownReminderMessage.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_up, 0);
+                    dropdownReminderMessage.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
+                    dropdownReminderMessage.setDropDownVerticalOffset(20);
+                    dropdownReminderMessage.showDropDown();
+                    isDropdownOpen = true;
+                }
             });
 
             dropdownReminderMessage.setOnItemClickListener(
@@ -255,8 +268,15 @@ public class NotificationSettingsFragment extends Fragment {
                         pref.edit().putString(
                                 KEY_REMINDER_MESSAGE, selected
                         ).apply();
+                        dropdownReminderMessage.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
                     }
             );
+            dropdownReminderMessage.setOnDismissListener(() -> {
+                dropdownReminderMessage.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
+                dropdownReminderMessage.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
+                dropdownReminderMessage.setDropDownVerticalOffset(20);
+                isDropdownOpen = false;
+            });
         }
 
         // snooze duration
@@ -273,12 +293,14 @@ public class NotificationSettingsFragment extends Fragment {
 
             dropdownSnoozeDuration.setAdapter(adapter);
 
-            dropdownSnoozeDuration.setDropDownBackgroundResource(
-                    R.drawable.bg_log_dropdown
-            );
-
             dropdownSnoozeDuration.setOnClickListener(v -> {
-                dropdownSnoozeDuration.showDropDown();
+                if (!isDropdownOpen) {
+                    dropdownSnoozeDuration.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_up, 0);
+                    dropdownSnoozeDuration.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
+                    dropdownSnoozeDuration.setDropDownVerticalOffset(20);
+                    dropdownSnoozeDuration.showDropDown();
+                    isDropdownOpen = true;
+                }
             });
 
             dropdownSnoozeDuration.setOnItemClickListener(
@@ -292,8 +314,15 @@ public class NotificationSettingsFragment extends Fragment {
                         pref.edit().putString(
                                 KEY_SNOOZE_DURATION, selected
                         ).apply();
+                        dropdownSnoozeDuration.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
                     }
             );
+            dropdownSnoozeDuration.setOnDismissListener(() -> {
+                dropdownSnoozeDuration.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
+                dropdownSnoozeDuration.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
+                dropdownSnoozeDuration.setDropDownVerticalOffset(20);
+                isDropdownOpen = false;
+            });
         }
 
         // appointment reminder
@@ -310,12 +339,14 @@ public class NotificationSettingsFragment extends Fragment {
 
             dropdownAppointmentReminder.setAdapter(adapter);
 
-            dropdownAppointmentReminder.setDropDownBackgroundResource(
-                    R.drawable.bg_log_dropdown
-            );
-
             dropdownAppointmentReminder.setOnClickListener(v -> {
-                dropdownAppointmentReminder.showDropDown();
+                if (!isDropdownOpen) {
+                    dropdownAppointmentReminder.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_up, 0);
+                    dropdownAppointmentReminder.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
+                    dropdownAppointmentReminder.setDropDownVerticalOffset(20);
+                    dropdownAppointmentReminder.showDropDown();
+                    isDropdownOpen = true;
+                }
             });
 
             dropdownAppointmentReminder.setOnItemClickListener(
@@ -329,8 +360,15 @@ public class NotificationSettingsFragment extends Fragment {
                         pref.edit().putString(
                                 KEY_APPOINTMENT_REMINDER, selected
                         ).apply();
+                        dropdownAppointmentReminder.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
                     }
             );
+            dropdownAppointmentReminder.setOnDismissListener(() -> {
+                dropdownAppointmentReminder.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
+                dropdownAppointmentReminder.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
+                dropdownAppointmentReminder.setDropDownVerticalOffset(20);
+                isDropdownOpen = false;
+            });
         }
 
         // repeat reminder

@@ -24,6 +24,7 @@ public class AppointmentPreReminderNotifReceiver extends BroadcastReceiver {
             notif.put("type", "Appointment");
             notif.put("title", "Segera Ada Janji Temu");
             notif.put("message", "5 menit lagi jadwal appointment " + title + ".");
+            notif.put("reference_id", appointmentId);
             notif.put("is_read", false);
             notif.put("created_at", Timestamp.now());
             db.collection("notifications").add(notif);

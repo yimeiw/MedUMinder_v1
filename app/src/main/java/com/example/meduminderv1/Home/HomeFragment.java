@@ -79,7 +79,7 @@ import java.util.UUID;
 
 public class HomeFragment extends Fragment {
     TextView tvGreeting, tvtitleCard, tvTime, tvDay, tvStokObat, tvTotalStok, btnLihatSemua, emptyTodaySchedule;
-    ImageButton btnNotif, btnProfile;
+    ImageButton btnNotif;
     MaterialButton addNoSchedule, btnKonfirmasi;
     RecyclerView rvTodaySchedule;
     LinearLayout addMed, addAppoint, addDoc, haveSchedule, noSchedule;
@@ -109,7 +109,6 @@ public class HomeFragment extends Fragment {
         tvStokObat = view.findViewById(R.id.tvStokObat);
         tvTotalStok = view.findViewById(R.id.tvTotalStok);
         btnNotif = view.findViewById(R.id.btnNotif);
-        btnProfile = view.findViewById(R.id.btnProfile);
         addMed = view.findViewById(R.id.layoutAddMed);
         addAppoint = view.findViewById(R.id.layoutAddAppoint);
         addDoc = view.findViewById(R.id.layoutDoc);
@@ -126,7 +125,6 @@ public class HomeFragment extends Fragment {
         medicationRepo = new MedicationRepo();
 
         btnNotif.setImageDrawable(requireContext().getDrawable(R.drawable.ic_notif));
-        btnProfile.setImageDrawable(requireContext().getDrawable(R.drawable.ic_profile));
 
         checkCurrentUser();
 
@@ -138,11 +136,6 @@ public class HomeFragment extends Fragment {
         //    btnNotif.setImageDrawable(requireContext().getDrawable(R.drawable.ic_notif_hover));
             NavHostFragment.findNavController(this)
                     .navigate(R.id.notificationFragment);
-        });
-        btnProfile.setOnClickListener(v -> {
-            btnProfile.setImageDrawable(requireContext().getDrawable(R.drawable.ic_profile_hover));
-            NavHostFragment.findNavController(this)
-                    .navigate(R.id.profileFragment);
         });
         addMed.setOnClickListener(v -> {
             NavHostFragment.findNavController(this)

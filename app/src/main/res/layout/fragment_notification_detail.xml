@@ -82,6 +82,20 @@
                 android:textSize="14sp"
                 android:layout_marginBottom="10dp"/>
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/tvScheduleDayTime"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/tvStockInfo"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp"/>
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAction"
                 android:layout_width="match_parent"
@@ -90,7 +104,8 @@
                 app:backgroundTint="@null"
                 android:textColor="?attr/colorPrimary"
                 android:textAllCaps="false"
-                android:visibility="visible"/>
+                android:visibility="visible"
+                android:layout_marginTop="10dp"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -126,46 +141,6 @@
                     android:textAllCaps="false"/>
 
             </LinearLayout>
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/scheduleDetail"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/bg_offset"
-            android:padding="14dp"
-            android:layout_marginBottom="10dp"
-            android:visibility="visible">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/tvConsumerName"
-                android:textStyle="bold"
-                android:textSize="14sp"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/tvScheduleName"
-                android:textSize="13sp"
-                android:layout_marginTop="4dp"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/tvScheduleDayTime"
-                android:textSize="12sp"
-                android:layout_marginTop="4dp"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/tvStockInfo"
-                android:textSize="12sp"
-                android:layout_marginTop="4dp"/>
-
         </LinearLayout>
     </LinearLayout>
 
