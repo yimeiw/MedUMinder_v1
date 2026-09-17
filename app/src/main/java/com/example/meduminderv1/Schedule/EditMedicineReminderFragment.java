@@ -212,18 +212,12 @@ public class EditMedicineReminderFragment extends Fragment {
                     new DatePickerDialog(
                             requireContext(),
                             (view1, year, month, day) -> {
-                                selectedCalendar.set(
-                                        Calendar.YEAR,
-                                        year
-                                );
-                                selectedCalendar.set(
-                                        Calendar.MONTH,
-                                        month
-                                );
-                                selectedCalendar.set(
-                                        Calendar.DAY_OF_MONTH,
-                                        day
-                                );
+                                selectedCalendar.set(Calendar.YEAR, year);
+                                selectedCalendar.set(Calendar.MONTH, month);
+                                selectedCalendar.set(Calendar.DAY_OF_MONTH, day);
+                                selectedCalendar.set(Calendar.HOUR_OF_DAY, 23);
+                                selectedCalendar.set(Calendar.MINUTE, 59);
+                                selectedCalendar.set(Calendar.SECOND, 59);
 
                                 endDateSelected = true;
                                 endDateReminder.setText(
@@ -258,8 +252,8 @@ public class EditMedicineReminderFragment extends Fragment {
                     }
 
                     medication = documentSnapshot.toObject(
-                                    Medication.class
-                            );
+                            Medication.class
+                    );
 
                     if (medication == null) {
                         return;
@@ -339,8 +333,8 @@ public class EditMedicineReminderFragment extends Fragment {
                     scheduleId = doc.getId();
 
                     medicationSchedule = doc.toObject(
-                                    MedicationSchedules.class
-                            );
+                            MedicationSchedules.class
+                    );
 
                     if (medicationSchedule != null) {
                         populateForm();
@@ -496,16 +490,18 @@ public class EditMedicineReminderFragment extends Fragment {
             endDate = null;
         }
 
-        // Hitung jumlah alarm dari jadwal lama
-        int count = 0;
+        // Ambil daftar JAM LAMA dari jadwal lama (bukan cuma jumlahnya) --
+        // AlarmSchedulerHelper.cancelAll butuh tahu jam-jam persisnya supaya
+        // bisa membatalkan alarm yang benar-benar cocok.
+        final List<String> oldTimesOfDay;
 
         if (medicationSchedule != null
                 && medicationSchedule.getTimes_of_day() != null) {
 
-            count = medicationSchedule.getTimes_of_day().size();
+            oldTimesOfDay = medicationSchedule.getTimes_of_day();
+        } else {
+            oldTimesOfDay = new ArrayList<>();
         }
-
-        final int oldOccurrenceCount = count;
 
         Map<String, Object> scheduleUpdates = new java.util.HashMap<>();
 
@@ -523,7 +519,7 @@ public class EditMedicineReminderFragment extends Fragment {
                     AlarmSchedulerHelper.cancelAll(
                             requireContext(),
                             scheduleId,
-                            oldOccurrenceCount
+                            oldTimesOfDay
                     );
 
                     String currentMedicineName =
@@ -638,10 +634,10 @@ public class EditMedicineReminderFragment extends Fragment {
         int filledColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface);
 
         MaterialTimePicker picker = new MaterialTimePicker.Builder().setTimeFormat(TimeFormat.CLOCK_24H)
-                        .setHour(now.get(Calendar.HOUR_OF_DAY))
-                        .setMinute(now.get(Calendar.MINUTE))
-                        .setTitleText("Pilih Jam Minum Obat")
-                        .build();
+                .setHour(now.get(Calendar.HOUR_OF_DAY))
+                .setMinute(now.get(Calendar.MINUTE))
+                .setTitleText("Pilih Jam Minum Obat")
+                .build();
 
         picker.addOnPositiveButtonClickListener(v -> {
                     String time = String.format(Locale.getDefault(), "%02d:%02d", picker.getHour(), picker.getMinute());

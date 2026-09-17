@@ -216,6 +216,10 @@ public class CaregiverHomeFragment extends Fragment {
     }
 
     private void setupSideNavInteractions(View view) {
+//        view.findViewById(R.id.navDocument).setOnClickListener(v -> {
+//            drawerLayout.closeDrawer(GravityCompat.START);
+//            NavHostFragment.findNavController(this).navigate(R.id.documentFragment);
+//        });
         view.findViewById(R.id.navRiwayat).setOnClickListener(v -> {
             drawerLayout.closeDrawer(GravityCompat.START);
             NavHostFragment.findNavController(this).navigate(R.id.logFragment);
@@ -366,7 +370,8 @@ public class CaregiverHomeFragment extends Fragment {
                             remaining[0]--;
                             continue;
                         } resolveMedName(log.getMedication_schedules_id(), (medName, stock) -> {
-                            combined.add(new LogItem("medicine", medName, sdf.format(log.getScheduled_at().toDate()), getString(R.string.sisa_stok, stock), log.getStatus()));
+                            combined.add(new LogItem("medicine", medName, sdf.format(log.getScheduled_at().toDate()), getString(R.string.sisa_stok, stock), log.getStatus(),
+                                    log.getMedication_schedules_id(), log.getScheduled_at().toDate().getTime()));
                             remaining[0]--;
                             if (remaining[0] <= 0){
                                 mergeAppointments(consumerUid, combined, startOfDay, startOfTomorrow);
@@ -389,11 +394,14 @@ public class CaregiverHomeFragment extends Fragment {
                         if (appt == null) continue;
                         combined.add(new LogItem("appointment", appt.getTitle(),
                                 sdf.format(appt.getAppointment_at().toDate()),
-                                appt.getAddress(), appt.getStatus()));
+                                appt.getAddress(), appt.getStatus(),
+                                doc.getId(), appt.getAppointment_at().toDate().getTime()));
                     }
                     Collections.sort(combined, (a, b) -> a.getTime().compareTo(b.getTime()));
                     List<LogItem> displayList = combined.size() > 3 ? combined.subList(0,3) : combined;
-                    rvTodaySchedule.setAdapter(new TodayScheduleAdapter(displayList, requireContext()));
+                    TodayScheduleAdapter adapter = new TodayScheduleAdapter(displayList, requireContext());
+                    adapter.setOnItemClickListener(this::navigateToReminder);
+                    rvTodaySchedule.setAdapter(adapter);
                     if (combined.isEmpty()){
                         emptyTodaySchedule.setVisibility(View.VISIBLE);
                         rvTodaySchedule.setVisibility(View.GONE);
@@ -404,6 +412,17 @@ public class CaregiverHomeFragment extends Fragment {
                         btnLihatSemua.setVisibility(View.VISIBLE);
                     }
                 });
+    }
+
+    private void navigateToReminder(LogItem item) {
+        if (!isAdded() || item == null) return;
+        Bundle bundle = new Bundle();
+        bundle.putString("medication_schedules_id", item.getScheduleId());
+        bundle.putString("nama_obat", item.getNamaJadwal());
+        bundle.putLong("scheduled_at", item.getScheduledAtMillis());
+        bundle.putString("status", item.getStatus());
+        bundle.putString("type", item.getType());
+        NavHostFragment.findNavController(this).navigate(R.id.reminderFragment, bundle);
     }
 
     private void loadAdherenceAndStats(String consumerUid) {

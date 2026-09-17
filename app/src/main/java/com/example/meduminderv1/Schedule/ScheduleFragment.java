@@ -1,4 +1,3 @@
-
 package com.example.meduminderv1.Schedule;
 
 import android.content.res.ColorStateList;
@@ -71,7 +70,12 @@ public class ScheduleFragment extends Fragment {
         rvSchedule = view.findViewById(R.id.rvSchedule);
         emptyState = view.findViewById(R.id.emptyState);
         toggleGroup = view.findViewById(R.id.toggleGroup);
+        btnMed = view.findViewById(R.id.btnMedicine);
+        btnAppoint = view.findViewById(R.id.btnAppointment);
         db = FirebaseFirestore.getInstance();
+
+        toggleGroup.check(R.id.btnMedicine);
+        currType = Type.Medication;
 
         rvSchedule.setLayoutManager(new LinearLayoutManager(requireContext()));
         if (getArguments() != null && getArguments().containsKey("selected_date")){
@@ -149,8 +153,14 @@ public class ScheduleFragment extends Fragment {
                                 remaining[0]--;
                                 continue;
                             } resolveMedName(log.getMedication_schedules_id(), (medName, stock) -> {
-                                result.add(new LogItem("medicine", medName, sdf.format(log.getScheduled_at().toDate()),
-                                        "Sisa stok: " + stock, log.getStatus()));
+                                // Id jadwal & waktu asli disertakan langsung lewat constructor
+                                // (LogItem sekarang tidak punya setter, semuanya diisi sekali
+                                // saat objek dibuat), supaya item ini bisa diklik untuk
+                                // dibuka ke ReminderFragment.
+                                LogItem item = new LogItem("medicine", medName, sdf.format(log.getScheduled_at().toDate()),
+                                        "Sisa stok: " + stock, log.getStatus(),
+                                        log.getMedication_schedules_id(), log.getScheduled_at().toDate().getTime());
+                                result.add(item);
                                 remaining[0]--;
                                 if (remaining[0] <= 0){
                                     showResult(result);
@@ -166,8 +176,10 @@ public class ScheduleFragment extends Fragment {
                         for (DocumentSnapshot doc : query.getDocuments()){
                             Appointment appoint = doc.toObject(Appointment.class);
                             if (appoint == null) continue;
-                            result.add(new LogItem("appointment", appoint.getTitle(), sdf.format(appoint.getAppointment_at().toDate()),
-                                    appoint.getAddress(), appoint.getStatus()));
+                            LogItem item = new LogItem("appointment", appoint.getTitle(), sdf.format(appoint.getAppointment_at().toDate()),
+                                    appoint.getAddress(), appoint.getStatus(),
+                                    doc.getId(), appoint.getAppointment_at().toDate().getTime());
+                            result.add(item);
                         } showResult(result);
                     }).addOnFailureListener(e -> showEmpty());
         }
@@ -181,7 +193,27 @@ public class ScheduleFragment extends Fragment {
             return;
         } emptyState.setVisibility(View.GONE);
         rvSchedule.setVisibility(View.VISIBLE);
-        rvSchedule.setAdapter(new TodayScheduleAdapter(result, requireContext()));
+        TodayScheduleAdapter adapter = new TodayScheduleAdapter(result, requireContext());
+        // nama method setter listener klik di TodayScheduleAdapter adalah
+        // setOnItemClickListener (bukan setOnScheduleItemClickListener).
+        adapter.setOnItemClickListener(this::navigateToReminder);
+        rvSchedule.setAdapter(adapter);
+    }
+
+    // buka Reminder view dari Calendar. source="schedule" -> tombol titik tiga (edit/hapus) ditampilkan.
+    private void navigateToReminder(LogItem item) {
+        if (item.getScheduleId() == null) return;
+
+        Bundle bundle = new Bundle();
+        bundle.putString("medication_schedules_id", item.getScheduleId());
+        bundle.putString("nama_obat", item.getNamaJadwal());
+        bundle.putLong("scheduled_at", item.getScheduledAtMillis());
+        bundle.putString("status", item.getStatus());
+        bundle.putString("type", item.getType());
+        bundle.putString("source", "schedule");
+
+        NavHostFragment.findNavController(this)
+                .navigate(R.id.reminderFragment, bundle);
     }
 
     private void showEmpty() {

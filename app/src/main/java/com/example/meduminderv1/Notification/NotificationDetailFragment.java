@@ -39,7 +39,7 @@ import java.util.Locale;
 public class NotificationDetailFragment extends Fragment {
     LinearLayout layoutButton, notifDetail;
     TextView titleNotif, messageNotif, timeNotif, headerNotif,
-            tvScheduleName, tvScheduleDayTime, tvStockInfo;
+            tvConsumerName, tvScheduleName, tvScheduleDayTime, tvStockInfo;
     MaterialButton btnAction, btnAcc, btnReject;
     ImageButton btnBack;
     Invitation invitation;
@@ -68,6 +68,7 @@ public class NotificationDetailFragment extends Fragment {
         tvScheduleName = view.findViewById(R.id.tvScheduleName);
         tvScheduleDayTime = view.findViewById(R.id.tvScheduleDayTime);
         tvStockInfo = view.findViewById(R.id.tvStockInfo);
+        tvConsumerName = view.findViewById(R.id.tvConsumerName);
 
         invitationRepo = new InvitationRepo();
         notificationRepo = new NotificationRepo();
@@ -164,6 +165,17 @@ public class NotificationDetailFragment extends Fragment {
         notifDetail.setVisibility(View.GONE);
         layoutButton.setVisibility(View.GONE);
         btnAction.setVisibility(View.GONE);
+    }
+
+    // MERGE: helper baru, dipakai bareng di detail Medicine & Appointment
+    // supaya tidak nulis ulang logic yang sama 3x. Ini yang dulunya ada di
+    // draft lama (ditulis manual di tiap render Runnable), sekarang
+    // dipusatkan di satu tempat.
+    private void bindConsumerName() {
+        if (tvConsumerName == null || notification == null) return;
+        String consumerName = notification.getConsumer_name();
+        tvConsumerName.setText(consumerName != null ? consumerName : "");
+        tvConsumerName.setVisibility(consumerName != null ? View.VISIBLE : View.GONE);
     }
 
     // ================= INVITATION =================
@@ -311,6 +323,8 @@ public class NotificationDetailFragment extends Fragment {
                 Runnable render = (() -> {
                     if (!isAdded()) return;
                     notifDetail.setVisibility(View.VISIBLE);
+                    // MERGE: tampilkan nama consumer di kartu, kalau ada.
+                    bindConsumerName();
 
                     String frekuensi = (schedule.getFrequency() != null ? schedule.getFrequency() : 0) + "x sehari";
                     String jam = schedule.getTimes_of_day() != null ? String.join(", ", schedule.getTimes_of_day()) : "-";
@@ -371,6 +385,8 @@ public class NotificationDetailFragment extends Fragment {
                     Runnable render = () -> {
                         if (!isAdded()) return;
                         notifDetail.setVisibility(View.VISIBLE);
+                        // MERGE: nama consumer, sama seperti di atas.
+                        bindConsumerName();
 
                         Locale locale = new Locale("id", "ID");
                         SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", locale);
@@ -456,7 +472,6 @@ public class NotificationDetailFragment extends Fragment {
         });
     }
 
-    // ================= APPOINTMENT =================
     private void showAppointment() {
         showMissedActionIfCaregiver();
         loadAppointmentDetail();
@@ -476,21 +491,17 @@ public class NotificationDetailFragment extends Fragment {
             } Appointment appointment = doc.toObject(Appointment.class);
             if (appointment == null) return;
             notifDetail.setVisibility(View.VISIBLE);
-
-            String consumerName = notification.getConsumer_name();
+            bindConsumerName();
 
             tvScheduleName.setText("Appointment: " + appointment.getTitle() + " (" + appointment.getAddress() + ")");
             SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", new Locale("id", "ID"));
             SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
             Date appointmentDate = appointment.getAppointment_at().toDate();
-            // FIX: sebelumnya timeFormat.format(timeFormat) -> IllegalArgumentException.
-            // Yang benar diformat adalah appointmentDate.
             tvScheduleDayTime.setText(dayFormat.format(appointmentDate) + " • " + timeFormat.format(appointmentDate));
             tvStockInfo.setVisibility(View.GONE);
         }).addOnFailureListener(e -> { if (isAdded()) cleanupOrphanNotification("Jadwal appointment sudah tidak tersedia."); });
     }
 
-    // ================= STOCK =================
     private void showLowStock() {
         notifDetail.setVisibility(View.GONE); // tidak relevan untuk stock notification
         layoutButton.setVisibility(View.GONE);
@@ -509,7 +520,6 @@ public class NotificationDetailFragment extends Fragment {
         });
     }
 
-    // ================= UTIL =================
     private void cleanupOrphanNotification(String message) {
         if (!isAdded()) return;
         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();

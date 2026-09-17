@@ -10,6 +10,9 @@ public class LogItem {
     private int stock;
     private String location;
 
+    private String scheduleId;
+    private long scheduledAtMillis;
+
     public LogItem(){}
 
     public LogItem(String type,
@@ -23,6 +26,23 @@ public class LogItem {
         this.time = time;
         this.informasiJadwal = informasiJadwal;
         this.status = status;
+    }
+
+    public LogItem(String type,
+                   String namaJadwal,
+                   String time,
+                   String informasiJadwal,
+                   String status,
+                   String scheduleId,
+                   long scheduledAtMillis){
+
+        this.type = type;
+        this.namaJadwal = namaJadwal;
+        this.time = time;
+        this.informasiJadwal = informasiJadwal;
+        this.status = status;
+        this.scheduleId = scheduleId;
+        this.scheduledAtMillis = scheduledAtMillis;
     }
 
     public String getType() {
@@ -51,5 +71,13 @@ public class LogItem {
 
     public String getLocation() {
         return location;
+    }
+
+    public String getScheduleId() {
+        return scheduleId;
+    }
+
+    public long getScheduledAtMillis() {
+        return scheduledAtMillis;
     }
 }

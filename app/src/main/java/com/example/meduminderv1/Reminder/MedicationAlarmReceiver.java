@@ -25,12 +25,15 @@ public class MedicationAlarmReceiver extends BroadcastReceiver {
                 System.currentTimeMillis()
         );
         String type = intent.getStringExtra("type");
-        int occurrenceIndex = intent.getIntExtra("occurrence_index", 0);
-        long endMillis = intent.getLongExtra("end_millis", 0L);
         long triggerAt = intent.getLongExtra("trigger_at", System.currentTimeMillis());
 
+        // FIX: rescheduleNextDay sekarang cuma butuh 4 argumen -- versi baru
+        // AlarmSchedulerHelper mengambil ulang data schedule (is_active,
+        // end_date) langsung dari Firestore, bukan dari occurrenceIndex/
+        // endMillis lama yang dititipkan di intent alarm (itu sudah tidak
+        // dikirim lagi sejak alarm dikunci berdasarkan jam, bukan nomor urut).
         if ("medicine".equals(type)){
-            AlarmSchedulerHelper.rescheduleNextDay(context, scheduleId, namaObat, triggerAt, occurrenceIndex, endMillis);
+            AlarmSchedulerHelper.rescheduleNextDay(context, scheduleId, namaObat, triggerAt);
         }
         Intent serviceIntent =
                 new Intent(context, AlarmRingingService.class);

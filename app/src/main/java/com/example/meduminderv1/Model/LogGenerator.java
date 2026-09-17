@@ -34,30 +34,38 @@ public class LogGenerator {
      * Panggil ini sekali tiap app dibuka, buat semua schedule aktif milik user
      */
     public void generateForAllActiveSchedules(String userId) {
+        LocalDate today = LocalDate.now();
+
         db.collection("medication_schedules")
                 .whereEqualTo("users_id", userId)
                 .whereEqualTo("is_active", true)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        Log.d("CHECK", "Doc ID = " + doc.getId());
-
-                        for (String key : doc.getData().keySet()) {
-                            Object value = doc.get(key);
-                            Log.d("CHECK",
-                                    key + " -> " +
-                                            value +
-                                            " (" +
-                                            (value == null ? "null" : value.getClass().getSimpleName()) +
-                                            ")");
-                        }
-
                         MedicationSchedules schedule = doc.toObject(MedicationSchedules.class);
-                        if (schedule != null){
-                            ensureLogsGenerated(schedule, doc.getId());
+                        if (schedule == null) continue;
+
+                        // Schedule yang end_date-nya sudah lewat bukan lagi "aktif" secara
+                        // logis walau is_active masih true di Firestore (gak ada yang pernah
+                        // matiin). Kalau ini gak difilter, tiap app dibuka akan terus generate
+                        // log/reminder untuk SEMUA schedule lama (termasuk data testing lama),
+                        // dan itu yang bikin daftar jadwal kelihatan kebanjiran entry.
+                        if (isExpired(schedule.getEnd_date(), today)) {
+                            db.collection("medication_schedules").document(doc.getId())
+                                    .update("is_active", false, "updated_at", Timestamp.now())
+                                    .addOnFailureListener(e ->
+                                            Log.e("LogGenerator", "Gagal nonaktifkan schedule kadaluarsa " + doc.getId(), e));
+                            continue;
                         }
+
+                        ensureLogsGenerated(schedule, doc.getId());
                     }
                 }).addOnFailureListener(e -> Log.e("LogGenerator", "Gagal load schedule aktif", e));
+    }
+
+    private boolean isExpired(Timestamp endDate, LocalDate today) {
+        if (endDate == null) return false; // gak ada end date = rolling window, gak pernah "expired" di sini
+        return toLocalDate(endDate).isBefore(today);
     }
 
     public void ensureLogsGenerated(MedicationSchedules schedule, String scheduleId) {

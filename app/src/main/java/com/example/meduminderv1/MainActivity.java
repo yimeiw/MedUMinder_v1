@@ -196,15 +196,8 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         bundle.putString("nama_obat", namaObat);
         bundle.putLong("scheduled_at", scheduledAt);
         bundle.putLong("taken_at", 0L);
-
-        // FIX: sebelumnya "AKAN_DATANG" (nama enum, pakai underscore) yang
-        // gagal di-parse LogStatus.fromRaw() (lihat perbaikan di LogStatus.java).
-        // Sekarang pakai bentuk raw yang benar. Tapi ini cuma nilai PLACEHOLDER
-        // sementara — ReminderFragment akan langsung fetch status asli dari
-        // Firestore begitu fragment-nya kebuka (lihat ReminderFragment.java),
-        // supaya kalau ada aksi lain (taken/snooze dari notifikasi) yang race
-        // dengan alarm ini, status yang ditampilkan tetap akurat.
         bundle.putString("status", "akan datang");
+        bundle.putString("source", "schedule");   // <-- baris baru
 
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.nav_host_fragment);
@@ -233,10 +226,10 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
             bundle.putString("nama_obat", intent.getStringExtra("nama_obat"));
             bundle.putLong("scheduled_at", intent.getLongExtra("scheduled_at", 0L));
             bundle.putString("status", intent.getStringExtra("status"));
-            bundle.putString("type", intent.getStringExtra("type")); // <- baru, sebelumnya gak diterusin
+            bundle.putString("type", intent.getStringExtra("type"));
+            bundle.putString("source", "schedule");   // <-- baris baru
 
             navHostFragment.getNavController().navigate(R.id.reminderFragment, bundle);
-
         } else if ("appointment_log".equals(navigateTo)) {
             Bundle bundle = new Bundle();
             bundle.putBoolean("open_appointment_tab", true);

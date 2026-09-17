@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.meduminderv1.Model.LogItem;
@@ -19,6 +20,19 @@ public class TodayScheduleAdapter extends RecyclerView.Adapter<TodayScheduleAdap
 
     private final List<LogItem> items;
     private final Context context;
+
+    // Listener klik item, supaya fragment (Home/CaregiverHome/Schedule) bisa
+    // dikabari saat sebuah jadwal di list ini diklik, lalu membuka ReminderFragment.
+    public interface OnItemClickListener {
+        void onItemClick(LogItem item);
+    }
+
+    @Nullable
+    private OnItemClickListener listener;
+
+    public void setOnItemClickListener(@Nullable OnItemClickListener listener) {
+        this.listener = listener;
+    }
 
     public TodayScheduleAdapter(List<LogItem> items, Context context) {
         this.items = items;
@@ -46,6 +60,12 @@ public class TodayScheduleAdapter extends RecyclerView.Adapter<TodayScheduleAdap
             holder.info.setVisibility(View.VISIBLE);
             holder.info.setText(item.getInformasiJadwal());
         }
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(item);
+            }
+        });
     }
 
     @Override

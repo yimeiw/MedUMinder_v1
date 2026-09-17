@@ -1,8 +1,10 @@
 package com.example.meduminderv1.Schedule;
 
+import android.app.AlarmManager;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
@@ -315,6 +317,9 @@ public class MedicineReminderFragment extends Fragment {
                 selectedCalendar.set(Calendar.YEAR, year);
                 selectedCalendar.set(Calendar.MONTH, month);
                 selectedCalendar.set(Calendar.DAY_OF_MONTH, day);
+                selectedCalendar.set(Calendar.HOUR_OF_DAY, 23);
+                selectedCalendar.set(Calendar.MINUTE, 59);
+                selectedCalendar.set(Calendar.SECOND, 59);
                 endDateSelected = true;
                 endDateReminder.setText(day + "/" + (month + 1) + "/" + year);
             }, today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH)
@@ -333,6 +338,29 @@ public class MedicineReminderFragment extends Fragment {
         });
 
         return view;
+    }
+
+    // FIX: sejak Android 12 (S), sistem WAJIB izin khusus "Alarm & pengingat"
+    // sebelum alarm bisa dipasang. Kalau izin ini belum dinyalakan,
+    // AlarmSchedulerHelper diam-diam TIDAK memasang alarm apa pun (tanpa
+    // error) -- makanya jadwal baru kelihatan tersimpan, tapi notifikasi/
+    // alarmnya tidak pernah muncul. Dicek di sini supaya user diarahkan ke
+    // halaman izin, bukan cuma diam kebingungan.
+    private boolean ensureExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            return true;
+        }
+        AlarmManager alarmManager = (AlarmManager) requireContext().getSystemService(Context.ALARM_SERVICE);
+        if (alarmManager != null && alarmManager.canScheduleExactAlarms()) {
+            return true;
+        }
+        Toast.makeText(
+                requireContext(),
+                "Aktifkan izin \"Alarm & pengingat\" dulu supaya notifikasi obat bisa muncul",
+                Toast.LENGTH_LONG
+        ).show();
+        AlarmSchedulerHelper.requestExactAlarmPermission(requireContext());
+        return false;
     }
 
     private int convertFrequencyToNumber(String selected) {
@@ -370,6 +398,12 @@ public class MedicineReminderFragment extends Fragment {
             btnSaveReminder.setEnabled(true);
             return;
         }
+
+        // Cek izin alarm dulu. Data jadwal tetap disimpan ke Firestore walau
+        // izinnya belum aktif (supaya tidak kehilangan input user), tapi
+        // user diberi tahu & diarahkan ke halaman izin, karena tanpa ini
+        // alarmnya tidak akan pernah berbunyi.
+        ensureExactAlarmPermission();
 
         // FIX TC-MED-CON-009: selalu ambil nama obat dari teks yang SEKARANG
         // ada di field, bukan dari selectedMed (nilai lama saat user pertama

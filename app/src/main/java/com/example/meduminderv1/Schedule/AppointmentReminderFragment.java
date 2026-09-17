@@ -107,11 +107,10 @@ public class AppointmentReminderFragment extends Fragment {
         });
 
         tvTime.setOnClickListener(v -> {
-            Calendar now = Calendar.getInstance();
             MaterialTimePicker picker = new MaterialTimePicker.Builder()
                     .setTimeFormat(TimeFormat.CLOCK_24H)
-                    .setHour(now.get(Calendar.HOUR_OF_DAY))
-                    .setMinute(now.get(Calendar.MINUTE))
+                    .setHour(selectedCalendar.get(Calendar.HOUR_OF_DAY))
+                    .setMinute(selectedCalendar.get(Calendar.MINUTE))
                     .setTitleText("Pilih Jam Appointment")
                     .build();
 
@@ -121,10 +120,17 @@ public class AppointmentReminderFragment extends Fragment {
                 selectedCalendar.set(Calendar.SECOND, 0);
                 selectedCalendar.set(Calendar.MILLISECOND, 0);
 
-                String time = String.format(Locale.getDefault(), "%02d:%02d", picker.getHour(), picker.getMinute());
+                String time = String.format(
+                        Locale.getDefault(),
+                        "%02d:%02d",
+                        picker.getHour(),
+                        picker.getMinute()
+                );
+
                 tvTime.setText(time);
                 isTimePicked = true;
             });
+
             picker.show(getParentFragmentManager(), "time_picker");
         });
 
@@ -170,6 +176,13 @@ public class AppointmentReminderFragment extends Fragment {
         } if (!isTimePicked){
             Toast.makeText(requireContext(), "Waktu Appointment wajib diisi.", Toast.LENGTH_SHORT).show();
             btnSaveAppoint.setEnabled(true);
+            return;
+        }
+        // getCurrentUser() bisa null kalau sesi auth belum siap/expired saat tombol
+        // Simpan ditekan. Kalau gak dicek, baris .getUid() di bawah bakal NPE
+        // langsung di click listener -> crash tanpa toast/error yang jelas.
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            Toast.makeText(requireContext(), "Sesi login bermasalah, coba login ulang", Toast.LENGTH_SHORT).show();
             return;
         }
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
