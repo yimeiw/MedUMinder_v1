@@ -79,11 +79,15 @@ public class AppointmentReminderFragment extends Fragment {
 
         View pickerRoot = viewF.findViewById(R.id.consumerPicker);
         consumerPickerHelper = new ConsumerPickerHelper(pickerRoot, requireContext(), uid -> {
+            boolean consumerChanged = targetUid != null && uid != null && !targetUid.equals(uid);
             targetUid = uid;
-            boolean hasConsumer = uid  != null;
+            boolean hasConsumer = uid != null;
             formContent.setVisibility(hasConsumer ? View.VISIBLE : View.GONE);
-            if (!hasConsumer){
-                pickerRoot.setOnClickListener(v ->  NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
+            if (!hasConsumer) {
+                pickerRoot.setOnClickListener(v -> NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
+            }
+            if (consumerChanged) {
+                resetForm();
             }
         }); consumerPickerHelper.setup();
 
@@ -118,23 +122,33 @@ public class AppointmentReminderFragment extends Fragment {
 
                 String time = String.format(Locale.getDefault(), "%02d:%02d", picker.getHour(), picker.getMinute());
                 tvTime.setText(time);
+                isTimePicked = true;
             });
             picker.show(getParentFragmentManager(), "time_picker");
-//                 isTimePicked = true;
-//             }, now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE), true );
-//             dialog.show();
         });
 
         btnSaveAppoint.setOnClickListener(v -> {
+            btnSaveAppoint.setEnabled(false);
             saveAppointment();
         });
 
         return viewF;
     }
 
+    private void resetForm() {
+        namaAppointment.setText("");
+        location_input.setText("");
+        tvDate.setText("");
+        tvTime.setText("");
+        selectedCalendar = Calendar.getInstance();
+        isDatePicked = false;
+        isTimePicked = false;
+    }
+
     private void saveAppointment() {
         if (targetUid == null){
             Toast.makeText(requireContext(), "Pilih consumer terlebih dahulu", Toast.LENGTH_SHORT).show();
+            btnSaveAppoint.setEnabled(true);
             return;
         }
         String nameAppoint = namaAppointment.getText().toString().trim();
@@ -142,15 +156,19 @@ public class AppointmentReminderFragment extends Fragment {
 
         if (nameAppoint.isEmpty()){
             namaAppointment.setError("Nama Appointment wajib diisi.");
+            btnSaveAppoint.setEnabled(true);
             return;
         } if (location.isEmpty()){
             location_input.setError("Lokasi Appointment wajib diisi.");
+            btnSaveAppoint.setEnabled(true);
             return;
         } if (!isDatePicked) {
-            tvDate.setError("Tanggal Appointment wajib diisi.");
+            Toast.makeText(requireContext(), "Tanggal Appointment wajib diisi.", Toast.LENGTH_SHORT).show();
+            btnSaveAppoint.setEnabled(true);
             return;
         } if (!isTimePicked){
-            tvTime.setError("Waktu Appointment wajib diisi.");
+            Toast.makeText(requireContext(), "Waktu Appointment wajib diisi.", Toast.LENGTH_SHORT).show();
+            btnSaveAppoint.setEnabled(true);
             return;
         }
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -164,8 +182,6 @@ public class AppointmentReminderFragment extends Fragment {
         appointment.put("title", nameAppoint);
         appointment.put("address", location);
         appointment.put("appointment_at", appointmentAt);
-//        appointment.put("appointment_date", tvDate.getText().toString());
-//        appointment.put("appointment_time", tvTime.getText().toString());
         appointment.put("created_at", FieldValue.serverTimestamp());
         appointment.put("updated_at", FieldValue.serverTimestamp());
         appointment.put("deleted_at", null);
@@ -200,6 +216,7 @@ public class AppointmentReminderFragment extends Fragment {
             NavHostFragment.findNavController(this).navigateUp();
         }).addOnFailureListener(e -> {
             Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+            btnSaveAppoint.setEnabled(true);
         });
 
     }

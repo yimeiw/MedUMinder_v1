@@ -89,6 +89,10 @@ public class MedicineReminderFragment extends Fragment {
     private Handler debounceHandler = new Handler(Looper.getMainLooper());
     private Runnable debounceRunnable;
     String targetUid;
+    // FIX TC-MED-CON-005 / TC-MED-CON-006: nilai stok yang sudah divalidasi
+    // (angka valid & > 0) disimpan di sini oleh validateReminder(), supaya
+    // saveReminder() tidak perlu parse ulang tanpa pengecekan.
+    private int validatedStock = 0;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -133,12 +137,20 @@ public class MedicineReminderFragment extends Fragment {
 
         View pickerRoot = view.findViewById(R.id.consumerPicker);
         consumerPickerHelper = new ConsumerPickerHelper(pickerRoot, requireContext(), uid -> {
+            // FIX TC-MED-CAR-003: kalau consumer yang dipilih berganti (misal dari
+            // Consumer A ke Consumer B), form yang sudah terisi harus dikosongkan.
+            // Sebelumnya tidak ada reset, jadi isian obat milik A berisiko ikut
+            // kesimpan sebagai jadwal milik B.
+            boolean consumerChanged = targetUid != null && uid != null && !targetUid.equals(uid);
             targetUid = uid;
             boolean hasConsumer = uid != null;
             formContent.setVisibility(hasConsumer ? View.VISIBLE : View.GONE);
             if (!hasConsumer) {
                 pickerRoot.setOnClickListener(v ->
                         NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
+            }
+            if (consumerChanged) {
+                clearFields();
             }
         });
         consumerPickerHelper.setup();
@@ -170,6 +182,14 @@ public class MedicineReminderFragment extends Fragment {
                     isSelectingItem = false;
                     return;
                 }
+                // FIX TC-MED-CON-009: begitu user mengetik/mengedit teks lagi
+                // secara manual (bukan lewat memilih item dari dropdown),
+                // anggap dia sudah tidak memakai saran "➕ Tambahkan ..." yang
+                // sempat dipilih sebelumnya. isNewMed & selectedMed direset,
+                // supaya saveReminder() nantinya membaca nama obat langsung
+                // dari teks terbaru di field, bukan nilai lama.
+                isNewMed = false;
+                selectedMed = "";
                 String keyword = editable.toString().trim();
                 if (keyword.startsWith("➕")) {
                     return;
@@ -303,6 +323,11 @@ public class MedicineReminderFragment extends Fragment {
         });
 
         btnSaveReminder.setOnClickListener(v -> {
+            // FIX TC-MED-CON-008 / TC-MED-CAR-008: kunci tombol dulu begitu
+            // ditekan, supaya tap dua kali cepat tidak membuat medication &
+            // schedule tersimpan dua kali. Dibuka lagi di setiap jalur gagal
+            // di dalam saveReminder().
+            btnSaveReminder.setEnabled(false);
             saveReminder();
         });
 
@@ -331,26 +356,29 @@ public class MedicineReminderFragment extends Fragment {
     private void saveReminder() {
         if (targetUid == null){
             Toast.makeText(requireContext(), "Pilih consumer terlebih dahulu", Toast.LENGTH_SHORT).show();
+            btnSaveReminder.setEnabled(true);
             return;
         }
         if (!validateReminder()){
+            btnSaveReminder.setEnabled(true);
             return;
         }
 
         if (user == null) {
             Toast.makeText(requireContext(), "User belum login", Toast.LENGTH_SHORT).show();
+            btnSaveReminder.setEnabled(true);
             return;
         }
 
-        String medName;
-        if (isNewMed) {
-            medName = selectedMed;
-        } else {
-            medName = namaObat.getText().toString().trim();
-        }
+        // FIX TC-MED-CON-009: selalu ambil nama obat dari teks yang SEKARANG
+        // ada di field, bukan dari selectedMed (nilai lama saat user pertama
+        // kali memilih saran dropdown). Kalau user sempat pilih "➕ Tambahkan
+        // X" lalu mengedit lagi jadi "Y" tanpa memilih ulang dari dropdown,
+        // yang tersimpan harus "Y", sesuai apa yang benar-benar terlihat di
+        // layar saat tombol "Simpan" ditekan.
+        String medName = namaObat.getText().toString().trim();
 
         String freq = freqMinumObat.getText().toString().trim();
-        String stok = stokObat.getText().toString().trim();
         String medType = radioPil.isChecked() ? "PIL" : "CAIR";
 
         int frequency = convertFrequencyToNumber(freq);
@@ -368,10 +396,12 @@ public class MedicineReminderFragment extends Fragment {
         Map<String, Object> stockMap = new HashMap<>();
 
         if (radioPil.isChecked()) {
-            int stock = Integer.parseInt(stok);
-
-            stockMap.put("stok_obat", stock);
-            stockMap.put("initial_stok", stock);
+            // FIX TC-MED-CON-005 / TC-MED-CON-006: pakai nilai yang sudah
+            // divalidasi di validateReminder() (dipastikan angka & > 0),
+            // bukan Integer.parseInt(stok) mentah yang bisa crash kalau
+            // isinya huruf.
+            stockMap.put("stok_obat", validatedStock);
+            stockMap.put("initial_stok", validatedStock);
             stockMap.put("minimum_stok", frequency);
         }
 
@@ -386,7 +416,7 @@ public class MedicineReminderFragment extends Fragment {
                         }
                     } if (selectedCatalogId != null) { // ini kalau catalog sudah ada/nama obatnya sudah ada
                         Medication med = new Medication(targetUid, selectedCatalogId, null, true, medType, stockMap, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
-                      
+
                         medicationRepo.saveMedication(med, new RepoCallback<String>() {
                             @Override
                             public void onSuccess(String medicationId) {
@@ -414,12 +444,14 @@ public class MedicineReminderFragment extends Fragment {
                                         notifyReminderCreated(medName);
                                         Toast.makeText(requireContext(), "Reminder berhasil dibuat", Toast.LENGTH_SHORT).show();
                                         clearFields();
+                                        btnSaveReminder.setEnabled(true);
                                         NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
                                     }
 
                                     @Override
                                     public void onFailure(Exception e) {
                                         Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        btnSaveReminder.setEnabled(true);
                                     }
                                 });
                             }
@@ -427,6 +459,7 @@ public class MedicineReminderFragment extends Fragment {
                             @Override
                             public void onFailure(Exception e) {
                                 Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                                btnSaveReminder.setEnabled(true);
                             }
                         });
                     } else { //ini kalau obat nya belum ada di database
@@ -459,12 +492,14 @@ public class MedicineReminderFragment extends Fragment {
                                             notifyReminderCreated(medName);
                                             Toast.makeText(requireContext(), "Reminder berhasil dibuat", Toast.LENGTH_SHORT).show();
                                             clearFields();
+                                            btnSaveReminder.setEnabled(true);
                                             NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
                                         }
 
                                         @Override
                                         public void onFailure(Exception e) {
                                             Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                                            btnSaveReminder.setEnabled(true);
                                         }
                                     });
                                 }
@@ -472,10 +507,17 @@ public class MedicineReminderFragment extends Fragment {
                                 @Override
                                 public void onFailure(Exception e) {
                                     Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    btnSaveReminder.setEnabled(true);
                                 }
                             });
+                        }).addOnFailureListener(e -> {
+                            Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                            btnSaveReminder.setEnabled(true);
                         });
                     }
+                }).addOnFailureListener(e -> {
+                    Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                    btnSaveReminder.setEnabled(true);
                 });
     }
 
@@ -544,11 +586,15 @@ public class MedicineReminderFragment extends Fragment {
         stokObat.setText("");
         endDateReminder.setText("");
         timeReminder.removeAllViews();
+        timeViews.clear();
         radioPil.setChecked(true);
         sectionStockObat.setVisibility(View.VISIBLE);
         selectedCalendar = Calendar.getInstance();
         isDropdownOpen = false;
         endDateSelected = false;
+        isNewMed = false;
+        selectedMed = "";
+        validatedStock = 0;
         freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
     }
 
@@ -566,9 +612,31 @@ public class MedicineReminderFragment extends Fragment {
         if (freq.isEmpty()) {
             freqMinumObat.setError("Frekuensi minum obat wajib diisi");
             valid = false;
-        } if (radioPil.isChecked() && stok.isEmpty()) {
-            stokObat.setError("Stok obat wajib diisi");
-            valid = false;
+        }
+        if (radioPil.isChecked()) {
+            // FIX TC-MED-CON-005 / TC-MED-CON-006: dulu cuma dicek "kosong atau
+            // tidak", jadi kalau user isi huruf (misal "abc"), lolos validasi
+            // lalu meledak (crash) di Integer.parseInt() waktu simpan. Dan
+            // kalau user isi "0", juga tetap lolos walau tidak masuk akal.
+            // Sekarang: dicek kosong, lalu dicek harus angka valid, lalu
+            // dicek harus lebih dari 0.
+            if (stok.isEmpty()) {
+                stokObat.setError("Stok obat wajib diisi");
+                valid = false;
+            } else {
+                try {
+                    int stockValue = Integer.parseInt(stok);
+                    if (stockValue <= 0) {
+                        stokObat.setError("Stok harus lebih dari 0");
+                        valid = false;
+                    } else {
+                        validatedStock = stockValue;
+                    }
+                } catch (NumberFormatException e) {
+                    stokObat.setError("Stok harus berupa angka");
+                    valid = false;
+                }
+            }
         }
         int frequency = convertFrequencyToNumber(freq);
         ArrayList<String> times = getSelectedTimes();
