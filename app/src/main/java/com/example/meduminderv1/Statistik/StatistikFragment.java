@@ -438,19 +438,20 @@ public class StatistikFragment extends Fragment {
         btnMonthly.setBackgroundResource(R.drawable.border);
         btnYearly.setBackgroundResource(R.drawable.border);
 
+        int activeColor = com.google.android.material.color.MaterialColors.getColor(
+                requireView(), com.google.android.material.R.attr.colorSecondary);
+
+        btnWeekly.setBackgroundTintList(null);
+        btnMonthly.setBackgroundTintList(null);
+        btnYearly.setBackgroundTintList(null);
+
         // Filter yang aktif
         if ("weekly".equals(selectedPeriod)) {
-            btnWeekly.setBackgroundTintList(android.content.res.ColorStateList.valueOf(requireContext().getColor(R.color.green)));
-            btnMonthly.setBackgroundTintList(null);
-            btnYearly.setBackgroundTintList(null);
+            btnWeekly.setBackgroundTintList(android.content.res.ColorStateList.valueOf(activeColor));
         } else if ("monthly".equals(selectedPeriod)) {
-            btnMonthly.setBackgroundTintList(android.content.res.ColorStateList.valueOf(requireContext().getColor(R.color.green)));
-            btnWeekly.setBackgroundTintList(null);
-            btnYearly.setBackgroundTintList(null);
+            btnMonthly.setBackgroundTintList(android.content.res.ColorStateList.valueOf(activeColor));
         } else if ("yearly".equals(selectedPeriod)) {
-            btnYearly.setBackgroundTintList(android.content.res.ColorStateList.valueOf(requireContext().getColor(R.color.green)));
-            btnWeekly.setBackgroundTintList(null);
-            btnMonthly.setBackgroundTintList(null);
+            btnYearly.setBackgroundTintList(android.content.res.ColorStateList.valueOf(activeColor));
         }
     }
 }

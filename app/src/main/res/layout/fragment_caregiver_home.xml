@@ -107,7 +107,6 @@
                         android:layout_marginVertical="10dp"
                         android:layout_marginBottom="10dp"
                         android:background="@drawable/edittext_border"
-                        android:backgroundTint="?attr/colorPrimaryFixedDim"
                         android:orientation="vertical">
 
                         <TextView
@@ -118,7 +117,7 @@
                             android:paddingHorizontal="12dp"
                             android:paddingTop="10dp"
                             android:text="@string/jadwal_berikutnya"
-                            android:textColor="?attr/colorPrimaryFixed"
+                            android:textColor="?attr/colorPrimary"
                             android:textSize="16sp" />
 
                         <LinearLayout
@@ -136,7 +135,7 @@
                                 android:paddingHorizontal="12dp"
                                 android:paddingVertical="5dp"
                                 android:text=""
-                                android:textColor="?attr/colorPrimaryFixed"
+                                android:textColor="?attr/colorPrimary"
                                 android:textSize="24sp" />
 
                             <LinearLayout
@@ -153,7 +152,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:gravity="center"
-                                    android:textColor="?attr/colorPrimaryFixed" />
+                                    android:textColor="?attr/colorPrimary" />
 
                                 <View
                                     android:layout_width="5dp"
@@ -168,7 +167,7 @@
                                     android:layout_gravity="center"
                                     android:layout_marginRight="5dp"
                                     android:background="@drawable/ic_time"
-                                    android:backgroundTint="?attr/colorPrimaryFixed" />
+                                    android:backgroundTint="?attr/colorPrimary" />
 
                                 <TextView
                                     android:id="@+id/tvTime"
@@ -176,7 +175,7 @@
                                     android:layout_height="wrap_content"
                                     android:layout_gravity="center"
                                     android:text="00:00"
-                                    android:textColor="?attr/colorPrimaryFixed" />
+                                    android:textColor="?attr/colorPrimary" />
                             </LinearLayout>
 
                             <LinearLayout
@@ -231,7 +230,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/consumer_belum_ada_jadwal"
-                                android:textColor="?attr/colorPrimaryFixed"
+                                android:textColor="?attr/colorPrimary"
                                 android:textSize="14sp" />
                         </LinearLayout>
                     </LinearLayout>

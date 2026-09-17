@@ -1,6 +1,7 @@
 
 package com.example.meduminderv1.Schedule;
 
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -31,6 +32,7 @@ import com.example.meduminderv1.Model.MedicineCatalog;
 import com.example.meduminderv1.R;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.color.MaterialColors;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -89,9 +91,12 @@ public class ScheduleFragment extends Fragment {
             selectedDate.set(year, month, day);
             loadScheduleForDate();
         });
+//        toggleGroup.check(R.id.btnMedicine);
+//        updateToggleColors();
         toggleGroup.addOnButtonCheckedListener((group, checkId, isChecked) -> {
             if (!isChecked) return;
             currType = (checkId == R.id.btnMedicine) ? Type.Medication : Type.Appointment;
+            //updateToggleColors();
             loadScheduleForDate();
         });
 
@@ -212,5 +217,18 @@ public class ScheduleFragment extends Fragment {
                                 }
                             });
                 });
+    }
+
+    private void updateToggleColors() {
+        int activeColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorSecondary); // pink
+        int inactiveColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorPrimaryInverse); // abu
+
+        MaterialButton btnMedicine = requireView().findViewById(R.id.btnMedicine);
+        MaterialButton btnAppointment = requireView().findViewById(R.id.btnAppointment);
+
+        btnMedicine.setBackgroundTintList(ColorStateList.valueOf(
+                currType == Type.Medication ? activeColor : inactiveColor));
+        btnAppointment.setBackgroundTintList(ColorStateList.valueOf(
+                currType == Type.Appointment ? activeColor : inactiveColor));
     }
 }

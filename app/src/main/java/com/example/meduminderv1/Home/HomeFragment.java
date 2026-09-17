@@ -82,7 +82,7 @@ public class HomeFragment extends Fragment {
     ImageButton btnNotif;
     MaterialButton addNoSchedule, btnKonfirmasi;
     RecyclerView rvTodaySchedule;
-    LinearLayout addMed, addAppoint, addDoc, haveSchedule, noSchedule;
+    LinearLayout addMed, addAppoint, viewLog, haveSchedule, noSchedule;
     SharedPreferences prefs;
     AuthManager authManager;
     FirebaseFirestore db;
@@ -111,7 +111,7 @@ public class HomeFragment extends Fragment {
         btnNotif = view.findViewById(R.id.btnNotif);
         addMed = view.findViewById(R.id.layoutAddMed);
         addAppoint = view.findViewById(R.id.layoutAddAppoint);
-        addDoc = view.findViewById(R.id.layoutDoc);
+        viewLog = view.findViewById(R.id.layoutLog);
         haveSchedule = view.findViewById(R.id.haveSchedule);
         noSchedule = view.findViewById(R.id.noSchedule);
         addNoSchedule = view.findViewById(R.id.addNoSchedule);
@@ -145,9 +145,9 @@ public class HomeFragment extends Fragment {
             NavHostFragment.findNavController(this)
                     .navigate(R.id.appointmentReminderFragment);
         });
-        addDoc.setOnClickListener(v -> {
+        viewLog.setOnClickListener(v -> {
             NavHostFragment.findNavController(this)
-                    .navigate(R.id.documentFragment);
+                    .navigate(R.id.logFragment);
         });
         addNoSchedule.setOnClickListener(v -> {
             NavHostFragment.findNavController(this)

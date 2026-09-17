@@ -26,13 +26,19 @@ public class NotificationRepo {
     }
 
     public void loadNotification(String uid, UserRole role, RepoCallback<List<Notification>> callback){
-        db.collection("notifications").whereEqualTo("receiver_uid", uid).whereEqualTo("target_role", role.name())
+        db.collection("notifications").whereEqualTo("receiver_uid", uid)
                 .orderBy("created_at", Query.Direction.DESCENDING).get().addOnSuccessListener(queryDocumentSnapshots -> {
                     List<Notification> list = new ArrayList<>();
                     for (DocumentSnapshot doc : queryDocumentSnapshots){
                         Notification notification = doc.toObject(Notification.class);
-                        if (notification != null){
-                            notification.setNotification_id(doc.getId());
+                        if (notification == null) continue;
+                        notification.setNotification_id(doc.getId());
+
+                        // backward-compat: notifikasi lama tanpa target_role dianggap milik Consumer
+                        UserRole effectiveRole = notification.getTargetRoleEnum();
+                        if (effectiveRole == null) effectiveRole = UserRole.Consumer;
+
+                        if (effectiveRole == role) {
                             list.add(notification);
                         }
                     } callback.onSuccess(list);
@@ -164,12 +170,19 @@ public class NotificationRepo {
                 .addOnFailureListener(callback::onFailure);
     }
     public void countUnread(String userUid, UserRole role, RepoCallback<Integer> callback){
-        db.collection("notifications").whereEqualTo("receiver_id", userUid).whereEqualTo("target_role", role.name())
-                .whereEqualTo("is_read", false).addSnapshotListener((snapshot, e) -> {
-                    if (e != null){
-                        callback.onFailure(e);
-                        return;
-                    } int count = (snapshot != null) ? snapshot.size() : 0;
+        db.collection("notifications").whereEqualTo("receiver_uid", userUid)
+                .addSnapshotListener((snapshot, e) -> {
+                    if (e != null){ callback.onFailure(e); return; }
+                    int count = 0;
+                    if (snapshot != null){
+                        for (DocumentSnapshot doc : snapshot.getDocuments()){
+                            Notification n = doc.toObject(Notification.class);
+                            if (n == null || n.isIs_read()) continue;
+                            UserRole effectiveRole = n.getTargetRoleEnum();
+                            if (effectiveRole == null) effectiveRole = UserRole.Consumer;
+                            if (effectiveRole == role) count++;
+                        }
+                    }
                     callback.onSuccess(count);
                 });
     }

@@ -103,6 +103,16 @@ public class Notification {
     public void setTarget_role(String target_role) {
         this.target_role = target_role;
     }
+    @Exclude
+    public UserRole getTargetRoleEnum(){
+        if (target_role == null) return null;
+        try {
+            return UserRole.valueOf(target_role);
+        } catch (IllegalArgumentException e){
+            return null;
+        }
+    }
+
     public boolean isIs_read() {
         return is_read;
     }
