@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import com.example.meduminderv1.Model.UserRole;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -27,6 +28,8 @@ public class AppointmentMissedNotifReceiver extends BroadcastReceiver {
             notifConsumer.put("type", "Appointment");
             notifConsumer.put("title", "Jadwal Terlewat");
             notifConsumer.put("message", "Jadwal appointment " + title + " Anda terlewat.");
+            notifConsumer.put("target_role", UserRole.Consumer);
+            notifConsumer.put("reference_id", appointmentId);
             notifConsumer.put("is_read", false);
             notifConsumer.put("created_at", Timestamp.now());
             db.collection("notifications").add(notifConsumer);
@@ -41,12 +44,15 @@ public class AppointmentMissedNotifReceiver extends BroadcastReceiver {
                             notifCaregiver.put("type", "Appointment");
                             notifCaregiver.put("title", "Consumer Melewatkan Jadwal");
                             notifCaregiver.put("message", "Consumer Anda melewatkan appointment " + title + ".");
+                            notifCaregiver.put("target_role", UserRole.Caregiver);
+                            notifCaregiver.put("reference_id", appointmentId);
                             notifCaregiver.put("consumer_uid", consumerUid);
                             notifCaregiver.put("is_read", false);
                             notifCaregiver.put("created_at", Timestamp.now());
                             db.collection("notifications").add(notifCaregiver);
                         }
                     });
+            context.stopService(new Intent(context, AlarmRingingService.class));
         });
     }
 }

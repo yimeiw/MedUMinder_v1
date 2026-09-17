@@ -39,7 +39,7 @@
                 android:id="@+id/tvType"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Riwayat Konsumsi"
+                android:text="@string/riwayat_konsumsi"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:textColor="?attr/colorOnSurface"
@@ -77,7 +77,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="10dp"
                 style="@style/MaterialButtonLog"
-                android:text="Semua"
+                android:text="@string/semua"
                 android:textSize="12sp"
                 android:textAllCaps="false"
                  />
@@ -90,7 +90,7 @@
                 style="@style/MaterialButtonLog"
                 android:textAllCaps="false"
                 android:textSize="12sp"
-                android:text="Akan Datang" />
+                android:text="@string/akan_datang" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnTaken"
@@ -100,7 +100,7 @@
                 style="@style/MaterialButtonLog"
                 android:textAllCaps="false"
                 android:textSize="12sp"
-                android:text="Dikonsumsi"/>
+                android:text="@string/dikonsumsi"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnMissed"
@@ -110,7 +110,7 @@
                 style="@style/MaterialButtonLog"
                 android:textAllCaps="false"
                 android:textSize="12sp"
-                android:text="Terlewatkan" />
+                android:text="@string/terlewatkan" />
 
         </LinearLayout>
 
@@ -120,7 +120,7 @@
         android:id="@+id/initial_state_medicine"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Belum ada riwayat konsumsi."
+        android:text="@string/belum_ada_riwayat_konsumsi"
         android:textColor="?attr/colorOnSurface"
         android:gravity="center_horizontal"
         android:textSize="16sp"
@@ -132,7 +132,7 @@
         android:id="@+id/initial_state_appoint"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Belum ada riwayat jadwal temu."
+        android:text="@string/belum_ada_riwayat_jadwal_temu"
         android:textColor="?attr/colorOnSurface"
         android:gravity="center_horizontal"
         android:textSize="16sp"

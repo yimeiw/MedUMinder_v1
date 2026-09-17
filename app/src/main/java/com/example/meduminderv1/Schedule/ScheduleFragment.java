@@ -1,5 +1,6 @@
 package com.example.meduminderv1.Schedule;
 
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -30,6 +31,7 @@ import com.example.meduminderv1.Model.MedicineCatalog;
 import com.example.meduminderv1.R;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.color.MaterialColors;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -93,9 +95,12 @@ public class ScheduleFragment extends Fragment {
             selectedDate.set(year, month, day);
             loadScheduleForDate();
         });
+//        toggleGroup.check(R.id.btnMedicine);
+//        updateToggleColors();
         toggleGroup.addOnButtonCheckedListener((group, checkId, isChecked) -> {
             if (!isChecked) return;
             currType = (checkId == R.id.btnMedicine) ? Type.Medication : Type.Appointment;
+            //updateToggleColors();
             loadScheduleForDate();
         });
 
@@ -148,10 +153,13 @@ public class ScheduleFragment extends Fragment {
                                 remaining[0]--;
                                 continue;
                             } resolveMedName(log.getMedication_schedules_id(), (medName, stock) -> {
+                                // Id jadwal & waktu asli disertakan langsung lewat constructor
+                                // (LogItem sekarang tidak punya setter, semuanya diisi sekali
+                                // saat objek dibuat), supaya item ini bisa diklik untuk
+                                // dibuka ke ReminderFragment.
                                 LogItem item = new LogItem("medicine", medName, sdf.format(log.getScheduled_at().toDate()),
-                                        "Sisa stok: " + stock, log.getStatus());
-                                item.setRefId(log.getMedication_schedules_id());
-                                item.setScheduledAtMillis(log.getScheduled_at().toDate().getTime());
+                                        "Sisa stok: " + stock, log.getStatus(),
+                                        log.getMedication_schedules_id(), log.getScheduled_at().toDate().getTime());
                                 result.add(item);
                                 remaining[0]--;
                                 if (remaining[0] <= 0){
@@ -169,9 +177,8 @@ public class ScheduleFragment extends Fragment {
                             Appointment appoint = doc.toObject(Appointment.class);
                             if (appoint == null) continue;
                             LogItem item = new LogItem("appointment", appoint.getTitle(), sdf.format(appoint.getAppointment_at().toDate()),
-                                    appoint.getAddress(), appoint.getStatus());
-                            item.setRefId(doc.getId());
-                            item.setScheduledAtMillis(appoint.getAppointment_at().toDate().getTime());
+                                    appoint.getAddress(), appoint.getStatus(),
+                                    doc.getId(), appoint.getAppointment_at().toDate().getTime());
                             result.add(item);
                         } showResult(result);
                     }).addOnFailureListener(e -> showEmpty());
@@ -187,16 +194,18 @@ public class ScheduleFragment extends Fragment {
         } emptyState.setVisibility(View.GONE);
         rvSchedule.setVisibility(View.VISIBLE);
         TodayScheduleAdapter adapter = new TodayScheduleAdapter(result, requireContext());
-        adapter.setOnScheduleItemClickListener(this::navigateToReminder);
+        // nama method setter listener klik di TodayScheduleAdapter adalah
+        // setOnItemClickListener (bukan setOnScheduleItemClickListener).
+        adapter.setOnItemClickListener(this::navigateToReminder);
         rvSchedule.setAdapter(adapter);
     }
 
     // buka Reminder view dari Calendar. source="schedule" -> tombol titik tiga (edit/hapus) ditampilkan.
     private void navigateToReminder(LogItem item) {
-        if (item.getRefId() == null) return;
+        if (item.getScheduleId() == null) return;
 
         Bundle bundle = new Bundle();
-        bundle.putString("medication_schedules_id", item.getRefId());
+        bundle.putString("medication_schedules_id", item.getScheduleId());
         bundle.putString("nama_obat", item.getNamaJadwal());
         bundle.putLong("scheduled_at", item.getScheduledAtMillis());
         bundle.putString("status", item.getStatus());
@@ -240,5 +249,18 @@ public class ScheduleFragment extends Fragment {
                                 }
                             });
                 });
+    }
+
+    private void updateToggleColors() {
+        int activeColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorSecondary); // pink
+        int inactiveColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorPrimaryInverse); // abu
+
+        MaterialButton btnMedicine = requireView().findViewById(R.id.btnMedicine);
+        MaterialButton btnAppointment = requireView().findViewById(R.id.btnAppointment);
+
+        btnMedicine.setBackgroundTintList(ColorStateList.valueOf(
+                currType == Type.Medication ? activeColor : inactiveColor));
+        btnAppointment.setBackgroundTintList(ColorStateList.valueOf(
+                currType == Type.Appointment ? activeColor : inactiveColor));
     }
 }

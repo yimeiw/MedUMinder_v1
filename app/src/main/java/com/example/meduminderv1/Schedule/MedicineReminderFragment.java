@@ -1,8 +1,10 @@
 package com.example.meduminderv1.Schedule;
 
+import android.app.AlarmManager;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
@@ -10,7 +12,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,8 @@ import android.widget.EditText;
 import android.widget.Filter;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,6 +33,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.meduminderv1.Caregiver.ConsumerPickerHelper;
 import com.example.meduminderv1.Model.LogGenerator;
+import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
@@ -43,15 +47,11 @@ import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Model.Medication;
 import com.example.meduminderv1.Model.MedicationSchedules;
 import com.example.meduminderv1.Model.User;
-import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.MedicationRepo;
-import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
-import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
@@ -68,9 +68,11 @@ public class MedicineReminderFragment extends Fragment {
 
     ImageButton btnBack;
     AutoCompleteTextView namaObat, freqMinumObat;
+    RadioGroup radioGroupJenisObat;
+    RadioButton radioPil, radioCair;
     EditText stokObat;
     TextView endDateReminder;
-    LinearLayout timeReminder, formContent;
+    LinearLayout timeReminder, formContent, sectionStockObat;
     FirebaseFirestore db;
     Calendar selectedCalendar;
     MaterialButton btnSaveReminder;
@@ -90,6 +92,10 @@ public class MedicineReminderFragment extends Fragment {
     private Handler debounceHandler = new Handler(Looper.getMainLooper());
     private Runnable debounceRunnable;
     String targetUid;
+    // FIX TC-MED-CON-005 / TC-MED-CON-006: nilai stok yang sudah divalidasi
+    // (angka valid & > 0) disimpan di sini oleh validateReminder(), supaya
+    // saveReminder() tidak perlu parse ulang tanpa pengecekan.
+    private int validatedStock = 0;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -101,6 +107,10 @@ public class MedicineReminderFragment extends Fragment {
         freqMinumObat = view.findViewById(R.id.freqMinumObat);
         timeReminder = view.findViewById(R.id.timeReminder);
         stokObat = view.findViewById(R.id.stokObat);
+        radioGroupJenisObat = view.findViewById(R.id.radioGroupJenisObat);
+        radioPil = view.findViewById(R.id.radioPil);
+        radioCair = view.findViewById(R.id.radioCair);
+        sectionStockObat = view.findViewById(R.id.sectionStockObat);
         endDateReminder = view.findViewById(R.id.endDateReminder);
         selectedCalendar = Calendar.getInstance();
         btnSaveReminder = view.findViewById(R.id.btnSaveReminder);
@@ -117,16 +127,33 @@ public class MedicineReminderFragment extends Fragment {
                     .navigateUp();
         });
 
+        radioGroupJenisObat.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.radioCair) {
+                sectionStockObat.setVisibility(View.GONE);
+                stokObat.setText("");
+            } else if (checkedId == R.id.radioPil) {
+                sectionStockObat.setVisibility(View.VISIBLE);
+            }
+        });
+
         user = sessionManager.getUser();
 
         View pickerRoot = view.findViewById(R.id.consumerPicker);
         consumerPickerHelper = new ConsumerPickerHelper(pickerRoot, requireContext(), uid -> {
+            // FIX TC-MED-CAR-003: kalau consumer yang dipilih berganti (misal dari
+            // Consumer A ke Consumer B), form yang sudah terisi harus dikosongkan.
+            // Sebelumnya tidak ada reset, jadi isian obat milik A berisiko ikut
+            // kesimpan sebagai jadwal milik B.
+            boolean consumerChanged = targetUid != null && uid != null && !targetUid.equals(uid);
             targetUid = uid;
             boolean hasConsumer = uid != null;
             formContent.setVisibility(hasConsumer ? View.VISIBLE : View.GONE);
             if (!hasConsumer) {
                 pickerRoot.setOnClickListener(v ->
                         NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
+            }
+            if (consumerChanged) {
+                clearFields();
             }
         });
         consumerPickerHelper.setup();
@@ -158,6 +185,14 @@ public class MedicineReminderFragment extends Fragment {
                     isSelectingItem = false;
                     return;
                 }
+                // FIX TC-MED-CON-009: begitu user mengetik/mengedit teks lagi
+                // secara manual (bukan lewat memilih item dari dropdown),
+                // anggap dia sudah tidak memakai saran "➕ Tambahkan ..." yang
+                // sempat dipilih sebelumnya. isNewMed & selectedMed direset,
+                // supaya saveReminder() nantinya membaca nama obat langsung
+                // dari teks terbaru di field, bukan nilai lama.
+                isNewMed = false;
+                selectedMed = "";
                 String keyword = editable.toString().trim();
                 if (keyword.startsWith("➕")) {
                     return;
@@ -282,15 +317,9 @@ public class MedicineReminderFragment extends Fragment {
                 selectedCalendar.set(Calendar.YEAR, year);
                 selectedCalendar.set(Calendar.MONTH, month);
                 selectedCalendar.set(Calendar.DAY_OF_MONTH, day);
-                // Set ke akhir hari (23:59:59.999), bukan cuma tanggalnya doang. Kalau
-                // gak gini, jam yang kepakai adalah jam waktu selectedCalendar pertama
-                // kali di-init (Calendar.getInstance() di onCreateView), yang bisa lebih
-                // awal dari startDate = Timestamp.now() yang diambil pas tombol Simpan
-                // ditekan -> end_date jadi tercatat SEBELUM start_date.
                 selectedCalendar.set(Calendar.HOUR_OF_DAY, 23);
                 selectedCalendar.set(Calendar.MINUTE, 59);
                 selectedCalendar.set(Calendar.SECOND, 59);
-                selectedCalendar.set(Calendar.MILLISECOND, 999);
                 endDateSelected = true;
                 endDateReminder.setText(day + "/" + (month + 1) + "/" + year);
             }, today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH)
@@ -300,10 +329,38 @@ public class MedicineReminderFragment extends Fragment {
         });
 
         btnSaveReminder.setOnClickListener(v -> {
+            // FIX TC-MED-CON-008 / TC-MED-CAR-008: kunci tombol dulu begitu
+            // ditekan, supaya tap dua kali cepat tidak membuat medication &
+            // schedule tersimpan dua kali. Dibuka lagi di setiap jalur gagal
+            // di dalam saveReminder().
+            btnSaveReminder.setEnabled(false);
             saveReminder();
         });
 
         return view;
+    }
+
+    // FIX: sejak Android 12 (S), sistem WAJIB izin khusus "Alarm & pengingat"
+    // sebelum alarm bisa dipasang. Kalau izin ini belum dinyalakan,
+    // AlarmSchedulerHelper diam-diam TIDAK memasang alarm apa pun (tanpa
+    // error) -- makanya jadwal baru kelihatan tersimpan, tapi notifikasi/
+    // alarmnya tidak pernah muncul. Dicek di sini supaya user diarahkan ke
+    // halaman izin, bukan cuma diam kebingungan.
+    private boolean ensureExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            return true;
+        }
+        AlarmManager alarmManager = (AlarmManager) requireContext().getSystemService(Context.ALARM_SERVICE);
+        if (alarmManager != null && alarmManager.canScheduleExactAlarms()) {
+            return true;
+        }
+        Toast.makeText(
+                requireContext(),
+                "Aktifkan izin \"Alarm & pengingat\" dulu supaya notifikasi obat bisa muncul",
+                Toast.LENGTH_LONG
+        ).show();
+        AlarmSchedulerHelper.requestExactAlarmPermission(requireContext());
+        return false;
     }
 
     private int convertFrequencyToNumber(String selected) {
@@ -328,31 +385,36 @@ public class MedicineReminderFragment extends Fragment {
     private void saveReminder() {
         if (targetUid == null){
             Toast.makeText(requireContext(), "Pilih consumer terlebih dahulu", Toast.LENGTH_SHORT).show();
+            btnSaveReminder.setEnabled(true);
             return;
         }
         if (!validateReminder()){
+            btnSaveReminder.setEnabled(true);
             return;
         }
 
-        // Ambil ulang dari SessionManager, jangan cuma andalkan field `user` yang
-        // di-capture sekali di onCreateView. Kalau session baru selesai ke-load
-        // SETELAH fragment ini dibuka, `user` bakal null selamanya walau sebenarnya
-        // user sudah login -> reminder gagal disimpan tanpa alasan yang jelas.
-        user = sessionManager.getUser();
         if (user == null) {
             Toast.makeText(requireContext(), "User belum login", Toast.LENGTH_SHORT).show();
+            btnSaveReminder.setEnabled(true);
             return;
         }
 
-        String medName;
-        if (isNewMed) {
-            medName = selectedMed;
-        } else {
-            medName = namaObat.getText().toString().trim();
-        }
+        // Cek izin alarm dulu. Data jadwal tetap disimpan ke Firestore walau
+        // izinnya belum aktif (supaya tidak kehilangan input user), tapi
+        // user diberi tahu & diarahkan ke halaman izin, karena tanpa ini
+        // alarmnya tidak akan pernah berbunyi.
+        ensureExactAlarmPermission();
+
+        // FIX TC-MED-CON-009: selalu ambil nama obat dari teks yang SEKARANG
+        // ada di field, bukan dari selectedMed (nilai lama saat user pertama
+        // kali memilih saran dropdown). Kalau user sempat pilih "➕ Tambahkan
+        // X" lalu mengedit lagi jadi "Y" tanpa memilih ulang dari dropdown,
+        // yang tersimpan harus "Y", sesuai apa yang benar-benar terlihat di
+        // layar saat tombol "Simpan" ditekan.
+        String medName = namaObat.getText().toString().trim();
 
         String freq = freqMinumObat.getText().toString().trim();
-        String stok = stokObat.getText().toString().trim();
+        String medType = radioPil.isChecked() ? "PIL" : "CAIR";
 
         int frequency = convertFrequencyToNumber(freq);
         ArrayList<String> times = getSelectedTimes();
@@ -365,10 +427,18 @@ public class MedicineReminderFragment extends Fragment {
         }
         Timestamp endDate = tempEndDate;
 
+        // biar apply ke tipe obat pil aja
         Map<String, Object> stockMap = new HashMap<>();
-        stockMap.put("stok_obat", Integer.parseInt(stok));
-        stockMap.put("initial_stok", Integer.parseInt(stok));
-        stockMap.put("minimum_stok", frequency);
+
+        if (radioPil.isChecked()) {
+            // FIX TC-MED-CON-005 / TC-MED-CON-006: pakai nilai yang sudah
+            // divalidasi di validateReminder() (dipastikan angka & > 0),
+            // bukan Integer.parseInt(stok) mentah yang bisa crash kalau
+            // isinya huruf.
+            stockMap.put("stok_obat", validatedStock);
+            stockMap.put("initial_stok", validatedStock);
+            stockMap.put("minimum_stok", frequency);
+        }
 
         db.collection("medicine_catalog").get()
                 .addOnSuccessListener(query -> {
@@ -379,18 +449,52 @@ public class MedicineReminderFragment extends Fragment {
                             selectedCatalogId = doc.getId();
                             break;
                         }
-                    }
-                    if (selectedCatalogId != null) { //ini kalau catalog sudah ada/nama obatnya sudah ada
-                        Medication med = new Medication(user.getAuth_uid(), selectedCatalogId, null, true, stockMap, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
+                    } if (selectedCatalogId != null) { // ini kalau catalog sudah ada/nama obatnya sudah ada
+                        Medication med = new Medication(targetUid, selectedCatalogId, null, true, medType, stockMap, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
+
                         medicationRepo.saveMedication(med, new RepoCallback<String>() {
                             @Override
                             public void onSuccess(String medicationId) {
-                                saveScheduleForMedication(medicationId, medName, frequency, times, startDate, endDate);
+                                MedicationSchedules schedules = new MedicationSchedules(targetUid, medicationId, frequency, times, startDate, endDate, true, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
+                                medicationRepo.saveMedSchedule(schedules, new RepoCallback<String>() {
+                                    @Override
+                                    public void onSuccess(String result) {
+                                        new LogGenerator().ensureLogsGenerated(
+                                                targetUid,
+                                                result,
+                                                times,
+                                                startDate,
+                                                endDate
+                                        );
+                                        // result = scheduleId dari Firestore
+                                        long endMillis = (endDate != null) ? endDate.toDate().getTime() : 0;
+                                        AlarmSchedulerHelper.scheduleAll(
+                                                requireContext(),
+                                                result,
+                                                medName,
+                                                times,
+                                                endMillis
+                                        );
+
+                                        notifyReminderCreated(medName, result);
+                                        Toast.makeText(requireContext(), "Reminder berhasil dibuat", Toast.LENGTH_SHORT).show();
+                                        clearFields();
+                                        btnSaveReminder.setEnabled(true);
+                                        NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
+                                    }
+
+                                    @Override
+                                    public void onFailure(Exception e) {
+                                        Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        btnSaveReminder.setEnabled(true);
+                                    }
+                                });
                             }
 
                             @Override
                             public void onFailure(Exception e) {
                                 Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                                btnSaveReminder.setEnabled(true);
                             }
                         });
                     } else { //ini kalau obat nya belum ada di database
@@ -399,110 +503,57 @@ public class MedicineReminderFragment extends Fragment {
                         catalog.put("created_at", Timestamp.now());
                         db.collection("medicine_catalog").add(catalog).addOnSuccessListener(documentReference -> {
                             selectedCatalogId = documentReference.getId();
-                            Medication med = new Medication(targetUid, selectedCatalogId, null, true, stockMap, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
+                            Medication med = new Medication(targetUid, selectedCatalogId, null, true, medType, stockMap, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
                             medicationRepo.saveMedication(med, new RepoCallback<String>() {
                                 @Override
                                 public void onSuccess(String medicationId) {
-                                    saveScheduleForMedication(medicationId, medName, frequency, times, startDate, endDate);
+                                    MedicationSchedules schedules = new MedicationSchedules(targetUid, medicationId, frequency, times, startDate, endDate, true, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
+                                    medicationRepo.saveMedSchedule(schedules, new RepoCallback<String>() {
+                                        @Override
+                                        public void onSuccess(String result) {
+                                            new LogGenerator().ensureLogsGenerated(
+                                                    targetUid,
+                                                    result,
+                                                    times,
+                                                    startDate,
+                                                    endDate
+                                            );
+
+                                            AlarmSchedulerHelper.scheduleAll(
+                                                    requireContext(), result, medName, times,
+                                                    endDate != null ? endDate.toDate().getTime() : 0
+                                            );
+
+                                            notifyReminderCreated(medName, result);
+                                            Toast.makeText(requireContext(), "Reminder berhasil dibuat", Toast.LENGTH_SHORT).show();
+                                            clearFields();
+                                            btnSaveReminder.setEnabled(true);
+                                            NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
+                                        }
+
+                                        @Override
+                                        public void onFailure(Exception e) {
+                                            Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                                            btnSaveReminder.setEnabled(true);
+                                        }
+                                    });
                                 }
 
                                 @Override
                                 public void onFailure(Exception e) {
                                     Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    btnSaveReminder.setEnabled(true);
                                 }
                             });
                         }).addOnFailureListener(e -> {
-                            // SEBELUMNYA: gak ada failure listener di sini sama sekali.
-                            // Kalau .add() ini gagal (mis. gak ada internet & belum pernah
-                            // ke-cache), sisa proses save gak akan pernah jalan, dan user
-                            // gak lihat apa-apa: gak ada toast, gak ada error, tombol
-                            // "Simpan" kelihatan diem aja padahal gagal total.
-                            Toast.makeText(requireContext(),
-                                    "Gagal menyimpan obat ke katalog: " + e.getMessage(),
-                                    Toast.LENGTH_LONG).show();
+                            Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                            btnSaveReminder.setEnabled(true);
                         });
                     }
-                })
-                .addOnFailureListener(e -> {
-                    // SEBELUMNYA: query paling awal di seluruh alur simpan reminder ini
-                    // gak punya failure listener. Kalau query ini gagal (paling sering
-                    // karena gak ada koneksi internet & belum ada cache lokal), method
-                    // saveReminder() berhenti total di titik ini TANPA pemberitahuan apa
-                    // pun ke user — persis gejala "tombol Simpan gak ngapa-ngapain".
-                    Toast.makeText(requireContext(),
-                            "Gagal memuat katalog obat, cek koneksi internet: " + e.getMessage(),
-                            Toast.LENGTH_LONG).show();
+                }).addOnFailureListener(e -> {
+                    Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                    btnSaveReminder.setEnabled(true);
                 });
-    }
-
-    /**
-     * Nonaktifkan dulu schedule aktif LAMA untuk obat yang sama (kalau ada), baru bikin
-     * schedule baru. Tanpa ini, tiap kali reminder untuk obat yang sama disimpan ulang
-     * (mis. waktu testing), schedule lama tetap is_active=true selamanya dan numpuk terus
-     * di Firestore, bikin LogGenerator generate log dobel dari schedule-schedule usang.
-     */
-    private void saveScheduleForMedication(String medicationId, String medName, int frequency,
-                                           ArrayList<String> times, Timestamp startDate, Timestamp endDate) {
-        medicationRepo.getActiveSchedulesForMedication(targetUid, medicationId, new RepoCallback<QuerySnapshot>() {
-            @Override
-            public void onSuccess(QuerySnapshot oldSchedules) {
-                for (DocumentSnapshot oldDoc : oldSchedules.getDocuments()) {
-                    medicationRepo.deactivateSchedule(oldDoc.getId(), new RepoCallback<Void>() {
-                        @Override
-                        public void onSuccess(Void result) { /* no-op */ }
-
-                        @Override
-                        public void onFailure(Exception e) {
-                            Log.e("MedicineReminder", "Gagal nonaktifkan schedule lama " + oldDoc.getId(), e);
-                        }
-                    });
-                }
-                createSchedule(medicationId, medName, frequency, times, startDate, endDate);
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                // Gagal cek schedule lama gak boleh nge-block user nyimpen reminder baru.
-                Log.e("MedicineReminder", "Gagal cek schedule aktif lama", e);
-                createSchedule(medicationId, medName, frequency, times, startDate, endDate);
-            }
-        });
-    }
-
-    private void createSchedule(String medicationId, String medName, int frequency,
-                                ArrayList<String> times, Timestamp startDate, Timestamp endDate) {
-        MedicationSchedules schedules = new MedicationSchedules(targetUid, medicationId, frequency, times, startDate, endDate, true, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
-        medicationRepo.saveMedSchedule(schedules, new RepoCallback<String>() {
-            @Override
-            public void onSuccess(String result) {
-                new LogGenerator().ensureLogsGenerated(
-                        user.getAuth_uid(),
-                        result,
-                        times,
-                        startDate,
-                        endDate
-                );
-                // result = scheduleId dari Firestore
-                long endMillis = (endDate != null) ? endDate.toDate().getTime() : 0;
-                AlarmSchedulerHelper.scheduleAll(
-                        requireContext(),
-                        result,
-                        medName,
-                        times,
-                        endMillis
-                );
-
-                notifyReminderCreated(medName);
-                Toast.makeText(requireContext(), "Reminder berhasil dibuat", Toast.LENGTH_SHORT).show();
-                clearFields();
-                NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     private void createTimeFields(int frequency) {
@@ -570,9 +621,15 @@ public class MedicineReminderFragment extends Fragment {
         stokObat.setText("");
         endDateReminder.setText("");
         timeReminder.removeAllViews();
+        timeViews.clear();
+        radioPil.setChecked(true);
+        sectionStockObat.setVisibility(View.VISIBLE);
         selectedCalendar = Calendar.getInstance();
         isDropdownOpen = false;
         endDateSelected = false;
+        isNewMed = false;
+        selectedMed = "";
+        validatedStock = 0;
         freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
     }
 
@@ -591,9 +648,30 @@ public class MedicineReminderFragment extends Fragment {
             freqMinumObat.setError("Frekuensi minum obat wajib diisi");
             valid = false;
         }
-        if (stok.isEmpty()) {
-            stokObat.setError("Stok obat wajib diisi");
-            valid = false;
+        if (radioPil.isChecked()) {
+            // FIX TC-MED-CON-005 / TC-MED-CON-006: dulu cuma dicek "kosong atau
+            // tidak", jadi kalau user isi huruf (misal "abc"), lolos validasi
+            // lalu meledak (crash) di Integer.parseInt() waktu simpan. Dan
+            // kalau user isi "0", juga tetap lolos walau tidak masuk akal.
+            // Sekarang: dicek kosong, lalu dicek harus angka valid, lalu
+            // dicek harus lebih dari 0.
+            if (stok.isEmpty()) {
+                stokObat.setError("Stok obat wajib diisi");
+                valid = false;
+            } else {
+                try {
+                    int stockValue = Integer.parseInt(stok);
+                    if (stockValue <= 0) {
+                        stokObat.setError("Stok harus lebih dari 0");
+                        valid = false;
+                    } else {
+                        validatedStock = stockValue;
+                    }
+                } catch (NumberFormatException e) {
+                    stokObat.setError("Stok harus berupa angka");
+                    valid = false;
+                }
+            }
         }
         int frequency = convertFrequencyToNumber(freq);
         ArrayList<String> times = getSelectedTimes();
@@ -631,20 +709,45 @@ public class MedicineReminderFragment extends Fragment {
         }
         return builder.toString().trim();
     }
-    private void notifyReminderCreated(String medName) {
+    private void notifyReminderCreated(String medName, String scheduleId) {
         boolean isForSelf = targetUid.equals(user.getAuth_uid());
         Notification notif = new Notification();
         notif.setReceiver_uid(targetUid);
         notif.setSender_uid(user.getAuth_uid());
+        notif.setReference_id(scheduleId);
         notif.setType(NotificationType.Medicine);
         notif.setTitle("Jadwal Obat Baru");
         notif.setMessage(isForSelf
                 ? "Anda menambahkan jadwal minum obat: " + medName
                 : user.getName() + " menambahkan jadwal minum obat " + medName + " untuk Anda");
+        notif.setTarget_role(UserRole.Consumer.name());
         notif.setIs_read(false);
         notificationRepo.createNotification(notif, new RepoCallback<Void>() {
             @Override public void onSuccess(Void result) { }
             @Override public void onFailure(Exception e) { }
         });
+        //aktivitas caregiver sendiri
+        if (!isForSelf){
+            Notification selfNotif = new Notification();
+            selfNotif.setReceiver_uid(user.getAuth_uid());
+            selfNotif.setSender_uid(user.getAuth_uid());
+            selfNotif.setReference_id(scheduleId);
+            selfNotif.setType(NotificationType.Medicine);
+            selfNotif.setTitle("Jadwal Obat Ditambahkan");
+            selfNotif.setMessage("Anda menambahkan jadwal minum obat " + medName);
+            selfNotif.setTarget_role(UserRole.Caregiver.name());
+            selfNotif.setIs_read(false);
+            notificationRepo.createNotification(selfNotif, new RepoCallback<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+
+                }
+            });
+        }
     }
 }

@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import com.example.meduminderv1.Model.UserRole;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -24,6 +25,8 @@ public class AppointmentPreReminderNotifReceiver extends BroadcastReceiver {
             notif.put("type", "Appointment");
             notif.put("title", "Segera Ada Janji Temu");
             notif.put("message", "5 menit lagi jadwal appointment " + title + ".");
+            notif.put("target_role", UserRole.Consumer);
+            notif.put("reference_id", appointmentId);
             notif.put("is_read", false);
             notif.put("created_at", Timestamp.now());
             db.collection("notifications").add(notif);

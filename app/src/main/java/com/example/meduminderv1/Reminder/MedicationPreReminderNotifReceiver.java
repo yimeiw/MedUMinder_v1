@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -26,6 +27,7 @@ public class MedicationPreReminderNotifReceiver extends BroadcastReceiver {
                     notif.put("type", NotificationType.Medicine);
                     notif.put("title", "Segera Minum Obat");
                     notif.put("message", "5 menit lagi jadwal minum obat " + namaObat + ".");
+                    notif.put("target_role", UserRole.Consumer);
                     notif.put("is_read", false);
                     notif.put("created_at", Timestamp.now());
                     db.collection("notifications").add(notif);

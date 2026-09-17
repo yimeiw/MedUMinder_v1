@@ -29,6 +29,19 @@
         android:name="com.example.meduminderv1.HealthDocument.DocumentFragment"
         android:label="Document"
         />
+
+    <fragment
+        android:id="@+id/reminderStockFragment"
+        android:name="com.example.meduminderv1.Reminder.ReminderStockFragment"
+        android:label="Isi Ulang Stok Obat"
+        tools:layout="@layout/fragment_reminder_stock" />
+
+    <fragment
+        android:id="@+id/editMedicineReminderFragment"
+        android:name="com.example.meduminderv1.Schedule.EditMedicineReminderFragment"
+        android:label="Ubah Pengingat"
+        tools:layout="@layout/fragment_edit_medicine_reminder" />
+
     <!--    general-->
     <fragment
         android:id="@+id/notificationFragment"
@@ -42,6 +55,13 @@
         android:name="com.example.meduminderv1.Profile.ProfileFragment"
         android:label="Profile"
         tools:layout="@layout/fragment_profile"
+        />
+
+    <fragment
+        android:id="@+id/languageFragment"
+        android:name="com.example.meduminderv1.Language.LanguageFragment"
+        android:label="Language"
+        tools:layout="@layout/fragment_language"
         />
 
     <fragment
@@ -68,6 +88,12 @@
         android:name="com.example.meduminderv1.Profile.DeleteAccountFragment"
         android:label="Delete Account"
         tools:layout="@layout/fragment_delete_account"/>
+
+    <fragment
+        android:id="@+id/notificationSettingsFragment"
+        android:name="com.example.meduminderv1.Notification.NotificationSettingsFragment"
+        android:label="Notification Settings"
+        tools:layout="@layout/fragment_notification_settings" />
 
     <fragment
         android:id="@+id/notificationDetailFragment"

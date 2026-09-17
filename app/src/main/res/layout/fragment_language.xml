@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    tools:context=".Language.LanguageFragment">'
+
+    <LinearLayout
+        android:id="@+id/headerSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="20dp">
+
+        <ImageButton
+            android:layout_width="30dp"
+            android:layout_height="26dp"
+            android:background="@drawable/ic_back"
+            android:id="@+id/btnBack"
+            android:layout_gravity="center"
+            app:tint="@color/hover_pressed"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/tvLanguagePage"
+            android:text="@string/langSetting"
+            android:textStyle="bold"
+            android:textSize="24sp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:textColor="?attr/colorOnSurface"/>
+
+        <View
+            android:layout_width="30dp"
+            android:layout_height="26dp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/languageList"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_below="@+id/headerSection"
+        android:layout_marginHorizontal="20dp">
+
+        <!-- Bahasa Saat Ini -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/current_language"
+            android:textSize="14sp"
+            android:textColor="?attr/colorOnSurface"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="5dp" />
+
+        <LinearLayout
+            android:id="@+id/currentLanguageContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/border_wp"
+            android:paddingVertical="16dp"
+            android:paddingHorizontal="20dp"
+            android:layout_marginBottom="20dp">
+
+            <TextView
+                android:id="@+id/tvCurrentLanguageValue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="?attr/colorOnSurface"/>
+        </LinearLayout>
+
+        <!-- Pilihan Bahasa -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/language_options"
+            android:textSize="14sp"
+            android:textColor="?attr/colorOnSurface"
+            android:layout_marginBottom="5dp"/>
+
+        <!-- Bahasa Indonesia -->
+        <LinearLayout
+            android:id="@+id/btnIndonesia"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/border_wp"
+            android:paddingVertical="16dp"
+            android:paddingHorizontal="20dp"
+            android:layout_marginVertical="5dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Indonesia"
+                android:textSize="16sp"
+                android:textColor="?attr/colorOnSurface"/>
+
+        </LinearLayout>
+
+        <!-- English -->
+        <LinearLayout
+            android:id="@+id/btnEnglish"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/border_wp"
+            android:paddingVertical="16dp"
+            android:paddingHorizontal="20dp"
+            android:layout_marginVertical="5dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="@string/english"
+                android:textSize="16sp"
+                android:textColor="?attr/colorOnSurface"/>
+
+        </LinearLayout>
+
+        <!-- Chinese -->
+        <LinearLayout
+            android:id="@+id/btnChinese"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/border_wp"
+            android:paddingVertical="16dp"
+            android:paddingHorizontal="20dp"
+            android:layout_marginVertical="5dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="中文"
+                android:textSize="16sp"
+                android:textColor="?attr/colorOnSurface"/>
+
+        </LinearLayout>
+    </LinearLayout>
+</RelativeLayout>

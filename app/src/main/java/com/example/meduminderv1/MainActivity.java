@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.app.AlarmManager;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,21 +14,20 @@ import android.view.View;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Model.LogGenerator;
 
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.example.meduminderv1.Reminder.AppLifecycleTracker;
+import com.example.meduminderv1.Reminder.DailyRescheduleWorker;
 import com.example.meduminderv1.Reminder.ReminderEventBus;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
@@ -42,6 +40,9 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
+import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
+
 public class MainActivity extends AppCompatActivity implements ReminderEventBus.Listener {
 
     BottomNavigationView bottomNav;
@@ -50,6 +51,9 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
     ListenerRegistration userListener;
     UserRole lastUserRole;
     FirebaseFirestore db;
+
+    private static final String PREFS_ALARM_PERM = "alarm_perm";
+    private static final String KEY_HAD_EXACT_ALARM_PERMISSION = "had_exact_alarm_permission";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,14 +120,14 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         boolean hasExactAlarmPermission = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
                 || (am != null && am.canScheduleExactAlarms());
         if (!hasExactAlarmPermission){
-            SharedPreferences prefs = getSharedPreferences("alarm_perm", MODE_PRIVATE);
+            SharedPreferences prefs = getSharedPreferences(PREFS_ALARM_PERM, MODE_PRIVATE);
             boolean alreadyAsked = prefs.getBoolean("asked_exact_alarm", false);
             if (!alreadyAsked){
                 MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-                builder.setTitle("Izin Alarm Dibutuhkan")
-                        .setMessage("Agar pengingat obat berbunyi tepat waktu, aktifkan izin alarm & pengingat untuk MedUMinder.")
-                        .setPositiveButton("Aktifkan", (d, w) -> AlarmSchedulerHelper.requestExactAlarmPermission(this))
-                        .setNegativeButton("Nanti", null);
+                builder.setTitle(getString(R.string.izin_alarm_dibutuhkan))
+                        .setMessage(getString(R.string.izin_alarm_message))
+                        .setPositiveButton(getString(R.string.aktifkan), (d, w) -> AlarmSchedulerHelper.requestExactAlarmPermission(this))
+                        .setNegativeButton(getString(R.string.nanti), null);
                 AlertDialog dialog = builder.create();
                 dialog.show();
                 if (dialog.getWindow() != null){
@@ -133,6 +137,21 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
                 } prefs.edit().putBoolean("asked_exact_alarm", true).apply();
             }
         }
+
+        PeriodicWorkRequest dailyWork = new PeriodicWorkRequest.Builder(DailyRescheduleWorker.class, 24, TimeUnit.HOURS)
+                .setInitialDelay(computeInitialDelayToMidninght(), TimeUnit.MILLISECONDS).build();
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork("daily_alarm_reschedule", ExistingPeriodicWorkPolicy.KEEP, dailyWork);
+    }
+
+    private long computeInitialDelayToMidninght() {
+        Calendar now = Calendar.getInstance();
+        Calendar nextMidnight = (Calendar) now.clone();
+        nextMidnight.set(Calendar.HOUR_OF_DAY, 0);
+        nextMidnight.set(Calendar.MINUTE, 0);
+        nextMidnight.set(Calendar.SECOND, 0);
+        nextMidnight.set(Calendar.MILLISECOND, 0);
+        nextMidnight.add(Calendar.DAY_OF_YEAR, 1); //besok jam 00.00
+        return nextMidnight.getTimeInMillis() - now.getTimeInMillis();
     }
 
     @Override
@@ -157,15 +176,15 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         boolean hasPermissionNow = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
                 || (am != null && am.canScheduleExactAlarms());
-        SharedPreferences prefs = getSharedPreferences("alarm_perm", MODE_PRIVATE);
-        boolean hadPermissionBefore = prefs.getBoolean("had_exact_alarm_permission", false);
+        SharedPreferences prefs = getSharedPreferences(PREFS_ALARM_PERM, MODE_PRIVATE);
+        boolean hadPermissionBefore = prefs.getBoolean(KEY_HAD_EXACT_ALARM_PERMISSION, false);
         if (hasPermissionNow && !hadPermissionBefore){
             FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
             if (user != null){
                 AlarmSchedulerHelper.rescheduleAllActiveForUser(this, user.getUid());
                 Log.d("ALARM_PERM", "Permission baru granted, reschedule semua alarm aktif.");
             }
-        } prefs.edit().putBoolean("has_exact_alarm_permmission", hasPermissionNow).apply();
+        } prefs.edit().putBoolean(KEY_HAD_EXACT_ALARM_PERMISSION, hasPermissionNow).apply();
     }
 
     @Override
@@ -177,15 +196,8 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         bundle.putString("nama_obat", namaObat);
         bundle.putLong("scheduled_at", scheduledAt);
         bundle.putLong("taken_at", 0L);
-
-        // FIX: sebelumnya "AKAN_DATANG" (nama enum, pakai underscore) yang
-        // gagal di-parse LogStatus.fromRaw() (lihat perbaikan di LogStatus.java).
-        // Sekarang pakai bentuk raw yang benar. Tapi ini cuma nilai PLACEHOLDER
-        // sementara — ReminderFragment akan langsung fetch status asli dari
-        // Firestore begitu fragment-nya kebuka (lihat ReminderFragment.java),
-        // supaya kalau ada aksi lain (taken/snooze dari notifikasi) yang race
-        // dengan alarm ini, status yang ditampilkan tetap akurat.
         bundle.putString("status", "akan datang");
+        bundle.putString("source", "schedule");   // <-- baris baru
 
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.nav_host_fragment);
@@ -214,10 +226,10 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
             bundle.putString("nama_obat", intent.getStringExtra("nama_obat"));
             bundle.putLong("scheduled_at", intent.getLongExtra("scheduled_at", 0L));
             bundle.putString("status", intent.getStringExtra("status"));
-            bundle.putString("type", intent.getStringExtra("type")); // <- baru, sebelumnya gak diterusin
+            bundle.putString("type", intent.getStringExtra("type"));
+            bundle.putString("source", "schedule");   // <-- baris baru
 
             navHostFragment.getNavController().navigate(R.id.reminderFragment, bundle);
-
         } else if ("appointment_log".equals(navigateTo)) {
             Bundle bundle = new Bundle();
             bundle.putBoolean("open_appointment_tab", true);
@@ -294,4 +306,5 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
             userListener.remove();
         }
     }
+
 }

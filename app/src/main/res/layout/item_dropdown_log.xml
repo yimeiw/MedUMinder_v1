@@ -13,8 +13,8 @@
         android:layout_height="wrap_content"
         android:background="@drawable/bg_popup_item_up"
         android:padding="14dp"
-        android:text="Riwayat Konsumsi"
-        android:textColor="@color/black"
+        android:text="@string/riwayat"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="16sp"/>
 
     <View
@@ -30,7 +30,7 @@
         android:background="@drawable/bg_popup_item_bot"
         android:padding="14dp"
         android:text="Riwayat Janji Temu"
-        android:textColor="@color/black"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="16sp"/>
 
 </LinearLayout>

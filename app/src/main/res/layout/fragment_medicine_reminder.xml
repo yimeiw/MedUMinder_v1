@@ -37,7 +37,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/tvAddReminderMed"
-                    android:text="Tambahkan Pengingat"
+                    android:text="@string/tambah_pengingat"
                     android:textStyle="bold"
                     android:textSize="24sp"
                     android:layout_weight="1"
@@ -64,7 +64,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Nama Obat"
+                        android:text="@string/nama_obat"
                         android:textStyle="bold"
                         android:textSize="16sp"
                         android:layout_marginVertical="10dp"
@@ -79,11 +79,56 @@
                         android:drawableEnd="@drawable/ic_search"
                         android:paddingHorizontal="20dp"
                         android:paddingVertical="18dp"
-                        android:hint="Masukkan nama obat Anda"
+                        android:hint="@string/masukkan_nama_obat"
                         android:textSize="12sp"
                         android:textColorHint="@color/placeholder"
                         android:textColor="?attr/colorOnSurface"/>
 
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/sectionJenisObat"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginVertical="10dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/jenisObat"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:layout_marginHorizontal="10dp"
+                        android:layout_marginBottom="10dp"
+                        android:textColor="?attr/colorOnSurface"/>
+
+                    <RadioGroup
+                        android:id="@+id/radioGroupJenisObat"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.radiobutton.MaterialRadioButton
+                            android:id="@+id/radioPil"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/obatPil"
+                            android:textSize="14sp"
+                            android:textColor="?attr/colorOnSurface"
+                            android:buttonTint="?attr/colorOnSurface"
+                            android:checked="true"/>
+
+                        <com.google.android.material.radiobutton.MaterialRadioButton
+                            android:id="@+id/radioCair"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="30dp"
+                            android:text="@string/obatCair"
+                            android:textSize="14sp"
+                            android:textColor="?attr/colorOnSurface"
+                            android:buttonTint="?attr/colorOnSurface"/>
+                    </RadioGroup>
                 </LinearLayout>
 
                 <LinearLayout
@@ -96,7 +141,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Frekuensi Minum Obat"
+                        android:text="@string/frekuensi_minum_obat"
                         android:textStyle="bold"
                         android:textSize="16sp"
                         android:layout_marginBottom="10dp"
@@ -107,7 +152,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:id="@+id/freqMinumObat"
-                        android:hint="Pilih frekuensi minum obat Anda"
+                        android:hint="@string/pilih_frekuensi_minum_obat"
                         android:background="@drawable/border"
                         android:drawableEnd="@drawable/ic_arrow_down"
                         android:textColorHint="@color/placeholder"
@@ -130,13 +175,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:id="@+id/sectionStokObat"
+                    android:id="@+id/sectionTanggalSelesai"
                     android:layout_marginVertical="10dp">
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Tanggal Selesai Minum Obat"
+                        android:text="@string/tanggal_selesai_minum_obat"
                         android:textStyle="bold"
                         android:textSize="16sp"
                         android:layout_marginBottom="10dp"
@@ -174,6 +219,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/sectionStockObat"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
@@ -182,7 +228,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Stok Obat"
+                        android:text="@string/stockObat"
                         android:textStyle="bold"
                         android:textSize="16sp"
                         android:layout_marginBottom="10dp"
@@ -194,7 +240,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="@drawable/border"
-                        android:hint="Masukkan jumlah stok obat Anda"
+                        android:hint="@string/masukkan_jumlah_stok_obat"
                         android:inputType="number"
                         android:textColorHint="@color/placeholder"
                         android:paddingHorizontal="20dp"
@@ -209,7 +255,7 @@
                     android:layout_height="wrap_content"
                     android:background="@drawable/button_selector"
                     app:backgroundTint="@null"
-                    android:text="Save Reminder"
+                    android:text="@string/save_reminder"
                     android:textColor="?attr/colorPrimary"
                     android:textAllCaps="false"
                     android:layout_marginVertical="10dp"/>

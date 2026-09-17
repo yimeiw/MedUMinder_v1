@@ -46,7 +46,9 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -175,6 +177,7 @@ public class ReminderFragment extends Fragment {
             snoozeReminder();
         });
         btnOption.setOnClickListener(v -> {
+            Log.d("REMINDER_FRAGMENT", "titik-3 diklik, buka popup menu");
             PopupMenu popupMenu = new PopupMenu(requireContext(), btnOption);
             popupMenu.getMenuInflater().inflate(R.menu.medicine_edit_menu, popupMenu.getMenu());
 
@@ -198,6 +201,7 @@ public class ReminderFragment extends Fragment {
                     return true;
                 }
                 if (menuItem.getItemId() == R.id.deleteMedicine) {
+                    Log.d("REMINDER_FRAGMENT", "menu Hapus dipilih");
                     confirmDeleteSchedule();
                     return true;
                 }
@@ -209,12 +213,14 @@ public class ReminderFragment extends Fragment {
     }
 
     private void confirmDeleteSchedule() {
+        Log.d("REMINDER_FRAGMENT", "confirmDeleteSchedule() dipanggil, tampilkan dialog konfirmasi");   // <-- baris baru
         String label = namaObat != null ? namaObat : (isAppointment ? "appointment ini" : "jadwal ini");
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(isAppointment ? "Hapus Appointment" : "Hapus Jadwal Obat")
                 .setMessage("Yakin mau menghapus " + label + "? Semua alarm untuk jadwal ini akan dihentikan.")
                 .setNegativeButton("Batal", null)
                 .setPositiveButton("Hapus", (dialog, which) -> {
+                    Log.d("REMINDER_FRAGMENT", "tombol Hapus di dialog konfirmasi ditekan");   // <-- baris baru
                     if (isAppointment) {
                         deleteAppointment();
                     } else {
@@ -239,6 +245,7 @@ public class ReminderFragment extends Fragment {
 
                     AlarmSchedulerHelper.cancelAll(requireContext(), scheduleId, times);
                     AlarmSchedulerHelper.cancelSnooze(requireContext(), scheduleId);
+                    deleteFutureMedicationLogs(scheduleId);
 
                     Map<String, Object> update = new HashMap<>();
                     update.put("is_active", false);
@@ -278,6 +285,7 @@ public class ReminderFragment extends Fragment {
 
                     AlarmSchedulerHelper.cancelAppointment(requireContext(), scheduleId);
                     AppointmentAlertScheduler.cancelAlerts(requireContext(), scheduleId);
+                    deleteFutureMedicationLogs(scheduleId);
 
                     Map<String, Object> update = new HashMap<>();
                     update.put("status", "dibatalkan");
@@ -300,11 +308,6 @@ public class ReminderFragment extends Fragment {
                     Toast.makeText(requireContext(), "Gagal menghapus appointment", Toast.LENGTH_SHORT).show();
                 });
     }
-
-    // FIX (baru): pola broadcast notifikasi yang sama seperti fix edit
-    // sebelumnya (EditAppointmentFragment/EditMedicineFragment) -- kalau
-    // caregiver yang hapus, consumer dikabari; caregiver LAIN (kecuali pelaku)
-    // selalu dikabari juga, biar semua pihak yang terlibat tetap sinkron.
     private void notifyScheduleDeleted(String consumerUid, String name, boolean appointment) {
         if (consumerUid == null) return;
         if (FirebaseAuth.getInstance().getCurrentUser() == null) return;
@@ -670,6 +673,58 @@ public class ReminderFragment extends Fragment {
                         AlarmRingingService.class
                 )
         );
+    }
+
+    private void deleteFutureMedicationLogs(String scheduleId) {
+        if (scheduleId == null || scheduleId.isEmpty()) return;
+
+        db.collection("medication_logs")
+                .whereEqualTo("medication_schedules_id", scheduleId)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    Log.d("REMINDER_FRAGMENT", "deleteFutureMedicationLogs: query nemu " + snapshot.size() + " dokumen untuk scheduleId=" + scheduleId);
+
+                    if (snapshot.isEmpty()) {
+                        Log.d("REMINDER_FRAGMENT", "deleteFutureMedicationLogs: snapshot KOSONG, tidak ada dokumen medication_logs dengan medication_schedules_id ini");
+                        return;
+                    }
+
+                    Timestamp now = Timestamp.now();
+                    WriteBatch batch = db.batch();
+                    int count = 0;
+
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        Timestamp scheduledAtTs = doc.getTimestamp("scheduled_at");
+                        boolean isFuture = scheduledAtTs != null && scheduledAtTs.toDate().after(now.toDate());
+
+                        Log.d("REMINDER_FRAGMENT", "deleteFutureMedicationLogs: doc=" + doc.getId()
+                                + " scheduled_at=" + scheduledAtTs
+                                + " now=" + now
+                                + " isFuture=" + isFuture);
+
+                        if (scheduledAtTs == null) continue;
+                        if (isFuture) {
+                            batch.delete(doc.getReference());
+                            count++;
+                        }
+                    }
+
+                    Log.d("REMINDER_FRAGMENT", "deleteFutureMedicationLogs: total dokumen yang akan dihapus = " + count);
+
+                    if (count == 0) return;
+
+                    int finalCount = count;
+                    batch.commit()
+                            .addOnSuccessListener(unused ->
+                                    Log.d("REMINDER_FRAGMENT",
+                                            "Future medication_logs terhapus (" + finalCount + " dokumen) untuk scheduleId=" + scheduleId))
+                            .addOnFailureListener(e ->
+                                    Log.e("REMINDER_FRAGMENT",
+                                            "Gagal hapus future medication_logs. scheduleId=" + scheduleId, e));
+                })
+                .addOnFailureListener(e ->
+                        Log.e("REMINDER_FRAGMENT",
+                                "Gagal ambil future medication_logs. scheduleId=" + scheduleId, e));
     }
 
     private void refreshLiveStatusAppoint() {

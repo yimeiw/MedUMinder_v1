@@ -27,7 +27,10 @@ public class AlarmSchedulerHelper {
     private static final String TIME_FORMAT = "HH:mm";
     private static final long DEFAULT_WINDOW_MILLIS = 7L * 24 * 60 * 60 * 1000;
     private static final long PRE_REMINDER_OFFSET_MS = 5 * 60 * 1000L;
-    private static final long MISSED_CHECK_DELAY_MS = 15 * 60 * 1000L;
+    // FIX: dulu private, tapi StatistikRepo.java butuh baca konstanta ini
+    // dari luar kelas (buat tahu "berapa lama setelah jadwal baru dianggap
+    // benar-benar terlewat"), jadi sekarang dibuka jadi public.
+    public static final long MISSED_CHECK_DELAY_MS = 15 * 60 * 1000L;
 
     // Sentinel value dari resolveEndMillis() yang artinya "jadwal ini sudah
     // expired (end_date sudah lewat) -> jangan dijadwalkan sama sekali".
@@ -308,6 +311,14 @@ public class AlarmSchedulerHelper {
         });
     }
 
+    // Dipertahankan supaya file lain (misalnya BootReceiver) yang masih
+    // memanggil nama method ini tidak error. Cuma "meneruskan" ke method
+    // resolveNamaObatThenSchedule yang sudah ada, jadi tetap ikut jalur
+    // penjadwalan yang baru (berbasis occurrenceKey/jam, bukan index).
+    public static void resolveAndScheduleForBoot(Context context, String scheduleId, MedicationSchedules schedules) {
+        resolveNamaObatThenSchedule(context, scheduleId, schedules);
+    }
+
     public static void cancelOccurrenceForScheduledAt(Context context, String scheduleId, long scheduledAtMillis) {
         SimpleDateFormat timeFormat = new SimpleDateFormat(TIME_FORMAT, Locale.getDefault());
         String occurrenceKey = timeFormat.format(new Date(scheduledAtMillis));
@@ -332,6 +343,43 @@ public class AlarmSchedulerHelper {
         int missedRequestCode = (scheduleId + "_missed_" + occurrenceKey).hashCode();
         alarmManager.cancel(PendingIntent.getBroadcast(context, missedRequestCode, missedIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+    }
+
+    // FIX (baru): pengganti rescheduleNextDay lama yang berbasis occurrenceIndex.
+    // Dipanggil MedicationAlarmReceiver setelah alarm utama berbunyi, supaya
+    // alarm untuk jam yang sama terpasang lagi besok. Sengaja mengambil ULANG
+    // data schedule dari Firestore (bukan percaya ke data lama yang dititipkan
+    // di intent alarm), supaya kalau user baru mengedit/menonaktifkan jadwal,
+    // reschedule ini otomatis ikut yang terbaru.
+    public static void rescheduleNextDay(Context context, String scheduleId, String namaObat, long previousTriggerMillis) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("medication_schedules").document(scheduleId).get()
+                .addOnSuccessListener(doc -> {
+                    MedicationSchedules schedule = doc.toObject(MedicationSchedules.class);
+                    if (schedule == null) return;
+                    if (schedule.getIs_active() == null || !schedule.getIs_active()) {
+                        Log.d("ALARM", "rescheduleNextDay dilewati, jadwal sudah tidak aktif. scheduleId=" + scheduleId);
+                        return;
+                    }
+
+                    long nextTrigger = previousTriggerMillis + AlarmManager.INTERVAL_DAY;
+                    long endMillis = resolveEndMillis(schedule.getEnd_date() != null ? schedule.getEnd_date().toDate().getTime() : 0);
+                    if (endMillis == EXPIRED || nextTrigger > endMillis) {
+                        Log.d("ALARM", "rescheduleNextDay dilewati, sudah lewat end_date. scheduleId=" + scheduleId);
+                        return;
+                    }
+
+                    SimpleDateFormat timeFormat = new SimpleDateFormat(TIME_FORMAT, Locale.getDefault());
+                    String occurrenceKey = timeFormat.format(new Date(previousTriggerMillis));
+
+                    scheduleSingleAlarm(context, scheduleId, scheduleId, namaObat, nextTrigger, nextTrigger, occurrenceKey, "medicine");
+                    scheduleMedicinePreReminder(context, scheduleId, namaObat, nextTrigger, occurrenceKey);
+                    scheduleMedicineMissedCheck(context, scheduleId, namaObat, nextTrigger, occurrenceKey);
+
+                    Log.d("ALARM", "Rescheduled next day scheduleId=" + scheduleId
+                            + " occurrenceKey=" + occurrenceKey + " nextTrigger=" + new Date(nextTrigger));
+                })
+                .addOnFailureListener(e -> Log.e("ALARM", "Gagal ambil schedule untuk rescheduleNextDay. id=" + scheduleId, e));
     }
 
     public static void cancelAppointment(Context context, String appointmentId) {

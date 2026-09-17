@@ -36,7 +36,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/tvAddReminderMed"
-                    android:text="Ubah Pengingat"
+                    android:text="@string/ubahPengingat"
                     android:textStyle="bold"
                     android:textSize="24sp"
                     android:layout_weight="1"
@@ -54,7 +54,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Nama Obat"
+                    android:text="@string/nama_obat"
                     android:textStyle="bold"
                     android:textSize="16sp"
                     android:layout_marginVertical="10dp"
@@ -70,7 +70,7 @@
                     android:drawableEnd="@drawable/ic_search"
                     android:paddingHorizontal="20dp"
                     android:paddingVertical="18dp"
-                    android:hint="Nama Obat"
+                    android:hint="@string/nama_obat"
                     android:textSize="12sp"
                     android:textColor="?attr/colorOnSurface"/>>
 
@@ -86,7 +86,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Frekuensi Minum Obat"
+                    android:text="@string/frekuensi_minum_obat"
                     android:textStyle="bold"
                     android:textSize="16sp"
                     android:layout_marginBottom="10dp"
@@ -97,7 +97,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:id="@+id/freqMinumObat"
-                    android:hint="Frekuensi"
+                    android:hint="@string/frekuensi"
                     android:background="@drawable/border"
                     android:drawableEnd="@drawable/ic_arrow_down"
                     android:paddingHorizontal="20dp"
@@ -125,7 +125,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Tanggal Selesai Minum Obat"
+                    android:text="@string/tanggal_selesai_minum_obat"
                     android:textStyle="bold"
                     android:textSize="16sp"
                     android:layout_marginBottom="10dp"
@@ -171,7 +171,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Stok Obat"
+                    android:text="@string/stockObat"
                     android:textStyle="bold"
                     android:textSize="16sp"
                     android:layout_marginBottom="10dp"
@@ -197,7 +197,7 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/button_selector"
                 app:backgroundTint="@null"
-                android:text="Perbarui Pengingat"
+                android:text="@string/perbarui_pengingat"
                 android:textColor="?attr/colorPrimary"
                 android:textAllCaps="false"
                 android:layout_marginVertical="10dp"/>

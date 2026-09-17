@@ -18,6 +18,7 @@ import android.widget.Toast;
 
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Caregiver.ConsumerPickerHelper;
+import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationFragment;
 import com.example.meduminderv1.Notification.NotificationType;
@@ -79,11 +80,15 @@ public class AppointmentReminderFragment extends Fragment {
 
         View pickerRoot = viewF.findViewById(R.id.consumerPicker);
         consumerPickerHelper = new ConsumerPickerHelper(pickerRoot, requireContext(), uid -> {
+            boolean consumerChanged = targetUid != null && uid != null && !targetUid.equals(uid);
             targetUid = uid;
-            boolean hasConsumer = uid  != null;
+            boolean hasConsumer = uid != null;
             formContent.setVisibility(hasConsumer ? View.VISIBLE : View.GONE);
-            if (!hasConsumer){
-                pickerRoot.setOnClickListener(v ->  NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
+            if (!hasConsumer) {
+                pickerRoot.setOnClickListener(v -> NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
+            }
+            if (consumerChanged) {
+                resetForm();
             }
         }); consumerPickerHelper.setup();
 
@@ -130,15 +135,27 @@ public class AppointmentReminderFragment extends Fragment {
         });
 
         btnSaveAppoint.setOnClickListener(v -> {
+            btnSaveAppoint.setEnabled(false);
             saveAppointment();
         });
 
         return viewF;
     }
 
+    private void resetForm() {
+        namaAppointment.setText("");
+        location_input.setText("");
+        tvDate.setText("");
+        tvTime.setText("");
+        selectedCalendar = Calendar.getInstance();
+        isDatePicked = false;
+        isTimePicked = false;
+    }
+
     private void saveAppointment() {
         if (targetUid == null){
             Toast.makeText(requireContext(), "Pilih consumer terlebih dahulu", Toast.LENGTH_SHORT).show();
+            btnSaveAppoint.setEnabled(true);
             return;
         }
         String nameAppoint = namaAppointment.getText().toString().trim();
@@ -146,15 +163,19 @@ public class AppointmentReminderFragment extends Fragment {
 
         if (nameAppoint.isEmpty()){
             namaAppointment.setError("Nama Appointment wajib diisi.");
+            btnSaveAppoint.setEnabled(true);
             return;
         } if (location.isEmpty()){
             location_input.setError("Lokasi Appointment wajib diisi.");
+            btnSaveAppoint.setEnabled(true);
             return;
         } if (!isDatePicked) {
-            tvDate.setError("Tanggal Appointment wajib diisi.");
+            Toast.makeText(requireContext(), "Tanggal Appointment wajib diisi.", Toast.LENGTH_SHORT).show();
+            btnSaveAppoint.setEnabled(true);
             return;
         } if (!isTimePicked){
-            tvTime.setError("Waktu Appointment wajib diisi.");
+            Toast.makeText(requireContext(), "Waktu Appointment wajib diisi.", Toast.LENGTH_SHORT).show();
+            btnSaveAppoint.setEnabled(true);
             return;
         }
         // getCurrentUser() bisa null kalau sesi auth belum siap/expired saat tombol
@@ -175,8 +196,6 @@ public class AppointmentReminderFragment extends Fragment {
         appointment.put("title", nameAppoint);
         appointment.put("address", location);
         appointment.put("appointment_at", appointmentAt);
-//        appointment.put("appointment_date", tvDate.getText().toString());
-//        appointment.put("appointment_time", tvTime.getText().toString());
         appointment.put("created_at", FieldValue.serverTimestamp());
         appointment.put("updated_at", FieldValue.serverTimestamp());
         appointment.put("deleted_at", null);
@@ -189,16 +208,33 @@ public class AppointmentReminderFragment extends Fragment {
             Notification notif = new Notification();
             notif.setReceiver_uid(targetUid);
             notif.setSender_uid(uid);
+            notif.setReference_id(documentReference.getId());
             notif.setType(NotificationType.Appointment);
             notif.setTitle("Jadwal Appointment Baru");
             notif.setMessage(isForSelf
                     ? "Anda menambahkan jadwal appointment: " + nameAppoint
                     : "Caregiver menambahkan jadwal appointment " + nameAppoint + " untuk Anda");
+            notif.setTarget_role(UserRole.Consumer.name());
             notif.setIs_read(false);
             notificationRepo.createNotification(notif, new RepoCallback<Void>() {
                 @Override public void onSuccess(Void result) { }
                 @Override public void onFailure(Exception e) { }
             });
+            if (!isForSelf) {
+                Notification selfNotif = new Notification();
+                selfNotif.setReceiver_uid(uid);
+                selfNotif.setSender_uid(uid);
+                selfNotif.setReference_id(documentReference.getId());
+                selfNotif.setType(NotificationType.Appointment);
+                selfNotif.setTitle("Appointment Ditambahkan");
+                selfNotif.setMessage("Anda menambahkan jadwal appointment " + nameAppoint + " untuk consumer Anda.");
+                selfNotif.setTarget_role(UserRole.Caregiver.name());
+                selfNotif.setIs_read(false);
+                notificationRepo.createNotification(selfNotif, new RepoCallback<Void>() {
+                    @Override public void onSuccess(Void result) { }
+                    @Override public void onFailure(Exception e) { }
+                });
+            }
             AppointmentAlertScheduler.scheduleAlerts(requireContext(), documentReference.getId(), nameAppoint, selectedCalendar.getTimeInMillis());
             Toast.makeText(requireContext(), "Appointment berhasil disimpan", Toast.LENGTH_SHORT).show();
             AlarmSchedulerHelper.scheduleAppointment(
@@ -211,6 +247,7 @@ public class AppointmentReminderFragment extends Fragment {
             NavHostFragment.findNavController(this).navigateUp();
         }).addOnFailureListener(e -> {
             Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+            btnSaveAppoint.setEnabled(true);
         });
 
     }

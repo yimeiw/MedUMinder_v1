@@ -41,6 +41,7 @@ import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.auth.UserInfo;
@@ -58,6 +59,7 @@ import java.util.UUID;
 
 public class AuthManager {
     private static AuthManager instance;
+    private final Context context;
     private final FirebaseAuth mAuth;
     private final UserRepository userRepository;
     private final SessionManager sessionManager;
@@ -67,6 +69,7 @@ public class AuthManager {
     private final CareRelationshipRepo relationshipRepo;
 
     public AuthManager(Context context){
+        this.context = context.getApplicationContext();
         mAuth = FirebaseAuth.getInstance();
         credentialManager = CredentialManager.create(context);
         userRepository = UserRepository.getInstance();
@@ -135,7 +138,13 @@ public class AuthManager {
                     callback.onFailure(message);
                 }
             });
-        }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+        }).addOnFailureListener(e -> {
+            if (e instanceof FirebaseAuthUserCollisionException) {
+                callback.onFailure("EMAIL_ALREADY_IN_USE");
+            } else {
+                callback.onFailure(e.getMessage());
+            }
+        });
     }
     public void loginWithEmail(String email, String password, AuthCallback<User> callback){
         if (email == null || email.trim().isEmpty()){
@@ -260,7 +269,13 @@ public class AuthManager {
                 return;
             }
             checkGoogleProfile(firebaseUser, callback);
-        }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+        }).addOnFailureListener(e -> {
+            if (e instanceof FirebaseAuthUserCollisionException) {
+                callback.onFailure("EMAIL_ALREADY_IN_USE_DIFFERENT_PROVIDER");
+            } else {
+                callback.onFailure(e.getMessage());
+            }
+        });
     }
     private void checkGoogleProfile(FirebaseUser firebaseUser,  AuthCallback<User> callback) {
         userRepository.getUserbyUid(firebaseUser.getUid(), new RepoCallback<User>() {
@@ -875,6 +890,7 @@ public class AuthManager {
         notif.setInvitation_id(invitation.getInvitation_id());
         notif.setType(NotificationType.Invitation);
         notif.setMessage(accepted ? "Undangan Anda diterima." : "Undangan Anda ditolak.");
+        notif.setTarget_role(UserRole.Consumer.name());
         notif.setIs_read(false);
         notificationRepo.createNotification(notif, new RepoCallback<Void>() {
             @Override
@@ -895,6 +911,7 @@ public class AuthManager {
         notification.setTitle("Invitation " + invitation.getInvite_role().name());
         notification.setMessage(invitation.getSender_name()
         + " mengundang Anda menjadi " + invitation.getInvite_role().name());
+        notification.setTarget_role(UserRole.Consumer.name());
         notification.setIs_read(false);
         notification.setCreated_at(Timestamp.now());
         notification.setUpdated_at(Timestamp.now());
@@ -915,7 +932,12 @@ public class AuthManager {
         if (firebaseUser == null){
             callback.onFailure("User belum login.");
             return;
-        } notificationRepo.loadNotification(firebaseUser.getUid(), new RepoCallback<List<Notification>>() {
+        } User user = sessionManager.getUser();
+        if (user == null){
+            callback.onFailure("User tidak ditemukan.");
+            return;
+        }
+        notificationRepo.loadNotification(firebaseUser.getUid(), user.getCurrentRole(), new RepoCallback<List<Notification>>() {
             @Override
             public void onSuccess(List<Notification> result) {
                 callback.onSuccess(result);
@@ -1004,7 +1026,12 @@ public class AuthManager {
         if (firebaseUser == null){
             callback.onFailure("User belum login.");
             return;
-        } notificationRepo.countUnread(firebaseUser.getUid(), new RepoCallback<Integer>() {
+        } User user = sessionManager.getUser();
+        if (user == null){
+            callback.onFailure("User tidak ditemukan.");
+            return;
+        }
+            notificationRepo.countUnread(firebaseUser.getUid(), user.getCurrentRole(), new RepoCallback<Integer>() {
             @Override
             public void onSuccess(Integer result) {
                 callback.onSuccess(result);

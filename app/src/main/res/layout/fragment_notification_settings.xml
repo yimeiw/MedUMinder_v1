@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/notificationSettingsFragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Notification.NotificationSettingsFragment">
+
+    <!-- HEADER -->
+    <LinearLayout
+        android:id="@+id/headerSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="20dp">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="30dp"
+            android:layout_height="26dp"
+            android:layout_gravity="center"
+            android:background="@drawable/ic_back"
+            app:tint="@color/hover_pressed" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/tvNotificationSettings"
+            android:text="@string/notifSetting"
+            android:textStyle="bold"
+            android:textSize="24sp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:textColor="?attr/colorOnSurface"/>
+
+        <View
+            android:layout_width="30dp"
+            android:layout_height="26dp"/>
+
+    </LinearLayout>
+
+    <ScrollView
+        android:id="@+id/scrollNotificationSettings"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/headerSection"
+        android:fillViewport="true"
+        android:layout_marginHorizontal="15dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="10dp">
+
+            <!-- NADA DERING -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:text="@string/ringtone"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="14sp"/>
+
+                <AutoCompleteTextView
+                    android:id="@+id/dropdownRingtone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/border_wp"
+                    android:drawableEnd="@drawable/ic_arrow_down"
+                    android:paddingVertical="16dp"
+                    android:paddingHorizontal="20dp"
+                    android:inputType="none"
+                    android:text="Nada 1"
+                    android:textSize="15sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:clickable="true"
+                    android:focusable="false"/>
+
+                <LinearLayout
+                    android:id="@+id/layoutReminderMessage"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                     <!-- KUSTOMISASI PESAN PENGINGAT -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="30dp"
+                        android:layout_marginBottom="10dp"
+                        android:text="@string/customMsg"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="14sp"/>
+
+                    <!-- Pesan Pengingat -->
+                    <AutoCompleteTextView
+                        android:id="@+id/dropdownReminderMessage"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/border_wp"
+                        android:drawableEnd="@drawable/ic_arrow_down"
+                        android:paddingVertical="16dp"
+                        android:paddingHorizontal="20dp"
+                        android:inputType="none"
+                        android:text="@string/time_to_consume_med"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="15sp" android:clickable="true"
+                        android:focusable="false"/>
+
+                    <!-- Durasi Tunda -->
+                    <AutoCompleteTextView
+                        android:id="@+id/dropdownSnoozeDuration"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/border_wp"
+                        android:drawableEnd="@drawable/ic_arrow_down"
+                        android:paddingVertical="16dp"
+                        android:paddingHorizontal="20dp"
+                        android:inputType="none"
+                        android:textColor="?attr/colorOnSurface"
+                        android:text="@string/fiveMin"
+                        android:textSize="15sp"
+                        android:clickable="true"
+                        android:focusable="false"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/layoutAppointmentReminder"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <!-- WAKTU PENGINGAT JANJI TEMU -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="30dp"
+                        android:layout_marginBottom="10dp"
+                        android:text="@string/appointmentReminder"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="14sp"/>
+
+                    <!-- Ingatkan Saya Sebelum -->
+                    <AutoCompleteTextView
+                        android:id="@+id/dropdownAppointmentReminder"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/border_wp"
+                        android:drawableEnd="@drawable/ic_arrow_down"
+                        android:paddingVertical="16dp"
+                        android:paddingHorizontal="20dp"
+                        android:textColor="?attr/colorOnSurface"
+                        android:inputType="none"
+                        android:text="@string/thirtyMin"
+                        android:textSize="15sp"
+                        android:clickable="true"
+                        android:focusable="false"/>
+                </LinearLayout>
+
+                <!-- Reminder Berulang -->
+                <LinearLayout
+                    android:id="@+id/layoutRepeatReminder"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="10dp"
+                    android:background="@drawable/border_wp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingVertical="6dp"
+                    android:paddingHorizontal="20dp">
+
+                    <TextView
+                        android:id="@+id/tvRepeatReminder"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/remindUntilConfirm"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="15sp"/>
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/switchRepeatReminder"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=""
+                        android:checked="false"/>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>

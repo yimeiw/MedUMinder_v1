@@ -25,7 +25,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
-            android:text="Edit"
+            android:text="@string/edit"
             android:textSize="14sp"
             android:textColor="?attr/colorOnSurface" />
 
@@ -50,7 +50,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
-            android:text="Hapus"
+            android:text="@string/delete"
             android:textSize="14sp"
             android:textColor="?attr/colorOnSurface" />
 

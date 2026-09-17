@@ -4,8 +4,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import com.example.meduminderv1.Model.MedicationSchedules;
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
-import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -38,28 +38,22 @@ public class BootReceiver extends BroadcastReceiver {
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         for (QueryDocumentSnapshot doc : task.getResult()) {
-                            try {
-                                String scheduleId = doc.getId();
-                                String namaObat = doc.getString("nama_obat");
-                                List<String> times = (List<String>) doc.get("times_of_day");
-                                // end_date disimpan sebagai Firestore Timestamp, BUKAN angka —
-                                // getLong() di sini yang bikin app crash tiap device di-restart
-                                // (RuntimeException: Field 'end_date' is not a java.lang.Number).
-                                Timestamp endDate = doc.getTimestamp("end_date");
-                                long endMillis = (endDate != null) ? endDate.toDate().getTime() : 0L;
-
-                                AlarmSchedulerHelper.scheduleAll(
-                                        appContext,
-                                        scheduleId,
-                                        namaObat != null ? namaObat : "Obat",
-                                        times,
-                                        endMillis
-                                );
-                            } catch (Exception e) {
-                                // Satu dokumen korup/gak sesuai bentuk gak boleh gagalin
-                                // penjadwalan ulang reminder-reminder lain saat boot.
-                                android.util.Log.e("BootReceiver", "Gagal reschedule dokumen " + doc.getId(), e);
+                            MedicationSchedules schedules = doc.toObject(MedicationSchedules.class);
+                            if (schedules != null){
+                                AlarmSchedulerHelper.resolveAndScheduleForBoot(appContext, doc.getId(), schedules);
                             }
+//                            String scheduleId = doc.getId();
+//                            String namaObat = doc.getString("nama_obat");
+//                            List<String> times = (List<String>) doc.get("times_of_day");
+//                            Long endDate = doc.getLong("end_date");
+//
+//                            AlarmSchedulerHelper.scheduleAll(
+//                                    appContext,
+//                                    scheduleId,
+//                                    namaObat != null ? namaObat : "Obat",
+//                                    times,
+//                                    endDate != null ? endDate : 0L
+//                            );
                         }
                     }
                     pendingResult.finish();

@@ -1,6 +1,8 @@
 package com.example.meduminderv1.Notification;
 
+import com.example.meduminderv1.Model.UserRole;
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.Exclude;
 
 public class Notification {
     private String notification_id;
@@ -13,7 +15,10 @@ public class Notification {
     private String title;
     private String message;
     private NotificationType type;
+    private String target_role;
+
     private boolean is_read;
+
     private Timestamp created_at, updated_at;
     public String getNotification_id() {
         return notification_id;
@@ -21,7 +26,6 @@ public class Notification {
     public void setNotification_id(String notification_id) {
         this.notification_id = notification_id;
     }
-
     public String getInvitation_id() {
         return invitation_id;
     }
@@ -53,17 +57,17 @@ public class Notification {
     public void setConsumer_uid(String consumer_uid) {
         this.consumer_uid = consumer_uid;
     }
+
     public String getConsumer_name() {
         return consumer_name;
     }
-
     public void setConsumer_name(String consumer_name) {
         this.consumer_name = consumer_name;
     }
+
     public String getSender_uid() {
         return sender_uid;
     }
-
     public void setSender_uid(String sender_uid) {
         this.sender_uid = sender_uid;
     }
@@ -90,6 +94,23 @@ public class Notification {
 
     public void setType(NotificationType type) {
         this.type = type;
+    }
+
+    public String getTarget_role() {
+        return target_role;
+    }
+
+    public void setTarget_role(String target_role) {
+        this.target_role = target_role;
+    }
+    @Exclude
+    public UserRole getTargetRoleEnum(){
+        if (target_role == null) return null;
+        try {
+            return UserRole.valueOf(target_role);
+        } catch (IllegalArgumentException e){
+            return null;
+        }
     }
 
     public boolean isIs_read() {

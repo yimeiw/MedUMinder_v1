@@ -64,7 +64,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Sisa stok: "
+                        android:text="@string/sisa_stok_label"
                         android:textColor="?attr/colorOnPrimary"
                         android:textSize="12sp"
                         />
@@ -86,7 +86,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Waktu:"
+                        android:text="@string/waktu"
                         android:textColor="?attr/colorOnPrimary"
                         android:textSize="12sp"
                         android:layout_marginEnd="2dp"
@@ -107,7 +107,7 @@
                 android:id="@+id/curr_status"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Dikonsumsi"
+                android:text="@string/dikonsumsi"
                 android:background="@drawable/border_hugcontent_nopadding"
                 android:backgroundTint="@color/green"
                 android:paddingVertical="6dp"

@@ -104,7 +104,6 @@ public class CaregiverHomeFragment extends Fragment {
         groupGeneralMenu = view.findViewById(R.id.groupGeneralMenu);
         labelListConsumer = view.findViewById(R.id.labelListConsumer);
         rvDrawerConsumer = view.findViewById(R.id.rvDrawerConsumer);
-        navDocument = view.findViewById(R.id.navDocument);
         navRiwayat = view.findViewById(R.id.navRiwayat);
         navStatistik = view.findViewById(R.id.navStatistik);
         btnNotif = view.findViewById(R.id.btnNotif);
@@ -157,7 +156,7 @@ public class CaregiverHomeFragment extends Fragment {
         });
 
         User caregiver = sessionManager.getUser();
-        if (caregiver != null) tvGreeting.setText("Halo, " + caregiver.getName());
+        if (caregiver != null) tvGreeting.setText(getString(R.string.home_greeting_caregiver, caregiver.getName()));
 
         View pickerRoot = view.findViewById(R.id.consumerPicker);
         consumerPicker = new ConsumerPickerHelper( pickerRoot, requireContext(), uid -> {
@@ -217,10 +216,10 @@ public class CaregiverHomeFragment extends Fragment {
     }
 
     private void setupSideNavInteractions(View view) {
-        view.findViewById(R.id.navDocument).setOnClickListener(v -> {
-            drawerLayout.closeDrawer(GravityCompat.START);
-            NavHostFragment.findNavController(this).navigate(R.id.documentFragment);
-        });
+//        view.findViewById(R.id.navDocument).setOnClickListener(v -> {
+//            drawerLayout.closeDrawer(GravityCompat.START);
+//            NavHostFragment.findNavController(this).navigate(R.id.documentFragment);
+//        });
         view.findViewById(R.id.navRiwayat).setOnClickListener(v -> {
             drawerLayout.closeDrawer(GravityCompat.START);
             NavHostFragment.findNavController(this).navigate(R.id.logFragment);
@@ -263,7 +262,7 @@ public class CaregiverHomeFragment extends Fragment {
                         if (!isAdded()) return;
                         nextScheduleMedName = medName;
                         tvtitleCard.setText(medName);
-                        tvStokNext.setText("Sisa stok: " + stock);
+                        tvStokNext.setText(getString(R.string.sisa_stok, stock));
                         btnRemindConsumer.setOnClickListener(v -> sendReminder(consumerUid, medName));
                     });
                 });
@@ -277,8 +276,8 @@ public class CaregiverHomeFragment extends Fragment {
         Locale localeId = new Locale("id", "ID");
         SimpleDateFormat sdfDay = new SimpleDateFormat("EEEE", localeId);
 
-        if (isSameDay(target, today)) return "Hari ini";
-        if (isSameDay(target, tomorrow)) return "Besok";
+        if (isSameDay(target, today)) return getString(R.string.hari_ini);
+        if (isSameDay(target, tomorrow)) return getString(R.string.besok);
         return sdfDay.format(date);
     }
 
@@ -293,12 +292,12 @@ public class CaregiverHomeFragment extends Fragment {
         notification.setReceiver_uid(consumerUid);
         notification.setSender_uid(caregiver.getAuth_uid());
         notification.setType(NotificationType.Medicine);
-        notification.setMessage(caregiver.getName() + " mengingatkan Anda untuk minum obat " + medName);
+        notification.setMessage(getString(R.string.mengingatkan_minum_obat, caregiver.getName(), medName));
         notification.setIs_read(false);
         notificationRepo.createNotification(notification, new RepoCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                Toast.makeText(requireContext(), "Pengingat terkirim.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), getString(R.string.pengingat_terkirim), Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -327,11 +326,11 @@ public class CaregiverHomeFragment extends Fragment {
                                     db.collection("medicine_catalog").document(med.getCatalog_id()).get()
                                             .addOnSuccessListener(catSnap -> {
                                                 MedicineCatalog catalog = catSnap.toObject(MedicineCatalog.class);
-                                                callback.onResolved(catalog != null ? catalog.getNama_obat() : "Obat", finalStock);
+                                                callback.onResolved(catalog != null ? catalog.getNama_obat() : getString(R.string.obat_default), finalStock);
                                             });
 
                                 } else {
-                                    callback.onResolved("Obat", finalStock);
+                                    callback.onResolved(getString(R.string.obat_default), finalStock);
                                 }
                             });
                 });
@@ -371,10 +370,8 @@ public class CaregiverHomeFragment extends Fragment {
                             remaining[0]--;
                             continue;
                         } resolveMedName(log.getMedication_schedules_id(), (medName, stock) -> {
-                            LogItem item = new LogItem("medicine", medName, sdf.format(log.getScheduled_at().toDate()), "Sisa stok: " + stock, log.getStatus());
-                            item.setRefId(log.getMedication_schedules_id());
-                            item.setScheduledAtMillis(log.getScheduled_at().toDate().getTime());
-                            combined.add(item);
+                            combined.add(new LogItem("medicine", medName, sdf.format(log.getScheduled_at().toDate()), getString(R.string.sisa_stok, stock), log.getStatus(),
+                                    log.getMedication_schedules_id(), log.getScheduled_at().toDate().getTime()));
                             remaining[0]--;
                             if (remaining[0] <= 0){
                                 mergeAppointments(consumerUid, combined, startOfDay, startOfTomorrow);
@@ -395,17 +392,15 @@ public class CaregiverHomeFragment extends Fragment {
                     for (DocumentSnapshot doc : apptQuery.getDocuments()) {
                         Appointment appt = doc.toObject(Appointment.class);
                         if (appt == null) continue;
-                        LogItem item = new LogItem("appointment", appt.getTitle(),
+                        combined.add(new LogItem("appointment", appt.getTitle(),
                                 sdf.format(appt.getAppointment_at().toDate()),
-                                appt.getAddress(), appt.getStatus());
-                        item.setRefId(doc.getId());
-                        item.setScheduledAtMillis(appt.getAppointment_at().toDate().getTime());
-                        combined.add(item);
+                                appt.getAddress(), appt.getStatus(),
+                                doc.getId(), appt.getAppointment_at().toDate().getTime()));
                     }
                     Collections.sort(combined, (a, b) -> a.getTime().compareTo(b.getTime()));
                     List<LogItem> displayList = combined.size() > 3 ? combined.subList(0,3) : combined;
                     TodayScheduleAdapter adapter = new TodayScheduleAdapter(displayList, requireContext());
-                    adapter.setOnScheduleItemClickListener(this::navigateToReminder);
+                    adapter.setOnItemClickListener(this::navigateToReminder);
                     rvTodaySchedule.setAdapter(adapter);
                     if (combined.isEmpty()){
                         emptyTodaySchedule.setVisibility(View.VISIBLE);
@@ -419,20 +414,15 @@ public class CaregiverHomeFragment extends Fragment {
                 });
     }
 
-    // buka Reminder view dari Home (caregiver). source="schedule" -> tombol titik tiga (edit/hapus) ditampilkan.
     private void navigateToReminder(LogItem item) {
-        if (item.getRefId() == null) return;
-
+        if (!isAdded() || item == null) return;
         Bundle bundle = new Bundle();
-        bundle.putString("medication_schedules_id", item.getRefId());
+        bundle.putString("medication_schedules_id", item.getScheduleId());
         bundle.putString("nama_obat", item.getNamaJadwal());
         bundle.putLong("scheduled_at", item.getScheduledAtMillis());
         bundle.putString("status", item.getStatus());
         bundle.putString("type", item.getType());
-        bundle.putString("source", "schedule");
-
-        NavHostFragment.findNavController(this)
-                .navigate(R.id.reminderFragment, bundle);
+        NavHostFragment.findNavController(this).navigate(R.id.reminderFragment, bundle);
     }
 
     private void loadAdherenceAndStats(String consumerUid) {
@@ -464,9 +454,9 @@ public class CaregiverHomeFragment extends Fragment {
                         if (status == LogStatus.DIKONSUMSI) taken++;
                         else if (status == LogStatus.TERLEWATKAN) missed++;
                         else if (status == LogStatus.AKAN_DATANG) upcoming++;
-                    } tvTotalDikonsumsi.setText(taken + " Obat");
-                    tvTotalTerlewat.setText(missed + " Obat");
-                    tvTotalAkanDatang.setText(upcoming + " Obat");
+                    } tvTotalDikonsumsi.setText(getString(R.string.jumlah_obat, taken));
+                    tvTotalTerlewat.setText(getString(R.string.jumlah_obat, missed));
+                    tvTotalAkanDatang.setText(getString(R.string.jumlah_obat, upcoming));
                 });
     }
 
