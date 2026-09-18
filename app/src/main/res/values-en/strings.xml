@@ -36,6 +36,7 @@
     <string name="email">Email</string>
     <string name="googleAcc">Google Account</string>
     <string name="deleteAcc">Delete Account</string>
+    <string name="forgotpass">Forgot Password</string>
     <string name="kepatuhan">Adherence Level</string>
     <string name="selengkapnya">See More</string>
     <string name="pengaturan">Settings</string>
@@ -146,6 +147,7 @@
     <!-- popup edit -->
     <string name="edit">Edit</string>
     <string name="delete">Delete</string>
+    <string name="kirim">Send</string>
 
     <!-- item_relation -->
     <string name="loading">Loading...</string>

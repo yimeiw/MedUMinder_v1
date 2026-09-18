@@ -109,7 +109,7 @@ public class AuthManager {
         if (user == null){
             callback.onFailure("Data user tidak boleh kosong.");
             return;
-        } String cleanEmail = user.getEmail() != null ? user.getEmail().trim() : "";
+        } String cleanEmail = user.getEmail() != null ? user.getEmail().trim().toLowerCase() : "";
         if (cleanEmail.isEmpty()){
             callback.onFailure("Email tidak boleh kosong.");
             return;
@@ -131,6 +131,7 @@ public class AuthManager {
             saveUserProfile(user, new AuthCallback<User>() {
                 @Override
                 public void onSuccess(User user) {
+                    callback.onSuccess(user);
                 }
 
                 @Override
@@ -156,7 +157,26 @@ public class AuthManager {
         } if (password == null || password.isEmpty()){
             callback.onFailure("Password tidak boleh kosong.");
             return;
-        }
+        } final String cleanEmail = email.trim().toLowerCase();
+
+        userRepository.getUserbyEmail(cleanEmail, new RepoCallback<User>() {
+            @Override
+            public void onSuccess(User result) {
+                if (result == null){
+                    callback.onFailure("Email belum terdaftar.");
+                    return;
+                } if (result.getAuthProvider() == AuthProviderType.GOOGLE && !result.isGoogle_email_password_capable()){
+                    callback.onFailure("Email terdaftar menggunakan akun Google. Silahkan login menggunakan Google.");
+                    return;
+                } performEmailSignIn(cleanEmail, password, callback);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                //Firestrore gagal diakses -> tetap coba signin langsung sebagai fallback
+                performEmailSignIn(cleanEmail, password, callback);
+            }
+        });
 
         mAuth.signInWithEmailAndPassword(email, password).addOnSuccessListener(result -> {
             FirebaseUser firebaseUser = result.getUser();
@@ -199,6 +219,41 @@ public class AuthManager {
                         "Jika akun Anda dibuat menggunakan Google, "+
                         "silahkan login menggunakan Google.";
             } callback.onFailure(message);
+        });
+    }
+
+    private void performEmailSignIn(String email, String password, AuthCallback<User> callback) {
+        mAuth.signInWithEmailAndPassword(email, password).addOnSuccessListener(result -> {
+            FirebaseUser firebaseUser = result.getUser();
+            if (firebaseUser == null){
+                callback.onFailure("Login gagal, User tidak ditemukan.");
+                return;
+            } firebaseUser.reload().addOnSuccessListener(unused -> {
+                if (!firebaseUser.isEmailVerified()){
+                    mAuth.signOut();
+                    sessionManager.clearSession();
+                    callback.onFailure("EMAIL_NOT_VERIFIED");
+                    return;
+                } userRepository.getUserbyUid(firebaseUser.getUid(), new RepoCallback<User>() {
+                    @Override
+                    public void onSuccess(User result) {
+                        sessionManager.saveUser(result);
+                        callback.onSuccess(result);
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        mAuth.signOut();
+                        sessionManager.clearSession();
+                        callback.onFailure(e.getMessage());
+                    }
+                });
+            }).addOnFailureListener(e -> {
+                mAuth.signOut();
+                callback.onFailure(e.getMessage());
+            });
+        }).addOnFailureListener(e -> {
+            callback.onFailure("Password salah.");
         });
     }
 
@@ -376,7 +431,17 @@ public class AuthManager {
                 callback.onFailure("User tidak ditemukan.");
                 return;
             } updatedUser.reload().addOnSuccessListener(unused -> {
-                callback.onSuccess(null);
+                Map<String, Object> update = new HashMap<>();
+                update.put("google_email_password_capable", true);
+                update.put("updated_at", Timestamp.now());
+                FirebaseFirestore.getInstance().collection("users").document(currentUser.getUid())
+                        .update(update).addOnCompleteListener(task -> {
+                            User user = sessionManager.getUser();
+                            if (user != null){
+                                user.setGoogle_email_password_capable(true);
+                                callback.onSuccess(null);
+                            }
+                        });
             }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
         }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
@@ -736,6 +801,7 @@ public class AuthManager {
         invitationRepo.createInvitation(invitation, new RepoCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
+                notifySenderInvitationSent(sender, receiverEmail, relationshipRole);
                 //user belum terdaftar
                 if (receiver == null) {
                     callback.onSuccess(false);
@@ -760,6 +826,28 @@ public class AuthManager {
             }
         });
     }
+
+    private void notifySenderInvitationSent(User sender, String receiverEmail, UserRole relationshipRole) {
+        Notification selfNotif = new Notification();
+        selfNotif.setNotification_id(UUID.randomUUID().toString());
+        selfNotif.setReceiver_uid(sender.getAuth_uid());
+        selfNotif.setSender_uid(sender.getAuth_uid());
+        selfNotif.setType(NotificationType.Invitation);
+        selfNotif.setTitle("Undangan Terkirim");
+        selfNotif.setMessage("Undangan Anda ke " + receiverEmail + " sebagai " + relationshipRole.name()
+                + " sudah terkirim dan menunggu respon.");
+        selfNotif.setTarget_role(null);
+        selfNotif.setIs_read(false);
+        selfNotif.setCreated_at(Timestamp.now());
+        notificationRepo.createNotification(selfNotif, new RepoCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {}
+
+            @Override
+            public void onFailure(Exception e) {}
+        });
+    }
+
     public void getPendingInvitation(AuthCallback<Invitation> callback){
         User user = getCurrentUser();
         if (user == null){
@@ -890,7 +978,7 @@ public class AuthManager {
         notif.setInvitation_id(invitation.getInvitation_id());
         notif.setType(NotificationType.Invitation);
         notif.setMessage(accepted ? "Undangan Anda diterima." : "Undangan Anda ditolak.");
-        notif.setTarget_role(UserRole.Consumer.name());
+        notif.setTarget_role(null);
         notif.setIs_read(false);
         notificationRepo.createNotification(notif, new RepoCallback<Void>() {
             @Override
@@ -911,7 +999,7 @@ public class AuthManager {
         notification.setTitle("Invitation " + invitation.getInvite_role().name());
         notification.setMessage(invitation.getSender_name()
         + " mengundang Anda menjadi " + invitation.getInvite_role().name());
-        notification.setTarget_role(UserRole.Consumer.name());
+        notification.setTarget_role(null);
         notification.setIs_read(false);
         notification.setCreated_at(Timestamp.now());
         notification.setUpdated_at(Timestamp.now());

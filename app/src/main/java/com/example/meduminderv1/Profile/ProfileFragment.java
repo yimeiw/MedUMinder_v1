@@ -352,9 +352,7 @@ MaterialButton btnSeeStatistic;
                 if (!isAdded()) return;
                 bindUser(result);
                 Toast.makeText(requireContext(), "Role caregiver berhasil diaktifkan.", Toast.LENGTH_SHORT).show();
-                if (continueSwitchRole){
-                    switchRole(UserRole.Caregiver);
-                }
+                switchRole(UserRole.Caregiver);
             }
 
             @Override

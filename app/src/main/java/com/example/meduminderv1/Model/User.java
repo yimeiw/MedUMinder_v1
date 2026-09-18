@@ -15,6 +15,7 @@ public class User {
     private Timestamp created_at;
     private Timestamp updated_at;
     private Timestamp deleted_at;
+    public boolean google_email_password_capable; //true kalau akun sudah link google tp tetap bisa login pake email
     public String getAuth_uid() {
         return auth_uid;
     }
@@ -102,5 +103,12 @@ public class User {
     @Exclude
     public UserRole getCurrentRole(){
         return UserRole.valueOf(current_role);
+    }
+    public boolean isGoogle_email_password_capable() {
+        return google_email_password_capable;
+    }
+
+    public void setGoogle_email_password_capable(boolean google_email_password_capable) {
+        this.google_email_password_capable = google_email_password_capable;
     }
 }

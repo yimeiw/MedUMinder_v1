@@ -42,6 +42,7 @@
     <string name="email">Email</string>
     <string name="googleAcc">Akun Google</string>
     <string name="deleteAcc">Hapus Akun</string>
+    <string name="forgotpass">Lupa Kata Sandi</string>
     <string name="kepatuhan">Tingkat Kepatuhan</string>
     <string name="selengkapnya">Lihat Selengkapnya</string>
     <string name="pengaturan">Pengaturan</string>
@@ -153,6 +154,7 @@
     <!-- popup edit -->
     <string name="edit">Edit</string>
     <string name="delete">Hapus</string>
+    <string name="kirim">Kirim</string>
 
     <!-- item_relation -->
     <string name="loading">Memuat...</string>

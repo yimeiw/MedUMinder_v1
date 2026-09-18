@@ -2,6 +2,7 @@ package com.example.meduminderv1.Login;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -16,6 +17,10 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.credentials.CredentialManager;
+import androidx.navigation.NavController;
+import androidx.navigation.NavGraph;
+import androidx.navigation.NavInflater;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Auth.SessionManager;
@@ -34,7 +39,6 @@ public class LoginActivity extends AppCompatActivity {
     CredentialManager credentialManager;
     AuthManager authManager;
     SessionManager sessionManager;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,42 +71,25 @@ public class LoginActivity extends AppCompatActivity {
             loginUser();
         });
 
-        forgotPassword.setOnClickListener(v -> {
-            String email = emailInput.getText().toString().trim();
-            if (email.isEmpty()){
-                emailInput.setError("Masukkan email terlebih dahulu.");
-                emailInput.requestFocus();
-                return;
-            }
-            authManager.resetPassword(email, new AuthCallback<Void>() {
-                @Override
-                public void onSuccess(Void result) {
-                    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(LoginActivity.this);
-                    builder.setTitle("Email berhasil dikirim")
-                            .setMessage("Silahkan buka email Anda untuk mengatur ulang password.")
-                            .setPositiveButton("Buka Email", (dialog, which) -> {
-                                Intent intent = new Intent(Intent.ACTION_MAIN);
-                                intent.addCategory(Intent.CATEGORY_APP_EMAIL);
-                                try {
-                                    startActivity(intent);
-                                } catch (Exception e){
-                                    Toast.makeText(LoginActivity.this, "Aplikasi email tidak ditemukan.", Toast.LENGTH_SHORT).show();
-                                }
-                            }).setNegativeButton("Tutup", null);
-                    AlertDialog dialog = builder.create();
-                    dialog.show();
-                    if (dialog.getWindow() != null){
-                        dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
-                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(LoginActivity.this, R.color.green));
-                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(LoginActivity.this, R.color.pink));
-                    }
-                }
+        NavHostFragment navHostFragment =
+                (NavHostFragment) getSupportFragmentManager()
+                        .findFragmentById(R.id.navHostForgotPassword);
 
-                @Override
-                public void onFailure(String message) {
-                    Toast.makeText(LoginActivity.this, message, Toast.LENGTH_SHORT).show();
-                }
-            });
+        NavController navController =
+                navHostFragment.getNavController();
+
+        NavInflater navInflater = navController.getNavInflater();
+
+        NavGraph navGraph =
+                navInflater.inflate(R.navigation.nav_graph);
+
+        navGraph.setStartDestination(R.id.forgotPassFragment);
+
+        navController.setGraph(navGraph);
+
+        forgotPassword.setOnClickListener(v -> {
+            findViewById(R.id.navHostForgotPassword)
+                    .setVisibility(View.VISIBLE);
         });
 
         signUpButton.setOnClickListener(view -> {
@@ -142,6 +129,9 @@ public class LoginActivity extends AppCompatActivity {
         } if (password.isEmpty()){
             passwordInput.setError("Password harus diisi");
             return;
+        } if (email.isEmpty() && password.isEmpty()){
+            Toast.makeText(this, "Semua field harus diisi.", Toast.LENGTH_SHORT).show();
+            return;
         }
 
         authManager.loginWithEmail(email, password, new AuthCallback<User>() {
@@ -171,5 +161,4 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
     }
-
 }

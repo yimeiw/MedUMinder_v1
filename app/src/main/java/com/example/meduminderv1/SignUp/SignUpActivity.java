@@ -78,16 +78,22 @@ public class SignUpActivity extends AppCompatActivity {
             public void onFailure(String message) {
                 if ("EMAIL_ALREADY_IN_USE_DIFFERENT_PROVIDER".equals(message)) {
 
-                    new MaterialAlertDialogBuilder(SignUpActivity.this)
-                            .setTitle("Email Sudah Terdaftar")
+                    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(SignUpActivity.this);
+                            builder.setTitle("Email Sudah Terdaftar")
                             .setMessage("Email ini sudah terdaftar dengan password. Silakan login menggunakan email dan password.")
                             .setPositiveButton("Login", (dialog, which) -> {
                                 Intent intent = new Intent(SignUpActivity.this, LoginActivity.class);
                                 intent.putExtra("prefill_email", emailInput.getText().toString().trim());
                                 startActivity(intent);
                             })
-                            .setNegativeButton("Batal", null)
-                            .show();
+                            .setNegativeButton("Batal", null);
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                    if (dialog.getWindow() != null){
+                        dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, R.color.green));
+                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, R.color.pink));
+                    }
 
                 } else {
                     Toast.makeText(SignUpActivity.this, message, Toast.LENGTH_SHORT).show();
@@ -99,7 +105,7 @@ public class SignUpActivity extends AppCompatActivity {
     private void registerUser() {
         User user = new User();
         user.setName(nameInput.getText().toString().trim());
-        user.setEmail(emailInput.getText().toString().trim());
+        user.setEmail(emailInput.getText().toString().trim().toLowerCase());
         user.setCurrent_role("Consumer");
         user.setCaregiver_enabled(false);
         user.setAuthProvider(AuthProviderType.EMAIL);
@@ -111,7 +117,7 @@ public class SignUpActivity extends AppCompatActivity {
 
         String password = passwordInput.getText().toString().trim();
 
-        if (user.getName().isEmpty() || user.getEmail().isEmpty() || password.isEmpty()) {
+        if (user.getName().isEmpty() && user.getEmail().isEmpty() && password.isEmpty()) {
             Toast.makeText(this, "Semua field harus diisi", Toast.LENGTH_SHORT).show();
             return;
         } if (!validateInput(user.getName(), user.getEmail(), password)){
@@ -144,16 +150,22 @@ public class SignUpActivity extends AppCompatActivity {
             @Override
             public void onFailure(String message) {
                 if ("EMAIL_ALREADY_IN_USE".equals(message)) {
-                    new MaterialAlertDialogBuilder(SignUpActivity.this)
-                            .setTitle("Email Sudah Terdaftar")
+                    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(SignUpActivity.this);
+                            builder.setTitle("Email Sudah Terdaftar")
                             .setMessage("Email ini sudah digunakan. Silakan login atau gunakan email lain.")
                             .setPositiveButton("Login", (dialog, which) -> {
                                 Intent intent = new Intent(SignUpActivity.this, LoginActivity.class);
                                 intent.putExtra("prefill_email", emailInput.getText().toString().trim());
                                 startActivity(intent);
-                            })
-                            .setNegativeButton("Batal", null)
-                            .show();
+                            }).setNegativeButton("Batal", null);
+
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                    if (dialog.getWindow() != null){
+                        dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, R.color.green));
+                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, R.color.pink));
+                    }
                 } else {
                     Toast.makeText(SignUpActivity.this, message, Toast.LENGTH_SHORT).show();
                 }
@@ -174,8 +186,8 @@ public class SignUpActivity extends AppCompatActivity {
             nameInput.setError("Nama harus diisi");
             return false;
         }
-        if (name.length() < 2) {
-            nameInput.setError("Nama minimal 2 karakter");
+        if (name.length() < 3) {
+            nameInput.setError("Nama minimal 4 karakter");
             return false;
         }
         if (name.length() > 50) {

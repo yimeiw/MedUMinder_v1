@@ -25,12 +25,6 @@
         />
 
     <fragment
-        android:id="@+id/documentFragment"
-        android:name="com.example.meduminderv1.HealthDocument.DocumentFragment"
-        android:label="Document"
-        />
-
-    <fragment
         android:id="@+id/reminderStockFragment"
         android:name="com.example.meduminderv1.Reminder.ReminderStockFragment"
         android:label="Isi Ulang Stok Obat"
@@ -43,6 +37,13 @@
         tools:layout="@layout/fragment_edit_medicine_reminder" />
 
     <!--    general-->
+    <fragment
+        android:id="@+id/forgotPassFragment"
+        android:name="com.example.meduminderv1.Login.ForgotPasswordFragment"
+        android:label="Forgot Password"
+        tools:layout="@layout/fragment_forgot_password"
+        />
+
     <fragment
         android:id="@+id/notificationFragment"
         android:name="com.example.meduminderv1.Notification.NotificationFragment"

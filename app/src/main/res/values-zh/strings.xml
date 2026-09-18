@@ -34,6 +34,7 @@
     <string name="email">电子邮件</string>
     <string name="googleAcc">Google 账户</string>
     <string name="deleteAcc">删除账户</string>
+    <string name="forgotpass">忘记密码</string>
     <string name="kepatuhan">服药依从度</string>
     <string name="selengkapnya">查看更多</string>
     <string name="pengaturan">设置</string>
@@ -145,6 +146,7 @@
     <!-- popup edit -->
     <string name="edit">编辑</string>
     <string name="delete">删除</string>
+    <string name="kirim">发送</string>
 
     <!-- item_relation -->
     <string name="loading">加载中...</string>

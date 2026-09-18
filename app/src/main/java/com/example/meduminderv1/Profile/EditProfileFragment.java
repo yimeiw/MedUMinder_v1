@@ -106,7 +106,7 @@ public class EditProfileFragment extends Fragment {
         String newName = userName.getText().toString().trim();
         if (newName.equals(currentUser.getName())){
             return;
-        } if (newName.length() < 4){
+        } if (newName.length() <= 4){
             userName.setError("Nama minimal 4 karaker");
             userName.requestFocus();
             return;
