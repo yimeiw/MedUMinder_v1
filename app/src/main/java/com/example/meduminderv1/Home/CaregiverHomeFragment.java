@@ -310,10 +310,12 @@ public class CaregiverHomeFragment extends Fragment {
     private void resolveMedName(String schedulesId, MedResolveCallback callback) {
         db.collection("medication_schedules").document(schedulesId).get()
                 .addOnSuccessListener(scheduleSnap -> {
+                    if (!isAdded()) return;   // <-- baris baru
                     MedicationSchedules schedule = scheduleSnap.toObject(MedicationSchedules.class);
                     if (schedule == null) return;
                     db.collection("medications").document(schedule.getMedication_id()).get()
                             .addOnSuccessListener(medSnap -> {
+                                if (!isAdded()) return;   // <-- baris baru
                                 Medication med = medSnap.toObject(Medication.class);
                                 if (med == null) return;
                                 int stock = 0;
@@ -325,17 +327,16 @@ public class CaregiverHomeFragment extends Fragment {
                                 } else if (med.getCatalog_id() != null) {
                                     db.collection("medicine_catalog").document(med.getCatalog_id()).get()
                                             .addOnSuccessListener(catSnap -> {
+                                                if (!isAdded()) return;   // <-- baris baru
                                                 MedicineCatalog catalog = catSnap.toObject(MedicineCatalog.class);
                                                 callback.onResolved(catalog != null ? catalog.getNama_obat() : getString(R.string.obat_default), finalStock);
                                             });
-
                                 } else {
                                     callback.onResolved(getString(R.string.obat_default), finalStock);
                                 }
                             });
                 });
     }
-
     private interface MedResolveCallback{
         void onResolved(String name, int stock);
     }
@@ -370,6 +371,7 @@ public class CaregiverHomeFragment extends Fragment {
                             remaining[0]--;
                             continue;
                         } resolveMedName(log.getMedication_schedules_id(), (medName, stock) -> {
+                            if (!isAdded()) return;
                             combined.add(new LogItem("medicine", medName, sdf.format(log.getScheduled_at().toDate()), getString(R.string.sisa_stok, stock), log.getStatus(),
                                     log.getMedication_schedules_id(), log.getScheduled_at().toDate().getTime()));
                             remaining[0]--;
@@ -388,6 +390,7 @@ public class CaregiverHomeFragment extends Fragment {
                 .whereLessThan("appointment_at", startOfTomorrow)
                 .get()
                 .addOnSuccessListener(apptQuery -> {
+                    if (!isAdded()) return;
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                     for (DocumentSnapshot doc : apptQuery.getDocuments()) {
                         Appointment appt = doc.toObject(Appointment.class);

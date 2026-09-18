@@ -303,6 +303,37 @@
 
                 </LinearLayout>
 
+                <!--                pengaturan tambah caregiver-->
+                <LinearLayout
+                    android:id="@+id/btnAddCaregiver"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:background="@drawable/border_wp"
+                    android:layout_marginVertical="5dp">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@drawable/ic_add_people"
+                        android:layout_margin="8dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/invCaregiver"
+                        android:layout_weight="1"
+                        android:layout_gravity="center"
+                        android:fontFamily="@font/inter_24pt_bold"/>
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_arrow"
+                        android:layout_gravity="center"/>
+
+                </LinearLayout>
+
 
                 <!--                pengaturan profile-->
                 <LinearLayout

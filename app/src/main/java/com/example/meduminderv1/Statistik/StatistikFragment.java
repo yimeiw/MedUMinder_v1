@@ -127,21 +127,21 @@ public class StatistikFragment extends Fragment {
         btnWeekly.setOnClickListener(v -> {
             selectedPeriod = "weekly";
             Toast.makeText(requireContext(), "Filter Mingguan terpilih", Toast.LENGTH_SHORT).show();
-            updatePeriodButton();
+            updatePeriodButton(v);   // <-- pakai "v" (View tombol yang diklik), bukan requireView()
             loadStats();
         });
 
         btnMonthly.setOnClickListener(v -> {
             selectedPeriod = "monthly";
             Toast.makeText(requireContext(), "Filter Bulanan terpilih", Toast.LENGTH_SHORT).show();
-            updatePeriodButton();
+            updatePeriodButton(v);
             loadStats();
         });
 
         btnYearly.setOnClickListener(v -> {
             selectedPeriod = "yearly";
             Toast.makeText(requireContext(), "Filter Tahunan terpilih", Toast.LENGTH_SHORT).show();
-            updatePeriodButton();
+            updatePeriodButton(v);
             loadStats();
         });
 
@@ -158,7 +158,11 @@ public class StatistikFragment extends Fragment {
         tvAdherenceDescription = view.findViewById(R.id.tvAdherenceDescription);
 
         btnDownloadReport.setOnClickListener(v -> {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                // Android 10 ke atas: gak perlu izin lagi, langsung lewat MediaStore
+                downloadReport();
+            } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                // Android 6 - 9: masih pakai cara lama, minta izin dulu
                 if (requireContext().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                     requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
                 } else {
@@ -170,7 +174,7 @@ public class StatistikFragment extends Fragment {
         });
 
         statistikRepo = new StatistikRepo();
-        updatePeriodButton();
+        updatePeriodButton(view);
         loadStats();
 
         return view;
@@ -352,11 +356,7 @@ public class StatistikFragment extends Fragment {
         }
 
         int contentWidth = statistikContent.getWidth();
-
-        if (contentWidth <= 0) {
-            contentWidth = statistikContent.getMeasuredWidth();
-        }
-
+        if (contentWidth <= 0) contentWidth = statistikContent.getMeasuredWidth();
         if (contentWidth <= 0) {
             Toast.makeText(requireContext(), "Gagal mengambil ukuran laporan", Toast.LENGTH_SHORT).show();
             return;
@@ -369,7 +369,6 @@ public class StatistikFragment extends Fragment {
 
         int width = statistikContent.getMeasuredWidth();
         int height = statistikContent.getMeasuredHeight();
-
         statistikContent.layout(0, 0, width, height);
 
         if (width <= 0 || height <= 0) {
@@ -386,33 +385,68 @@ public class StatistikFragment extends Fragment {
 
         for (int pageNumber = 0; pageNumber < pageCount; pageNumber++) {
             PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber + 1).create();
-
             PdfDocument.Page page = document.startPage(pageInfo);
-
             Canvas canvas = page.getCanvas();
             canvas.save();
             canvas.scale(scale, scale);
             canvas.translate(0, -(pageNumber * pageHeight) / scale);
-
             statistikContent.draw(canvas);
             canvas.restore();
             document.finishPage(page);
         }
 
-        // Nama file
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-        String fileName =
-                "Laporan_Statistik_" + timestamp + ".pdf";
+        String fileName = "Laporan_Statistik_" + timestamp + ".pdf";
 
+        // Ini bagian yang beda per versi Android
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            saveViaMediaStore(document, fileName);
+        } else {
+            saveViaLegacyFile(document, fileName);
+        }
+    }
+
+    // Cara BARU (Android 10 ke atas): titip file lewat "loket resmi" MediaStore, gak perlu izin
+    private void saveViaMediaStore(PdfDocument document, String fileName) {
+        android.content.ContentValues values = new android.content.ContentValues();
+        values.put(android.provider.MediaStore.Downloads.DISPLAY_NAME, fileName);
+        values.put(android.provider.MediaStore.Downloads.MIME_TYPE, "application/pdf");
+        values.put(android.provider.MediaStore.Downloads.IS_PENDING, 1);
+
+        android.content.ContentResolver resolver = requireContext().getContentResolver();
+        android.net.Uri itemUri = resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+
+        if (itemUri == null) {
+            document.close();
+            Toast.makeText(requireContext(), "Gagal membuat file laporan", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        try (java.io.OutputStream out = resolver.openOutputStream(itemUri)) {
+            document.writeTo(out);
+            document.close();
+
+            values.clear();
+            values.put(android.provider.MediaStore.Downloads.IS_PENDING, 0);
+            resolver.update(itemUri, values, null, null);
+
+            Toast.makeText(requireContext(), "Laporan berhasil diunduh", Toast.LENGTH_LONG).show();
+        } catch (IOException e) {
+            document.close();
+            Toast.makeText(requireContext(), "Gagal mengunduh laporan", Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+        }
+    }
+
+    // Cara LAMA (Android 9 ke bawah): tetap pakai File API kayak sebelumnya
+    private void saveViaLegacyFile(PdfDocument document, String fileName) {
         File downloadFolder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
 
         if (!downloadFolder.exists()) {
             boolean created = downloadFolder.mkdirs();
-
             if (!created && !downloadFolder.exists()) {
                 document.close();
                 Toast.makeText(requireContext(), "Gagal membuat folder Download", Toast.LENGTH_LONG).show();
-
                 return;
             }
         }
@@ -428,24 +462,22 @@ public class StatistikFragment extends Fragment {
         } catch (IOException e) {
             document.close();
             Toast.makeText(requireContext(), "Gagal mengunduh laporan", Toast.LENGTH_LONG).show();
-
             e.printStackTrace();
         }
     }
 
-    private void updatePeriodButton() {
+    private void updatePeriodButton(View root) {
         btnWeekly.setBackgroundResource(R.drawable.border);
         btnMonthly.setBackgroundResource(R.drawable.border);
         btnYearly.setBackgroundResource(R.drawable.border);
 
         int activeColor = com.google.android.material.color.MaterialColors.getColor(
-                requireView(), com.google.android.material.R.attr.colorSecondary);
+                root, com.google.android.material.R.attr.colorSecondary);
 
         btnWeekly.setBackgroundTintList(null);
         btnMonthly.setBackgroundTintList(null);
         btnYearly.setBackgroundTintList(null);
 
-        // Filter yang aktif
         if ("weekly".equals(selectedPeriod)) {
             btnWeekly.setBackgroundTintList(android.content.res.ColorStateList.valueOf(activeColor));
         } else if ("monthly".equals(selectedPeriod)) {

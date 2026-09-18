@@ -55,10 +55,8 @@ public class ProfileFragment extends Fragment {
     RelativeLayout themeSwitch;
     ImageView iconToggle, imgAktivasi;
     SharedPreferences prefs;
-
-    LinearLayout btnEditProfile, btnAktivasi, btnListRelation, btnChangeLanguage, btnNotificationSetting, cardStatistik;
-
-MaterialButton btnSeeStatistic;
+    LinearLayout btnEditProfile, btnAktivasi, btnListRelation, btnChangeLanguage, btnNotificationSetting, cardStatistik, btnAddCaregiver;
+    MaterialButton btnSeeStatistic;
     ProgressView adherenceRing;
     StatistikRepo statistikRepo;
 
@@ -94,6 +92,7 @@ MaterialButton btnSeeStatistic;
         btnListRelation = view.findViewById(R.id.btnRelationList);
         btnChangeLanguage = view.findViewById(R.id.btnChangeLanguage);
         btnNotificationSetting = view.findViewById(R.id.btnNotificationSetting);
+        btnAddCaregiver = view.findViewById(R.id.btnAddCaregiver);
 
         if (user != null){
             loadUser();
@@ -141,6 +140,12 @@ MaterialButton btnSeeStatistic;
             }
         });
 
+        btnAddCaregiver.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putString("relationship_role", "Caregiver");
+            NavHostFragment.findNavController(this).navigate(R.id.invitationFragment, bundle);
+        });
+
         btnChangeLanguage.setOnClickListener(v -> {
             NavHostFragment.findNavController(this)
                     .navigate(R.id.languageFragment);
@@ -165,6 +170,8 @@ MaterialButton btnSeeStatistic;
             NavHostFragment.findNavController(this)
                     .navigate(R.id.statistikFragment);
         });
+
+
 
         return view;
     }
@@ -390,6 +397,7 @@ MaterialButton btnSeeStatistic;
         txtListRelation.setText(
                 isConsumer ? getString(R.string.caregiverList) : getString(R.string.consumerList)
         );
+        btnAddCaregiver.setVisibility(isConsumer ? View.VISIBLE : View.GONE);
         btnListRelation.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
             bundle.putString(RelationListFragment.ARG_MODE, isConsumer ? "Caregiver" : "Consumer");
@@ -397,6 +405,7 @@ MaterialButton btnSeeStatistic;
         });
 
         cardStatistik.setVisibility(isConsumer ? View.VISIBLE : View.GONE);
+
     }
 
 

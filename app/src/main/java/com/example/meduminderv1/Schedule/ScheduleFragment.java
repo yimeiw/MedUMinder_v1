@@ -176,6 +176,7 @@ public class ScheduleFragment extends Fragment {
                         for (DocumentSnapshot doc : query.getDocuments()){
                             Appointment appoint = doc.toObject(Appointment.class);
                             if (appoint == null) continue;
+                            if (appoint.getDeleted_at() != null) continue; // <-- filter manual ini sudah cukup
                             LogItem item = new LogItem("appointment", appoint.getTitle(), sdf.format(appoint.getAppointment_at().toDate()),
                                     appoint.getAddress(), appoint.getStatus(),
                                     doc.getId(), appoint.getAppointment_at().toDate().getTime());

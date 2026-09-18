@@ -180,7 +180,13 @@ public class NotificationDetailFragment extends Fragment {
 
     // ================= INVITATION =================
     private void showInvitation() {
-        notifDetail.setVisibility(View.GONE); // invitation tidak pakai card jadwal
+        // JANGAN matikan notifDetail seluruhnya, cukup sembunyikan
+        // bagian yang gak dipakai buat undangan (jadwal, stok, dll)
+        notifDetail.setVisibility(View.VISIBLE);
+        tvScheduleName.setVisibility(View.GONE);
+        tvScheduleDayTime.setVisibility(View.GONE);
+        tvStockInfo.setVisibility(View.GONE);
+        tvConsumerName.setVisibility(View.GONE); // tidak relevan juga buat invitation
 
         if (notification.getInvitation_id() == null) {
             cleanupOrphanNotification("Undangan tidak ditemukan.");

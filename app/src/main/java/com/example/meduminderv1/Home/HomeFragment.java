@@ -403,6 +403,7 @@ public class HomeFragment extends Fragment {
                 .whereGreaterThanOrEqualTo("scheduled_at", startOfDay)
                 .whereLessThan("scheduled_at", startOfTomorrow).get()
                 .addOnSuccessListener(medQuery -> {
+                    if (!isAdded()) return;
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                     List<DocumentSnapshot> medDocs = medQuery.getDocuments();
                     if (medDocs.isEmpty()){
@@ -429,6 +430,7 @@ public class HomeFragment extends Fragment {
                             // (fix dari sesi sebelumnya, dipertahankan): id jadwal &
                             // waktu asli disertakan supaya item bisa diklik untuk
                             // dibuka ke ReminderFragment.
+                            if (!isAdded()) return;
                             combined.add(new LogItem("medicine", medName,
                                     sdf.format(log.getScheduled_at().toDate()), info, log.getStatus(),
                                     log.getMedication_schedules_id(), log.getScheduled_at().toDate().getTime()));
