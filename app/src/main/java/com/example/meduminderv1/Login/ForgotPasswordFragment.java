@@ -55,11 +55,11 @@ public class ForgotPasswordFragment extends Fragment {
     private void resetPassword() {
         String email = emailInput.getText().toString().trim();
         if (TextUtils.isEmpty(email)){
-            emailInput.setError("Masukkan email terlebih dahulu.");
+            emailInput.setError(getString(R.string.masukkan_email_dahulu));
             emailInput.requestFocus();
             return;
         } if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
-            emailInput.setError("Format email tidak valid.");
+            emailInput.setError(getString(R.string.format_email_tidak_valid));
             emailInput.requestFocus();
             return;
         } btnKirim.setEnabled(false);
@@ -70,17 +70,17 @@ public class ForgotPasswordFragment extends Fragment {
                 if (!isAdded()) return;
                 btnKirim.setEnabled(true);
                 MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
-                builder.setTitle("Email berhasil dikirim")
-                        .setMessage("Silahkan buka email Anda untuk mengatur ulang password.")
-                        .setPositiveButton("Buka Email", (dialog, which) -> {
+                builder.setTitle(getString(R.string.email_berhasil_dikirim))
+                        .setMessage(getString(R.string.silahkan_buka_email_reset_password))
+                        .setPositiveButton(getString(R.string.buka_email), (dialog, which) -> {
                             Intent intent = new Intent(Intent.ACTION_MAIN);
                             intent.addCategory(Intent.CATEGORY_APP_EMAIL);
                             try {
                                 startActivity(intent);
                             } catch (Exception e){
-                                Toast.makeText(requireContext(), "Aplikasi email tidak ditemukan.", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(requireContext(), getString(R.string.aplikasi_email_tidak_ditemukan), Toast.LENGTH_SHORT).show();
                             }
-                        }).setNegativeButton("Tutup", null);
+                        }).setNegativeButton(getString(R.string.tutup_btn), null);
                 AlertDialog dialog = builder.create();
                 dialog.show();
                 if (dialog.getWindow() != null){

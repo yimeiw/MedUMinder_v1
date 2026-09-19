@@ -59,9 +59,9 @@ public class EditProfileFragment extends Fragment {
 
         deleteAcc.setOnClickListener(v -> {
             MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
-            builder.setTitle("Hapus Akun")
-                    .setMessage("Apakah Anda yakin ingin menghapus akun?\nSeluruh data akan dihapus permanen.")
-                    .setPositiveButton("Hapus", (dialog, which) -> {
+            builder.setTitle(getString(R.string.deleteAcc))
+                    .setMessage(getString(R.string.konfirmasi_hapus_akun_msg))
+                    .setPositiveButton(getString(R.string.delete), (dialog, which) -> {
                         AuthProviderType providerType = authManager.getPrimaryProvider();
                         if (providerType == AuthProviderType.EMAIL){
                             NavHostFragment.findNavController(this).navigate(R.id.deleteAccountFragment);
@@ -69,7 +69,7 @@ public class EditProfileFragment extends Fragment {
                             authManager.deleteAccount(requireActivity(), null, new AuthCallback<Void>() {
                                 @Override
                                 public void onSuccess(Void result) {
-                                    Toast.makeText(requireContext(), "Akun berhasil dihapus", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(requireContext(), getString(R.string.akun_berhasil_dihapus), Toast.LENGTH_SHORT).show();
                                     Intent intent = new Intent(requireContext(), LoginActivity.class);
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                     startActivity(intent);
@@ -82,7 +82,7 @@ public class EditProfileFragment extends Fragment {
                                 }
                             });
                         }
-                    }).setNegativeButton("Batal", null);
+                    }).setNegativeButton(getString(R.string.cancel), null);
 
             AlertDialog dialog = builder.create();
             dialog.show();
@@ -107,7 +107,7 @@ public class EditProfileFragment extends Fragment {
         if (newName.equals(currentUser.getName())){
             return;
         } if (newName.length() <= 4){
-            userName.setError("Nama minimal 4 karaker");
+            userName.setError(getString(R.string.nama_minimal_4_karaker_typo));
             userName.requestFocus();
             return;
         } isUpdatingName = true;
@@ -117,7 +117,7 @@ public class EditProfileFragment extends Fragment {
                 isUpdatingName = false;
                 currentUser = result;
                 refreshProfile();
-                Toast.makeText(requireContext(), "Nama berhasil diperbarui", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), getString(R.string.nama_berhasil_diperbarui), Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -148,19 +148,19 @@ public class EditProfileFragment extends Fragment {
     private void setupGoogle() {
         btnGoogle.setOnClickListener(v -> {
             if (authManager.hasGoogleProvider()){
-                Toast.makeText(requireContext(), "Akun Google sudah terhubung.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), getString(R.string.akun_google_sudah_terhubung_toast), Toast.LENGTH_SHORT).show();
                 return;
             }
 
             MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
-            builder.setTitle("Hubungkan Google").setMessage("Hubungkan akun Google ke akun ini?")
-                    .setPositiveButton("Hubungkan", (dialog, which) -> {
+            builder.setTitle(getString(R.string.hubungkan_google_title)).setMessage(getString(R.string.hubungkan_akun_google_msg))
+                    .setPositiveButton(getString(R.string.hubungkan), (dialog, which) -> {
                         authManager.linkGoogle(requireActivity(), new AuthCallback<Void>() {
                             @Override
                             public void onSuccess(Void result) {
                                 requireActivity().runOnUiThread(() -> {
                                     refreshProfile();
-                                    Toast.makeText(requireContext(), "Google berhasil dihubungkan.", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(requireContext(), getString(R.string.google_berhasil_dihubungkan), Toast.LENGTH_SHORT).show();
                                 });
                             }
 
@@ -169,7 +169,7 @@ public class EditProfileFragment extends Fragment {
                                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
                             }
                         });
-                    }).setNegativeButton("Batal", null);
+                    }).setNegativeButton(getString(R.string.cancel), null);
             AlertDialog dialog = builder.create();
             dialog.show();
             if (dialog.getWindow() != null){
@@ -184,7 +184,7 @@ public class EditProfileFragment extends Fragment {
         currentUser = authManager.getCurrentUser();
 
         if (currentUser == null){
-            Toast.makeText(requireContext(), "User tidak ditemukan.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.user_tidak_ditemukan), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -201,10 +201,10 @@ public class EditProfileFragment extends Fragment {
 
     private void updateGoogle() {
         if (authManager.hasGoogleProvider()){
-            btnGoogle.setText("Linked");
+            btnGoogle.setText(getString(R.string.linked_status));
             btnGoogle.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.green)));
         } else {
-            btnGoogle.setText("Not Linked");
+            btnGoogle.setText(getString(R.string.not_linked_status));
             btnGoogle.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.dark_pink)));
         }
     }

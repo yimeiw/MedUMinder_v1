@@ -79,14 +79,14 @@ public class SignUpActivity extends AppCompatActivity {
                 if ("EMAIL_ALREADY_IN_USE_DIFFERENT_PROVIDER".equals(message)) {
 
                     MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(SignUpActivity.this);
-                            builder.setTitle("Email Sudah Terdaftar")
-                            .setMessage("Email ini sudah terdaftar dengan password. Silakan login menggunakan email dan password.")
-                            .setPositiveButton("Login", (dialog, which) -> {
+                            builder.setTitle(getString(R.string.email_sudah_terdaftar_title))
+                            .setMessage(getString(R.string.email_sudah_terdaftar_password_msg))
+                            .setPositiveButton(getString(R.string.login), (dialog, which) -> {
                                 Intent intent = new Intent(SignUpActivity.this, LoginActivity.class);
                                 intent.putExtra("prefill_email", emailInput.getText().toString().trim());
                                 startActivity(intent);
                             })
-                            .setNegativeButton("Batal", null);
+                            .setNegativeButton(getString(R.string.cancel), null);
                     AlertDialog dialog = builder.create();
                     dialog.show();
                     if (dialog.getWindow() != null){
@@ -103,13 +103,27 @@ public class SignUpActivity extends AppCompatActivity {
     }
 
     private void registerUser() {
+        String deviceLang = java.util.Locale.getDefault().getLanguage();
+        String preferredLanguage;
+        if (deviceLang.equals("en")) {
+            preferredLanguage = "en";
+        } else if (deviceLang.equals("zh")) {
+            preferredLanguage = "zh";
+        } else if (deviceLang.equals("in") || deviceLang.equals("id")) {
+            preferredLanguage = "id";
+        } else {
+            preferredLanguage = "en";
+        }
+
         User user = new User();
         user.setName(nameInput.getText().toString().trim());
         user.setEmail(emailInput.getText().toString().trim().toLowerCase());
         user.setCurrent_role("Consumer");
         user.setCaregiver_enabled(false);
         user.setAuthProvider(AuthProviderType.EMAIL);
-        user.setPreferred_language("Indonesia");
+
+        user.setPreferred_language(preferredLanguage);
+
         user.setTimezone("Asia/Jakarta");
         user.setCreated_at(Timestamp.now());
         user.setUpdated_at(Timestamp.now());
@@ -118,7 +132,7 @@ public class SignUpActivity extends AppCompatActivity {
         String password = passwordInput.getText().toString().trim();
 
         if (user.getName().isEmpty() && user.getEmail().isEmpty() && password.isEmpty()) {
-            Toast.makeText(this, "Semua field harus diisi", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.semua_field_harus_diisi), Toast.LENGTH_SHORT).show();
             return;
         } if (!validateInput(user.getName(), user.getEmail(), password)){
             return;
@@ -127,17 +141,17 @@ public class SignUpActivity extends AppCompatActivity {
             @Override
             public void onSuccess(User result) {
                 MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(SignUpActivity.this);
-                builder.setTitle("Verifikasi Email")
-                                .setMessage("Akun berhasil dibuat.\n"+"Kami telah mengirim email verifikasi ke: "+result.getEmail()
-                                + "\nSilahkan verifikasi email terlebih dahulu sebelum login.").setCancelable(false)
-                                .setPositiveButton("Buka Email", (dialog, which) -> {
-                                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                                    intent.addCategory(Intent.CATEGORY_APP_EMAIL);
-                                    try {
-                                        startActivity(intent);
-                                    } catch (Exception ignored){
-                                    } goToLogin(result.getEmail());
-                                }).setNegativeButton("Nanti", (dialog, which) -> goToLogin(result.getEmail()));
+                builder.setTitle(getString(R.string.verifikasi_email_title))
+                        .setMessage(getString(R.string.akun_berhasil_dibuat_verifikasi_msg, result.getEmail()))
+                        .setCancelable(false)
+                        .setPositiveButton(getString(R.string.buka_email_btn), (dialog, which) -> {
+                            Intent intent = new Intent(Intent.ACTION_MAIN);
+                            intent.addCategory(Intent.CATEGORY_APP_EMAIL);
+                            try {
+                                startActivity(intent);
+                            } catch (Exception ignored){
+                            } goToLogin(result.getEmail());
+                        }).setNegativeButton(getString(R.string.nanti), (dialog, which) -> goToLogin(result.getEmail()));
                 AlertDialog dialog = builder.create();
                 dialog.show();
                 if (dialog.getWindow() != null){
@@ -151,13 +165,13 @@ public class SignUpActivity extends AppCompatActivity {
             public void onFailure(String message) {
                 if ("EMAIL_ALREADY_IN_USE".equals(message)) {
                     MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(SignUpActivity.this);
-                            builder.setTitle("Email Sudah Terdaftar")
-                            .setMessage("Email ini sudah digunakan. Silakan login atau gunakan email lain.")
-                            .setPositiveButton("Login", (dialog, which) -> {
+                            builder.setTitle(getString(R.string.email_sudah_terdaftar_title))
+                            .setMessage(getString(R.string.email_sudah_digunakan_msg))
+                            .setPositiveButton(getString(R.string.login), (dialog, which) -> {
                                 Intent intent = new Intent(SignUpActivity.this, LoginActivity.class);
                                 intent.putExtra("prefill_email", emailInput.getText().toString().trim());
                                 startActivity(intent);
-                            }).setNegativeButton("Batal", null);
+                            }).setNegativeButton(getString(R.string.cancel), null);
 
                     AlertDialog dialog = builder.create();
                     dialog.show();
@@ -183,31 +197,31 @@ public class SignUpActivity extends AppCompatActivity {
 
     private boolean validateInput(String name, String email, String password) {
         if(TextUtils.isEmpty(name)){
-            nameInput.setError("Nama harus diisi");
+            nameInput.setError(getString(R.string.nama_harus_diisi));
             return false;
         }
-        if (name.length() < 3) {
-            nameInput.setError("Nama minimal 4 karakter");
+        if (name.length() < 4) {
+            nameInput.setError(getString(R.string.nama_minimal_4_karaker_typo));
             return false;
         }
         if (name.length() > 50) {
-            nameInput.setError("Nama maksimal 50 karakter");
+            nameInput.setError(getString(R.string.nama_maksimal_50_karakter));
             return false;
         }
         if (TextUtils.isEmpty(email)){
-            emailInput.setError("Email harus diisi");
+            emailInput.setError(getString(R.string.email_harus_diisi));
             return false;
         }
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
-            emailInput.setError("Email tidak valid");
+            emailInput.setError(getString(R.string.email_tidak_valid));
             return false;
         }
         if (TextUtils.isEmpty(password)){
-            passwordInput.setError("Password harus diisi");
+            passwordInput.setError(getString(R.string.password_harus_diisi));
             return false;
         }
         if (password.length() < 6){
-            passwordInput.setError("Password harus lebih dari 6 karakter");
+            passwordInput.setError(getString(R.string.password_min_6_karakter));
             return false;
         } return true;
     }

@@ -63,7 +63,7 @@ public class DrawerConsumerAdapter extends RecyclerView.Adapter<DrawerConsumerAd
         if (cache.containsKey(consumerUid)) {
             holder.nama.setText(cache.get(consumerUid).getName());
         } else {
-            holder.nama.setText("Memuat...");
+            holder.nama.setText(context.getString(R.string.loading));
             userRepository.getUserbyUid(consumerUid, new RepoCallback<User>() {
                 @Override
                 public void onSuccess(User result) {
@@ -74,7 +74,7 @@ public class DrawerConsumerAdapter extends RecyclerView.Adapter<DrawerConsumerAd
                 }
                 @Override
                 public void onFailure(Exception e) {
-                    holder.nama.setText("Unknown");
+                    holder.nama.setText(context.getString(R.string.unknown_label));
                 }
             });
         }

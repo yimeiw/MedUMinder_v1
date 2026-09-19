@@ -85,6 +85,7 @@
 
     <string name="saveChanges">保存更改</string>
     <string name="ubahPengingat">编辑提醒</string>
+    <string name="tambahkan">添加</string>
 
     <!-- Home Page -->
     <string name="home_greeting">你好，%1$s！</string>
@@ -122,7 +123,6 @@
 
     <string name="dosis_seharusnya">应服剂量</string>
     <string name="dosis_dikonsumsi">已服剂量</string>
-    <string name="persentase_kepatuhan">依从率</string>
 
     <string name="hari_ini">今天</string>
     <string name="besok">明天</string>
@@ -190,6 +190,14 @@
     <string name="tanggal_selesai_minum_obat">停止服药日期</string>
     <string name="masukkan_jumlah_stok_obat">请输入您的药物库存数量</string>
     <string name="save_reminder">保存提醒</string>
+    <string-array name="frekuensi_array">
+        <item>每天一次</item>
+        <item>每天两次</item>
+        <item>每天三次</item>
+        <item>每天四次</item>
+        <item>每天五次</item>
+        <item>每天六次</item>
+    </string-array>
 
     <!-- relation -->
     <string name="belum_ada_relasi">暂无关系。</string>
@@ -221,6 +229,7 @@
     <string name="masukkan_lokasi_appointment">请输入预约地点</string>
     <string name="lokasi_appointment">预约地点</string>
     <string name="masukkan_nama_appointment">请输入预约名称</string>
+    <string name="tambahkan_appointment">添加预约</string>
 
     <!-- pilih consumer -->
     <string name="pilih_consumer">选择 Consumer</string>
@@ -240,6 +249,9 @@
     <string name="welcome_login">欢迎！请在此登录</string>
 
     <!-- izin -->
+    <string name="izin_alarm_toast">请先启用"闹钟和提醒"权限，以便显示服药通知</string>
+    <string name="pilih_jam_minum_obat_title">选择服药时间</string>
+    <string name="caregiver_menambahkan_jadwal_untuk_anda">%1$s 为您添加了服药日程 %2$s</string>
     <string name="izin_alarm_dibutuhkan">需要闹钟权限</string>
     <string name="izin_alarm_message">为了确保药物提醒按时响起，请为 MedUMinder 启用闹钟和提醒权限。</string>
     <string name="aktifkan">启用</string>
@@ -272,4 +284,240 @@
     <string name="invitation_pending">邀请仍处于待处理状态。</string>
     <string name="undangan_diterima">您的邀请已被接受。</string>
     <string name="undangan_ditolak">您的邀请已被拒绝。</string>
+    <string name="email_terdaftar_google_msg">该邮箱已使用 Google 帐号注册。请使用 Google 登录。</string>
+    <string name="password_tidak_boleh_kosong">密码不能为空。</string>
+    <string name="undangan_terkirim_full_msg">您发送给 %1$s 的邀请（角色：%2$s）已发送，正在等待回应。</string>
+    <string name="sender_mengundang_anda_msg">%1$s 邀请您成为 %2$s</string>
+    <string name="notif_type_invitation">邀请</string>
+    <string name="notif_type_medicine">用药提醒</string>
+    <string name="notif_type_appointment">预约提醒</string>
+    <string name="notif_type_stock">库存不足提醒</string>
+    <string name="notif_type_default">通知</string>
+
+    <!-- ============ Tambahan: teks yang sebelumnya hardcode (hasil audit) ============ -->
+    <string name="obat_nol">0 种药物</string>
+    <string name="waktu_hint_spasi">00 : 00</string>
+    <string name="waktu_default">00:00</string>
+    <string name="contoh_lokasi">示例地点</string>
+    <string name="akun_google_sudah_terhubung_toast">Google 账户已连接。</string>
+    <string name="akun_berhasil_dibuat_pesan">账户创建成功。\n</string>
+    <string name="akun_berhasil_dihapus">账户删除成功</string>
+    <string name="anda_menambahkan_jadwal_appointment">您添加了一个预约日程 </string>
+    <string name="anda_menambahkan_jadwal_minum_obat">您添加了一个服药日程 </string>
+    <string name="pesan_pengingat_terkirim_consumer">您已向 Consumer 发送提醒，请其查看日程。</string>
+    <string name="appointment_sudah_ditandai_dihadiri_msg">您已将此预约标记为已参加。</string>
+    <string name="contoh_nama_obat">Antimo</string>
+    <string name="konfirmasi_ganti_role_msg">您确定要切换到以下角色吗： </string>
+    <string name="konfirmasi_logout">您确定要退出登录吗？</string>
+    <string name="konfirmasi_hapus_akun_msg">您确定要删除账户吗？\n所有数据将被永久删除。</string>
+    <string name="konfirmasi_hapus_hubungan_msg">您确定要删除与以下用户的关系吗： </string>
+    <string name="aplikasi_email_tidak_ditemukan">未找到邮件应用。</string>
+    <string name="label_appointment_colon">预约： </string>
+    <string name="appointment_ditambahkan_title">预约已添加</string>
+    <string name="appointment_id_tidak_ditemukan">未找到预约 ID</string>
+    <string name="appointment_berhasil_dihapus">预约删除成功</string>
+    <string name="appointment_berhasil_diperbarui">预约更新成功</string>
+    <string name="appointment_berhasil_disimpan">预约保存成功</string>
+    <string name="appointment_ditandai_dihadiri">预约已标记为已参加</string>
+    <string name="appointment_tidak_ditemukan">未找到预约</string>
+    <string name="bagikan">分享</string>
+    <string name="batalkan_status">撤销状态</string>
+    <string name="belum_ada_consumer">暂无 Consumer</string>
+    <string name="buka_email">打开邮件</string>
+    <string name="caregiver_menghapus_jadwal_msg">照护者删除了日程 </string>
+    <string name="caregiver_mengubah_jadwal_appointment_msg">照护者修改了预约日程 </string>
+    <string name="consumer_sudah_menghadiri_appointment">Consumer 已参加预约</string>
+    <string name="consumer_sudah_minum_obat">Consumer 已服药</string>
+    <string name="data_appointment_tidak_ditemukan">未找到预约数据</string>
+    <string name="data_appointment_tidak_lengkap">预约数据不完整</string>
+    <string name="data_pengguna_tidak_ditemukan">未找到用户数据</string>
+    <string name="data_reminder_belum_lengkap">提醒数据不完整</string>
+    <string name="data_reminder_tidak_ditemukan">未找到提醒数据</string>
+    <string name="edit_appointment_title">编辑预约</string>
+    <string name="email_belum_diverifikasi_title">邮箱尚未验证</string>
+    <string name="email_sudah_terdaftar_title">邮箱已注册</string>
+    <string name="email_berhasil_dikirim">邮件发送成功</string>
+    <string name="email_harus_diisi">请填写电子邮箱</string>
+    <string name="email_sudah_digunakan_msg">此邮箱已被使用。请登录或使用其他邮箱。</string>
+    <string name="email_sudah_terdaftar_password_msg">此邮箱已使用密码注册。请使用邮箱和密码登录。</string>
+    <string name="email_tidak_valid">邮箱无效</string>
+    <string name="filter_bulanan_terpilih">已选择按月筛选</string>
+    <string name="filter_mingguan_terpilih">已选择按周筛选</string>
+    <string name="filter_tahunan_terpilih">已选择按年筛选</string>
+    <string name="frekuensi_minum_obat_wajib_diisi">请填写服药频率</string>
+    <string name="gagal_membuat_file_laporan">创建报告文件失败</string>
+    <string name="gagal_membuat_folder_download">创建下载文件夹失败</string>
+    <string name="gagal_mengambil_laporan">获取报告失败</string>
+    <string name="gagal_mengambil_ukuran_laporan">获取报告大小失败</string>
+    <string name="gagal_menghapus_msg">删除失败： </string>
+    <string name="gagal_menghapus_appointment">删除预约失败</string>
+    <string name="gagal_menghapus_jadwal">删除日程失败</string>
+    <string name="gagal_mengubah_status_appointment">更改预约状态失败</string>
+    <string name="gagal_mengunduh_laporan">下载报告失败</string>
+    <string name="gagal_update_status_msg">更新状态失败： </string>
+    <string name="ganti_role_title">切换角色</string>
+    <string name="google_berhasil_dihubungkan">Google 已成功连接。</string>
+    <string name="hapus_hubungan_title">删除关系</string>
+    <string name="hubungan_berhasil_dihapus">关系删除成功</string>
+    <string name="hubungkan">连接</string>
+    <string name="hubungkan_google_title">连接 Google</string>
+    <string name="hubungkan_akun_google_msg">将 Google 账户连接到此账户？</string>
+    <string name="isi_ulang_obat_notif_title">补充药品（</string>
+    <string name="invitation_title">邀请 </string>
+    <string name="invitation_berhasil_dikirim">邀请发送成功。</string>
+    <string name="invite_caregiver_btn">邀请照护者</string>
+    <string name="invite_consumer_btn">邀请 Consumer</string>
+    <string name="izin_penyimpanan_diperlukan">下载报告需要存储权限</string>
+    <string name="jadwal_appointment_baru_title">新的预约日程</string>
+    <string name="jadwal_appointment_diperbarui_title">预约日程已更新</string>
+    <string name="jadwal_obat_baru_title">新的服药日程</string>
+    <string name="jadwal_obat_diperbarui_title">服药日程已更新</string>
+    <string name="jadwal_obat_ditambahkan_title">服药日程已添加</string>
+    <string name="jadwal_berhasil_dihapus">日程删除成功</string>
+    <string name="jadwal_tidak_ditemukan">未找到日程</string>
+    <string name="jam_minum_obat_label">服药时间 </string>
+    <string name="jam_minum_tidak_boleh_sama">服药时间不能相同。</string>
+    <string name="jam_tersebut_sudah_dipilih">该时间已被选择。</string>
+    <string name="laporan_berhasil_diunduh">报告下载成功</string>
+    <string name="laporan_ukuran_tidak_valid">报告大小无效</string>
+    <string name="linked_status">已连接</string>
+    <string name="logout_title">退出登录</string>
+    <string name="lokasi_appointment_wajib_diisi">请填写预约地点。</string>
+    <string name="masukkan_email_dahulu">请先输入邮箱。</string>
+    <string name="brand_med">Med</string>
+    <string name="aktivasi_caregiver_msg">启用照护者权限，以监督并协助提醒 Consumer 服药。</string>
+    <string name="brand_minder">Minder</string>
+    <string name="nada_1">铃声 1</string>
+    <string name="nama_appointment_wajib_diisi">请填写预约名称。</string>
+    <string name="nama_berhasil_diperbarui">姓名更新成功</string>
+    <string name="nama_harus_diisi">请填写姓名</string>
+    <string name="nama_maksimal_50_karakter">姓名最多50个字符</string>
+    <string name="nama_minimal_4_karaker_typo">姓名至少需要4个字符</string>
+    <string name="nama_obat_tidak_ditemukan">未找到药物名称！</string>
+    <string name="nama_obat_wajib_diisi">请填写药物名称</string>
+    <string name="not_linked_status">未连接</string>
+    <string name="notifikasi_tidak_ditemukan">未找到通知。</string>
+    <string name="ok_label">确定</string>
+    <string name="obat_ditandai_dikonsumsi">药物已标记为已服用</string>
+    <string name="obat_kosong_placeholder">药物：-</string>
+    <string name="password_harus_diisi">请填写密码</string>
+    <string name="password_min_6_karakter">密码必须超过6个字符</string>
+    <string name="pengingat_terkirim_title">提醒已发送</string>
+    <string name="pengingat_berhasil_diubah">提醒更新成功</string>
+    <string name="pengingat_dari_caregiver_title">来自照护者的提醒</string>
+    <string name="pilih_jam_hint">选择时间</string>
+    <string name="pilih_role_title">选择角色</string>
+    <string name="pilih_consumer_dahulu">请先选择 Consumer</string>
+    <string name="registrasi_berhasil_verifikasi_msg">注册成功！请先验证邮箱后再登录。</string>
+    <string name="reminder_berhasil_dibuat">提醒创建成功</string>
+    <string name="reminder_berhasil_diperbarui">提醒更新成功</string>
+    <string name="riwayat_janji_temu">预约记录</string>
+    <string name="role_caregiver_berhasil_diaktifkan">照护者角色激活成功。</string>
+    <string name="save_appointment_btn">保存预约</string>
+    <string name="schedule_id_tidak_ditemukan">未找到日程 ID</string>
+    <string name="seharusnya_label">应为： </string>
+    <string name="sekarang_kamu_adalah_caregiver">您现在是照护者</string>
+    <string name="sekarang_kamu_adalah_consumer">您现在是 Consumer</string>
+    <string name="semua_field_harus_diisi">所有字段均为必填项。</string>
+    <string name="semua_jam_minum_harus_dipilih">必须选择所有服药时间。</string>
+    <string name="sesi_login_bermasalah">登录会话出现问题，请重新登录</string>
+    <string name="sesi_user_tidak_ditemukan">未找到用户会话，请重新登录</string>
+    <string name="silahkan_buka_email_reset_password">请打开您的邮箱以重置密码。</string>
+    <string name="silahkan_verifikasi_email_dahulu">请先验证您的邮箱后再登录。</string>
+    <string name="sisa_stok_obat_label">剩余药品库存： </string>
+    <string name="status_berhasil_diperbarui">状态更新成功</string>
+    <string name="stok_harus_angka">库存必须为数字</string>
+    <string name="stok_harus_lebih_dari_0">库存必须大于0</string>
+    <string name="stok_obat_wajib_diisi">请填写药品库存</string>
+    <string name="sudah_hadir_btn">已参加</string>
+    <string name="tambahkan_appointment_title">添加预约</string>
+    <string name="tanggal_appointment_wajib_diisi">请填写预约日期。</string>
+    <string name="email_belum_terdaftar_di_app_msg">但该邮箱尚未在 MedUMinder 应用中注册。</string>
+    <string name="placeholder_textview">TextView</string>
+    <string name="tutup_btn">关闭</string>
+    <string name="undangan_label">邀请 </string>
+    <string name="undangan_anda_ke_label">您的邀请发送给 </string>
+    <string name="undangan_baru_title">新邀请</string>
+    <string name="undangan_terkirim_title">邀请已发送</string>
+    <string name="undangan_berhasil_dibuat">邀请创建成功。</string>
+    <string name="undangan_diterima_toast">邀请已接受</string>
+    <string name="undangan_ditolak_toast">邀请已拒绝</string>
+    <string name="unknown_label">未知</string>
+    <string name="update_appointment_btn">更新预约</string>
+    <string name="verifikasi_email_title">验证邮箱</string>
+    <string name="waktu_appointment_wajib_diisi">请填写预约时间。</string>
+    <string name="ya_btn">是</string>
+    <string name="yakin_mau_menghapus_msg">您确定要删除 </string>
+    <string name="format_tanggal_hint">dd/mm/yyyy</string>
+    <string name="placeholder_timestamp">时间戳</string>
+    <string name="separator_pipe">|</string>
+
+    <string name="appointment_lewat_konfirmasi_msg">此预约已过期。您是否仍参加了？</string>
+    <string name="konfirmasi_hadir_appointment_msg">您是否已参加此预约？</string>
+    <string name="consumer_telah_menghadiri_appointment">%1$s 已参加预约 %2$s。</string>
+
+    <string name="default_appointment_label">此预约</string>
+    <string name="default_jadwal_label">此安排</string>
+    <string name="konfirmasi_hapus_item_msg">确定要删除 %1$s 吗？此安排的所有提醒都将停止。</string>
+    <string name="hapus_appointment_title">删除预约</string>
+    <string name="hapus_jadwal_obat_title">删除用药安排</string>
+    <string name="jadwal_appointment_dihapus_title">预约安排已删除</string>
+    <string name="jadwal_obat_dihapus_title">用药安排已删除</string>
+    <string name="caregiver_menghapus_jadwal_anda_full">照护者删除了您的 %1$s 安排</string>
+    <string name="consumer_menghapus_jadwal_msg">用户删除了安排：%1$s</string>
+    <string name="jadwal_consumer_telah_dihapus_msg">该用户的 %1$s 安排已被删除</string>
+    <string name="consumer_telah_minum_obat_msg">%1$s 已服用药物 %2$s。</string>
+    <string name="waktu_alarm_tidak_ditemukan">未找到闹钟时间</string>
+    <string name="gagal_mengubah_status_obat">更改用药状态失败</string>
+    <string name="pengingat_ditunda_menit">提醒已推迟 %1$d 分钟</string>
+    <string name="data_jadwal_obat_tidak_ditemukan">未找到用药安排数据</string>
+    <string name="gagal_mengambil_pengaturan_snooze">获取推迟设置失败</string>
+
+    <string name="pilih_jam_appointment_title">选择预约时间</string>
+    <string name="caregiver_mengubah_jadwal_appointment_anda_full">照护者更改了您的 %1$s 预约安排</string>
+    <string name="consumer_mengubah_jadwal_appointment_msg">用户更改了预约安排：%1$s</string>
+    <string name="jadwal_appointment_consumer_diperbarui_msg">该用户的 %1$s 预约安排已更新</string>
+
+    <string name="caregiver_mengubah_jadwal_obat_anda_full">%1$s 更改了您的 %2$s 用药安排</string>
+    <string name="consumer_mengubah_jadwal_obat_msg">%1$s 更改了用药安排：%2$s</string>
+    <string name="jadwal_obat_consumer_diperbarui_msg">该用户的 %1$s 用药安排已更新</string>
+
+    <string name="undangan_tidak_ditemukan">未找到邀请。</string>
+    <string name="undangan_sudah_tidak_tersedia">此邀请已不再可用。</string>
+    <string name="undangan_diterima_title">邀请已接受</string>
+    <string name="undangan_ditolak_title">邀请已拒绝</string>
+    <string name="relasi_mengawasi_anda_label">照护您</string>
+    <string name="relasi_diawasi_anda_label">由您照护</string>
+    <string name="invitation_accepted_result_msg">%1$s 已接受邀请，角色为%2$s，%3$s。</string>
+    <string name="invitation_rejected_result_msg">%1$s 已拒绝邀请，角色为%2$s。</string>
+    <string name="jadwal_obat_sudah_tidak_tersedia">此用药安排已不再可用。</string>
+    <string name="riwayat_obat_sudah_tidak_tersedia">此用药记录已不再可用。</string>
+    <string name="jadwal_appointment_sudah_tidak_tersedia">此预约安排已不再可用。</string>
+    <string name="obat_label_colon">药物：</string>
+    <string name="frekuensi_x_sehari_format">每天%1$d次</string>
+    <string name="caregiver_mengingatkan_periksa_jadwal_msg">%1$s 提醒您立即检查您的安排。</string>
+
+    <string name="bagikan_link_aplikasi_msg">分享应用链接，让对方使用该邮箱注册。</string>
+    <string name="share_invitation_message">我邀请您加入 MedUMinder。\n\n请通过以下链接下载 MedUMinder 应用：\n\n\n请使用此邮箱通过邮箱或 Google 注册：%1$s\n\n使用该邮箱登录后，邀请将自动显示在通知菜单中。</string>
+    <string name="bagikan_melalui_title">分享方式</string>
+
+    <string name="gagal_mengambil_statistik">获取统计数据失败</string>
+    <string name="konfirmasi_ganti_role_full_msg">您确定要切换到%1$s角色吗？</string>
+
+    <string name="konfirmasi_hapus_hubungan_full_msg">您确定要删除与 %1$s 的关系吗？\n\n删除后，与该%2$s的数据访问和提醒同步将停止。</string>
+
+    <string name="anda_menambahkan_jadwal_appointment_msg">您添加了预约行程：%1$s</string>
+    <string name="caregiver_menambahkan_jadwal_appointment_anda_msg">照护者为您添加了预约行程 %1$s</string>
+    <string name="anda_menambahkan_jadwal_appointment_consumer_msg">您为您的被照护者添加了预约行程 %1$s。</string>
+
+    <string name="akun_berhasil_dibuat_verifikasi_msg">账户创建成功。\n我们已发送验证邮件至：%1$s\n请先验证您的邮箱再登录。</string>
+    <string name="buka_email_btn">打开邮箱</string>
+
+    <string name="statistik_marker_detail_format">应服用：%1$d | 已服用：%2$d\n依从率：%3$d%%</string>
+
+    <string name="response_snooze_label">稍后提醒</string>
+    <string name="response_diabaikan_label">已忽略</string>
+    <string name="response_center_label">响应</string>
+
+    <string name="nama_file_laporan_statistik">统计报告</string>
 </resources>

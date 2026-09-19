@@ -67,7 +67,7 @@ public class RelationAdapter extends RecyclerView.Adapter<RelationAdapter.ViewHo
         if (userCache.containsKey(partnerUid)) {
             bindUser(holder, userCache.get(partnerUid));
         } else {
-            holder.nama.setText("Memuat...");
+            holder.nama.setText(context.getString(R.string.loading));
             holder.email.setText("");
             userRepository.getUserbyUid(partnerUid, new RepoCallback<User>() {
                 @Override
@@ -80,42 +80,41 @@ public class RelationAdapter extends RecyclerView.Adapter<RelationAdapter.ViewHo
 
                 @Override
                 public void onFailure(Exception e) {
-                    holder.nama.setText("User tidak ditemukan");
+                    holder.nama.setText(context.getString(R.string.user_tidak_ditemukan));
                 }
             });
         }
 
         holder.btnHapus.setOnClickListener(v -> {
             String namaPartner = holder.nama.getText().toString();
+            String roleLabel = isViewingCaregiver ? "Caregiver" : "Consumer";
             MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context);
-            builder.setTitle("Hapus Hubungan")
-                            .setMessage("Apakah Anda yakin ingin menghapus hubungan dengan " + namaPartner +
-                                    "?\n\n" + "Setelah dihapus, akses data dan sinkronisasi pengingat dengan " +
-                                    (isViewingCaregiver ? "Caregiver" : "Consumer") + " ini akan dihentikan.")
-                            .setNegativeButton("Batal", null)
-                            .setPositiveButton("Hapus", (dialog, which) -> {
-                                relationshipRepo.deleteRelationship(rel.getRelationship_id(), new RepoCallback<Void>() {
-                                    @Override
-                                    public void onSuccess(Void result) {
-                                        //kalau consumer yg dihpus sdg aktif dipilih caregiver, reset pilihan
-                                        if (!isViewingCaregiver && partnerUid.equals(SessionManager.getInstance().getActiveConsumerUid())){
-                                            SessionManager.getInstance().setActiveConsumerUid(null);
-                                        }
-                                        int pos = holder.getAdapterPosition();
-                                        if (pos != RecyclerView.NO_POSITION) {
-                                            relations.remove(pos);
-                                            notifyItemRemoved(pos);
-                                        }
-                                        Toast.makeText(context, "Hubungan berhasil dihapus", Toast.LENGTH_SHORT).show();
-                                        if (listener != null) listener.onDeleted(rel);
-                                    }
+            builder.setTitle(context.getString(R.string.hapus_hubungan_title))
+                    .setMessage(context.getString(R.string.konfirmasi_hapus_hubungan_full_msg, namaPartner, roleLabel))
+                    .setNegativeButton(context.getString(R.string.cancel), null)
+                    .setPositiveButton(context.getString(R.string.delete), (dialog, which) -> {
+                        relationshipRepo.deleteRelationship(rel.getRelationship_id(), new RepoCallback<Void>() {
+                            @Override
+                            public void onSuccess(Void result) {
+                                if (!isViewingCaregiver && partnerUid.equals(SessionManager.getInstance().getActiveConsumerUid())){
+                                    SessionManager.getInstance().setActiveConsumerUid(null);
+                                }
+                                int pos = holder.getAdapterPosition();
+                                if (pos != RecyclerView.NO_POSITION) {
+                                    relations.remove(pos);
+                                    notifyItemRemoved(pos);
+                                }
+                                Toast.makeText(context, context.getString(R.string.hubungan_berhasil_dihapus), Toast.LENGTH_SHORT).show();
+                                if (listener != null) listener.onDeleted(rel);
+                            }
 
-                                    @Override
-                                    public void onFailure(Exception e) {
-                                        Toast.makeText(context, "Gagal menghapus: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                            });
+                            @Override
+                            public void onFailure(Exception e) {
+                                Toast.makeText(context, context.getString(R.string.gagal_menghapus_msg) + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    });
+
             AlertDialog dialog = builder.create();
             dialog.show();
             if (dialog.getWindow() != null){

@@ -32,15 +32,15 @@ public class InvitationPopupHelper {
 
     private static void showPopup(Fragment fragment, AuthManager authManager, Invitation invitation) {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(fragment.requireContext());
-                builder.setTitle("Undangan Baru")
-                .setMessage(invitation.getSender_name() + " mengundang Anda menjadi "
-                        + invitation.getInvite_role().name())
+        builder.setTitle(fragment.getString(R.string.undangan_baru_title))
+                .setMessage(fragment.getString(R.string.sender_mengundang_anda_msg,
+                        invitation.getSender_name(), invitation.getInvite_role().name()))
                 .setCancelable(false)
-                .setPositiveButton("Terima", (d, w) -> respond(fragment, authManager, invitation, true))
-                .setNegativeButton("Tolak", (d, w) -> respond(fragment, authManager, invitation, false));
+                .setPositiveButton(fragment.getString(R.string.terima), (d, w) -> respond(fragment, authManager, invitation, true))
+                .setNegativeButton(fragment.getString(R.string.tolak), (d, w) -> respond(fragment, authManager, invitation, false));
         AlertDialog dialog = builder.create();
         dialog.show();
-        if (dialog.getWindow() != null){
+        if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(fragment.requireContext(), R.color.green));
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(fragment.requireContext(), R.color.pink));
@@ -53,9 +53,9 @@ public class InvitationPopupHelper {
             public void onSuccess(User result) {
                 if (!fragment.isAdded()) return;
                 if (accept) {
-                    Toast.makeText(fragment.requireContext(), "Undangan diterima", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(fragment.requireContext(), fragment.getString(R.string.undangan_diterima), Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(fragment.requireContext(), "Undangan ditolak", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(fragment.requireContext(), fragment.getString(R.string.undangan_ditolak), Toast.LENGTH_SHORT).show();
                 }
             }
 

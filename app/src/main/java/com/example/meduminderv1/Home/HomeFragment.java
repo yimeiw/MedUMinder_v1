@@ -127,10 +127,9 @@ public class HomeFragment extends Fragment {
 
         authManager = AuthManager.getInstance(requireContext());
         db = FirebaseFirestore.getInstance();
-        medicationRepo = new MedicationRepo();
+        medicationRepo = new MedicationRepo(requireContext());
 
         btnNotif.setImageDrawable(requireContext().getDrawable(R.drawable.ic_notif));
-        // MERGE: ikon awal untuk btnProfile, sama seperti versi satunya.
         if (btnProfile != null) {
             btnProfile.setImageDrawable(requireContext().getDrawable(R.drawable.ic_profile));
         }
@@ -146,8 +145,6 @@ public class HomeFragment extends Fragment {
             NavHostFragment.findNavController(this)
                     .navigate(R.id.notificationFragment);
         });
-        // MERGE: klik Profile -> profileFragment, dengan swap ikon hover
-        // seperti di versi satunya.
         if (btnProfile != null) {
             btnProfile.setOnClickListener(v -> {
                 btnProfile.setImageDrawable(requireContext().getDrawable(R.drawable.ic_profile_hover));
@@ -163,13 +160,6 @@ public class HomeFragment extends Fragment {
             NavHostFragment.findNavController(this)
                     .navigate(R.id.appointmentReminderFragment);
         });
-//        // MERGE: klik Dokumen -> documentFragment.
-//        if (addDoc != null) {
-//            addDoc.setOnClickListener(v -> {
-//                NavHostFragment.findNavController(this)
-//                        .navigate(R.id.documentFragment);
-//            });
-//        }
         if (viewLog != null) {
             viewLog.setOnClickListener(v -> {
                 NavHostFragment.findNavController(this)
@@ -403,6 +393,7 @@ public class HomeFragment extends Fragment {
                 .whereGreaterThanOrEqualTo("scheduled_at", startOfDay)
                 .whereLessThan("scheduled_at", startOfTomorrow).get()
                 .addOnSuccessListener(medQuery -> {
+                    if (!isAdded()) return;
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                     List<DocumentSnapshot> medDocs = medQuery.getDocuments();
                     if (medDocs.isEmpty()){
@@ -425,13 +416,11 @@ public class HomeFragment extends Fragment {
                             if("PIL".equals(medType)) {
                                 info = getString(R.string.sisa_stok, stock);
                             }
-
-                            // (fix dari sesi sebelumnya, dipertahankan): id jadwal &
-                            // waktu asli disertakan supaya item bisa diklik untuk
-                            // dibuka ke ReminderFragment.
+                            if (!isAdded()) return;
                             combined.add(new LogItem("medicine", medName,
                                     sdf.format(log.getScheduled_at().toDate()), info, log.getStatus(),
-                                    log.getMedication_schedules_id(), log.getScheduled_at().toDate().getTime()));
+                                    log.getMedication_schedules_id(), log.getScheduled_at().toDate().getTime(),
+                                    log.getCreated_at() != null ? log.getCreated_at().toDate().getTime() : 0));
                             remaining[0]--;
                             if (remaining[0] <= 0) mergeAppointments(uid, combined, startOfDay, startOfTomorrow);
                         });
@@ -457,9 +446,10 @@ public class HomeFragment extends Fragment {
                         combined.add(new LogItem("appointment", appt.getTitle(),
                                 sdf.format(appt.getAppointment_at().toDate()),
                                 appt.getAddress(), appt.getStatus(),
-                                doc.getId(), appt.getAppointment_at().toDate().getTime()));
+                                doc.getId(), appt.getAppointment_at().toDate().getTime(),
+                                appt.getCreated_at() != null ? appt.getCreated_at().toDate().getTime() : 0));
                     }
-                    Collections.sort(combined, (a, b) -> a.getTime().compareTo(b.getTime()));
+                    Collections.sort(combined, (a, b) -> Long.compare(b.getCreatedAtMillis(), a.getCreatedAtMillis()));
                     if (!isAdded() || getContext() == null) return;
                     List<LogItem> displayList = combined.size() > 3 ? combined.subList(0,3) :combined;
                     TodayScheduleAdapter adapter = new TodayScheduleAdapter(displayList, requireContext());
@@ -555,7 +545,7 @@ public class HomeFragment extends Fragment {
         dsDikonsumsi.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 
         // persentase kepatuhan
-        LineDataSet dsPersentase = new LineDataSet(persentase, getString(R.string.persentase_kepatuhan));
+        LineDataSet dsPersentase = new LineDataSet(persentase, getString(R.string.persentaseKepatuhan));
         dsPersentase.setColor(requireContext().getColor(R.color.pink));
         dsPersentase.setCircleColor(requireContext().getColor(R.color.pink));
         dsPersentase.setLineWidth(3f);

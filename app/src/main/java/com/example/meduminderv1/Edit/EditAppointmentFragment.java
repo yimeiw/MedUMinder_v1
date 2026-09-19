@@ -70,16 +70,13 @@ public class EditAppointmentFragment extends Fragment {
 
         selectedCalendar = Calendar.getInstance();
         db = FirebaseFirestore.getInstance();
-        notificationRepo = new NotificationRepo();
+        notificationRepo = new NotificationRepo(requireContext());
         careRelationshipRepo = new CareRelationshipRepo();
 
-        // edit appointment tidak boleh ganti consumer-nya, jadi picker-nya
-        // disembunyikan aja (bukan dihapus dari layout, biar layout tetap
-        // reusable/konsisten sama fragment_appointment_reminder).
         if (consumerPickerRoot != null) consumerPickerRoot.setVisibility(View.GONE);
 
-        tvAddReminderMed.setText("Edit Appointment");
-        btnSaveAppoint.setText("Update Appointment");
+        tvAddReminderMed.setText(getString(R.string.edit_appointment_title));
+        btnSaveAppoint.setText(getString(R.string.update_appointment_btn));
 
         btnBack.setOnClickListener(v ->
                 NavHostFragment.findNavController(EditAppointmentFragment.this).navigateUp());
@@ -90,7 +87,7 @@ public class EditAppointmentFragment extends Fragment {
         }
 
         if (appointmentId == null || appointmentId.isEmpty()) {
-            Toast.makeText(requireContext(), "Data appointment tidak ditemukan", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.data_appointment_tidak_ditemukan), Toast.LENGTH_SHORT).show();
         } else {
             loadExistingData();
         }
@@ -113,7 +110,7 @@ public class EditAppointmentFragment extends Fragment {
                     .setTimeFormat(TimeFormat.CLOCK_24H)
                     .setHour(selectedCalendar.get(Calendar.HOUR_OF_DAY))
                     .setMinute(selectedCalendar.get(Calendar.MINUTE))
-                    .setTitleText("Pilih Jam Appointment")
+                    .setTitleText(getString(R.string.pilih_jam_appointment_title))
                     .build();
 
             picker.addOnPositiveButtonClickListener(v2 -> {
@@ -136,7 +133,7 @@ public class EditAppointmentFragment extends Fragment {
         db.collection("appointments").document(appointmentId).get()
                 .addOnSuccessListener(doc -> {
                     if (!doc.exists()) {
-                        Toast.makeText(requireContext(), "Appointment tidak ditemukan", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(requireContext(), getString(R.string.appointment_tidak_ditemukan), Toast.LENGTH_SHORT).show();
                         return;
                     }
                     Appointment appointment = doc.toObject(Appointment.class);
@@ -167,13 +164,13 @@ public class EditAppointmentFragment extends Fragment {
         String nameAppoint = namaAppointment.getText().toString().trim();
         String location = location_input.getText().toString().trim();
 
-        if (nameAppoint.isEmpty()) { namaAppointment.setError("Nama Appointment wajib diisi."); return; }
-        if (location.isEmpty()) { location_input.setError("Lokasi Appointment wajib diisi."); return; }
-        if (!isDatePicked) { tvDate.setError("Tanggal Appointment wajib diisi."); return; }
-        if (!isTimePicked) { tvTime.setError("Waktu Appointment wajib diisi."); return; }
+        if (nameAppoint.isEmpty()) { namaAppointment.setError(getString(R.string.nama_appointment_wajib_diisi)); return; }
+        if (location.isEmpty()) { location_input.setError(getString(R.string.lokasi_appointment_wajib_diisi)); return; }
+        if (!isDatePicked) { tvDate.setError(getString(R.string.tanggal_appointment_wajib_diisi)); return; }
+        if (!isTimePicked) { tvTime.setError(getString(R.string.waktu_appointment_wajib_diisi)); return; }
 
         if (appointmentId == null) {
-            Toast.makeText(requireContext(), "Data appointment tidak lengkap", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.data_appointment_tidak_lengkap), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -202,7 +199,7 @@ public class EditAppointmentFragment extends Fragment {
 
                     notifyAppointmentUpdated(nameAppoint, uid);
 
-                    Toast.makeText(requireContext(), "Appointment berhasil diperbarui", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), getString(R.string.appointment_berhasil_diperbarui), Toast.LENGTH_SHORT).show();
                     NavHostFragment.findNavController(EditAppointmentFragment.this).navigateUp();
                 })
                 .addOnFailureListener(e ->
@@ -218,8 +215,8 @@ public class EditAppointmentFragment extends Fragment {
             notifToConsumer.setReceiver_uid(targetUid);
             notifToConsumer.setSender_uid(actorUid);
             notifToConsumer.setType(NotificationType.Appointment);
-            notifToConsumer.setTitle("Jadwal Appointment Diperbarui");
-            notifToConsumer.setMessage("Caregiver mengubah jadwal appointment " + title + " Anda");
+            notifToConsumer.setTitle(getString(R.string.jadwal_appointment_diperbarui_title));
+            notifToConsumer.setMessage(getString(R.string.caregiver_mengubah_jadwal_appointment_anda_full, title));
             notifToConsumer.setIs_read(false);
             notificationRepo.createNotification(notifToConsumer, new RepoCallback<Void>() {
                 @Override public void onSuccess(Void result) { }
@@ -238,10 +235,10 @@ public class EditAppointmentFragment extends Fragment {
                     notifToCaregiver.setReceiver_uid(caregiverUid);
                     notifToCaregiver.setSender_uid(actorUid);
                     notifToCaregiver.setType(NotificationType.Appointment);
-                    notifToCaregiver.setTitle("Jadwal Appointment Diperbarui");
+                    notifToCaregiver.setTitle(getString(R.string.jadwal_appointment_diperbarui_title));
                     notifToCaregiver.setMessage(isForSelf
-                            ? "Consumer mengubah jadwal appointment: " + title
-                            : "Jadwal appointment " + title + " untuk consumer telah diperbarui");
+                            ? getString(R.string.consumer_mengubah_jadwal_appointment_msg, title)
+                            : getString(R.string.jadwal_appointment_consumer_diperbarui_msg, title));
                     notifToCaregiver.setIs_read(false);
                     notificationRepo.createNotification(notifToCaregiver, new RepoCallback<Void>() {
                         @Override public void onSuccess(Void result) { }

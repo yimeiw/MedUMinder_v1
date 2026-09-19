@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Model;
 
+import android.content.Context;
+
 import com.example.meduminderv1.R;
 
 public enum LogStatus {
@@ -29,6 +31,12 @@ public enum LogStatus {
         // ReminderFragment kadang keliatan kosong padahal harusnya "Akan Datang".
         // Normalisasi underscore -> spasi di sini biar kedua bentuk sama-sama
         // kebaca dengan benar, tanpa perlu ubah semua caller satu-satu.
+        //
+        // CATATAN BAHASA: nilai "akan datang" / "dikonsumsi" / "terlewatkan" di
+        // sini adalah nilai INTERNAL (disimpan di database & dipakai untuk
+        // membandingkan status), BUKAN teks yang dilihat user — jadi sengaja
+        // tetap Bahasa Indonesia dan tidak perlu ikut berubah saat bahasa
+        // aplikasi diganti. Yang perlu ikut berubah bahasa itu displayLabel().
         String normalized = value.trim().toLowerCase().replace('_', ' ');
 
         switch (normalized) {
@@ -44,14 +52,16 @@ public enum LogStatus {
         }
     }
 
-    public String displayLabel(boolean isAppointment) {
+    public String displayLabel(Context context, boolean isAppointment) {
         switch (this) {
             case AKAN_DATANG:
-                return "Akan Datang";
+                return context.getString(R.string.akan_datang);
             case DIKONSUMSI:
-                return isAppointment ? "Dihadiri" : "Dikonsumsi";
+                return isAppointment
+                        ? context.getString(R.string.dihadiri)
+                        : context.getString(R.string.dikonsumsi);
             case TERLEWATKAN:
-                return "Terlewatkan";
+                return context.getString(R.string.terlewatkan);
             default:
                 return "";
         }

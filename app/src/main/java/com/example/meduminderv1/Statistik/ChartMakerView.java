@@ -29,8 +29,8 @@ public class ChartMakerView extends MarkerView {
         if (index >= 0 && index < stats.size()) {
             StatistikRepo.DayStat s = stats.get(index);
             tvLabel.setText(s.label);
-            tvValue.setText("Seharusnya: " + s.seharusnya + " | Dikonsumsi: " + s.dikonsumsi
-                    + "\nKepatuhan: " + s.persentase + "%");
+            tvValue.setText(getContext().getString(R.string.statistik_marker_detail_format,
+                    s.seharusnya, s.dikonsumsi, s.persentase));
         }
         super.refreshContent(e, highlight);
     }

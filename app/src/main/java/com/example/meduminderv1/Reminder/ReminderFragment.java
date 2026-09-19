@@ -4,6 +4,7 @@ import static android.content.Context.LAYOUT_INFLATER_SERVICE;
 
 import static androidx.core.content.ContextCompat.getSystemService;
 
+import android.app.appsearch.GetSchemaResponse;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -91,17 +92,12 @@ public class ReminderFragment extends Fragment {
 
 
     @Override
-    public View onCreateView(
-            LayoutInflater inflater,
-            ViewGroup container,
-            Bundle savedInstanceState
-    ) {
-
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_reminder, container,false);
 
         db = FirebaseFirestore.getInstance();
 
-        notificationRepo = new NotificationRepo();
+        notificationRepo = new NotificationRepo(requireContext());
         careRelationshipRepo = new CareRelationshipRepo();
 
         btnBack = view.findViewById(R.id.btnBack);
@@ -213,14 +209,14 @@ public class ReminderFragment extends Fragment {
     }
 
     private void confirmDeleteSchedule() {
-        Log.d("REMINDER_FRAGMENT", "confirmDeleteSchedule() dipanggil, tampilkan dialog konfirmasi");   // <-- baris baru
-        String label = namaObat != null ? namaObat : (isAppointment ? "appointment ini" : "jadwal ini");
+        Log.d("REMINDER_FRAGMENT", "confirmDeleteSchedule() dipanggil, tampilkan dialog konfirmasi");
+        String label = namaObat != null ? namaObat : (isAppointment ? getString(R.string.default_appointment_label) : getString(R.string.default_jadwal_label));
         new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(isAppointment ? "Hapus Appointment" : "Hapus Jadwal Obat")
-                .setMessage("Yakin mau menghapus " + label + "? Semua alarm untuk jadwal ini akan dihentikan.")
-                .setNegativeButton("Batal", null)
-                .setPositiveButton("Hapus", (dialog, which) -> {
-                    Log.d("REMINDER_FRAGMENT", "tombol Hapus di dialog konfirmasi ditekan");   // <-- baris baru
+                .setTitle(isAppointment ? getString(R.string.hapus_appointment_title) : getString(R.string.hapus_jadwal_obat_title))
+                .setMessage(getString(R.string.konfirmasi_hapus_item_msg, label))
+                .setNegativeButton(getString(R.string.cancel), null)
+                .setPositiveButton(getString(R.string.delete), (dialog, which) -> {
+                    Log.d("REMINDER_FRAGMENT", "tombol Hapus di dialog konfirmasi ditekan");
                     if (isAppointment) {
                         deleteAppointment();
                     } else {
@@ -232,7 +228,7 @@ public class ReminderFragment extends Fragment {
 
     private void deleteMedicationSchedule() {
         if (scheduleId == null || scheduleId.isEmpty()) {
-            Toast.makeText(requireContext(), "Schedule ID tidak ditemukan", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.schedule_id_tidak_ditemukan), Toast.LENGTH_SHORT).show();
             return;
         }
         stopRingingAlarm();
@@ -254,27 +250,23 @@ public class ReminderFragment extends Fragment {
 
                     db.collection("medication_schedules").document(scheduleId).update(update)
                             .addOnSuccessListener(unused -> {
-                                Toast.makeText(requireContext(), "Jadwal berhasil dihapus", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(requireContext(), getString(R.string.jadwal_berhasil_dihapus), Toast.LENGTH_SHORT).show();
                                 notifyScheduleDeleted(consumerUid, namaObat, false);
                                 NavHostFragment.findNavController(ReminderFragment.this).navigateUp();
                             })
                             .addOnFailureListener(e -> {
                                 Log.e("REMINDER_FRAGMENT", "Gagal hapus jadwal obat. id=" + scheduleId, e);
-                                Toast.makeText(requireContext(), "Gagal menghapus jadwal", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(requireContext(), getString(R.string.gagal_menghapus_jadwal), Toast.LENGTH_SHORT).show();
                             });
                 })
                 .addOnFailureListener(e -> {
                     Log.e("REMINDER_FRAGMENT", "Gagal ambil data jadwal untuk dihapus. id=" + scheduleId, e);
-                    Toast.makeText(requireContext(), "Gagal menghapus jadwal", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), getString(R.string.gagal_menghapus_jadwal), Toast.LENGTH_SHORT).show();
                 });
     }
-
-    // FIX (baru): implementasi nyata untuk hapus appointment. Appointment
-    // "dihapus" ditandai lewat status "dibatalkan" + deleted_at, bukan
-    // hard-delete, konsisten dengan pola status lain (dihadiri/terlewatkan).
     private void deleteAppointment() {
         if (scheduleId == null || scheduleId.isEmpty()) {
-            Toast.makeText(requireContext(), "Appointment ID tidak ditemukan", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.appointment_id_tidak_ditemukan), Toast.LENGTH_SHORT).show();
             return;
         }
         stopRingingAlarm();
@@ -294,18 +286,18 @@ public class ReminderFragment extends Fragment {
 
                     db.collection("appointments").document(scheduleId).update(update)
                             .addOnSuccessListener(unused -> {
-                                Toast.makeText(requireContext(), "Appointment berhasil dihapus", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(requireContext(), getString(R.string.appointment_berhasil_dihapus), Toast.LENGTH_SHORT).show();
                                 notifyScheduleDeleted(consumerUid, namaObat, true);
                                 NavHostFragment.findNavController(ReminderFragment.this).navigateUp();
                             })
                             .addOnFailureListener(e -> {
                                 Log.e("REMINDER_FRAGMENT", "Gagal hapus appointment. id=" + scheduleId, e);
-                                Toast.makeText(requireContext(), "Gagal menghapus appointment", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(requireContext(), getString(R.string.gagal_menghapus_appointment), Toast.LENGTH_SHORT).show();
                             });
                 })
                 .addOnFailureListener(e -> {
                     Log.e("REMINDER_FRAGMENT", "Gagal ambil data appointment untuk dihapus. id=" + scheduleId, e);
-                    Toast.makeText(requireContext(), "Gagal menghapus appointment", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), getString(R.string.gagal_menghapus_appointment), Toast.LENGTH_SHORT).show();
                 });
     }
     private void notifyScheduleDeleted(String consumerUid, String name, boolean appointment) {
@@ -313,15 +305,15 @@ public class ReminderFragment extends Fragment {
         if (FirebaseAuth.getInstance().getCurrentUser() == null) return;
         String actorUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         boolean isForSelf = consumerUid.equals(actorUid);
-        String displayName = name != null ? name : (appointment ? "appointment" : "obat");
+        String displayName = name != null ? name : (appointment ? getString(R.string.appointment) : getString(R.string.medicine));
 
         if (!isForSelf) {
             Notification notifToConsumer = new Notification();
             notifToConsumer.setReceiver_uid(consumerUid);
             notifToConsumer.setSender_uid(actorUid);
             notifToConsumer.setType(appointment ? NotificationType.Appointment : NotificationType.Medicine);
-            notifToConsumer.setTitle(appointment ? "Jadwal Appointment Dihapus" : "Jadwal Obat Dihapus");
-            notifToConsumer.setMessage("Caregiver menghapus jadwal " + displayName + " Anda");
+            notifToConsumer.setTitle(appointment ? getString(R.string.jadwal_appointment_dihapus_title) : getString(R.string.jadwal_obat_dihapus_title));
+            notifToConsumer.setMessage(getString(R.string.caregiver_menghapus_jadwal_anda_full, displayName));
             notifToConsumer.setIs_read(false);
             notificationRepo.createNotification(notifToConsumer, new RepoCallback<Void>() {
                 @Override public void onSuccess(Void result) { }
@@ -340,10 +332,10 @@ public class ReminderFragment extends Fragment {
                     notifToCaregiver.setReceiver_uid(caregiverUid);
                     notifToCaregiver.setSender_uid(actorUid);
                     notifToCaregiver.setType(appointment ? NotificationType.Appointment : NotificationType.Medicine);
-                    notifToCaregiver.setTitle(appointment ? "Jadwal Appointment Dihapus" : "Jadwal Obat Dihapus");
+                    notifToCaregiver.setTitle(appointment ? getString(R.string.jadwal_appointment_dihapus_title) : getString(R.string.jadwal_obat_dihapus_title));
                     notifToCaregiver.setMessage(isForSelf
-                            ? "Consumer menghapus jadwal: " + displayName
-                            : "Jadwal " + displayName + " untuk consumer telah dihapus");
+                            ? getString(R.string.consumer_menghapus_jadwal_msg, displayName)
+                            : getString(R.string.jadwal_consumer_telah_dihapus_msg, displayName));
                     notifToCaregiver.setIs_read(false);
                     notificationRepo.createNotification(notifToCaregiver, new RepoCallback<Void>() {
                         @Override public void onSuccess(Void result) { }
@@ -374,13 +366,10 @@ public class ReminderFragment extends Fragment {
                             notif.setReceiver_uid(relation.getCaregiver_uid());
                             notif.setSender_uid(consumerUid);
                             notif.setType(NotificationType.Medicine);
-                            notif.setTitle("Consumer Sudah Minum Obat");
-                            notif.setMessage(consumerName + " telah minum obat " + namaObat + ".");
+                            notif.setTitle(getString(R.string.consumer_sudah_minum_obat));
+                            notif.setMessage(getString(R.string.consumer_telah_minum_obat_msg, consumerName, namaObat));
                             notif.setReference_id(logId);
                             notif.setConsumer_name(consumerName);
-                            // consumer_uid sengaja TIDAK di-set, biar tombol
-                            // "Ingatkan Consumer" di NotificationDetailFragment
-                            // ga muncul buat notif yang statusnya udah selesai.
                             notif.setIs_read(false);
                             notificationRepo.createNotification(notif, new RepoCallback<Void>() {
                                 @Override public void onSuccess(Void result) { }
@@ -421,11 +410,6 @@ public class ReminderFragment extends Fragment {
                 .get()
                 .addOnSuccessListener(document -> {
                     if (!isAdded() || document == null || !document.exists()) return;
-
-                    // Pakai getStatusBasedOnDate(), bukan getString("status") mentah —
-                    // biar konsisten sama refreshLiveStatusAppoint(), dan biar reminder
-                    // yang udah lewat waktunya tapi belum ditandai "dikonsumsi" bisa
-                    // kelihatan "Terlewat", bukan selalu "Akan datang".
                     MedicationLog log = document.toObject(MedicationLog.class);
                     if (log != null) {
                         updateStatusUI(log.getStatusBasedOnDate());
@@ -440,47 +424,24 @@ public class ReminderFragment extends Fragment {
 
         if (scheduleId == null || scheduleId.isEmpty()) {
 
-            Toast.makeText(
-                    requireContext(),
-                    "Schedule ID tidak ditemukan",
-                    Toast.LENGTH_SHORT
+            Toast.makeText(requireContext(), getString(R.string.schedule_id_tidak_ditemukan), Toast.LENGTH_SHORT
             ).show();
 
             return;
         }
 
         if (scheduledAt <= 0L) {
-
-            Toast.makeText(
-                    requireContext(),
-                    "Waktu alarm tidak ditemukan",
-                    Toast.LENGTH_SHORT
-            ).show();
-
-            Log.e(
-                    "REMINDER_FRAGMENT",
-                    "scheduledAt invalid: " + scheduledAt
-            );
-
+            Toast.makeText(requireContext(), getString(R.string.waktu_alarm_tidak_ditemukan), Toast.LENGTH_SHORT).show();
+            Log.e("REMINDER_FRAGMENT", "scheduledAt invalid: " + scheduledAt);
             return;
         }
         stopRingingAlarm();
         AlarmSchedulerHelper.cancelSnooze(requireContext(), scheduleId);
         AlarmSchedulerHelper.cancelOccurrenceForScheduledAt(requireContext(), scheduleId, scheduledAt);
 
-        String logId =
-                buildLogId(
-                        scheduleId,
-                        scheduledAt
-                );
+        String logId = buildLogId(scheduleId, scheduledAt);
 
-        Log.d(
-                "REMINDER_FRAGMENT",
-                "Mark as taken"
-                        + "\nscheduleId = " + scheduleId
-                        + "\nscheduledAt = " + scheduledAt
-                        + "\nlogId = " + logId
-        );
+        Log.d("REMINDER_FRAGMENT", "Mark as taken" + "\nscheduleId = " + scheduleId + "\nscheduledAt = " + scheduledAt+ "\nlogId = " + logId);
 
         db.collection("medication_logs")
                 .document(logId)
@@ -493,7 +454,7 @@ public class ReminderFragment extends Fragment {
                 .addOnSuccessListener(unused -> {
                     Log.d("REMINDER_FRAGMENT", "Obat berhasil ditandai dikonsumsi");
                     updateStatusUIFromRaw("dikonsumsi");
-                    Toast.makeText(requireContext(), "Obat ditandai sebagai dikonsumsi", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), getString(R.string.obat_ditandai_dikonsumsi), Toast.LENGTH_SHORT).show();
 
                     notifyCaregiverMedicineTaken(logId);
                 })
@@ -508,7 +469,7 @@ public class ReminderFragment extends Fragment {
 
                     Toast.makeText(
                             requireContext(),
-                            "Gagal mengubah status obat",
+                            getString(R.string.gagal_mengubah_status_obat),
                             Toast.LENGTH_SHORT
                     ).show();
                 });
@@ -516,7 +477,7 @@ public class ReminderFragment extends Fragment {
 
     private void markAppointmentAttended() {
         if (scheduleId == null || scheduleId.isEmpty()) {
-            Toast.makeText(requireContext(), "Appointment ID tidak ditemukan", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.appointment_id_tidak_ditemukan), Toast.LENGTH_SHORT).show();
             return;
         }
         stopRingingAlarm();
@@ -528,12 +489,12 @@ public class ReminderFragment extends Fragment {
                 .update("status", "dihadiri", "updated_at", Timestamp.now())
                 .addOnSuccessListener(unused -> {
                     updateStatusUIFromRaw("dihadiri");
-                    Toast.makeText(requireContext(), "Appointment ditandai sebagai dihadiri", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), getString(R.string.appointment_ditandai_dihadiri), Toast.LENGTH_SHORT).show();
                     notifyCaregiverAppointmentAttended(scheduleId);
                 })
                 .addOnFailureListener(e -> {
                     Log.e("REMINDER_FRAGMENT", "Gagal update status appointment. id=" + scheduleId, e);
-                    Toast.makeText(requireContext(), "Gagal mengubah status appointment", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), getString(R.string.gagal_mengubah_status_appointment), Toast.LENGTH_SHORT).show();
                 });
     }
 
@@ -555,9 +516,8 @@ public class ReminderFragment extends Fragment {
                             notif.setReceiver_uid(relation.getCaregiver_uid());
                             notif.setSender_uid(consumerUid);
                             notif.setType(NotificationType.Appointment);
-                            notif.setTitle("Consumer Sudah Menghadiri Appointment");
-                            notif.setMessage(consumerName + " telah menghadiri appointment "
-                                    + (title != null ? title : namaObat) + ".");
+                            notif.setTitle(getString(R.string.consumer_sudah_menghadiri_appointment));
+                            notif.setMessage(getString(R.string.consumer_telah_menghadiri_appointment, consumerName, (title != null ? title : namaObat)));
                             notif.setReference_id(appointmentId);
                             notif.setConsumer_name(consumerName);
                             notif.setIs_read(false);
@@ -577,27 +537,20 @@ public class ReminderFragment extends Fragment {
     private void snoozeReminder() {
 
         if (scheduleId == null || scheduleId.isEmpty()) {
-            Toast.makeText(requireContext(), "Schedule ID tidak ditemukan", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.schedule_id_tidak_ditemukan), Toast.LENGTH_SHORT).show();
             return;
         }
 
         stopRingingAlarm();
 
         if (isAppointment) {
-            // appointment belum punya field snooze_minutes sendiri, pakai default dulu
-            AlarmSchedulerHelper.scheduleSnooze(
-                    requireContext(), scheduleId, namaObat, scheduledAt, DEFAULT_SNOOZE_MINUTES);
-
-            Toast.makeText(requireContext(),
-                    "Pengingat ditunda " + DEFAULT_SNOOZE_MINUTES + " menit",
-                    Toast.LENGTH_SHORT).show();
-
+            AlarmSchedulerHelper.scheduleSnooze(requireContext(), scheduleId, namaObat, scheduledAt, DEFAULT_SNOOZE_MINUTES);
+            Toast.makeText(requireContext(), getString(R.string.pengingat_ditunda_menit, DEFAULT_SNOOZE_MINUTES),Toast.LENGTH_SHORT).show();
             NavHostFragment.findNavController(ReminderFragment.this).navigateUp();
             return;
         }
         stopRingingAlarm();
 
-        // Ambil konfigurasi snooze dari medication_schedules
         db.collection("medication_schedules")
                 .document(scheduleId)
                 .get()
@@ -606,14 +559,13 @@ public class ReminderFragment extends Fragment {
                     if (!document.exists()) {
                         Toast.makeText(
                                 requireContext(),
-                                "Data jadwal obat tidak ditemukan",
+                                getString(R.string.data_jadwal_obat_tidak_ditemukan),
                                 Toast.LENGTH_SHORT
                         ).show();
                         return;
                     }
 
-                    Long snoozeValue =
-                            document.getLong("snooze_minutes");
+                    Long snoozeValue = document.getLong("snooze_minutes");
 
                     // Fallback hanya jika field Firebase belum tersedia.
                     int snoozeMinutes =
@@ -636,22 +588,10 @@ public class ReminderFragment extends Fragment {
                             snoozeMinutes
                     );
 
-                    Toast.makeText(
-                            requireContext(),
-                            "Pengingat ditunda "
-                                    + snoozeMinutes
-                                    + " menit",
-                            Toast.LENGTH_SHORT
-                    ).show();
-
-                    NavHostFragment
-                            .findNavController(
-                                    ReminderFragment.this
-                            )
-                            .navigateUp();
+                    Toast.makeText(requireContext(), getString(R.string.pengingat_ditunda_menit, snoozeMinutes), Toast.LENGTH_SHORT).show();
+                    NavHostFragment.findNavController(ReminderFragment.this).navigateUp();
                 })
                 .addOnFailureListener(e -> {
-
                     Log.e(
                             "REMINDER_FRAGMENT",
                             "Gagal mengambil snooze_minutes",
@@ -660,7 +600,7 @@ public class ReminderFragment extends Fragment {
 
                     Toast.makeText(
                             requireContext(),
-                            "Gagal mengambil pengaturan snooze",
+                            getString(R.string.gagal_mengambil_pengaturan_snooze),
                             Toast.LENGTH_SHORT
                     ).show();
                 });
@@ -750,13 +690,13 @@ public class ReminderFragment extends Fragment {
         currentStatus = logStatus.name();
 
         TextView statusLabelView = isAppointment ? statusReminderAppoint : statusReminder;
-        statusLabelView.setText(logStatus.displayLabel(isAppointment));
+        statusLabelView.setText(logStatus.displayLabel(requireContext(), isAppointment));
 
         applyCircleStatusColor(circleNamaObat, logStatus);
 
         boolean alreadyDone = logStatus == LogStatus.DIKONSUMSI;
 
-        btnIsTaken.setText(isAppointment ? "Sudah Hadir" : "Sudah Diminum");
+        btnIsTaken.setText(isAppointment ? getString(R.string.sudah_hadir_btn) : getString(R.string.sudah_diminum));
         btnIsTaken.setVisibility(alreadyDone ? View.GONE : View.VISIBLE);
 
         btnTundaReminder.setVisibility(alreadyDone ? View.GONE : View.VISIBLE);

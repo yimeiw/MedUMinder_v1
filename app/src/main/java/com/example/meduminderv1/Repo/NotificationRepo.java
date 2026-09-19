@@ -1,9 +1,12 @@
 package com.example.meduminderv1.Repo;
 
+import android.content.Context;
+
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
+import com.example.meduminderv1.R;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -15,8 +18,10 @@ import java.util.List;
 public class NotificationRepo {
 
     private final FirebaseFirestore db;
+    private final Context context;
 
-    public NotificationRepo() {
+    public NotificationRepo(Context context) {
+        this.context = context;
         db = FirebaseFirestore.getInstance();
     }
 
@@ -120,8 +125,8 @@ public class NotificationRepo {
         notification.setSender_uid(null);
         notification.setReference_id(medicationId);
         notification.setInvitation_id(null);
-        notification.setTitle("ISI ULANG OBAT (" + medicineName + ")");
-        notification.setMessage("Obat Anda sudah mau habis, segera isi ulang obat Anda!");
+        notification.setTitle(context.getString(R.string.isi_ulang_obat_notif_title) + medicineName + ")");
+        notification.setMessage(context.getString(R.string.stok_hampir_habis));
         notification.setType(NotificationType.Stock);
         notification.setTarget_role(notification.getTarget_role());
         notification.setIs_read(false);
@@ -134,7 +139,7 @@ public class NotificationRepo {
         db.collection("notifications").document(notificationId).get()
                 .addOnSuccessListener(document -> {
                     if (!document.exists()) {
-                        callback.onFailure(new Exception("Notifikasi tidak ditemukan."));
+                        callback.onFailure(new Exception(context.getString(R.string.notifikasi_tidak_ditemukan)));
                         return;
                     }
 

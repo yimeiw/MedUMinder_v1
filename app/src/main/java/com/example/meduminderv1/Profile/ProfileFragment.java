@@ -55,10 +55,8 @@ public class ProfileFragment extends Fragment {
     RelativeLayout themeSwitch;
     ImageView iconToggle, imgAktivasi;
     SharedPreferences prefs;
-
-    LinearLayout btnEditProfile, btnAktivasi, btnListRelation, btnChangeLanguage, btnNotificationSetting, cardStatistik;
-
-MaterialButton btnSeeStatistic;
+    LinearLayout btnEditProfile, btnAktivasi, btnListRelation, btnChangeLanguage, btnNotificationSetting, cardStatistik, btnAddCaregiver;
+    MaterialButton btnSeeStatistic;
     ProgressView adherenceRing;
     StatistikRepo statistikRepo;
 
@@ -94,6 +92,7 @@ MaterialButton btnSeeStatistic;
         btnListRelation = view.findViewById(R.id.btnRelationList);
         btnChangeLanguage = view.findViewById(R.id.btnChangeLanguage);
         btnNotificationSetting = view.findViewById(R.id.btnNotificationSetting);
+        btnAddCaregiver = view.findViewById(R.id.btnAddCaregiver);
 
         if (user != null){
             loadUser();
@@ -141,6 +140,12 @@ MaterialButton btnSeeStatistic;
             }
         });
 
+        btnAddCaregiver.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putString("relationship_role", "Caregiver");
+            NavHostFragment.findNavController(this).navigate(R.id.invitationFragment, bundle);
+        });
+
         btnChangeLanguage.setOnClickListener(v -> {
             NavHostFragment.findNavController(this)
                     .navigate(R.id.languageFragment);
@@ -165,6 +170,8 @@ MaterialButton btnSeeStatistic;
             NavHostFragment.findNavController(this)
                     .navigate(R.id.statistikFragment);
         });
+
+
 
         return view;
     }
@@ -200,11 +207,7 @@ MaterialButton btnSeeStatistic;
                     public void onFailure(Exception e) {
                         if (!isAdded()) return;
 
-                        Toast.makeText(
-                                requireContext(),
-                                "Gagal mengambil statistik",
-                                Toast.LENGTH_SHORT
-                        ).show();
+                        Toast.makeText(requireContext(), getString(R.string.gagal_mengambil_statistik), Toast.LENGTH_SHORT).show();
                     }
                 }
         );
@@ -212,14 +215,14 @@ MaterialButton btnSeeStatistic;
 
     private void showLogoutDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Logout");
-        builder.setMessage("Apakah Anda yakin ingin logout?");
+        builder.setTitle(getString(R.string.logout_title));
+        builder.setMessage(getString(R.string.konfirmasi_logout));
 
-        builder.setPositiveButton("Ya", (dialog, which) -> {
+        builder.setPositiveButton(getString(R.string.ya_btn), (dialog, which) -> {
             logoutUser();
         });
 
-        builder.setNegativeButton("Batal", null);
+        builder.setNegativeButton(getString(R.string.cancel), null);
         AlertDialog dialog = builder.create();
         dialog.show();
         if (dialog.getWindow() != null){
@@ -269,7 +272,7 @@ MaterialButton btnSeeStatistic;
         String[] roles ={"Consumer","Caregiver"};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Pilih Role");
+        builder.setTitle(getString(R.string.pilih_role_title));
         builder.setItems(roles, (dialog, which) -> {
             UserRole targetRole = which == 0 ?
                     UserRole.Consumer : UserRole.Caregiver;
@@ -292,14 +295,15 @@ MaterialButton btnSeeStatistic;
         } if (targetRole == UserRole.Caregiver && !user.isCaregiver_enabled()){ //kalau caregiver belum aktif
             showEnableCaregiver(true);
             return;
-        } showSwitchRole(targetRole); //caregiver sudah aktif
+        } showSwitchRole(targetRole);
     }
 
     private void showSwitchRole(UserRole targetRole) {
         String roleName = targetRole == UserRole.Consumer ? "Consumer" : "Caregiver";
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
-        builder.setTitle("Ganti Role").setMessage("Apakah Anda yakin ingin berpindah ke role " + roleName + "?")
-                .setNegativeButton("Batal", null).setPositiveButton("Ya", (dialog, which) -> {
+        builder.setTitle(getString(R.string.ganti_role_title))
+                .setMessage(getString(R.string.konfirmasi_ganti_role_full_msg, roleName))
+                .setNegativeButton(getString(R.string.cancel), null).setPositiveButton(getString(R.string.ya_btn), (dialog, which) -> {
                     switchRole(targetRole);
                 });
 
@@ -330,10 +334,10 @@ MaterialButton btnSeeStatistic;
 
     private void showEnableCaregiver(boolean continueSwitchRole) {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Aktivasi Caregiver");
-        builder.setMessage("Mengaktifkan akses caregiver untuk memantau dan membantu pengingat konsumsi obat consumer.");
-        builder.setNegativeButton("Batal", null);
-        builder.setPositiveButton("Aktifkan", (dialog, which) -> {
+        builder.setTitle(getString(R.string.activateCaregiver));
+        builder.setMessage(getString(R.string.aktivasi_caregiver_msg));
+        builder.setNegativeButton(getString(R.string.cancel), null);
+        builder.setPositiveButton(getString(R.string.aktifkan), (dialog, which) -> {
             enableCaregiver(continueSwitchRole);
         });
         AlertDialog dialog = builder.create();
@@ -351,7 +355,7 @@ MaterialButton btnSeeStatistic;
             public void onSuccess(User result) {
                 if (!isAdded()) return;
                 bindUser(result);
-                Toast.makeText(requireContext(), "Role caregiver berhasil diaktifkan.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), getString(R.string.role_caregiver_berhasil_diaktifkan), Toast.LENGTH_SHORT).show();
                 switchRole(UserRole.Caregiver);
             }
 
@@ -390,6 +394,7 @@ MaterialButton btnSeeStatistic;
         txtListRelation.setText(
                 isConsumer ? getString(R.string.caregiverList) : getString(R.string.consumerList)
         );
+        btnAddCaregiver.setVisibility(isConsumer ? View.VISIBLE : View.GONE);
         btnListRelation.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
             bundle.putString(RelationListFragment.ARG_MODE, isConsumer ? "Caregiver" : "Consumer");
@@ -397,6 +402,7 @@ MaterialButton btnSeeStatistic;
         });
 
         cardStatistik.setVisibility(isConsumer ? View.VISIBLE : View.GONE);
+
     }
 
 
