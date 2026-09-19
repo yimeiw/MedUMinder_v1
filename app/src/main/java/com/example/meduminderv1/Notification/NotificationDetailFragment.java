@@ -71,14 +71,14 @@ public class NotificationDetailFragment extends Fragment {
         tvConsumerName = view.findViewById(R.id.tvConsumerName);
 
         invitationRepo = new InvitationRepo();
-        notificationRepo = new NotificationRepo();
+        notificationRepo = new NotificationRepo(requireContext());
 
         btnBack.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());
 
         Bundle args = getArguments();
         String notifId = args != null ? args.getString("notification_id") : null;
         if (notifId == null){
-            Toast.makeText(requireContext(), "Notifikasi tidak ditemukan.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.notifikasi_tidak_ditemukan), Toast.LENGTH_SHORT).show();
             NavHostFragment.findNavController(this).navigateUp();
             return view;
         }
@@ -93,7 +93,7 @@ public class NotificationDetailFragment extends Fragment {
             public void onSuccess(Notification result) {
                 if (!isAdded()) return;
                 if (result == null){
-                    Toast.makeText(requireContext(), "Notifikasi tidak ditemukan.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), getString(R.string.notifikasi_tidak_ditemukan), Toast.LENGTH_SHORT).show();
                     NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
                     return;
                 }
@@ -154,7 +154,6 @@ public class NotificationDetailFragment extends Fragment {
                 showLowStock();
                 break;
             default:
-                // System / tipe tidak dikenal: tampilkan title+message saja, tanpa card jadwal
                 hideDetailCard();
                 break;
         }
@@ -167,10 +166,6 @@ public class NotificationDetailFragment extends Fragment {
         btnAction.setVisibility(View.GONE);
     }
 
-    // MERGE: helper baru, dipakai bareng di detail Medicine & Appointment
-    // supaya tidak nulis ulang logic yang sama 3x. Ini yang dulunya ada di
-    // draft lama (ditulis manual di tiap render Runnable), sekarang
-    // dipusatkan di satu tempat.
     private void bindConsumerName() {
         if (tvConsumerName == null || notification == null) return;
         String consumerName = notification.getConsumer_name();
@@ -178,18 +173,15 @@ public class NotificationDetailFragment extends Fragment {
         tvConsumerName.setVisibility(consumerName != null ? View.VISIBLE : View.GONE);
     }
 
-    // ================= INVITATION =================
     private void showInvitation() {
-        // JANGAN matikan notifDetail seluruhnya, cukup sembunyikan
-        // bagian yang gak dipakai buat undangan (jadwal, stok, dll)
         notifDetail.setVisibility(View.VISIBLE);
         tvScheduleName.setVisibility(View.GONE);
         tvScheduleDayTime.setVisibility(View.GONE);
         tvStockInfo.setVisibility(View.GONE);
-        tvConsumerName.setVisibility(View.GONE); // tidak relevan juga buat invitation
+        tvConsumerName.setVisibility(View.GONE);
 
         if (notification.getInvitation_id() == null) {
-            cleanupOrphanNotification("Undangan tidak ditemukan.");
+            cleanupOrphanNotification(getString(R.string.undangan_tidak_ditemukan));
             return;
         }
 
@@ -198,17 +190,16 @@ public class NotificationDetailFragment extends Fragment {
             public void onSuccess(Invitation result) {
                 if (!isAdded()) return;
                 if (result == null){
-                    cleanupOrphanNotification("Undangan sudah tidak tersedia.");
+                    cleanupOrphanNotification(getString(R.string.undangan_sudah_tidak_tersedia));
                     return;
                 }
                 invitation = result;
                 boolean isPending = invitation.getStatus() == InvitationStatus.Pending;
 
                 if (isPending) {
-                    headerNotif.setText("Undangan Baru");
-                    titleNotif.setText("Undangan " + invitation.getInvite_role().name());
-                    messageNotif.setText(invitation.getSender_name() + " mengundang Anda menjadi "
-                            + roleLabel(invitation.getInvite_role()) + ".");
+                    headerNotif.setText(getString(R.string.undangan_baru_title));
+                    titleNotif.setText(getString(R.string.undangan_label) + invitation.getInvite_role().name());
+                    messageNotif.setText(getString(R.string.sender_mengundang_anda_msg, invitation.getSender_name(), roleLabel(invitation.getInvite_role())));
                     layoutButton.setVisibility(View.VISIBLE);
                     btnAction.setVisibility(View.GONE);
                     btnAcc.setOnClickListener(v -> acceptInvitation());
@@ -216,12 +207,12 @@ public class NotificationDetailFragment extends Fragment {
                 } else {
                     layoutButton.setVisibility(View.GONE);
                     boolean accepted = invitation.getStatus() == InvitationStatus.Accepted;
-                    headerNotif.setText(accepted ? "Undangan Diterima" : "Undangan Ditolak");
+                    headerNotif.setText(accepted ? getString(R.string.undangan_diterima) : getString(R.string.undangan_ditolak));
                     titleNotif.setText(headerNotif.getText());
 
                     String responderUid = notification.getSender_uid();
                     if (responderUid == null){
-                        messageNotif.setText(accepted ? "Undangan Anda diterima." : "Undangan Anda ditolak.");
+                        messageNotif.setText(accepted ? getString(R.string.undangan_diterima) : getString(R.string.undangan_ditolak));
                         return;
                     }
                     UserRepository.getInstance().getUserbyUid(responderUid, new RepoCallback<User>() {
@@ -233,7 +224,7 @@ public class NotificationDetailFragment extends Fragment {
                         @Override
                         public void onFailure(Exception e) {
                             if (!isAdded()) return;
-                            messageNotif.setText(accepted ? "Undangan Anda diterima." : "Undangan Anda ditolak.");
+                            messageNotif.setText(accepted ? getString(R.string.undangan_diterima) : getString(R.string.undangan_ditolak));
                         }
                     });
                 }
@@ -242,7 +233,7 @@ public class NotificationDetailFragment extends Fragment {
             @Override
             public void onFailure(Exception e) {
                 if (!isAdded()) return;
-                cleanupOrphanNotification("Undangan sudah tidak tersedia.");
+                cleanupOrphanNotification(getString(R.string.undangan_sudah_tidak_tersedia));
             }
         });
     }
@@ -253,11 +244,14 @@ public class NotificationDetailFragment extends Fragment {
 
     private String buildInvitationResultMessage(String responderName, boolean accepted) {
         boolean responderJadiCaregiver = invitation.getInvite_role() == UserRole.Caregiver;
-        String roleText = responderJadiCaregiver ? "Caregiver" : "Consumer";
-        String relasiText = responderJadiCaregiver ? "mengawasi Anda" : "diawasi Anda";
-        String aksi = accepted ? "menerima" : "menolak";
-        return responderName + " " + aksi + " undangan sebagai " + roleText
-                + (accepted ? " untuk " + relasiText + "." : ".");
+        String roleText = roleLabel(invitation.getInvite_role());
+        if (accepted) {
+            String relasiText = responderJadiCaregiver
+                    ? getString(R.string.relasi_mengawasi_anda_label)
+                    : getString(R.string.relasi_diawasi_anda_label);
+            return getString(R.string.invitation_accepted_result_msg, responderName, roleText, relasiText);
+        }
+        return getString(R.string.invitation_rejected_result_msg, responderName, roleText);
     }
 
     private void rejectInvitation() {
@@ -265,7 +259,7 @@ public class NotificationDetailFragment extends Fragment {
             @Override
             public void onSuccess(User result) {
                 if (!isAdded()) return;
-                Toast.makeText(requireContext(), "Undangan ditolak", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), getString(R.string.undangan_ditolak_toast), Toast.LENGTH_SHORT).show();
                 NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
             }
 
@@ -308,7 +302,7 @@ public class NotificationDetailFragment extends Fragment {
     }
 
     private boolean isNewScheduleNotif() {
-        return notification.getTitle() != null && notification.getTitle().contains("Baru");
+        return notification.isIs_new_schedule();
     }
 
     private void loadNewMedicineScheduleDetail() {
@@ -317,7 +311,7 @@ public class NotificationDetailFragment extends Fragment {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("medication_schedules").document(scheduleId).get().addOnSuccessListener(scheduleSnap -> {
             if (!isAdded()) return;
-            if (!scheduleSnap.exists()) { cleanupOrphanNotification("Jadwal obat sudah tidak tersedia."); return; }
+            if (!scheduleSnap.exists()) { cleanupOrphanNotification(getString(R.string.jadwal_obat_sudah_tidak_tersedia)); return; }
             MedicationSchedules schedule = scheduleSnap.toObject(MedicationSchedules.class);
             if (schedule == null) return;
             db.collection("medications").document(schedule.getMedication_id()).get().addOnSuccessListener(medSnap -> {
@@ -329,37 +323,37 @@ public class NotificationDetailFragment extends Fragment {
                 Runnable render = (() -> {
                     if (!isAdded()) return;
                     notifDetail.setVisibility(View.VISIBLE);
-                    // MERGE: tampilkan nama consumer di kartu, kalau ada.
                     bindConsumerName();
 
-                    String frekuensi = (schedule.getFrequency() != null ? schedule.getFrequency() : 0) + "x sehari";
+                    int freqNum = schedule.getFrequency() != null ? schedule.getFrequency() : 0;
+                    String frekuensi = getString(R.string.frekuensi_x_sehari_format, freqNum);
                     String jam = schedule.getTimes_of_day() != null ? String.join(", ", schedule.getTimes_of_day()) : "-";
                     tvScheduleDayTime.setText(frekuensi + " • " + jam);
 
                     if (med != null && "PIL".equalsIgnoreCase(med.getMed_type())) {
                         tvStockInfo.setVisibility(View.VISIBLE);
-                        tvStockInfo.setText("Sisa stok: " + stock);
+                        tvStockInfo.setText(getString(R.string.sisa_stok, stock));
                     } else {
                         tvStockInfo.setVisibility(View.GONE);
                     }
                 });
 
                 if (med != null && med.getCustom_medicine_name() != null) {
-                    tvScheduleName.setText("Obat: " + med.getCustom_medicine_name());
+                    tvScheduleName.setText(getString(R.string.obat_label_colon) + med.getCustom_medicine_name());
                     render.run();
                 } else if (med != null && med.getCatalog_id() != null) {
                     db.collection("medicine_catalog").document(med.getCatalog_id()).get().addOnSuccessListener(catSnap -> {
                         if (!isAdded()) return;
                         MedicineCatalog cat = catSnap.toObject(MedicineCatalog.class);
-                        tvScheduleName.setText("Obat: " + (cat != null ? cat.getNama_obat() : "Obat"));
+                        tvScheduleName.setText(getString(R.string.obat_label_colon) + (cat != null ? cat.getNama_obat() : "Obat"));
                         render.run();
                     });
                 } else {
-                    tvScheduleName.setText("Obat: -");
+                    tvScheduleName.setText(getString(R.string.obat_kosong_placeholder));
                     render.run();
                 }
             });
-        }).addOnFailureListener(e -> { if (isAdded()) cleanupOrphanNotification("Jadwal obat sudah tidak tersedia."); });
+        }).addOnFailureListener(e -> { if (isAdded()) cleanupOrphanNotification(getString(R.string.jadwal_obat_sudah_tidak_tersedia)); });
     }
 
     private void loadMedicationDetail() {
@@ -372,7 +366,7 @@ public class NotificationDetailFragment extends Fragment {
         db.collection("medication_logs").document(logId).get().addOnSuccessListener(logDoc -> {
             if (!isAdded()) return;
             if (!logDoc.exists()){
-                cleanupOrphanNotification("Riwayat obat sudah tidak tersedia.");
+                cleanupOrphanNotification(getString(R.string.riwayat_obat_sudah_tidak_tersedia));
                 return;
             }
             MedicationLog log = logDoc.toObject(MedicationLog.class);
@@ -391,34 +385,32 @@ public class NotificationDetailFragment extends Fragment {
                     Runnable render = () -> {
                         if (!isAdded()) return;
                         notifDetail.setVisibility(View.VISIBLE);
-                        // MERGE: nama consumer, sama seperti di atas.
                         bindConsumerName();
 
-                        Locale locale = new Locale("id", "ID");
-                        SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", locale);
+                        SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", Locale.getDefault());
                         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
                         Date scheduleDate = log.getScheduled_at().toDate();
                         tvScheduleDayTime.setText(dayFormat.format(scheduleDate) + " • " + timeFormat.format(scheduleDate));
                         tvStockInfo.setVisibility(View.VISIBLE);
-                        tvStockInfo.setText("Sisa stok obat: " + finalStock);
+                        tvStockInfo.setText(getString(R.string.sisa_stok_obat_label) + finalStock);
                     };
                     if (med != null && med.getCustom_medicine_name() != null){
-                        tvScheduleName.setText("Obat: " + med.getCustom_medicine_name());
+                        tvScheduleName.setText(getString(R.string.obat_label_colon) + med.getCustom_medicine_name());
                         render.run();
                     } else if (med != null && med.getCatalog_id() != null){
                         db.collection("medicine_catalog").document(med.getCatalog_id()).get().addOnSuccessListener(catSnap -> {
                             if (!isAdded()) return;
                             MedicineCatalog cat = catSnap.toObject(MedicineCatalog.class);
-                            tvScheduleName.setText("Obat: " + (cat != null ? cat.getNama_obat() : "Obat"));
+                            tvScheduleName.setText(getString(R.string.obat_label_colon) + (cat != null ? cat.getNama_obat() : getString(R.string.obat_default)));
                             render.run();
                         });
                     } else {
-                        tvScheduleName.setText("Obat: -");
+                        tvScheduleName.setText(getString(R.string.obat_kosong_placeholder));
                         render.run();
                     }
                 });
             });
-        }).addOnFailureListener(e -> { if (isAdded()) cleanupOrphanNotification("Riwayat obat sudah tidak tersedia."); });
+        }).addOnFailureListener(e -> { if (isAdded()) cleanupOrphanNotification(getString(R.string.riwayat_obat_sudah_tidak_tersedia)); });
     }
 
     private void showMissedActionIfCaregiver() {
@@ -430,7 +422,7 @@ public class NotificationDetailFragment extends Fragment {
         layoutButton.setVisibility(View.GONE);
         if (isCaregiverMissedAlert){
             btnAction.setVisibility(View.VISIBLE);
-            btnAction.setText("Ingatkan Consumer");
+            btnAction.setText(getString(R.string.remind_consumer));
             btnAction.setOnClickListener(v -> remindConsumer(notification.getConsumer_uid()));
         } else {
             btnAction.setVisibility(View.GONE);
@@ -445,23 +437,23 @@ public class NotificationDetailFragment extends Fragment {
         reminder.setReceiver_uid(consumerUid);
         reminder.setSender_uid(caregiver.getAuth_uid());
         reminder.setType(NotificationType.Medicine);
-        reminder.setTitle("Pengingat dari Caregiver");
-        reminder.setMessage(caregiver.getName() + " mengingatkan Anda untuk segera memeriksa jadwal Anda.");
+        reminder.setTitle(getString(R.string.pengingat_dari_caregiver_title));
+        reminder.setMessage(getString(R.string.caregiver_mengingatkan_periksa_jadwal_msg, caregiver.getName()));
         reminder.setTarget_role(UserRole.Consumer.name());
         reminder.setIs_read(false);
         notificationRepo.createNotification(reminder, new RepoCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
                 if (!isAdded()) return;
-                Toast.makeText(requireContext(), "Pengingat terkirim.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), getString(R.string.pengingat_terkirim), Toast.LENGTH_SHORT).show();
 
                 // konfirmasi ke diri sendiri (caregiver) bahwa reminder sudah dikirim
                 Notification confirmation = new Notification();
                 confirmation.setReceiver_uid(caregiver.getAuth_uid());
                 confirmation.setSender_uid(caregiver.getAuth_uid());
                 confirmation.setType(NotificationType.Medicine);
-                confirmation.setTitle("Pengingat Terkirim");
-                confirmation.setMessage("Anda mengirim pengingat kepada consumer untuk memeriksa jadwalnya.");
+                confirmation.setTitle(getString(R.string.pengingat_terkirim));
+                confirmation.setMessage(getString(R.string.pesan_pengingat_terkirim_consumer));
                 confirmation.setTarget_role(UserRole.Caregiver.name());
                 confirmation.setIs_read(false);
                 notificationRepo.createNotification(confirmation, new RepoCallback<Void>() {
@@ -492,24 +484,24 @@ public class NotificationDetailFragment extends Fragment {
         db.collection("appointments").document(appointId).get().addOnSuccessListener(doc -> {
             if (!isAdded()) return;
             if (!doc.exists()){
-                cleanupOrphanNotification("Jadwal appointment sudah tidak tersedia.");
+                cleanupOrphanNotification(getString(R.string.jadwal_appointment_sudah_tidak_tersedia));
                 return;
             } Appointment appointment = doc.toObject(Appointment.class);
             if (appointment == null) return;
             notifDetail.setVisibility(View.VISIBLE);
             bindConsumerName();
 
-            tvScheduleName.setText("Appointment: " + appointment.getTitle() + " (" + appointment.getAddress() + ")");
-            SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", new Locale("id", "ID"));
+            tvScheduleName.setText(getString(R.string.label_appointment_colon) + appointment.getTitle() + " (" + appointment.getAddress() + ")");
+            SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", Locale.getDefault());
             SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
             Date appointmentDate = appointment.getAppointment_at().toDate();
             tvScheduleDayTime.setText(dayFormat.format(appointmentDate) + " • " + timeFormat.format(appointmentDate));
             tvStockInfo.setVisibility(View.GONE);
-        }).addOnFailureListener(e -> { if (isAdded()) cleanupOrphanNotification("Jadwal appointment sudah tidak tersedia."); });
+        }).addOnFailureListener(e -> { if (isAdded()) cleanupOrphanNotification(getString(R.string.jadwal_appointment_sudah_tidak_tersedia)); });
     }
 
     private void showLowStock() {
-        notifDetail.setVisibility(View.GONE); // tidak relevan untuk stock notification
+        notifDetail.setVisibility(View.GONE);
         layoutButton.setVisibility(View.GONE);
         btnAcc.setVisibility(View.GONE);
         btnReject.setVisibility(View.GONE);

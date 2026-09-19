@@ -86,7 +86,7 @@ public class ConsumerPickerHelper {
                     }
                 }
                 if (relations.isEmpty()) {
-                    namaConsumer.setText("Belum ada consumer");
+                    namaConsumer.setText(context.getString(R.string.belum_ada_consumer));
                     imgArrow.setImageResource(R.drawable.ic_add);
                     listener.onChanged(null);
                     return;
@@ -130,7 +130,7 @@ public class ConsumerPickerHelper {
 
             @Override
             public void onFailure(Exception e) {
-                namaConsumer.setText("Unknown");
+                namaConsumer.setText(context.getString(R.string.unknown_label));
             }
         });
     }
@@ -154,14 +154,14 @@ public class ConsumerPickerHelper {
         for (CareRelationship rel : relations) {
             View row = LayoutInflater.from(context).inflate(R.layout.item_dropdown_consumer, popupContent, false);
             TextView tvName = row.findViewById(R.id.itemConsumerName);
-            tvName.setText("Memuat...");
+            tvName.setText(context.getString(R.string.loading));
 
             String consumerUid = rel.getConsumer_uid();
             userRepository.getUserbyUid(consumerUid, new RepoCallback<User>() {
                 @Override
                 public void onSuccess(User result) { tvName.setText(result.getName()); }
                 @Override
-                public void onFailure(Exception e) { tvName.setText("Unknown"); }
+                public void onFailure(Exception e) { tvName.setText(context.getString(R.string.unknown_label)); }
             });
 
             row.setOnClickListener(v -> {

@@ -84,7 +84,6 @@ public class LogFragment extends Fragment {
     MaterialButton btnAll, btnUpcoming, btnTaken, btnMissed;
     ImageButton btnBack;
 
-    //Status filter aktif & tipe log aktif
     private enum FilterType { ALL, UPCOMING, TAKEN, MISSED }
     private enum LogType { MEDICATION, APPOINTMENT }
     private FilterType currentFilter = FilterType.ALL;
@@ -96,7 +95,7 @@ public class LogFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_log, container, false);
 
         db = FirebaseFirestore.getInstance();
-        notificationRepo = new NotificationRepo();
+        notificationRepo = new NotificationRepo(requireContext());
         careRelationshipRepo = new CareRelationshipRepo();
 
         layoutFilter = view.findViewById(R.id.layoutFilter);
@@ -177,7 +176,7 @@ public class LogFragment extends Fragment {
             imgArrow.animate().rotation(180f).setDuration(150).start();
 
             itemConsumption.setOnClickListener(itemView -> {
-                tvType.setText("Riwayat Konsumsi");
+                tvType.setText(getString(R.string.riwayat_konsumsi));
                 currentType = LogType.MEDICATION;
                 updateFilterButtonLabels();
                 medAdapter = new MedicationLogAdapter(medLog, requireContext());
@@ -214,7 +213,7 @@ public class LogFragment extends Fragment {
     }
     private void updateFilterButtonLabels() {
         boolean isAppointment = currentType == LogType.APPOINTMENT;
-        btnTaken.setText(isAppointment ? "Dihadiri" : "Dikonsumsi");
+        btnTaken.setText(isAppointment ? getString(R.string.dihadiri) : getString(R.string.dikonsumsi));
     }
     //Filter dropdown dan button horizontal
     private void applyFilter() {
@@ -275,12 +274,11 @@ public class LogFragment extends Fragment {
         LocalDate yesterday = today.minusDays(1);
         return date.isEqual(today) || date.isEqual(yesterday);
     }
-    //Ambil data dari firestore
     private void loadMedicationLogs() {
         String users_id = SessionManager.getInstance().getTargetUid();
         if (users_id == null){
             initialMedicine.setVisibility(View.VISIBLE);
-            return; //caregiver blm pilih consumer atau blm punya consumer
+            return;
         }
 
         Calendar startCal = Calendar.getInstance();
@@ -349,9 +347,9 @@ public class LogFragment extends Fragment {
         if (currentStatus == LogStatus.DIKONSUMSI) {
             android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(requireContext())
                     .setTitle(appointment.getTitle())
-                    .setMessage("Anda sudah menandai appointment ini sebagai dihadiri.")
-                    .setPositiveButton("Tutup", null)
-                    .setNegativeButton("Batalkan Status", (d, which) -> {
+                    .setMessage(getString(R.string.appointment_sudah_ditandai_dihadiri_msg))
+                    .setPositiveButton(getString(R.string.tutup_btn), null)
+                    .setNegativeButton(getString(R.string.batalkan_status), (d, which) -> {
                         updateAppointmentStatus(appointment, "akan datang");
                     })
                     .create();
@@ -368,16 +366,16 @@ public class LogFragment extends Fragment {
         }
 
         String message = (currentStatus == LogStatus.TERLEWATKAN)
-                ? "Jadwal appointment ini sudah lewat. Apakah Anda tetap menghadirinya?"
-                : "Apakah Anda sudah menghadiri appointment ini?";
+                ? getString(R.string.appointment_lewat_konfirmasi_msg)
+                : getString(R.string.konfirmasi_hadir_appointment_msg);
 
         android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(requireContext())
                 .setTitle(appointment.getTitle())
                 .setMessage(message)
-                .setPositiveButton("Sudah Hadir", (d, which) -> {
+                .setPositiveButton(getString(R.string.sudah_hadir_btn), (d, which) -> {
                     updateAppointmentStatus(appointment, "dihadiri");
                 })
-                .setNegativeButton("Batal", null)
+                .setNegativeButton(getString(R.string.cancel), null)
                 .create();
 
         dialog.setOnShowListener(d -> {
@@ -413,10 +411,10 @@ public class LogFragment extends Fragment {
                         notifyCaregiverAppointmentAttended(appointment);
                     }
 
-                    Toast.makeText(requireContext(), "Status berhasil diperbarui", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), getString(R.string.status_berhasil_diperbarui), Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e ->
-                        Toast.makeText(requireContext(), "Gagal update status: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), getString(R.string.gagal_update_status_msg) + e.getMessage(), Toast.LENGTH_SHORT).show()
                 );
     }
 
@@ -435,8 +433,8 @@ public class LogFragment extends Fragment {
                         notif.setReceiver_uid(relation.getCaregiver_uid());
                         notif.setSender_uid(consumerUid);
                         notif.setType(NotificationType.Appointment);
-                        notif.setTitle("Consumer Sudah Menghadiri Appointment");
-                        notif.setMessage(consumerName + " telah menghadiri appointment " + appointment.getTitle() + ".");
+                        notif.setTitle(getString(R.string.consumer_sudah_menghadiri_appointment));
+                        notif.setMessage(consumerName + getString(R.string.consumer_telah_menghadiri_appointment) + appointment.getTitle() + ".");
                         notif.setReference_id(appointment.getDocId());
                         notif.setConsumer_name(consumerName);
                         notif.setIs_read(false);
@@ -483,7 +481,7 @@ public class LogFragment extends Fragment {
     }
 
     private void switchToAppointmentTab() {
-        tvType.setText("Riwayat Janji Temu");
+        tvType.setText(getString(R.string.riwayat_janji_temu));
 
         currentType = LogType.APPOINTMENT;
 

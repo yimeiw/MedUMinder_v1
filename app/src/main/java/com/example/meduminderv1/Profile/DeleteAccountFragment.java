@@ -53,7 +53,7 @@ public class DeleteAccountFragment extends Fragment {
             authManager.deleteAccount(requireActivity(), password, new AuthCallback<Void>() {
                 @Override
                 public void onSuccess(Void result) {
-                    Toast.makeText(requireContext(), "Akun berhasil dihapus", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), getString(R.string.akun_berhasil_dihapus), Toast.LENGTH_SHORT).show();
                    startActivity(new Intent(requireContext(), SignUpActivity.class));
                    requireActivity().finish();
                 }

@@ -75,7 +75,7 @@ public class AuthManager {
         userRepository = UserRepository.getInstance();
         sessionManager = SessionManager.getInstance();
         invitationRepo = new InvitationRepo();
-        notificationRepo = new NotificationRepo();
+        notificationRepo = new NotificationRepo(context);
         relationshipRepo = new CareRelationshipRepo();
     }
 
@@ -107,24 +107,24 @@ public class AuthManager {
 //    EMAIl
     public void registerWithEmail(User user, String password, AuthCallback<User> callback){
         if (user == null){
-            callback.onFailure("Data user tidak boleh kosong.");
+            callback.onFailure(context.getString(R.string.data_user_tidak_boleh_kosong));
             return;
         } String cleanEmail = user.getEmail() != null ? user.getEmail().trim().toLowerCase() : "";
         if (cleanEmail.isEmpty()){
-            callback.onFailure("Email tidak boleh kosong.");
+            callback.onFailure(context.getString(R.string.email_tidak_boleh_kosong));
             return;
         } if (!Patterns.EMAIL_ADDRESS.matcher(cleanEmail).matches()){
-            callback.onFailure("Format email tidak valid.");
+            callback.onFailure(context.getString(R.string.format_email_tidak_valid));
             return;
         } if (password == null || password.length() < 6){
-            callback.onFailure("Password minimal 6 karakter.");
+            callback.onFailure(context.getString(R.string.password_minimal));
             return;
         } user.setEmail(cleanEmail);
 
         mAuth.createUserWithEmailAndPassword(user.getEmail(), password).addOnSuccessListener(authResult -> {
             FirebaseUser firebaseUser = authResult.getUser();
             if (firebaseUser == null){
-                callback.onFailure("Gagal membuat akun.");
+                callback.onFailure(context.getString(R.string.gagal_membuat_akun));
                 return;
             }
             user.setAuth_uid(firebaseUser.getUid());
@@ -149,13 +149,13 @@ public class AuthManager {
     }
     public void loginWithEmail(String email, String password, AuthCallback<User> callback){
         if (email == null || email.trim().isEmpty()){
-            callback.onFailure("Email tidak boleh kosong");
+            callback.onFailure(context.getString(R.string.email_tidak_boleh_kosong));
             return;
         } if (!Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()){
-            callback.onFailure("Format email tidak valid.");
+            callback.onFailure(context.getString(R.string.format_email_tidak_valid));
             return;
         } if (password == null || password.isEmpty()){
-            callback.onFailure("Password tidak boleh kosong.");
+            callback.onFailure(context.getString(R.string.password_tidak_boleh_kosong));
             return;
         } final String cleanEmail = email.trim().toLowerCase();
 
@@ -163,17 +163,16 @@ public class AuthManager {
             @Override
             public void onSuccess(User result) {
                 if (result == null){
-                    callback.onFailure("Email belum terdaftar.");
+                    callback.onFailure(context.getString(R.string.email_belum_terdaftar));
                     return;
                 } if (result.getAuthProvider() == AuthProviderType.GOOGLE && !result.isGoogle_email_password_capable()){
-                    callback.onFailure("Email terdaftar menggunakan akun Google. Silahkan login menggunakan Google.");
+                    callback.onFailure(context.getString(R.string.email_terdaftar_google_msg));
                     return;
                 } performEmailSignIn(cleanEmail, password, callback);
             }
 
             @Override
             public void onFailure(Exception e) {
-                //Firestrore gagal diakses -> tetap coba signin langsung sebagai fallback
                 performEmailSignIn(cleanEmail, password, callback);
             }
         });
@@ -181,7 +180,7 @@ public class AuthManager {
         mAuth.signInWithEmailAndPassword(email, password).addOnSuccessListener(result -> {
             FirebaseUser firebaseUser = result.getUser();
             if (firebaseUser == null){
-                callback.onFailure("Login gagal, User tidak ditemukan.");
+                callback.onFailure(context.getString(R.string.login_gagal_user_tidak_ditemukan));
                 return;
             } firebaseUser.reload().addOnSuccessListener(unused -> {
                 if (!firebaseUser.isEmailVerified()){
@@ -209,15 +208,13 @@ public class AuthManager {
                 callback.onFailure(e.getMessage());
             });
         }).addOnFailureListener(e -> {
-            String message = "Email atau password salah.";
+            String message = context.getString(R.string.email_atau_password_salah);
             if (e instanceof FirebaseAuthInvalidUserException){
-                message = "Email belum terdaftar.\n\n"+
-                        "Jika akun Anda dibuat menggunakan Google, "+
-                        "silahkan login menggunakan Google.";
+                message = context.getString(R.string.email_belum_terdaftar) + "\n\n"
+                        + context.getString(R.string.akun_google_login);
             } else if (e instanceof FirebaseAuthInvalidCredentialsException){
-                message = "Password salah.\n\n"+
-                        "Jika akun Anda dibuat menggunakan Google, "+
-                        "silahkan login menggunakan Google.";
+                message = context.getString(R.string.password_salah) + "\n\n"
+                        + context.getString(R.string.akun_google_login);
             } callback.onFailure(message);
         });
     }
@@ -226,7 +223,7 @@ public class AuthManager {
         mAuth.signInWithEmailAndPassword(email, password).addOnSuccessListener(result -> {
             FirebaseUser firebaseUser = result.getUser();
             if (firebaseUser == null){
-                callback.onFailure("Login gagal, User tidak ditemukan.");
+                callback.onFailure(context.getString(R.string.login_gagal_user_tidak_ditemukan));
                 return;
             } firebaseUser.reload().addOnSuccessListener(unused -> {
                 if (!firebaseUser.isEmailVerified()){
@@ -253,23 +250,23 @@ public class AuthManager {
                 callback.onFailure(e.getMessage());
             });
         }).addOnFailureListener(e -> {
-            callback.onFailure("Password salah.");
+            callback.onFailure(context.getString(R.string.password_salah));
         });
     }
 
     public void resetPassword(String email, AuthCallback<Void> callback){
         if (email == null || email.trim().isEmpty()){
-            callback.onFailure("Email tidak boleh kosong.");
+            callback.onFailure(context.getString(R.string.email_tidak_boleh_kosong));
             return;
         } if (!Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()){
-            callback.onFailure("Format email tidak valid.");
+            callback.onFailure(context.getString(R.string.format_email_tidak_valid));
             return;
         }
 
         mAuth.sendPasswordResetEmail(email.trim()).addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(e -> {
                     if(e instanceof FirebaseAuthInvalidUserException){
-                        callback.onFailure("Email belum terdaftar.");
+                        callback.onFailure(context.getString(R.string.email_belum_terdaftar));
                     } else {
                         callback.onFailure(e.getMessage());
                     }
@@ -301,12 +298,12 @@ public class AuthManager {
     private void handleGoogleCredential(GetCredentialResponse response, AuthCallback<User> callback) {
         Credential credential = response.getCredential();
         if (!(credential instanceof CustomCredential)){
-            callback.onFailure("Credential tidak valid.");
+            callback.onFailure(context.getString(R.string.credential_tidak_valid));
             return;
         } CustomCredential customCredential = (CustomCredential) credential;
 
         if (!GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL.equals(customCredential.getType())){
-            callback.onFailure("Google Credential tidak valid.");
+            callback.onFailure(context.getString(R.string.google_credential_tidak_valid));
             return;
         } try {
             GoogleIdTokenCredential googleIdTokenCredential = GoogleIdTokenCredential.createFrom(customCredential.getData());
@@ -320,7 +317,7 @@ public class AuthManager {
         mAuth.signInWithCredential(authCredential).addOnSuccessListener(result -> {
             FirebaseUser firebaseUser = result.getUser();
             if (firebaseUser == null){
-                callback.onFailure("User tidak ditemukan.");
+                callback.onFailure(context.getString(R.string.user_tidak_ditemukan));
                 return;
             }
             checkGoogleProfile(firebaseUser, callback);
@@ -393,11 +390,11 @@ public class AuthManager {
     private void handleGoogleLinkCredential(GetCredentialResponse response, AuthCallback<Void> callback) {
         Credential credential = response.getCredential();
         if (!(credential instanceof CustomCredential)){
-            callback.onFailure("Credential tidak valid.");
+            callback.onFailure(context.getString(R.string.credential_tidak_valid));
             return;
         } CustomCredential customCredential = (CustomCredential) credential;
         if (!GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL.equals(customCredential.getType())){
-            callback.onFailure("Google Credential tidak valid.");
+            callback.onFailure(context.getString(R.string.google_credential_tidak_valid));
             return;
         } try {
             GoogleIdTokenCredential googleIdTokenCredential = GoogleIdTokenCredential.createFrom(customCredential.getData());
@@ -410,10 +407,10 @@ public class AuthManager {
     private void firebaseLinkGoogle(GoogleIdTokenCredential googleIdTokenCredential, AuthCallback<Void> callback) {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null){
-            callback.onFailure("User belum login.");
+            callback.onFailure(context.getString(R.string.user_belum_login));
             return;
         } if (hasGoogleProvider()){
-            callback.onFailure("Google sudah terhubung");
+            callback.onFailure(context.getString(R.string.google_sudah_terhubung));
             return;
         }
         String googleEmail = googleIdTokenCredential.getId();
@@ -421,14 +418,14 @@ public class AuthManager {
 
         if (googleEmail == null || !googleEmail.equalsIgnoreCase(currentEmail)){
             FirebaseAuth.getInstance().signOut();
-            callback.onFailure("Email Google harus sama dengan email akun MedUMinder.");
+            callback.onFailure(context.getString(R.string.email_google_harus_sama));
             return;
         }
         AuthCredential credential = GoogleAuthProvider.getCredential(googleIdTokenCredential.getIdToken(), null);
         currentUser.linkWithCredential(credential).addOnSuccessListener(authResult -> {
             FirebaseUser updatedUser = authResult.getUser();
             if (updatedUser == null){
-                callback.onFailure("User tidak ditemukan.");
+                callback.onFailure(context.getString(R.string.user_tidak_ditemukan));
                 return;
             } updatedUser.reload().addOnSuccessListener(unused -> {
                 Map<String, Object> update = new HashMap<>();
@@ -450,7 +447,7 @@ public class AuthManager {
     public void restoreSession(AuthCallback<User> callback){
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null){
-            callback.onFailure("Belum login.");
+            callback.onFailure(context.getString(R.string.belum_login));
             return;
         }
 
@@ -489,7 +486,7 @@ public class AuthManager {
             public void onSuccess(Void result) {
                 FirebaseUser firebaseUser = mAuth.getCurrentUser();
                 if (firebaseUser == null){
-                    callback.onFailure("User tidak ditemukan.");
+                    callback.onFailure(context.getString(R.string.user_tidak_ditemukan));
                     return;
                 } firebaseUser.sendEmailVerification().addOnSuccessListener(unused -> {
                     mAuth.signOut();
@@ -523,7 +520,7 @@ public class AuthManager {
     public void loadCurrentUserProfile(AuthCallback<User> callback){
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null){
-            callback.onFailure("User belum login.");
+            callback.onFailure(context.getString(R.string.user_belum_login));
             return;
         } loadUserProfile(firebaseUser.getUid(), callback);
     }
@@ -546,7 +543,6 @@ public class AuthManager {
             @Override
             public void onError(@NonNull ClearCredentialException e) {
                 Log.e("LOGOUT", "Clear credential gagal", e);
-                //firebasenya sudah logout, jadi tidak dianggap gagal
                 callback.onSuccess(null);
             }
         });
@@ -556,7 +552,7 @@ public class AuthManager {
     public void switchRole(UserRole role, AuthCallback<User> callback) {
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null){
-            callback.onFailure("User belum login.");
+            callback.onFailure(context.getString(R.string.user_belum_login));
             return;
         }
         userRepository.updateRole(firebaseUser.getUid(), role, new RepoCallback<Void>() {
@@ -575,7 +571,7 @@ public class AuthManager {
     public void enableCaregiver(AuthCallback<User> callback) {
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null){
-            callback.onFailure("User belum login.");
+            callback.onFailure(context.getString(R.string.user_belum_login));
             return;
         } userRepository.enableCaregiver(firebaseUser.getUid(), new RepoCallback<Void>() {
             @Override
@@ -598,17 +594,17 @@ public class AuthManager {
     public void updateDisplayName(String newName, AuthCallback<User> callback) {
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null){
-            callback.onFailure("User belum login.");
+            callback.onFailure(context.getString(R.string.user_belum_login));
             return;
         } final String finalName = newName.trim();
         if (finalName.length() < 4){
-            callback.onFailure("Nama minimal 4 karakter.");
+            callback.onFailure(context.getString(R.string.nama_minimal));
             return;
         } UserProfileChangeRequest profileChangeRequest = new UserProfileChangeRequest.Builder().setDisplayName(finalName).build();
         firebaseUser.updateProfile(profileChangeRequest).addOnSuccessListener(unused -> {
             User user = sessionManager.getUser();
             if (user == null){
-                callback.onFailure("User tidak ditemukan.");
+                callback.onFailure(context.getString(R.string.user_tidak_ditemukan));
                 return;
             }
             user.setName(finalName);
@@ -630,11 +626,11 @@ public class AuthManager {
     public void deleteAccount(@Nullable Activity activity, @Nullable String password, AuthCallback<Void> callback){
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null){
-            callback.onFailure("User belum login.");
+            callback.onFailure(context.getString(R.string.user_belum_login));
             return;
         } User user = sessionManager.getUser();
         if (user == null){
-            callback.onFailure("Data user tidak ditemukan.");
+            callback.onFailure(context.getString(R.string.data_user_tidak_ditemukan));
             return;
         } switch (user.getAuthProvider()){
             case EMAIL:
@@ -644,7 +640,7 @@ public class AuthManager {
                 reauthenticateGoogle(activity, callback);
                 break;
             default:
-                callback.onFailure("Provider tidak didukung.");
+                callback.onFailure(context.getString(R.string.provider_tidak_didukung));
                 break;
         }
     }
@@ -669,7 +665,7 @@ public class AuthManager {
     private void handleGoogleReauthentication(GetCredentialResponse response, AuthCallback<Void> callback) {
         Credential credential = response.getCredential();
         if (!(credential instanceof  CustomCredential)){
-            callback.onFailure("Credential tidak valid.");
+            callback.onFailure(context.getString(R.string.credential_tidak_valid));
             return;
         } CustomCredential customCredential = (CustomCredential) credential;
         try {
@@ -686,21 +682,21 @@ public class AuthManager {
     private void reauthenticateEmail(String password, AuthCallback<Void> callback) {
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null){
-            callback.onFailure("User belum login.");
+            callback.onFailure(context.getString(R.string.user_belum_login));
             return;
         } if (password == null || password.trim().isEmpty()){
-            callback.onFailure("Password tidak boleh kosong.");
+            callback.onFailure(context.getString(R.string.password_tidak_boleh_kosong));
             return;
         } AuthCredential credential = EmailAuthProvider.getCredential(firebaseUser.getEmail(), password);
         firebaseUser.reauthenticate(credential).addOnSuccessListener(unused -> performDelete(callback))
-                .addOnFailureListener(e -> callback.onFailure("Password salah."));
+                .addOnFailureListener(e -> callback.onFailure(context.getString(R.string.password_salah)));
     }
 
     private void performDelete(AuthCallback<Void> callback) {
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         User user = sessionManager.getUser();
         if (firebaseUser == null || user == null){
-            callback.onFailure("User tidak ditemukan.");
+            callback.onFailure(context.getString(R.string.user_tidak_ditemukan));
             return;
         } userRepository.deleteUser(user.getAuth_uid(), new RepoCallback<Void>() {
             @Override
@@ -722,18 +718,18 @@ public class AuthManager {
     public void sendInvitation(String receiverEmail, UserRole relationshipRole, InvitationCallback callback){
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null){
-            callback.onFailure("User belum login.");
+            callback.onFailure(context.getString(R.string.user_belum_login));
             return;
         } User sender = getCurrentUser();
         if (sender == null) {
-            callback.onFailure("Data user tidak ditemukan.");
+            callback.onFailure(context.getString(R.string.data_user_tidak_ditemukan));
             return;
         } final String email = receiverEmail.trim();
         if (email.isEmpty()){
-            callback.onFailure("Email wajib diisi.");
+            callback.onFailure(context.getString(R.string.email_wajib_diisi));
             return;
         } if (email.equalsIgnoreCase(sender.getEmail())){
-            callback.onFailure("Anda tidak dapat mengundang akun sendiri.");
+            callback.onFailure(context.getString(R.string.tidak_dapat_mengundang_diri));
             return;
         } userRepository.getUserbyEmail(email, new RepoCallback<User>() {
             @Override
@@ -747,13 +743,13 @@ public class AuthManager {
                     @Override
                     public void onSuccess(Boolean hasRelationship) {
                         if (Boolean.TRUE.equals(hasRelationship)){
-                            callback.onFailure("User sudah terhubung.");
+                            callback.onFailure(context.getString(R.string.user_sudah_terhubung));
                             return;
                         } invitationRepo.hasPendingInvitation(sender.getAuth_uid(), email, new RepoCallback<Boolean>() {
                             @Override
                             public void onSuccess(Boolean pending) {
                                 if (Boolean.TRUE.equals(pending)){
-                                    callback.onFailure("Invitation masih pending.");
+                                    callback.onFailure(context.getString(R.string.invitation_pending));
                                     return;
                                 } createInvitation(sender, receiver, email, relationshipRole, callback);
                             }
@@ -833,9 +829,8 @@ public class AuthManager {
         selfNotif.setReceiver_uid(sender.getAuth_uid());
         selfNotif.setSender_uid(sender.getAuth_uid());
         selfNotif.setType(NotificationType.Invitation);
-        selfNotif.setTitle("Undangan Terkirim");
-        selfNotif.setMessage("Undangan Anda ke " + receiverEmail + " sebagai " + relationshipRole.name()
-                + " sudah terkirim dan menunggu respon.");
+        selfNotif.setTitle(context.getString(R.string.undangan_terkirim_title));
+        selfNotif.setMessage(context.getString(R.string.undangan_terkirim_full_msg, receiverEmail, relationshipRole.name()));
         selfNotif.setTarget_role(null);
         selfNotif.setIs_read(false);
         selfNotif.setCreated_at(Timestamp.now());
@@ -851,7 +846,7 @@ public class AuthManager {
     public void getPendingInvitation(AuthCallback<Invitation> callback){
         User user = getCurrentUser();
         if (user == null){
-            callback.onFailure("User belum login.");
+            callback.onFailure(context.getString(R.string.user_belum_login));
             return;
         } invitationRepo.getPendingInvitationForUser(user.getAuth_uid(), user.getEmail(), new RepoCallback<Invitation>() {
             @Override
@@ -957,7 +952,7 @@ public class AuthManager {
     public void linkAndRespondInvitation(String invitationId, boolean accept, AuthCallback<User> callback){
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null){
-            callback.onFailure("User belum login.");
+            callback.onFailure(context.getString(R.string.user_belum_login));
             return;
         } invitationRepo.linkReceiver(invitationId, firebaseUser.getUid(), new RepoCallback<Void>() {
             @Override
@@ -977,7 +972,7 @@ public class AuthManager {
         notif.setSender_uid(invitation.getReceiver_uid());
         notif.setInvitation_id(invitation.getInvitation_id());
         notif.setType(NotificationType.Invitation);
-        notif.setMessage(accepted ? "Undangan Anda diterima." : "Undangan Anda ditolak.");
+        notif.setMessage(accepted ? context.getString(R.string.undangan_diterima) : context.getString(R.string.undangan_ditolak));
         notif.setTarget_role(null);
         notif.setIs_read(false);
         notificationRepo.createNotification(notif, new RepoCallback<Void>() {
@@ -996,9 +991,9 @@ public class AuthManager {
         notification.setReceiver_uid(receiverUid);
         notification.setInvitation_id(invitation.getInvitation_id());
         notification.setType(NotificationType.Invitation);
-        notification.setTitle("Invitation " + invitation.getInvite_role().name());
-        notification.setMessage(invitation.getSender_name()
-        + " mengundang Anda menjadi " + invitation.getInvite_role().name());
+        notification.setTitle(context.getString(R.string.invitation_title) + invitation.getInvite_role().name());
+        notification.setMessage(context.getString(R.string.sender_mengundang_anda_msg,
+                invitation.getSender_name(), invitation.getInvite_role().name()));
         notification.setTarget_role(null);
         notification.setIs_read(false);
         notification.setCreated_at(Timestamp.now());
@@ -1018,11 +1013,11 @@ public class AuthManager {
     public void loadNotification(AuthCallback<List<Notification>> callback){
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null){
-            callback.onFailure("User belum login.");
+            callback.onFailure(context.getString(R.string.user_belum_login));
             return;
         } User user = sessionManager.getUser();
         if (user == null){
-            callback.onFailure("User tidak ditemukan.");
+            callback.onFailure(context.getString(R.string.user_tidak_ditemukan));
             return;
         }
         notificationRepo.loadNotification(firebaseUser.getUid(), user.getCurrentRole(), new RepoCallback<List<Notification>>() {
@@ -1071,15 +1066,15 @@ public class AuthManager {
     public String getNotificationTitle(NotificationType type){
         switch (type){
             case Invitation:
-                return "Invitation";
+                return context.getString(R.string.notif_type_invitation);
             case Medicine:
-                return "Medicine Reminder";
+                return context.getString(R.string.notif_type_medicine);
             case Appointment:
-                return "Appointment Reminder";
+                return context.getString(R.string.notif_type_appointment);
             case Stock:
-                return "Low Stock Reminder";
+                return context.getString(R.string.notif_type_stock);
             default:
-                return "Notification";
+                return context.getString(R.string.notif_type_default);
         }
     }
 
@@ -1112,11 +1107,11 @@ public class AuthManager {
     public void unreadNotif(AuthCallback<Integer> callback){
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null){
-            callback.onFailure("User belum login.");
+            callback.onFailure(context.getString(R.string.user_belum_login));
             return;
         } User user = sessionManager.getUser();
         if (user == null){
-            callback.onFailure("User tidak ditemukan.");
+            callback.onFailure(context.getString(R.string.user_tidak_ditemukan));
             return;
         }
             notificationRepo.countUnread(firebaseUser.getUid(), user.getCurrentRole(), new RepoCallback<Integer>() {

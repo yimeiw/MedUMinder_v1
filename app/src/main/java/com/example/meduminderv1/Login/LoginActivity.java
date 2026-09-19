@@ -64,7 +64,7 @@ public class LoginActivity extends AppCompatActivity {
         String prefillEmail = getIntent().getStringExtra("prefill_email");
         if (prefillEmail != null){
             emailInput.setText(prefillEmail);
-            Toast.makeText(this, "Registrasi berhasil! Silahkan verifikasi email lalu login.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.registrasi_berhasil_verifikasi_msg), Toast.LENGTH_SHORT).show();
         }
 
         login.setOnClickListener(v -> {
@@ -124,13 +124,13 @@ public class LoginActivity extends AppCompatActivity {
         String password = passwordInput.getText().toString().trim();
 
         if (email.isEmpty()){
-            emailInput.setError("Email harus diisi");
+            emailInput.setError(getString(R.string.email_harus_diisi));
             return;
         } if (password.isEmpty()){
-            passwordInput.setError("Password harus diisi");
+            passwordInput.setError(getString(R.string.password_harus_diisi));
             return;
         } if (email.isEmpty() && password.isEmpty()){
-            Toast.makeText(this, "Semua field harus diisi.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.semua_field_harus_diisi), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -145,8 +145,8 @@ public class LoginActivity extends AppCompatActivity {
             public void onFailure(String message) {
                 if (message.equals("EMAIL_NOT_VERIFIED")){
                     MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(LoginActivity.this);
-                    builder.setTitle("Email Belum Diverifikasi")
-                            .setMessage("Silahkan verifikasi email Anda terlebih dahulu sebelum login.")
+                    builder.setTitle(getString(R.string.email_belum_diverifikasi_title))
+                            .setMessage(getString(R.string.silahkan_verifikasi_email_dahulu))
                             .setPositiveButton("OK", null);
                     AlertDialog dialog = builder.create();
                     dialog.show();

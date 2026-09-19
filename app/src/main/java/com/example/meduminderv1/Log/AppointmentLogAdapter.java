@@ -63,7 +63,7 @@ public class AppointmentLogAdapter extends RecyclerView.Adapter<AppointmentLogAd
         }
 
         LogStatus status = appointment.getStatusBasedOnDate();
-        holder.currStatus.setText(status.displayLabel(true));
+        holder.currStatus.setText(status.displayLabel(context, true));
         applyStatusColor(holder, status);
 
         holder.itemView.setOnClickListener(view -> {

@@ -76,6 +76,7 @@ public class ScheduleFragment extends Fragment {
 
         toggleGroup.check(R.id.btnMedicine);
         currType = Type.Medication;
+        updateToggleColors(view);
 
         rvSchedule.setLayoutManager(new LinearLayoutManager(requireContext()));
         if (getArguments() != null && getArguments().containsKey("selected_date")){
@@ -95,12 +96,10 @@ public class ScheduleFragment extends Fragment {
             selectedDate.set(year, month, day);
             loadScheduleForDate();
         });
-//        toggleGroup.check(R.id.btnMedicine);
-//        updateToggleColors();
         toggleGroup.addOnButtonCheckedListener((group, checkId, isChecked) -> {
             if (!isChecked) return;
             currType = (checkId == R.id.btnMedicine) ? Type.Medication : Type.Appointment;
-            //updateToggleColors();
+            updateToggleColors(view);
             loadScheduleForDate();
         });
 
@@ -152,13 +151,11 @@ public class ScheduleFragment extends Fragment {
                             if (log == null){
                                 remaining[0]--;
                                 continue;
-                            } resolveMedName(log.getMedication_schedules_id(), (medName, stock) -> {
-                                // Id jadwal & waktu asli disertakan langsung lewat constructor
-                                // (LogItem sekarang tidak punya setter, semuanya diisi sekali
-                                // saat objek dibuat), supaya item ini bisa diklik untuk
-                                // dibuka ke ReminderFragment.
+                            }
+                            resolveMedName(log.getMedication_schedules_id(), (medName, stock) -> {
+                                if (!isAdded()) return;
                                 LogItem item = new LogItem("medicine", medName, sdf.format(log.getScheduled_at().toDate()),
-                                        "Sisa stok: " + stock, log.getStatus(),
+                                        getString(R.string.sisa_stok, stock), log.getStatus(),
                                         log.getMedication_schedules_id(), log.getScheduled_at().toDate().getTime());
                                 result.add(item);
                                 remaining[0]--;
@@ -176,7 +173,7 @@ public class ScheduleFragment extends Fragment {
                         for (DocumentSnapshot doc : query.getDocuments()){
                             Appointment appoint = doc.toObject(Appointment.class);
                             if (appoint == null) continue;
-                            if (appoint.getDeleted_at() != null) continue; // <-- filter manual ini sudah cukup
+                            if (appoint.getDeleted_at() != null) continue;
                             LogItem item = new LogItem("appointment", appoint.getTitle(), sdf.format(appoint.getAppointment_at().toDate()),
                                     appoint.getAddress(), appoint.getStatus(),
                                     doc.getId(), appoint.getAppointment_at().toDate().getTime());
@@ -195,8 +192,6 @@ public class ScheduleFragment extends Fragment {
         } emptyState.setVisibility(View.GONE);
         rvSchedule.setVisibility(View.VISIBLE);
         TodayScheduleAdapter adapter = new TodayScheduleAdapter(result, requireContext());
-        // nama method setter listener klik di TodayScheduleAdapter adalah
-        // setOnItemClickListener (bukan setOnScheduleItemClickListener).
         adapter.setOnItemClickListener(this::navigateToReminder);
         rvSchedule.setAdapter(adapter);
     }
@@ -219,7 +214,7 @@ public class ScheduleFragment extends Fragment {
 
     private void showEmpty() {
         if (!isAdded()) return;
-        emptyState.setText("Belum ada jadwal.");
+        emptyState.setText(getString(R.string.belum_ada_jadwal));
         emptyState.setVisibility(View.VISIBLE);
         rvSchedule.setVisibility(View.GONE);
     }
@@ -252,16 +247,13 @@ public class ScheduleFragment extends Fragment {
                 });
     }
 
-    private void updateToggleColors() {
-        int activeColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorSecondary); // pink
-        int inactiveColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorPrimaryInverse); // abu
+    private void updateToggleColors(View root) {
+        int activeColor = MaterialColors.getColor(root, com.google.android.material.R.attr.colorSecondary);
+        int inactiveColor = MaterialColors.getColor(root, com.google.android.material.R.attr.colorPrimarySurface);
 
-        MaterialButton btnMedicine = requireView().findViewById(R.id.btnMedicine);
-        MaterialButton btnAppointment = requireView().findViewById(R.id.btnAppointment);
-
-        btnMedicine.setBackgroundTintList(ColorStateList.valueOf(
+        btnMed.setBackgroundTintList(ColorStateList.valueOf(
                 currType == Type.Medication ? activeColor : inactiveColor));
-        btnAppointment.setBackgroundTintList(ColorStateList.valueOf(
+        btnAppoint.setBackgroundTintList(ColorStateList.valueOf(
                 currType == Type.Appointment ? activeColor : inactiveColor));
     }
 }

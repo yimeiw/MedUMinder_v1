@@ -23,14 +23,14 @@ import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
-import com.example.meduminderv1.Auth.SessionManager; // <-- ditambahin
+import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Model.CareRelationship;
 import com.example.meduminderv1.Model.LogGenerator;
-import com.example.meduminderv1.Model.LogStatus; // <-- ditambahin
+import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.Model.Medication;
 import com.example.meduminderv1.Model.MedicationSchedules;
-import com.example.meduminderv1.Model.User; // <-- ditambahin (sesuaikan package User kamu kalau beda)
+import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.example.meduminderv1.Repo.MedicationRepo;
@@ -92,8 +92,8 @@ public class EditMedicineFragment extends Fragment {
 
 
         db = FirebaseFirestore.getInstance();
-        medicationRepo = new MedicationRepo();
-        notificationRepo = new NotificationRepo();
+        medicationRepo = new MedicationRepo(requireContext());
+        notificationRepo = new NotificationRepo(requireContext());
         careRelationshipRepo = new CareRelationshipRepo();
 
         sessionManager = SessionManager.getInstance();
@@ -102,15 +102,14 @@ public class EditMedicineFragment extends Fragment {
         btnBack.setOnClickListener(v ->
                 NavHostFragment.findNavController(EditMedicineFragment.this).navigateUp());
 
-        String[] frequencies = {"Sekali sehari", "Dua kali sehari", "Tiga kali sehari",
-                "Empat kali sehari", "Lima kali sehari", "Enam kali sehari"};
+        String[] frequencies = getResources().getStringArray(R.array.frekuensi_array);
         ArrayAdapter<String> freqAdapter = new ArrayAdapter<>(requireContext(),
                 android.R.layout.simple_list_item_1, frequencies);
         freqMinumObat.setAdapter(freqAdapter);
         freqMinumObat.setInputType(0);
         freqMinumObat.setOnItemClickListener((parent, v, position, id) -> {
             String selected = parent.getItemAtPosition(position).toString();
-            createTimeFields(convertFrequencyToNumber(selected), null); // ganti freq manual -> jam kosong lagi
+            createTimeFields(convertFrequencyToNumber(selected), null);
         });
 
         Bundle bundle = getArguments();
@@ -119,7 +118,7 @@ public class EditMedicineFragment extends Fragment {
         }
 
         if (scheduleId == null || scheduleId.isEmpty()) {
-            Toast.makeText(requireContext(), "Data reminder tidak ditemukan", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.data_reminder_tidak_ditemukan), Toast.LENGTH_SHORT).show();
         } else {
             loadExistingData();
         }
@@ -134,7 +133,7 @@ public class EditMedicineFragment extends Fragment {
             @Override
             public void onSuccess(MedicationSchedules schedule) {
                 if (schedule == null) {
-                    Toast.makeText(requireContext(), "Jadwal tidak ditemukan", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), getString(R.string.jadwal_tidak_ditemukan), Toast.LENGTH_SHORT).show();
                     return;
                 }
                 medicationId = schedule.getMedication_id();
@@ -169,12 +168,12 @@ public class EditMedicineFragment extends Fragment {
         if (!validateReminder()) return;
 
         if (scheduleId == null || medicationId == null) {
-            Toast.makeText(requireContext(), "Data reminder belum lengkap", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.data_reminder_belum_lengkap), Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (user == null) {
-            Toast.makeText(requireContext(), "Sesi user tidak ditemukan, coba login ulang", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.sesi_user_tidak_ditemukan), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -204,9 +203,8 @@ public class EditMedicineFragment extends Fragment {
                                     "updated_at", Timestamp.now()
                             )
                             .addOnSuccessListener(unused2 -> {
-                                // batalin alarm lama (pakai jumlah times LAMA), pasang alarm baru
                                 AlarmSchedulerHelper.cancelAll(requireContext(), scheduleId, originalTimesOfDay);
-                                AlarmSchedulerHelper.cancelSnooze(requireContext(), scheduleId); // <-- ditambahin: lihat catatan di bawah
+                                AlarmSchedulerHelper.cancelSnooze(requireContext(), scheduleId);
 
                                 long endMillis = (endDate != null) ? endDate.toDate().getTime() : 0;
                                 AlarmSchedulerHelper.scheduleAll(requireContext(), scheduleId, medName, times, endMillis);
@@ -221,7 +219,7 @@ public class EditMedicineFragment extends Fragment {
 
                                 notifyReminderUpdated(medName);
 
-                                Toast.makeText(requireContext(), "Reminder berhasil diperbarui", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(requireContext(), getString(R.string.reminder_berhasil_diperbarui), Toast.LENGTH_SHORT).show();
                                 NavHostFragment.findNavController(EditMedicineFragment.this).navigateUp();
                             })
                             .addOnFailureListener(e ->
@@ -241,8 +239,8 @@ public class EditMedicineFragment extends Fragment {
             notifToConsumer.setReceiver_uid(targetUid);
             notifToConsumer.setSender_uid(actorUid);
             notifToConsumer.setType(NotificationType.Medicine);
-            notifToConsumer.setTitle("Jadwal Obat Diperbarui");
-            notifToConsumer.setMessage(user.getName() + " mengubah jadwal minum obat " + medName + " Anda");
+            notifToConsumer.setTitle(getString(R.string.jadwal_obat_diperbarui_title));
+            notifToConsumer.setMessage(getString(R.string.caregiver_mengubah_jadwal_obat_anda_full, user.getName(), medName));
             notifToConsumer.setIs_read(false);
             notificationRepo.createNotification(notifToConsumer, new RepoCallback<Void>() {
                 @Override public void onSuccess(Void result) { }
@@ -261,10 +259,10 @@ public class EditMedicineFragment extends Fragment {
                     notifToCaregiver.setReceiver_uid(caregiverUid);
                     notifToCaregiver.setSender_uid(actorUid);
                     notifToCaregiver.setType(NotificationType.Medicine);
-                    notifToCaregiver.setTitle("Jadwal Obat Diperbarui");
+                    notifToCaregiver.setTitle(getString(R.string.jadwal_obat_diperbarui_title));
                     notifToCaregiver.setMessage(isForSelf
-                            ? user.getName() + " mengubah jadwal minum obat: " + medName
-                            : "Jadwal minum obat " + medName + " untuk consumer telah diperbarui");
+                            ? getString(R.string.consumer_mengubah_jadwal_obat_msg, user.getName(), medName)
+                            : getString(R.string.jadwal_obat_consumer_diperbarui_msg, medName));
                     notifToCaregiver.setIs_read(false);
                     notificationRepo.createNotification(notifToCaregiver, new RepoCallback<Void>() {
                         @Override public void onSuccess(Void result) { }
@@ -285,19 +283,19 @@ public class EditMedicineFragment extends Fragment {
         String freq = freqMinumObat.getText().toString().trim();
         String stok = stokObat.getText().toString().trim();
 
-        if (name.isEmpty()) { namaObat.setError("Nama obat wajib diisi"); valid = false; }
-        if (freq.isEmpty()) { freqMinumObat.setError("Frekuensi minum obat wajib diisi"); valid = false; }
-        if (stok.isEmpty()) { stokObat.setError("Stok obat wajib diisi"); valid = false; }
+        if (name.isEmpty()) { namaObat.setError(getString(R.string.nama_obat_wajib_diisi)); valid = false; }
+        if (freq.isEmpty()) { freqMinumObat.setError(getString(R.string.frekuensi_minum_obat_wajib_diisi)); valid = false; }
+        if (stok.isEmpty()) { stokObat.setError(getString(R.string.stok_obat_wajib_diisi)); valid = false; }
 
         int frequency = convertFrequencyToNumber(freq);
         ArrayList<String> times = getSelectedTimes();
         if (times.size() != frequency) {
-            Toast.makeText(requireContext(), "Semua jam minum harus dipilih.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.semua_jam_minum_harus_dipilih), Toast.LENGTH_SHORT).show();
             valid = false;
         }
         HashSet<String> unique = new HashSet<>(times);
         if (unique.size() != times.size()) {
-            Toast.makeText(requireContext(), "Jam minum tidak boleh sama.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.jam_minum_tidak_boleh_sama), Toast.LENGTH_SHORT).show();
             valid = false;
         }
         return valid;
@@ -307,7 +305,7 @@ public class EditMedicineFragment extends Fragment {
         ArrayList<String> times = new ArrayList<>();
         for (TextView tv : timeViews) {
             String value = tv.getText().toString().trim();
-            if (!value.equals("Pilih Jam")) {
+            if (!value.equals(getString(R.string.pilih_jam_hint))) {
                 times.add(value);
             }
         }
@@ -353,7 +351,7 @@ public class EditMedicineFragment extends Fragment {
 
         for (int i = 1; i <= frequency; i++) {
             TextView label = new TextView(requireContext());
-            label.setText("Jam Minum Obat " + i);
+            label.setText(getString(R.string.jam_minum_obat_label) + "" + i);
             label.setPadding(20, 10, 20, 5);
             label.setTextColor(typedValue.data);
 
@@ -381,14 +379,14 @@ public class EditMedicineFragment extends Fragment {
                 .setTimeFormat(TimeFormat.CLOCK_24H)
                 .setHour(now.get(Calendar.HOUR_OF_DAY))
                 .setMinute(now.get(Calendar.MINUTE))
-                .setTitleText("Pilih Jam Minum Obat")
+                .setTitleText(getString(R.string.pilih_jam_minum_obat_title))
                 .build();
 
         picker.addOnPositiveButtonClickListener(v -> {
             String time = String.format(Locale.getDefault(), "%02d:%02d", picker.getHour(), picker.getMinute());
             for (TextView tv : timeViews) {
                 if (tv != selectedView && tv.getText().toString().equals(time)) {
-                    Toast.makeText(requireContext(), "Jam tersebut sudah dipilih.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), getString(R.string.jam_tersebut_sudah_dipilih), Toast.LENGTH_SHORT).show();
                     return;
                 }
             }
@@ -398,26 +396,21 @@ public class EditMedicineFragment extends Fragment {
         picker.show(getParentFragmentManager(), "time_picker");
     }
     private int convertFrequencyToNumber(String selected) {
-        switch (selected) {
-            case "Sekali sehari": return 1;
-            case "Dua kali sehari": return 2;
-            case "Tiga kali sehari": return 3;
-            case "Empat kali sehari": return 4;
-            case "Lima kali sehari": return 5;
-            case "Enam kali sehari": return 6;
-            default: return 0;
+        String[] options = getResources().getStringArray(R.array.frekuensi_array);
+        for (int i = 0; i < options.length; i++) {
+            if (options[i].equals(selected)) {
+                return i + 1;
+            }
         }
+        return 0;
     }
 
+
     private String convertNumberToFrequency(int frequency) {
-        switch (frequency) {
-            case 1: return "Sekali sehari";
-            case 2: return "Dua kali sehari";
-            case 3: return "Tiga kali sehari";
-            case 4: return "Empat kali sehari";
-            case 5: return "Lima kali sehari";
-            case 6: return "Enam kali sehari";
-            default: return "";
+        String[] options = getResources().getStringArray(R.array.frekuensi_array);
+        if (frequency >= 1 && frequency <= options.length) {
+            return options[frequency - 1];
         }
+        return "";
     }
 }

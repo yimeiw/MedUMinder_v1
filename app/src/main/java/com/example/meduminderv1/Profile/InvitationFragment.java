@@ -65,14 +65,14 @@ public class InvitationFragment extends Fragment {
             @Override
             public void onSuccess(User result) {
                 if (result.getCurrentRole() == UserRole.Consumer){
-                    tvHeaderInvite.setText("Invite Caregiver");
-                    tvInvitation.setText("Sekarang kamu adalah Consumer");
+                    tvHeaderInvite.setText(getString(R.string.invCaregiver));
+                    tvInvitation.setText(getString(R.string.sekarang_kamu_adalah_consumer));
                     imgInvite.setImageResource(R.drawable.ic_invite);
                     alert.setText(R.string.alert_invite_caregiver);
 
                 } else {
-                    tvHeaderInvite.setText("Invite Consumer");
-                    tvInvitation.setText("Sekarang kamu adalah Caregiver");
+                    tvHeaderInvite.setText(getString(R.string.invConsumer));
+                    tvInvitation.setText(getString(R.string.sekarang_kamu_adalah_caregiver));
                     imgInvite.setImageResource(R.drawable.ic_add_people);
                     alert.setText(R.string.alert_invite_consumer);
                 }
@@ -92,7 +92,7 @@ public class InvitationFragment extends Fragment {
     private void sendInvitation() {
         String email = etEmail.getText().toString().trim();
         if (email.isEmpty()){
-            etEmail.setError("Email wajib diisi");
+            etEmail.setError(getString(R.string.email_wajib_diisi));
             return;
         } UserRole currentRole = authManager.getCurrentUser().getCurrentRole();
         UserRole inviteRole = (currentRole == UserRole.Consumer) ? UserRole.Caregiver : UserRole.Consumer;
@@ -100,7 +100,7 @@ public class InvitationFragment extends Fragment {
             @Override
             public void onSuccess(boolean registered) {
                 if (registered){ // jika user sudah terdaftar
-                    Toast.makeText(requireContext(), "Invitation berhasil dikirim.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), getString(R.string.invitation_berhasil_dikirim), Toast.LENGTH_SHORT).show();
                     NavHostFragment.findNavController(InvitationFragment.this).popBackStack();
                 } else {
                     showShareDialog(email);
@@ -116,11 +116,10 @@ public class InvitationFragment extends Fragment {
 
     private void showShareDialog(String email) {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
-        builder.setTitle("Undangan berhasil dibuat.")
-                .setMessage("Tetapi email tersebut belum terdaftar pada aplikasi MedUMinder." +
-                        "\nBagikan link aplikasi agar pengguna dapat mendaftar menggunakan email tersebut.")
-                .setNegativeButton("Nanti", null)
-                .setPositiveButton("Bagikan", (dialog, which) -> {
+        builder.setTitle(getString(R.string.undangan_berhasil_dibuat))
+                .setMessage(getString(R.string.email_belum_terdaftar_di_app_msg) + "\n" + getString(R.string.bagikan_link_aplikasi_msg))
+                .setNegativeButton(getString(R.string.nanti), null)
+                .setPositiveButton(getString(R.string.bagikan), (dialog, which) -> {
                     shareInvitation(email);
                 });
         AlertDialog dialog = builder.create();
@@ -132,14 +131,10 @@ public class InvitationFragment extends Fragment {
         }
     }
     private void shareInvitation(String email) {
-    //    String appLink = "https://play.google.com/store/apps/details?id=" + requireContext().getPackageName();
-        String message = "Saya mengundang Anda bergabung di MedUMinder.\n\n" +
-                "Silahkan download aplikasi MedUMinder menggunakan link berikut:\n" +
-                /* appLink + */ "\n\nDaftar menggunakan email atau google dengan email: "
-                + email + "\n\nSetelah login menggunakan email tersebut, Invitation akan otomatis muncul pada menu Notification.";
+        String message = getString(R.string.share_invitation_message, email);
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("text/plain");
         intent.putExtra(Intent.EXTRA_TEXT, message);
-        startActivity(Intent.createChooser(intent, "Bagikan melalui"));
+        startActivity(Intent.createChooser(intent, getString(R.string.bagikan_melalui_title)));
     }
 }

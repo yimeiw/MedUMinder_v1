@@ -126,10 +126,10 @@ public class CaregiverHomeFragment extends Fragment {
         sessionManager = SessionManager.getInstance();
         careRelationshipRepo = new CareRelationshipRepo();
         userRepository = UserRepository.getInstance();
-        medicationRepo = new MedicationRepo();
+        medicationRepo = new MedicationRepo(requireContext());
         db = FirebaseFirestore.getInstance();
         authManager = AuthManager.getInstance(requireContext());
-        notificationRepo = new NotificationRepo();
+        notificationRepo = new NotificationRepo(requireContext());
         statistikRepo = new StatistikRepo();
 
         rvDrawerConsumer.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -216,10 +216,6 @@ public class CaregiverHomeFragment extends Fragment {
     }
 
     private void setupSideNavInteractions(View view) {
-//        view.findViewById(R.id.navDocument).setOnClickListener(v -> {
-//            drawerLayout.closeDrawer(GravityCompat.START);
-//            NavHostFragment.findNavController(this).navigate(R.id.documentFragment);
-//        });
         view.findViewById(R.id.navRiwayat).setOnClickListener(v -> {
             drawerLayout.closeDrawer(GravityCompat.START);
             NavHostFragment.findNavController(this).navigate(R.id.logFragment);
@@ -258,7 +254,7 @@ public class CaregiverHomeFragment extends Fragment {
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                     tvDay.setText(formatDayLabel(targetLog.getScheduled_at().toDate()));
                     tvTime.setText(sdf.format(targetLog.getScheduled_at().toDate()));
-                    resolveMedName(targetLog.getMedication_schedules_id(), (medName, stock) -> {
+                    resolveMedName(targetLog.getMedication_schedules_id(), (medName, stock, medType) -> {
                         if (!isAdded()) return;
                         nextScheduleMedName = medName;
                         tvtitleCard.setText(medName);
@@ -310,37 +306,39 @@ public class CaregiverHomeFragment extends Fragment {
     private void resolveMedName(String schedulesId, MedResolveCallback callback) {
         db.collection("medication_schedules").document(schedulesId).get()
                 .addOnSuccessListener(scheduleSnap -> {
-                    if (!isAdded()) return;   // <-- baris baru
+                    if (!isAdded()) return;
                     MedicationSchedules schedule = scheduleSnap.toObject(MedicationSchedules.class);
                     if (schedule == null) return;
                     db.collection("medications").document(schedule.getMedication_id()).get()
                             .addOnSuccessListener(medSnap -> {
-                                if (!isAdded()) return;   // <-- baris baru
+                                if (!isAdded()) return;
                                 Medication med = medSnap.toObject(Medication.class);
                                 if (med == null) return;
                                 int stock = 0;
                                 if (med.getStock() != null && med.getStock().get("stok_obat") != null){
                                     stock = ((Number) med.getStock().get("stok_obat")).intValue();
-                                } int finalStock = stock;
+                                }
+                                int finalStock = stock;
+                                String medType = med.getMed_type(); // <-- BARU
                                 if (med.getCustom_medicine_name() != null){
-                                    callback.onResolved(med.getCustom_medicine_name(), finalStock);
+                                    callback.onResolved(med.getCustom_medicine_name(), finalStock, medType);
                                 } else if (med.getCatalog_id() != null) {
                                     db.collection("medicine_catalog").document(med.getCatalog_id()).get()
                                             .addOnSuccessListener(catSnap -> {
-                                                if (!isAdded()) return;   // <-- baris baru
+                                                if (!isAdded()) return;
                                                 MedicineCatalog catalog = catSnap.toObject(MedicineCatalog.class);
-                                                callback.onResolved(catalog != null ? catalog.getNama_obat() : getString(R.string.obat_default), finalStock);
+                                                callback.onResolved(catalog != null ? catalog.getNama_obat() : getString(R.string.obat_default), finalStock, medType);
                                             });
                                 } else {
-                                    callback.onResolved(getString(R.string.obat_default), finalStock);
+                                    callback.onResolved(getString(R.string.obat_default), finalStock, medType);
                                 }
                             });
                 });
     }
-    private interface MedResolveCallback{
-        void onResolved(String name, int stock);
-    }
 
+    private interface MedResolveCallback{
+        void onResolved(String name, int stock, String medType);
+    }
     private void loadTodaySchedule(String consumerUid) {
         if (todayScheduleListener != null) todayScheduleListener.remove();
         Calendar startCal = Calendar.getInstance();
@@ -370,10 +368,19 @@ public class CaregiverHomeFragment extends Fragment {
                         if (log == null){
                             remaining[0]--;
                             continue;
-                        } resolveMedName(log.getMedication_schedules_id(), (medName, stock) -> {
+                        }
+                        resolveMedName(log.getMedication_schedules_id(), (medName, stock, medType) -> {
                             if (!isAdded()) return;
-                            combined.add(new LogItem("medicine", medName, sdf.format(log.getScheduled_at().toDate()), getString(R.string.sisa_stok, stock), log.getStatus(),
-                                    log.getMedication_schedules_id(), log.getScheduled_at().toDate().getTime()));
+
+                            String info = "";
+                            if ("PIL".equals(medType)) {
+                                info = getString(R.string.sisa_stok, stock);
+                            }
+
+                            combined.add(new LogItem("medicine", medName,
+                                    sdf.format(log.getScheduled_at().toDate()), info, log.getStatus(),
+                                    log.getMedication_schedules_id(), log.getScheduled_at().toDate().getTime(),
+                                    log.getCreated_at() != null ? log.getCreated_at().toDate().getTime() : 0));
                             remaining[0]--;
                             if (remaining[0] <= 0){
                                 mergeAppointments(consumerUid, combined, startOfDay, startOfTomorrow);
@@ -398,9 +405,10 @@ public class CaregiverHomeFragment extends Fragment {
                         combined.add(new LogItem("appointment", appt.getTitle(),
                                 sdf.format(appt.getAppointment_at().toDate()),
                                 appt.getAddress(), appt.getStatus(),
-                                doc.getId(), appt.getAppointment_at().toDate().getTime()));
+                                doc.getId(), appt.getAppointment_at().toDate().getTime(),
+                                appt.getCreated_at() != null ? appt.getCreated_at().toDate().getTime() : 0)); // <-- BARU
                     }
-                    Collections.sort(combined, (a, b) -> a.getTime().compareTo(b.getTime()));
+                    Collections.sort(combined, (a, b) -> Long.compare(b.getCreatedAtMillis(), a.getCreatedAtMillis())); // <-- diganti
                     List<LogItem> displayList = combined.size() > 3 ? combined.subList(0,3) : combined;
                     TodayScheduleAdapter adapter = new TodayScheduleAdapter(displayList, requireContext());
                     adapter.setOnItemClickListener(this::navigateToReminder);

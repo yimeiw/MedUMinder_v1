@@ -18,7 +18,7 @@ public class Notification {
     private String target_role;
 
     private boolean is_read;
-
+    private boolean is_new_schedule;
     private Timestamp created_at, updated_at;
     public String getNotification_id() {
         return notification_id;
@@ -119,6 +119,14 @@ public class Notification {
 
     public void setIs_read(boolean is_read) {
         this.is_read = is_read;
+    }
+
+    public boolean isIs_new_schedule() {
+        return is_new_schedule;
+    }
+
+    public void setIs_new_schedule(boolean is_new_schedule) {
+        this.is_new_schedule = is_new_schedule;
     }
 
     public Timestamp getCreated_at() {

@@ -212,7 +212,7 @@ public class AlarmActionReceiver extends BroadcastReceiver {
 
     /**
      * Menambahkan snooze_count pada medication_logs.
-     *
+     * <p>
      * Menggunakan set() + SetOptions.merge() agar dokumen tetap bisa
      * dibuat apabila medication_logs untuk jadwal tersebut belum ada.
      */
@@ -277,185 +277,54 @@ public class AlarmActionReceiver extends BroadcastReceiver {
                         scheduledAtMillis
                 );
 
-        FirebaseFirestore db =
-                FirebaseFirestore.getInstance();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        /*
-         * ------------------------------------------------------------
-         * 1. Update medication log
-         * ------------------------------------------------------------
-         */
         db.collection("medication_logs")
                 .document(logId)
-                .update(
-                        "status",
-                        "dikonsumsi",
-                        "taken_at",
-                        Timestamp.now()
-                )
+                .update("status", "dikonsumsi", "taken_at", Timestamp.now())
                 .addOnSuccessListener(unused -> {
-
-                    /*
-                     * ------------------------------------------------
-                     * 2. Ambil medication_id dari schedule
-                     * ------------------------------------------------
-                     */
                     db.collection("medication_schedules")
                             .document(scheduleId)
                             .get()
                             .addOnSuccessListener(scheduleDoc -> {
-
-                                String medicationId =
-                                        scheduleDoc.getString(
-                                                "medication_id"
-                                        );
-
-                                if (medicationId == null
-                                        || medicationId.isEmpty()) {
-
-                                    Log.e(
-                                            TAG,
-                                            "medication_id tidak ditemukan"
-                                    );
-
-                                    stopAlarmService(
-                                            context,
-                                            pendingResult
-                                    );
+                                String medicationId = scheduleDoc.getString("medication_id");
+                                if (medicationId == null || medicationId.isEmpty()) {
+                                    stopAlarmService(context, pendingResult);
 
                                     return;
                                 }
 
-                                /*
-                                 * ------------------------------------
-                                 * 3. Kurangi stock obat
-                                 * ------------------------------------
-                                 */
-                                MedicationRepo medicationRepo =
-                                        new MedicationRepo();
-
-                                medicationRepo.decrementStock(
-                                        medicationId,
-                                        new RepoCallback<Void>() {
-
+                                MedicationRepo medicationRepo = new MedicationRepo(context);
+                                medicationRepo.decrementStock(medicationId, new RepoCallback<Void>() {
                                             @Override
-                                            public void onSuccess(
-                                                    Void result
-                                            ) {
-
-                                                Log.d(
-                                                        TAG,
-                                                        "Stock berhasil diproses"
-                                                );
-
-                                                stopAlarmService(
-                                                        context,
-                                                        pendingResult
-                                                );
+                                            public void onSuccess(Void result) {
+                                                stopAlarmService(context, pendingResult);
                                             }
-
                                             @Override
-                                            public void onFailure(
-                                                    Exception e
-                                            ) {
-
-                                                Log.e(
-                                                        TAG,
-                                                        "Gagal memproses stock",
-                                                        e
-                                                );
-
-                                                stopAlarmService(
-                                                        context,
-                                                        pendingResult
-                                                );
+                                            public void onFailure(Exception e) {
+                                                stopAlarmService(context, pendingResult);
                                             }
                                         }
                                 );
                             })
                             .addOnFailureListener(e -> {
-
-                                Log.e(
-                                        TAG,
-                                        "Gagal mengambil medication schedule",
-                                        e
-                                );
-
-                                stopAlarmService(
-                                        context,
-                                        pendingResult
-                                );
+                                stopAlarmService(context, pendingResult);
                             });
                 })
                 .addOnFailureListener(e -> {
-
-                    Log.e(
-                            TAG,
-                            "Gagal update status log. logId="
-                                    + logId,
-                            e
-                    );
-
-                    stopAlarmService(
-                            context,
-                            pendingResult
-                    );
+                    stopAlarmService(context, pendingResult);
                 });
     }
 
-    /**
-     * Stop AlarmRingingService dan selesaikan PendingResult.
-     */
-    private void stopAlarmService(
-            Context context,
-            PendingResult pendingResult
-    ) {
-
-        context.stopService(
-                new Intent(
-                        context,
-                        AlarmRingingService.class
-                )
-        );
-
+    private void stopAlarmService(Context context, PendingResult pendingResult) {
+        context.stopService(new Intent(context, AlarmRingingService.class));
         pendingResult.finish();
     }
 
-    /**
-     * Membuat ID medication_logs berdasarkan:
-     *
-     * scheduleId + tanggal + jam:menit
-     *
-     * Contoh:
-     * schedule123_2026-09-17_2100
-     */
-    private String buildLogId(
-            String scheduleId,
-            long scheduledAtMillis
-    ) {
-
-        LocalDateTime dt =
-                LocalDateTime.ofInstant(
-                        Instant.ofEpochMilli(
-                                scheduledAtMillis
-                        ),
-                        ZoneId.systemDefault()
-                );
-
-        LocalDate date =
-                dt.toLocalDate();
-
-        String cleanTime =
-                dt.format(
-                        DateTimeFormatter.ofPattern(
-                                "HHmm"
-                        )
-                );
-
-        return scheduleId
-                + "_"
-                + date
-                + "_"
-                + cleanTime;
+    private String buildLogId(String scheduleId, long scheduledAtMillis) {
+        LocalDateTime dt = LocalDateTime.ofInstant(Instant.ofEpochMilli(scheduledAtMillis), ZoneId.systemDefault());
+        LocalDate date = dt.toLocalDate();
+        String cleanTime =dt.format(DateTimeFormatter.ofPattern("HHmm"));
+        return scheduleId + "_" + date + "_" + cleanTime;
     }
 }

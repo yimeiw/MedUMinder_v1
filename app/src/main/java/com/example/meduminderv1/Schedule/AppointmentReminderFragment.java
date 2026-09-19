@@ -76,7 +76,7 @@ public class AppointmentReminderFragment extends Fragment {
         selectedCalendar = Calendar.getInstance();
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
-        notificationRepo = new NotificationRepo();
+        notificationRepo = new NotificationRepo(requireContext());
 
         View pickerRoot = viewF.findViewById(R.id.consumerPicker);
         consumerPickerHelper = new ConsumerPickerHelper(pickerRoot, requireContext(), uid -> {
@@ -111,7 +111,7 @@ public class AppointmentReminderFragment extends Fragment {
                     .setTimeFormat(TimeFormat.CLOCK_24H)
                     .setHour(selectedCalendar.get(Calendar.HOUR_OF_DAY))
                     .setMinute(selectedCalendar.get(Calendar.MINUTE))
-                    .setTitleText("Pilih Jam Appointment")
+                    .setTitleText(getString(R.string.pilih_jam_appointment_title))
                     .build();
 
             picker.addOnPositiveButtonClickListener(v2 -> {
@@ -154,7 +154,7 @@ public class AppointmentReminderFragment extends Fragment {
 
     private void saveAppointment() {
         if (targetUid == null){
-            Toast.makeText(requireContext(), "Pilih consumer terlebih dahulu", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.pilih_consumer_dahulu), Toast.LENGTH_SHORT).show();
             btnSaveAppoint.setEnabled(true);
             return;
         }
@@ -162,27 +162,24 @@ public class AppointmentReminderFragment extends Fragment {
         String location = location_input.getText().toString().trim();
 
         if (nameAppoint.isEmpty()){
-            namaAppointment.setError("Nama Appointment wajib diisi.");
+            namaAppointment.setError(getString(R.string.nama_appointment_wajib_diisi));
             btnSaveAppoint.setEnabled(true);
             return;
         } if (location.isEmpty()){
-            location_input.setError("Lokasi Appointment wajib diisi.");
+            location_input.setError(getString(R.string.lokasi_appointment_wajib_diisi));
             btnSaveAppoint.setEnabled(true);
             return;
         } if (!isDatePicked) {
-            Toast.makeText(requireContext(), "Tanggal Appointment wajib diisi.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.tanggal_appointment_wajib_diisi), Toast.LENGTH_SHORT).show();
             btnSaveAppoint.setEnabled(true);
             return;
         } if (!isTimePicked){
-            Toast.makeText(requireContext(), "Waktu Appointment wajib diisi.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.waktu_appointment_wajib_diisi), Toast.LENGTH_SHORT).show();
             btnSaveAppoint.setEnabled(true);
             return;
         }
-        // getCurrentUser() bisa null kalau sesi auth belum siap/expired saat tombol
-        // Simpan ditekan. Kalau gak dicek, baris .getUid() di bawah bakal NPE
-        // langsung di click listener -> crash tanpa toast/error yang jelas.
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
-            Toast.makeText(requireContext(), "Sesi login bermasalah, coba login ulang", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.sesi_login_bermasalah), Toast.LENGTH_SHORT).show();
             return;
         }
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -210,10 +207,10 @@ public class AppointmentReminderFragment extends Fragment {
             notif.setSender_uid(uid);
             notif.setReference_id(documentReference.getId());
             notif.setType(NotificationType.Appointment);
-            notif.setTitle("Jadwal Appointment Baru");
+            notif.setTitle(getString(R.string.jadwal_appointment_baru_title));
             notif.setMessage(isForSelf
-                    ? "Anda menambahkan jadwal appointment: " + nameAppoint
-                    : "Caregiver menambahkan jadwal appointment " + nameAppoint + " untuk Anda");
+                    ? getString(R.string.anda_menambahkan_jadwal_appointment_msg, nameAppoint)
+                    : getString(R.string.caregiver_menambahkan_jadwal_appointment_anda_msg, nameAppoint));
             notif.setTarget_role(UserRole.Consumer.name());
             notif.setIs_read(false);
             notificationRepo.createNotification(notif, new RepoCallback<Void>() {
@@ -226,8 +223,8 @@ public class AppointmentReminderFragment extends Fragment {
                 selfNotif.setSender_uid(uid);
                 selfNotif.setReference_id(documentReference.getId());
                 selfNotif.setType(NotificationType.Appointment);
-                selfNotif.setTitle("Appointment Ditambahkan");
-                selfNotif.setMessage("Anda menambahkan jadwal appointment " + nameAppoint + " untuk consumer Anda.");
+                selfNotif.setTitle(getString(R.string.appointment_ditambahkan_title));
+                selfNotif.setMessage(getString(R.string.anda_menambahkan_jadwal_appointment_consumer_msg, nameAppoint));
                 selfNotif.setTarget_role(UserRole.Caregiver.name());
                 selfNotif.setIs_read(false);
                 notificationRepo.createNotification(selfNotif, new RepoCallback<Void>() {
@@ -236,7 +233,7 @@ public class AppointmentReminderFragment extends Fragment {
                 });
             }
             AppointmentAlertScheduler.scheduleAlerts(requireContext(), documentReference.getId(), nameAppoint, selectedCalendar.getTimeInMillis());
-            Toast.makeText(requireContext(), "Appointment berhasil disimpan", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.appointment_berhasil_disimpan), Toast.LENGTH_SHORT).show();
             AlarmSchedulerHelper.scheduleAppointment(
                     requireContext(),
                     documentReference.getId(),

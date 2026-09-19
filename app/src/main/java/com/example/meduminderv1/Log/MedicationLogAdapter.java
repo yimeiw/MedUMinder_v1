@@ -62,10 +62,10 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
         if (namaObatCache.containsKey(medication_schedules_id)){
             holder.namaObatLog.setText(namaObatCache.get(medication_schedules_id));
         } else {
-            holder.namaObatLog.setText("Memuat....");
+            holder.namaObatLog.setText(context.getString(R.string.loading));
             loadNamaObat(medication_schedules_id, holder);
         }
-        holder.currStatus.setText(statusLog.displayLabel(false));
+        holder.currStatus.setText(statusLog.displayLabel(context, false));
         if (medicationLog.getScheduled_at() != null) {
             Locale localeId = new Locale("id", "ID");
             SimpleDateFormat sdf = new SimpleDateFormat("EEEE, dd MMM - HH:mm", localeId);
@@ -168,7 +168,7 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
                                 } else {
                                     String catalog_id = medication.getCatalog_id();
                                     if (catalog_id == null) {
-                                        holder.namaObatLog.setText("Nama obat tidak ditemukan!");
+                                        holder.namaObatLog.setText(context.getString(R.string.nama_obat_tidak_ditemukan));
                                         return;
                                     }
                                     db.collection("medicine_catalog").document(catalog_id)

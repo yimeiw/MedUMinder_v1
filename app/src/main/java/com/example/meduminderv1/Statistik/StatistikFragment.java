@@ -43,19 +43,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link StatistikFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class StatistikFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
 
@@ -79,33 +68,6 @@ public class StatistikFragment extends Fragment {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment StatistikFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static StatistikFragment newInstance(String param1, String param2) {
-        StatistikFragment fragment = new StatistikFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -126,21 +88,21 @@ public class StatistikFragment extends Fragment {
 
         btnWeekly.setOnClickListener(v -> {
             selectedPeriod = "weekly";
-            Toast.makeText(requireContext(), "Filter Mingguan terpilih", Toast.LENGTH_SHORT).show();
-            updatePeriodButton(v);   // <-- pakai "v" (View tombol yang diklik), bukan requireView()
+            Toast.makeText(requireContext(), getString(R.string.filter_mingguan_terpilih), Toast.LENGTH_SHORT).show();
+            updatePeriodButton(v);
             loadStats();
         });
 
         btnMonthly.setOnClickListener(v -> {
             selectedPeriod = "monthly";
-            Toast.makeText(requireContext(), "Filter Bulanan terpilih", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.filter_bulanan_terpilih), Toast.LENGTH_SHORT).show();
             updatePeriodButton(v);
             loadStats();
         });
 
         btnYearly.setOnClickListener(v -> {
             selectedPeriod = "yearly";
-            Toast.makeText(requireContext(), "Filter Tahunan terpilih", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.filter_tahunan_terpilih), Toast.LENGTH_SHORT).show();
             updatePeriodButton(v);
             loadStats();
         });
@@ -159,10 +121,8 @@ public class StatistikFragment extends Fragment {
 
         btnDownloadReport.setOnClickListener(v -> {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                // Android 10 ke atas: gak perlu izin lagi, langsung lewat MediaStore
                 downloadReport();
             } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                // Android 6 - 9: masih pakai cara lama, minta izin dulu
                 if (requireContext().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                     requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
                 } else {
@@ -188,7 +148,7 @@ public class StatistikFragment extends Fragment {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 downloadReport();
             } else {
-                Toast.makeText(requireContext(), "Izin penyimpanan diperlukan untuk mengunduh laporan", Toast.LENGTH_LONG).show();
+                Toast.makeText(requireContext(), getString(R.string.izin_penyimpanan_diperlukan), Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -196,7 +156,7 @@ public class StatistikFragment extends Fragment {
     private void loadStats(){
         String uid = com.example.meduminderv1.Auth.SessionManager.getInstance().getTargetUid();
         if (uid == null || uid.isEmpty()) {
-            Toast.makeText(requireContext(), "Data pengguna tidak ditemukan", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.data_pengguna_tidak_ditemukan), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -230,16 +190,11 @@ public class StatistikFragment extends Fragment {
                     tvAdherenceDescription.setText(R.string.desc_kepatuhan_rendah);
                 }
 
-                tvTotalTaken.setText(totalDikonsumsi + " Obat");
-                tvTotalIgnored.setText(totalDiabaikan + " Obat");
-                tvTotalSnooze.setText(totalSnooze + " Obat");
+                tvTotalTaken.setText(getString(R.string.jumlah_obat, totalDikonsumsi));
+                tvTotalIgnored.setText(getString(R.string.jumlah_obat, totalDiabaikan));
+                tvTotalSnooze.setText(getString(R.string.jumlah_obat, totalSnooze));
 
-                android.util.Log.d(
-                        "STAT_DEBUG",
-                        "Taken=" + totalDikonsumsi
-                                + ", Ignored=" + totalDiabaikan
-                                + ", Snooze=" + totalSnooze
-                );
+                android.util.Log.d("STAT_DEBUG", "Taken=" + totalDikonsumsi + ", Ignored=" + totalDiabaikan + ", Snooze=" + totalSnooze);
 
                 renderAdherenceChart(weekStats);
                 renderResponseAnalysis(totalDikonsumsi, totalDiabaikan, totalSnooze);
@@ -266,7 +221,7 @@ public class StatistikFragment extends Fragment {
             labels.add(stat.label);
         }
 
-        BarDataSet dataSet = new BarDataSet(entries, "Persentase Kepatuhan");
+        BarDataSet dataSet = new BarDataSet(entries, getString(R.string.persentaseKepatuhan));
 
         int pink = requireContext().getColor(R.color.pink);
 
@@ -311,17 +266,17 @@ public class StatistikFragment extends Fragment {
         ArrayList<Integer> colors = new ArrayList<>();
 
         if (totalDikonsumsi > 0) {
-            entries.add(new PieEntry(totalDikonsumsi, "Dikonsumsi"));
+            entries.add(new PieEntry(totalDikonsumsi, getString(R.string.dikonsumsi)));
             colors.add(requireContext().getColor(R.color.green));
         }
 
         if (totalSnooze > 0) {
-            entries.add(new PieEntry(totalSnooze, "Remind Me Later"));
+            entries.add(new PieEntry(totalSnooze, getString(R.string.response_snooze_label)));
             colors.add(requireContext().getColor(R.color.gray));
         }
 
         if (totalDiabaikan > 0) {
-            entries.add(new PieEntry(totalDiabaikan, "Diabaikan"));
+            entries.add(new PieEntry(totalDiabaikan, getString(R.string.response_diabaikan_label)));
             colors.add(requireContext().getColor(R.color.pink));
         }
 
@@ -341,7 +296,7 @@ public class StatistikFragment extends Fragment {
         chart.getDescription().setEnabled(false);
         chart.setDrawEntryLabels(false);
         chart.setUsePercentValues(true);
-        chart.setCenterText("Response");
+        chart.setCenterText(getString(R.string.response_center_label));
         chart.setCenterTextSize(14f);
         chart.getLegend().setEnabled(false);
         chart.setHoleRadius(55f);
@@ -351,14 +306,14 @@ public class StatistikFragment extends Fragment {
 
     private void downloadReport() {
         if (statistikContent == null) {
-            Toast.makeText(requireContext(), "Gagal mengambil laporan", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.gagal_mengambil_laporan), Toast.LENGTH_SHORT).show();
             return;
         }
 
         int contentWidth = statistikContent.getWidth();
         if (contentWidth <= 0) contentWidth = statistikContent.getMeasuredWidth();
         if (contentWidth <= 0) {
-            Toast.makeText(requireContext(), "Gagal mengambil ukuran laporan", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.gagal_mengambil_ukuran_laporan), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -372,7 +327,7 @@ public class StatistikFragment extends Fragment {
         statistikContent.layout(0, 0, width, height);
 
         if (width <= 0 || height <= 0) {
-            Toast.makeText(requireContext(), "Laporan tidak memiliki ukuran yang valid", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.laporan_ukuran_tidak_valid), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -396,9 +351,8 @@ public class StatistikFragment extends Fragment {
         }
 
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-        String fileName = "Laporan_Statistik_" + timestamp + ".pdf";
+        String fileName = getString(R.string.nama_file_laporan_statistik) + "_" + timestamp + ".pdf";
 
-        // Ini bagian yang beda per versi Android
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
             saveViaMediaStore(document, fileName);
         } else {
@@ -406,7 +360,6 @@ public class StatistikFragment extends Fragment {
         }
     }
 
-    // Cara BARU (Android 10 ke atas): titip file lewat "loket resmi" MediaStore, gak perlu izin
     private void saveViaMediaStore(PdfDocument document, String fileName) {
         android.content.ContentValues values = new android.content.ContentValues();
         values.put(android.provider.MediaStore.Downloads.DISPLAY_NAME, fileName);
@@ -418,7 +371,7 @@ public class StatistikFragment extends Fragment {
 
         if (itemUri == null) {
             document.close();
-            Toast.makeText(requireContext(), "Gagal membuat file laporan", Toast.LENGTH_LONG).show();
+            Toast.makeText(requireContext(), getString(R.string.gagal_membuat_file_laporan), Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -430,10 +383,10 @@ public class StatistikFragment extends Fragment {
             values.put(android.provider.MediaStore.Downloads.IS_PENDING, 0);
             resolver.update(itemUri, values, null, null);
 
-            Toast.makeText(requireContext(), "Laporan berhasil diunduh", Toast.LENGTH_LONG).show();
+            Toast.makeText(requireContext(), getString(R.string.laporan_berhasil_diunduh), Toast.LENGTH_LONG).show();
         } catch (IOException e) {
             document.close();
-            Toast.makeText(requireContext(), "Gagal mengunduh laporan", Toast.LENGTH_LONG).show();
+            Toast.makeText(requireContext(), getString(R.string.gagal_mengunduh_laporan), Toast.LENGTH_LONG).show();
             e.printStackTrace();
         }
     }
@@ -446,7 +399,7 @@ public class StatistikFragment extends Fragment {
             boolean created = downloadFolder.mkdirs();
             if (!created && !downloadFolder.exists()) {
                 document.close();
-                Toast.makeText(requireContext(), "Gagal membuat folder Download", Toast.LENGTH_LONG).show();
+                Toast.makeText(requireContext(), getString(R.string.gagal_membuat_folder_download), Toast.LENGTH_LONG).show();
                 return;
             }
         }
@@ -458,10 +411,10 @@ public class StatistikFragment extends Fragment {
             document.writeTo(outputStream);
             outputStream.close();
             document.close();
-            Toast.makeText(requireContext(), "Laporan berhasil diunduh", Toast.LENGTH_LONG).show();
+            Toast.makeText(requireContext(), getString(R.string.laporan_berhasil_diunduh), Toast.LENGTH_LONG).show();
         } catch (IOException e) {
             document.close();
-            Toast.makeText(requireContext(), "Gagal mengunduh laporan", Toast.LENGTH_LONG).show();
+            Toast.makeText(requireContext(), getString(R.string.gagal_mengunduh_laporan), Toast.LENGTH_LONG).show();
             e.printStackTrace();
         }
     }

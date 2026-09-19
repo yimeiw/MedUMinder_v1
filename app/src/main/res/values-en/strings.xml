@@ -86,6 +86,7 @@
 
     <string name="saveChanges">Save Changes</string>
     <string name="ubahPengingat">Edit Reminder</string>
+    <string name="tambahkan">Add</string>
 
     <!-- Home Page -->
     <string name="home_greeting">Hello, %1$s!</string>
@@ -123,7 +124,6 @@
 
     <string name="dosis_seharusnya">Scheduled Dose</string>
     <string name="dosis_dikonsumsi">Dose Taken</string>
-    <string name="persentase_kepatuhan">Adherence Percentage</string>
 
     <string name="hari_ini">Today</string>
     <string name="besok">Tomorrow</string>
@@ -191,12 +191,19 @@
     <string name="tanggal_selesai_minum_obat">Medication End Consumption Date</string>
     <string name="masukkan_jumlah_stok_obat">Enter your medicine stock quantity</string>
     <string name="save_reminder">Save Reminder</string>
+    <string-array name="frekuensi_array">
+        <item>Once daily</item>
+        <item>Twice daily</item>
+        <item>Three times daily</item>
+        <item>Four times daily</item>
+        <item>Five times daily</item>
+        <item>Six times daily</item>
+    </string-array>
 
     <!-- relation -->
     <string name="belum_ada_relasi">No relationships yet.</string>
 
     <!-- log -->
-
     <string name="belum_ada_riwayat_konsumsi">No consumption history yet.</string>
     <string name="terlewatkan">Missed</string>
     <string name="belum_ada_riwayat_jadwal_temu">No appointment history yet.</string>
@@ -217,11 +224,13 @@
     <string name="cancel">Cancel</string>
 
     <!-- appointment reminder -->
+    <string name="simpan_appointment">Save Appointment</string>
     <string name="masukkan_nama_appointment">Enter your appointment name</string>
     <string name="lokasi_appointment">Appointment Location</string>
     <string name="masukkan_lokasi_appointment">Enter your appointment location</string>
     <string name="tanggal_appointment">Appointment Date</string>
     <string name="jam_appointment">Appointment Time</string>
+    <string name="tambahkan_appointment">Add Appointment</string>
 
     <!-- pilih consumer -->
     <string name="pilih_consumer">Select Consumer</string>
@@ -241,6 +250,9 @@
     <string name="dont_have_account">Dont have an account yet?</string>
 
     <!-- izin -->
+    <string name="izin_alarm_toast">Please enable the \"Alarm &amp; reminder\" permission first so medication notifications can appear</string>
+    <string name="pilih_jam_minum_obat_title">Select Medication Time</string>
+    <string name="caregiver_menambahkan_jadwal_untuk_anda">%1$s added a medication schedule %2$s for you</string>
     <string name="izin_alarm_dibutuhkan">Alarm Permission Required</string>
     <string name="izin_alarm_message">To ensure medicine reminders sound on time, enable alarm &amp; reminder permission for MedUMinder.</string>
     <string name="aktifkan">Enable</string>
@@ -273,4 +285,240 @@
     <string name="invitation_pending">Invitation is still pending.</string>
     <string name="undangan_diterima">Your invitation was accepted.</string>
     <string name="undangan_ditolak">Your invitation was rejected.</string>
+    <string name="email_terdaftar_google_msg">This email is registered with a Google account. Please sign in with Google.</string>
+    <string name="password_tidak_boleh_kosong">Password cannot be empty.</string>
+    <string name="undangan_terkirim_full_msg">Your invitation to %1$s as %2$s has been sent and is awaiting a response.</string>
+    <string name="sender_mengundang_anda_msg">%1$s invited you to become a %2$s</string>
+    <string name="notif_type_invitation">Invitation</string>
+    <string name="notif_type_medicine">Medicine Reminder</string>
+    <string name="notif_type_appointment">Appointment Reminder</string>
+    <string name="notif_type_stock">Low Stock Reminder</string>
+    <string name="notif_type_default">Notification</string>
+
+    <string name="obat_nol">0 Medicine(s)</string>
+    <string name="waktu_hint_spasi">00 : 00</string>
+    <string name="waktu_default">00:00</string>
+    <string name="contoh_lokasi">Sample location</string>
+    <string name="akun_google_sudah_terhubung_toast">Google account is already connected.</string>
+    <string name="akun_berhasil_dibuat_pesan">Account created successfully.\n</string>
+    <string name="akun_berhasil_dihapus">Account deleted successfully</string>
+    <string name="anda_menambahkan_jadwal_appointment">You added an appointment schedule </string>
+    <string name="anda_menambahkan_jadwal_minum_obat">You added a medication schedule </string>
+    <string name="pesan_pengingat_terkirim_consumer">You sent a reminder to the consumer to check their schedule.</string>
+    <string name="appointment_sudah_ditandai_dihadiri_msg">You have already marked this appointment as attended.</string>
+    <string name="contoh_nama_obat">Antimo</string>
+    <string name="konfirmasi_ganti_role_msg">Are you sure you want to switch to the role </string>
+    <string name="konfirmasi_logout">Are you sure you want to log out?</string>
+    <string name="konfirmasi_hapus_akun_msg">Are you sure you want to delete your account?\nAll data will be permanently deleted.</string>
+    <string name="konfirmasi_hapus_hubungan_msg">Are you sure you want to remove your relationship with </string>
+    <string name="aplikasi_email_tidak_ditemukan">No email app found.</string>
+    <string name="label_appointment_colon">Appointment: </string>
+    <string name="appointment_ditambahkan_title">Appointment Added</string>
+    <string name="appointment_id_tidak_ditemukan">Appointment ID not found</string>
+    <string name="appointment_berhasil_dihapus">Appointment deleted successfully</string>
+    <string name="appointment_berhasil_diperbarui">Appointment updated successfully</string>
+    <string name="appointment_berhasil_disimpan">Appointment saved successfully</string>
+    <string name="appointment_ditandai_dihadiri">Appointment marked as attended</string>
+    <string name="appointment_tidak_ditemukan">Appointment not found</string>
+    <string name="bagikan">Share</string>
+    <string name="batalkan_status">Undo Status</string>
+    <string name="belum_ada_consumer">No consumer yet</string>
+    <string name="buka_email">Open Email</string>
+    <string name="caregiver_menghapus_jadwal_msg">Caregiver deleted the schedule </string>
+    <string name="caregiver_mengubah_jadwal_appointment_msg">Caregiver changed the appointment schedule </string>
+    <string name="consumer_sudah_menghadiri_appointment">Consumer Has Attended the Appointment</string>
+    <string name="consumer_sudah_minum_obat">Consumer Has Taken the Medicine</string>
+    <string name="data_appointment_tidak_ditemukan">Appointment data not found</string>
+    <string name="data_appointment_tidak_lengkap">Appointment data is incomplete</string>
+    <string name="data_pengguna_tidak_ditemukan">User data not found</string>
+    <string name="data_reminder_belum_lengkap">Reminder data is incomplete</string>
+    <string name="data_reminder_tidak_ditemukan">Reminder data not found</string>
+    <string name="edit_appointment_title">Edit Appointment</string>
+    <string name="email_belum_diverifikasi_title">Email Not Verified</string>
+    <string name="email_sudah_terdaftar_title">Email Already Registered</string>
+    <string name="email_berhasil_dikirim">Email sent successfully</string>
+    <string name="email_harus_diisi">Email must be filled in</string>
+    <string name="email_sudah_digunakan_msg">This email is already in use. Please log in or use a different email.</string>
+    <string name="email_sudah_terdaftar_password_msg">This email is already registered with a password. Please log in using your email and password.</string>
+    <string name="email_tidak_valid">Invalid email</string>
+    <string name="filter_bulanan_terpilih">Monthly filter selected</string>
+    <string name="filter_mingguan_terpilih">Weekly filter selected</string>
+    <string name="filter_tahunan_terpilih">Yearly filter selected</string>
+    <string name="frekuensi_minum_obat_wajib_diisi">Medication frequency is required</string>
+    <string name="gagal_membuat_file_laporan">Failed to create report file</string>
+    <string name="gagal_membuat_folder_download">Failed to create Download folder</string>
+    <string name="gagal_mengambil_laporan">Failed to retrieve report</string>
+    <string name="gagal_mengambil_ukuran_laporan">Failed to retrieve report size</string>
+    <string name="gagal_menghapus_msg">Failed to delete: </string>
+    <string name="gagal_menghapus_appointment">Failed to delete appointment</string>
+    <string name="gagal_menghapus_jadwal">Failed to delete schedule</string>
+    <string name="gagal_mengubah_status_appointment">Failed to change appointment status</string>
+    <string name="gagal_mengunduh_laporan">Failed to download report</string>
+    <string name="gagal_update_status_msg">Failed to update status: </string>
+    <string name="ganti_role_title">Switch Role</string>
+    <string name="google_berhasil_dihubungkan">Google connected successfully.</string>
+    <string name="hapus_hubungan_title">Remove Relationship</string>
+    <string name="hubungan_berhasil_dihapus">Relationship removed successfully</string>
+    <string name="hubungkan">Connect</string>
+    <string name="hubungkan_google_title">Connect Google</string>
+    <string name="hubungkan_akun_google_msg">Connect your Google account to this account?</string>
+    <string name="isi_ulang_obat_notif_title">REFILL MEDICINE (</string>
+    <string name="invitation_title">Invitation </string>
+    <string name="invitation_berhasil_dikirim">Invitation sent successfully.</string>
+    <string name="invite_caregiver_btn">Invite Caregiver</string>
+    <string name="invite_consumer_btn">Invite Consumer</string>
+    <string name="izin_penyimpanan_diperlukan">Storage permission is required to download the report</string>
+    <string name="jadwal_appointment_baru_title">New Appointment Schedule</string>
+    <string name="jadwal_appointment_diperbarui_title">Appointment Schedule Updated</string>
+    <string name="jadwal_obat_baru_title">New Medication Schedule</string>
+    <string name="jadwal_obat_diperbarui_title">Medication Schedule Updated</string>
+    <string name="jadwal_obat_ditambahkan_title">Medication Schedule Added</string>
+    <string name="jadwal_berhasil_dihapus">Schedule deleted successfully</string>
+    <string name="jadwal_tidak_ditemukan">Schedule not found</string>
+    <string name="jam_minum_obat_label">Medication Time </string>
+    <string name="jam_minum_tidak_boleh_sama">Medication times cannot be the same.</string>
+    <string name="jam_tersebut_sudah_dipilih">That time has already been selected.</string>
+    <string name="laporan_berhasil_diunduh">Report downloaded successfully</string>
+    <string name="laporan_ukuran_tidak_valid">The report does not have a valid size</string>
+    <string name="linked_status">Linked</string>
+    <string name="logout_title">Logout</string>
+    <string name="lokasi_appointment_wajib_diisi">Appointment location is required.</string>
+    <string name="masukkan_email_dahulu">Please enter your email first.</string>
+    <string name="brand_med">Med</string>
+    <string name="aktivasi_caregiver_msg">Activates caregiver access to monitor and help remind the consumer to take their medicine.</string>
+    <string name="brand_minder">Minder</string>
+    <string name="nada_1">Tone 1</string>
+    <string name="nama_appointment_wajib_diisi">Appointment name is required.</string>
+    <string name="nama_berhasil_diperbarui">Name updated successfully</string>
+    <string name="nama_harus_diisi">Name must be filled in</string>
+    <string name="nama_maksimal_50_karakter">Name must be at most 50 characters</string>
+    <string name="nama_minimal_4_karaker_typo">Name must be at least 4 characters</string>
+    <string name="nama_obat_tidak_ditemukan">Medicine name not found!</string>
+    <string name="nama_obat_wajib_diisi">Medicine name is required</string>
+    <string name="not_linked_status">Not Linked</string>
+    <string name="notifikasi_tidak_ditemukan">Notification not found.</string>
+    <string name="ok_label">OK</string>
+    <string name="obat_ditandai_dikonsumsi">Medicine marked as taken</string>
+    <string name="obat_kosong_placeholder">Medicine: -</string>
+    <string name="password_harus_diisi">Password must be filled in</string>
+    <string name="password_min_6_karakter">Password must be more than 6 characters</string>
+    <string name="pengingat_terkirim_title">Reminder Sent</string>
+    <string name="pengingat_berhasil_diubah">Reminder updated successfully</string>
+    <string name="pengingat_dari_caregiver_title">Reminder from Caregiver</string>
+    <string name="pilih_jam_hint">Select Time</string>
+    <string name="pilih_role_title">Select Role</string>
+    <string name="pilih_consumer_dahulu">Please select a consumer first</string>
+    <string name="registrasi_berhasil_verifikasi_msg">Registration successful! Please verify your email then log in.</string>
+    <string name="reminder_berhasil_dibuat">Reminder created successfully</string>
+    <string name="reminder_berhasil_diperbarui">Reminder updated successfully</string>
+    <string name="riwayat_janji_temu">Appointment History</string>
+    <string name="role_caregiver_berhasil_diaktifkan">Caregiver role activated successfully.</string>
+    <string name="save_appointment_btn">Save Appointment</string>
+    <string name="schedule_id_tidak_ditemukan">Schedule ID not found</string>
+    <string name="seharusnya_label">Should be: </string>
+    <string name="sekarang_kamu_adalah_caregiver">You are now a Caregiver</string>
+    <string name="sekarang_kamu_adalah_consumer">You are now a Consumer</string>
+    <string name="semua_field_harus_diisi">All fields must be filled in.</string>
+    <string name="semua_jam_minum_harus_dipilih">All medication times must be selected.</string>
+    <string name="sesi_login_bermasalah">There is a problem with your login session, please log in again</string>
+    <string name="sesi_user_tidak_ditemukan">User session not found, please log in again</string>
+    <string name="silahkan_buka_email_reset_password">Please open your email to reset your password.</string>
+    <string name="silahkan_verifikasi_email_dahulu">Please verify your email first before logging in.</string>
+    <string name="sisa_stok_obat_label">Remaining medicine stock: </string>
+    <string name="status_berhasil_diperbarui">Status updated successfully</string>
+    <string name="stok_harus_angka">Stock must be a number</string>
+    <string name="stok_harus_lebih_dari_0">Stock must be greater than 0</string>
+    <string name="stok_obat_wajib_diisi">Medicine stock is required</string>
+    <string name="sudah_hadir_btn">Attended</string>
+    <string name="tambahkan_appointment_title">Add Appointment</string>
+    <string name="tanggal_appointment_wajib_diisi">Appointment date is required.</string>
+    <string name="email_belum_terdaftar_di_app_msg">However, that email is not yet registered on the MedUMinder app.</string>
+    <string name="placeholder_textview">TextView</string>
+    <string name="tutup_btn">Close</string>
+    <string name="undangan_label">Invitation </string>
+    <string name="undangan_anda_ke_label">Your invitation to </string>
+    <string name="undangan_baru_title">New Invitation</string>
+    <string name="undangan_terkirim_title">Invitation Sent</string>
+    <string name="undangan_berhasil_dibuat">Invitation created successfully.</string>
+    <string name="undangan_diterima_toast">Invitation accepted</string>
+    <string name="undangan_ditolak_toast">Invitation rejected</string>
+    <string name="unknown_label">Unknown</string>
+    <string name="update_appointment_btn">Update Appointment</string>
+    <string name="verifikasi_email_title">Verify Email</string>
+    <string name="waktu_appointment_wajib_diisi">Appointment time is required.</string>
+    <string name="ya_btn">Yes</string>
+    <string name="yakin_mau_menghapus_msg">Are you sure you want to delete </string>
+    <string name="format_tanggal_hint">dd/mm/yyyy</string>
+    <string name="placeholder_timestamp">timestamp</string>
+    <string name="separator_pipe">|</string>
+
+    <string name="appointment_lewat_konfirmasi_msg">This appointment has already passed. Did you still attend it?</string>
+    <string name="konfirmasi_hadir_appointment_msg">Have you attended this appointment?</string>
+    <string name="consumer_telah_menghadiri_appointment">%1$s has attended the appointment %2$s.</string>
+
+    <string name="default_appointment_label">this appointment</string>
+    <string name="default_jadwal_label">this schedule</string>
+    <string name="konfirmasi_hapus_item_msg">Are you sure you want to delete %1$s? All alarms for this schedule will be stopped.</string>
+    <string name="hapus_appointment_title">Delete Appointment</string>
+    <string name="hapus_jadwal_obat_title">Delete Medication Schedule</string>
+    <string name="jadwal_appointment_dihapus_title">Appointment Schedule Deleted</string>
+    <string name="jadwal_obat_dihapus_title">Medication Schedule Deleted</string>
+    <string name="caregiver_menghapus_jadwal_anda_full">Caregiver deleted your %1$s schedule</string>
+    <string name="consumer_menghapus_jadwal_msg">Consumer deleted the schedule: %1$s</string>
+    <string name="jadwal_consumer_telah_dihapus_msg">The %1$s schedule for the consumer has been deleted</string>
+    <string name="consumer_telah_minum_obat_msg">%1$s has taken the medication %2$s.</string>
+    <string name="waktu_alarm_tidak_ditemukan">Alarm time not found</string>
+    <string name="gagal_mengubah_status_obat">Failed to change medication status</string>
+    <string name="pengingat_ditunda_menit">Reminder snoozed for %1$d minutes</string>
+    <string name="data_jadwal_obat_tidak_ditemukan">Medication schedule data not found</string>
+    <string name="gagal_mengambil_pengaturan_snooze">Failed to retrieve snooze settings</string>
+
+    <string name="pilih_jam_appointment_title">Select Appointment Time</string>
+    <string name="caregiver_mengubah_jadwal_appointment_anda_full">Caregiver changed your %1$s appointment schedule</string>
+    <string name="consumer_mengubah_jadwal_appointment_msg">Consumer changed the appointment schedule: %1$s</string>
+    <string name="jadwal_appointment_consumer_diperbarui_msg">The %1$s appointment schedule for the consumer has been updated</string>
+
+    <string name="caregiver_mengubah_jadwal_obat_anda_full">%1$s changed your medication schedule for %2$s</string>
+    <string name="consumer_mengubah_jadwal_obat_msg">%1$s changed the medication schedule: %2$s</string>
+    <string name="jadwal_obat_consumer_diperbarui_msg">The medication schedule for %1$s has been updated for the consumer</string>
+
+    <string name="undangan_tidak_ditemukan">Invitation not found.</string>
+    <string name="undangan_sudah_tidak_tersedia">This invitation is no longer available.</string>
+    <string name="undangan_diterima_title">Invitation Accepted</string>
+    <string name="undangan_ditolak_title">Invitation Rejected</string>
+    <string name="relasi_mengawasi_anda_label">supervising you</string>
+    <string name="relasi_diawasi_anda_label">supervised by you</string>
+    <string name="invitation_accepted_result_msg">%1$s accepted the invitation as %2$s, %3$s.</string>
+    <string name="invitation_rejected_result_msg">%1$s rejected the invitation as %2$s.</string>
+    <string name="jadwal_obat_sudah_tidak_tersedia">This medication schedule is no longer available.</string>
+    <string name="riwayat_obat_sudah_tidak_tersedia">This medication history is no longer available.</string>
+    <string name="jadwal_appointment_sudah_tidak_tersedia">This appointment schedule is no longer available.</string>
+    <string name="obat_label_colon">Medicine: </string>
+    <string name="frekuensi_x_sehari_format">%1$dx daily</string>
+    <string name="caregiver_mengingatkan_periksa_jadwal_msg">%1$s reminded you to check your schedule right away.</string>
+
+    <string name="bagikan_link_aplikasi_msg">Share the app link so the person can sign up using that email.</string>
+    <string name="share_invitation_message">I\'m inviting you to join MedUMinder.\n\nPlease download the MedUMinder app using the link below:\n\n\nSign up using email or Google with this email: %1$s\n\nAfter logging in with that email, the invitation will automatically appear in the Notification menu.</string>
+    <string name="bagikan_melalui_title">Share via</string>
+
+    <string name="gagal_mengambil_statistik">Failed to load statistics</string>
+    <string name="konfirmasi_ganti_role_full_msg">Are you sure you want to switch to the %1$s role?</string>
+
+    <string name="konfirmasi_hapus_hubungan_full_msg">Are you sure you want to remove your relationship with %1$s?\n\nAfter removal, data access and reminder sync with this %2$s will be stopped.</string>
+
+    <string name="anda_menambahkan_jadwal_appointment_msg">You added an appointment schedule: %1$s</string>
+    <string name="caregiver_menambahkan_jadwal_appointment_anda_msg">Caregiver added an appointment schedule %1$s for you</string>
+    <string name="anda_menambahkan_jadwal_appointment_consumer_msg">You added an appointment schedule %1$s for your consumer.</string>
+
+    <string name="akun_berhasil_dibuat_verifikasi_msg">Account created successfully.\nWe have sent a verification email to: %1$s\nPlease verify your email before logging in.</string>
+    <string name="buka_email_btn">Open Email</string>
+
+    <string name="statistik_marker_detail_format">Expected: %1$d | Taken: %2$d\nAdherence: %3$d%%</string>
+
+    <string name="response_snooze_label">Remind Me Later</string>
+    <string name="response_diabaikan_label">Ignored</string>
+    <string name="response_center_label">Response</string>
+
+    <string name="nama_file_laporan_statistik">Statistics_Report</string>
+
 </resources>

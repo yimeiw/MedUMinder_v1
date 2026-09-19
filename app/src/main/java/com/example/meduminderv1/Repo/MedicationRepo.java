@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Repo;
 
+import android.content.Context;
+
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Model.Medication;
 import com.example.meduminderv1.Model.MedicationSchedules;
@@ -15,10 +17,13 @@ import java.util.Map;
 
 public class MedicationRepo {
     FirebaseFirestore db;
+    private final Context context;
 
-    public MedicationRepo(){
+    public MedicationRepo(Context context){
+        this.context = context.getApplicationContext();
         db = FirebaseFirestore.getInstance();
     }
+
 
     //med
     public void saveMedication(Medication medication, RepoCallback<String> callback){
@@ -180,13 +185,8 @@ public class MedicationRepo {
                 .addOnFailureListener(callback::onFailure);
     }
 
-    private void createStockNotification(
-            Medication med,
-            String medicationId,
-            String medicineName,
-            RepoCallback<Void> callback
-    ) {
-        NotificationRepo notificationRepo = new NotificationRepo();
+    private void createStockNotification(Medication med, String medicationId, String medicineName, RepoCallback<Void> callback) {
+        NotificationRepo notificationRepo = new NotificationRepo(context);
 
         notificationRepo.createStockNotification(
                 med.getUsers_id(),

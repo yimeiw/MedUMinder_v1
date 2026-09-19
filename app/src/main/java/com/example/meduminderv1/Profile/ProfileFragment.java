@@ -207,11 +207,7 @@ public class ProfileFragment extends Fragment {
                     public void onFailure(Exception e) {
                         if (!isAdded()) return;
 
-                        Toast.makeText(
-                                requireContext(),
-                                "Gagal mengambil statistik",
-                                Toast.LENGTH_SHORT
-                        ).show();
+                        Toast.makeText(requireContext(), getString(R.string.gagal_mengambil_statistik), Toast.LENGTH_SHORT).show();
                     }
                 }
         );
@@ -219,14 +215,14 @@ public class ProfileFragment extends Fragment {
 
     private void showLogoutDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Logout");
-        builder.setMessage("Apakah Anda yakin ingin logout?");
+        builder.setTitle(getString(R.string.logout_title));
+        builder.setMessage(getString(R.string.konfirmasi_logout));
 
-        builder.setPositiveButton("Ya", (dialog, which) -> {
+        builder.setPositiveButton(getString(R.string.ya_btn), (dialog, which) -> {
             logoutUser();
         });
 
-        builder.setNegativeButton("Batal", null);
+        builder.setNegativeButton(getString(R.string.cancel), null);
         AlertDialog dialog = builder.create();
         dialog.show();
         if (dialog.getWindow() != null){
@@ -276,7 +272,7 @@ public class ProfileFragment extends Fragment {
         String[] roles ={"Consumer","Caregiver"};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Pilih Role");
+        builder.setTitle(getString(R.string.pilih_role_title));
         builder.setItems(roles, (dialog, which) -> {
             UserRole targetRole = which == 0 ?
                     UserRole.Consumer : UserRole.Caregiver;
@@ -299,14 +295,15 @@ public class ProfileFragment extends Fragment {
         } if (targetRole == UserRole.Caregiver && !user.isCaregiver_enabled()){ //kalau caregiver belum aktif
             showEnableCaregiver(true);
             return;
-        } showSwitchRole(targetRole); //caregiver sudah aktif
+        } showSwitchRole(targetRole);
     }
 
     private void showSwitchRole(UserRole targetRole) {
         String roleName = targetRole == UserRole.Consumer ? "Consumer" : "Caregiver";
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
-        builder.setTitle("Ganti Role").setMessage("Apakah Anda yakin ingin berpindah ke role " + roleName + "?")
-                .setNegativeButton("Batal", null).setPositiveButton("Ya", (dialog, which) -> {
+        builder.setTitle(getString(R.string.ganti_role_title))
+                .setMessage(getString(R.string.konfirmasi_ganti_role_full_msg, roleName))
+                .setNegativeButton(getString(R.string.cancel), null).setPositiveButton(getString(R.string.ya_btn), (dialog, which) -> {
                     switchRole(targetRole);
                 });
 
@@ -337,10 +334,10 @@ public class ProfileFragment extends Fragment {
 
     private void showEnableCaregiver(boolean continueSwitchRole) {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Aktivasi Caregiver");
-        builder.setMessage("Mengaktifkan akses caregiver untuk memantau dan membantu pengingat konsumsi obat consumer.");
-        builder.setNegativeButton("Batal", null);
-        builder.setPositiveButton("Aktifkan", (dialog, which) -> {
+        builder.setTitle(getString(R.string.activateCaregiver));
+        builder.setMessage(getString(R.string.aktivasi_caregiver_msg));
+        builder.setNegativeButton(getString(R.string.cancel), null);
+        builder.setPositiveButton(getString(R.string.aktifkan), (dialog, which) -> {
             enableCaregiver(continueSwitchRole);
         });
         AlertDialog dialog = builder.create();
@@ -358,7 +355,7 @@ public class ProfileFragment extends Fragment {
             public void onSuccess(User result) {
                 if (!isAdded()) return;
                 bindUser(result);
-                Toast.makeText(requireContext(), "Role caregiver berhasil diaktifkan.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), getString(R.string.role_caregiver_berhasil_diaktifkan), Toast.LENGTH_SHORT).show();
                 switchRole(UserRole.Caregiver);
             }
 
