@@ -72,10 +72,21 @@ public class NotificationFragment extends Fragment {
     }
 
     private void onNotificationClick(Notification notification) {
+        if (!notification.isIs_read()) {
+            notification.setIs_read(true);
+            adapter.notifyDataSetChanged();
+
+            authManager.markNotificationAsRead(notification.getNotification_id(), new AuthCallback<Void>() {
+                @Override public void onSuccess(Void result) {  }
+                @Override public void onFailure(String message) { }
+            });
+        }
+
         // Khusus notifikasi stok obat
         if (notification.getType() == NotificationType.Stock) {
             Bundle bundle = new Bundle();
             bundle.putString("medication_id", notification.getReference_id());
+            bundle.putString("notification_id", notification.getNotification_id());  // tambahan: biar konsisten dengan flow refill
             NavHostFragment.findNavController(this).navigate(R.id.reminderStockFragment, bundle);
         } else {
             Bundle bundle = new Bundle();

@@ -67,8 +67,7 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
         }
         holder.currStatus.setText(statusLog.displayLabel(context, false));
         if (medicationLog.getScheduled_at() != null) {
-            Locale localeId = new Locale("id", "ID");
-            SimpleDateFormat sdf = new SimpleDateFormat("EEEE, dd MMM - HH:mm", localeId);
+            SimpleDateFormat sdf = new SimpleDateFormat("EEEE, dd MMM - HH:mm", Locale.getDefault());
             String dateTimeText = sdf.format(medicationLog.getScheduled_at().toDate());
             holder.scheduledAt.setText(dateTimeText);
         }

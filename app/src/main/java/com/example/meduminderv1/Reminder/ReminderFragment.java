@@ -209,6 +209,7 @@ public class ReminderFragment extends Fragment {
     }
 
     private void confirmDeleteSchedule() {
+        if (!isAdded()) return;
         Log.d("REMINDER_FRAGMENT", "confirmDeleteSchedule() dipanggil, tampilkan dialog konfirmasi");
         String label = namaObat != null ? namaObat : (isAppointment ? getString(R.string.default_appointment_label) : getString(R.string.default_jadwal_label));
         new MaterialAlertDialogBuilder(requireContext())
@@ -227,6 +228,7 @@ public class ReminderFragment extends Fragment {
     }
 
     private void deleteMedicationSchedule() {
+        if (!isAdded()) return;
         if (scheduleId == null || scheduleId.isEmpty()) {
             Toast.makeText(requireContext(), getString(R.string.schedule_id_tidak_ditemukan), Toast.LENGTH_SHORT).show();
             return;
@@ -235,6 +237,7 @@ public class ReminderFragment extends Fragment {
 
         db.collection("medication_schedules").document(scheduleId).get()
                 .addOnSuccessListener(scheduleDoc -> {
+                    if (!isAdded()) return;
                     MedicationSchedules schedule = scheduleDoc.toObject(MedicationSchedules.class);
                     List<String> times = (schedule != null) ? schedule.getTimes_of_day() : null;
                     String consumerUid = (schedule != null) ? schedule.getUsers_id() : null;
@@ -250,21 +253,25 @@ public class ReminderFragment extends Fragment {
 
                     db.collection("medication_schedules").document(scheduleId).update(update)
                             .addOnSuccessListener(unused -> {
+                                if (!isAdded()) return;
                                 Toast.makeText(requireContext(), getString(R.string.jadwal_berhasil_dihapus), Toast.LENGTH_SHORT).show();
                                 notifyScheduleDeleted(consumerUid, namaObat, false);
                                 NavHostFragment.findNavController(ReminderFragment.this).navigateUp();
                             })
                             .addOnFailureListener(e -> {
                                 Log.e("REMINDER_FRAGMENT", "Gagal hapus jadwal obat. id=" + scheduleId, e);
+                                if (!isAdded()) return;
                                 Toast.makeText(requireContext(), getString(R.string.gagal_menghapus_jadwal), Toast.LENGTH_SHORT).show();
                             });
                 })
                 .addOnFailureListener(e -> {
                     Log.e("REMINDER_FRAGMENT", "Gagal ambil data jadwal untuk dihapus. id=" + scheduleId, e);
+                    if (!isAdded()) return;
                     Toast.makeText(requireContext(), getString(R.string.gagal_menghapus_jadwal), Toast.LENGTH_SHORT).show();
                 });
     }
     private void deleteAppointment() {
+        if (!isAdded()) return;
         if (scheduleId == null || scheduleId.isEmpty()) {
             Toast.makeText(requireContext(), getString(R.string.appointment_id_tidak_ditemukan), Toast.LENGTH_SHORT).show();
             return;
@@ -273,6 +280,7 @@ public class ReminderFragment extends Fragment {
 
         db.collection("appointments").document(scheduleId).get()
                 .addOnSuccessListener(apDoc -> {
+                    if (!isAdded()) return;
                     String consumerUid = apDoc.exists() ? apDoc.getString("users_id") : null;
 
                     AlarmSchedulerHelper.cancelAppointment(requireContext(), scheduleId);
@@ -286,21 +294,25 @@ public class ReminderFragment extends Fragment {
 
                     db.collection("appointments").document(scheduleId).update(update)
                             .addOnSuccessListener(unused -> {
+                                if (!isAdded()) return;
                                 Toast.makeText(requireContext(), getString(R.string.appointment_berhasil_dihapus), Toast.LENGTH_SHORT).show();
                                 notifyScheduleDeleted(consumerUid, namaObat, true);
                                 NavHostFragment.findNavController(ReminderFragment.this).navigateUp();
                             })
                             .addOnFailureListener(e -> {
                                 Log.e("REMINDER_FRAGMENT", "Gagal hapus appointment. id=" + scheduleId, e);
+                                if (!isAdded()) return;
                                 Toast.makeText(requireContext(), getString(R.string.gagal_menghapus_appointment), Toast.LENGTH_SHORT).show();
                             });
                 })
                 .addOnFailureListener(e -> {
                     Log.e("REMINDER_FRAGMENT", "Gagal ambil data appointment untuk dihapus. id=" + scheduleId, e);
+                    if (!isAdded()) return;
                     Toast.makeText(requireContext(), getString(R.string.gagal_menghapus_appointment), Toast.LENGTH_SHORT).show();
                 });
     }
     private void notifyScheduleDeleted(String consumerUid, String name, boolean appointment) {
+        if (!isAdded()) return;
         if (consumerUid == null) return;
         if (FirebaseAuth.getInstance().getCurrentUser() == null) return;
         String actorUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -308,6 +320,7 @@ public class ReminderFragment extends Fragment {
         String displayName = name != null ? name : (appointment ? getString(R.string.appointment) : getString(R.string.medicine));
 
         if (!isForSelf) {
+            if (!isAdded()) return;
             Notification notifToConsumer = new Notification();
             notifToConsumer.setReceiver_uid(consumerUid);
             notifToConsumer.setSender_uid(actorUid);
@@ -324,6 +337,7 @@ public class ReminderFragment extends Fragment {
         careRelationshipRepo.getCaregiverForConsumer(consumerUid, new RepoCallback<List<CareRelationship>>() {
             @Override
             public void onSuccess(List<CareRelationship> relations) {
+                if (!isAdded()) return;
                 for (CareRelationship relation : relations) {
                     String caregiverUid = relation.getCaregiver_uid();
                     if (caregiverUid == null || caregiverUid.equals(actorUid)) continue;
@@ -351,6 +365,7 @@ public class ReminderFragment extends Fragment {
 
     private void notifyCaregiverMedicineTaken(String logId) {
         db.collection("medication_logs").document(logId).get().addOnSuccessListener(logDoc -> {
+            if (!isAdded()) return;
             if (!logDoc.exists()) return;
             String consumerUid = logDoc.getString("users_id");
             if (consumerUid == null) return;
@@ -361,6 +376,7 @@ public class ReminderFragment extends Fragment {
                 careRelationshipRepo.getCaregiverForConsumer(consumerUid, new RepoCallback<List<CareRelationship>>() {
                     @Override
                     public void onSuccess(List<CareRelationship> relations) {
+                        if (!isAdded()) return;
                         for (CareRelationship relation : relations) {
                             Notification notif = new Notification();
                             notif.setReceiver_uid(relation.getCaregiver_uid());
@@ -401,6 +417,7 @@ public class ReminderFragment extends Fragment {
     }
 
     private void refreshLiveStatus() {
+        if (!isAdded()) return;
         if (scheduleId == null || scheduleId.isEmpty() || scheduledAt <= 0L) return;
 
         String logId = buildLogId(scheduleId, scheduledAt);
@@ -421,7 +438,7 @@ public class ReminderFragment extends Fragment {
     }
 
     private void markAsTaken() {
-
+        if (!isAdded()) return;
         if (scheduleId == null || scheduleId.isEmpty()) {
 
             Toast.makeText(requireContext(), getString(R.string.schedule_id_tidak_ditemukan), Toast.LENGTH_SHORT
@@ -452,6 +469,7 @@ public class ReminderFragment extends Fragment {
                         Timestamp.now()
                 )
                 .addOnSuccessListener(unused -> {
+                    if (!isAdded()) return;
                     Log.d("REMINDER_FRAGMENT", "Obat berhasil ditandai dikonsumsi");
                     updateStatusUIFromRaw("dikonsumsi");
                     Toast.makeText(requireContext(), getString(R.string.obat_ditandai_dikonsumsi), Toast.LENGTH_SHORT).show();
@@ -459,13 +477,13 @@ public class ReminderFragment extends Fragment {
                     notifyCaregiverMedicineTaken(logId);
                 })
                 .addOnFailureListener(e -> {
-
                     Log.e(
                             "REMINDER_FRAGMENT",
                             "Gagal update medication log"
                                     + "\nlogId = " + logId,
                             e
                     );
+                    if (!isAdded()) return;
 
                     Toast.makeText(
                             requireContext(),
@@ -476,6 +494,7 @@ public class ReminderFragment extends Fragment {
     }
 
     private void markAppointmentAttended() {
+        if (!isAdded()) return;
         if (scheduleId == null || scheduleId.isEmpty()) {
             Toast.makeText(requireContext(), getString(R.string.appointment_id_tidak_ditemukan), Toast.LENGTH_SHORT).show();
             return;
@@ -500,6 +519,7 @@ public class ReminderFragment extends Fragment {
 
     private void notifyCaregiverAppointmentAttended(String appointmentId) {
         db.collection("appointments").document(appointmentId).get().addOnSuccessListener(apDoc -> {
+            if (!isAdded()) return;
             if (!apDoc.exists()) return;
             String consumerUid = apDoc.getString("users_id");
             String title = apDoc.getString("title");
@@ -511,6 +531,7 @@ public class ReminderFragment extends Fragment {
                 careRelationshipRepo.getCaregiverForConsumer(consumerUid, new RepoCallback<List<CareRelationship>>() {
                     @Override
                     public void onSuccess(List<CareRelationship> relations) {
+                        if (!isAdded()) return;
                         for (CareRelationship relation : relations) {
                             Notification notif = new Notification();
                             notif.setReceiver_uid(relation.getCaregiver_uid());
@@ -535,7 +556,7 @@ public class ReminderFragment extends Fragment {
     }
 
     private void snoozeReminder() {
-
+        if (!isAdded()) return;
         if (scheduleId == null || scheduleId.isEmpty()) {
             Toast.makeText(requireContext(), getString(R.string.schedule_id_tidak_ditemukan), Toast.LENGTH_SHORT).show();
             return;
@@ -555,7 +576,7 @@ public class ReminderFragment extends Fragment {
                 .document(scheduleId)
                 .get()
                 .addOnSuccessListener(document -> {
-
+                    if (!isAdded()) return;
                     if (!document.exists()) {
                         Toast.makeText(
                                 requireContext(),
@@ -597,7 +618,7 @@ public class ReminderFragment extends Fragment {
                             "Gagal mengambil snooze_minutes",
                             e
                     );
-
+                    if (!isAdded()) return;
                     Toast.makeText(
                             requireContext(),
                             getString(R.string.gagal_mengambil_pengaturan_snooze),
@@ -622,6 +643,7 @@ public class ReminderFragment extends Fragment {
                 .whereEqualTo("medication_schedules_id", scheduleId)
                 .get()
                 .addOnSuccessListener(snapshot -> {
+                    if (!isAdded()) return;
                     Log.d("REMINDER_FRAGMENT", "deleteFutureMedicationLogs: query nemu " + snapshot.size() + " dokumen untuk scheduleId=" + scheduleId);
 
                     if (snapshot.isEmpty()) {
@@ -662,12 +684,14 @@ public class ReminderFragment extends Fragment {
                                     Log.e("REMINDER_FRAGMENT",
                                             "Gagal hapus future medication_logs. scheduleId=" + scheduleId, e));
                 })
-                .addOnFailureListener(e ->
-                        Log.e("REMINDER_FRAGMENT",
-                                "Gagal ambil future medication_logs. scheduleId=" + scheduleId, e));
+                .addOnFailureListener(e -> {
+                    Log.e("REMINDER_FRAGMENT", "Gagal ambil future medication_logs. scheduleId=" + scheduleId, e);
+                    if (!isAdded()) return;
+                });
     }
 
     private void refreshLiveStatusAppoint() {
+        if (!isAdded()) return;
         if (scheduleId == null || scheduleId.isEmpty()) return;
 
         db.collection("appointments")
@@ -682,9 +706,10 @@ public class ReminderFragment extends Fragment {
                         locationReminderAppoint.setText(appointment.getAddress());
                     }
                 })
-                .addOnFailureListener(e ->
-                        Log.e("REMINDER_FRAGMENT", "Gagal ambil status appointment untuk id=" + scheduleId, e)
-                );
+                .addOnFailureListener(e -> {
+                        Log.e("REMINDER_FRAGMENT", "Gagal ambil status appointment untuk id=" + scheduleId, e);
+                        if (!isAdded()) return;
+                });
     }
     private void updateStatusUI(LogStatus logStatus) {
         currentStatus = logStatus.name();
@@ -708,34 +733,13 @@ public class ReminderFragment extends Fragment {
 
     private String buildLogId(String scheduleId, long scheduledAtMillis) {
 
-        LocalDateTime dt =
-                LocalDateTime.ofInstant(
-                        Instant.ofEpochMilli(
-                                scheduledAtMillis
-                        ),
-                        ZoneId.systemDefault()
-                );
-
-
-        LocalDate date =
-                dt.toLocalDate();
-
-
-        String cleanTime =
-                dt.format(
-                        DateTimeFormatter.ofPattern("HHmm")
-                );
-
-
-        return scheduleId
-                + "_"
-                + date
-                + "_"
-                + cleanTime;
+        LocalDateTime dt = LocalDateTime.ofInstant(Instant.ofEpochMilli(scheduledAtMillis), ZoneId.systemDefault());
+        LocalDate date = dt.toLocalDate();
+        String cleanTime = dt.format(DateTimeFormatter.ofPattern("HHmm"));
+        return scheduleId + "_" + date + "_" + cleanTime;
     }
 
     private void applyCircleStatusColor(View circleView, LogStatus status) {
-
         int statusColor =
                 ContextCompat.getColor(
                         requireContext(),

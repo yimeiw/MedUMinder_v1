@@ -56,12 +56,10 @@ public class AppointmentLogAdapter extends RecyclerView.Adapter<AppointmentLogAd
         holder.namaAppointment.setText(appointment.getTitle());
         holder.namaLokasi.setText(appointment.getAddress());
         if (appointment.getAppointment_at() != null) {
-            Locale localeId = new Locale("id", "ID");
-            SimpleDateFormat sdf = new SimpleDateFormat("EEEE, dd MMM - HH:mm", localeId);
+            SimpleDateFormat sdf = new SimpleDateFormat("EEEE, dd MMM - HH:mm", Locale.getDefault());
             String dateTimeText = sdf.format(appointment.getAppointment_at().toDate());
             holder.timeAppointment.setText(dateTimeText);
         }
-
         LogStatus status = appointment.getStatusBasedOnDate();
         holder.currStatus.setText(status.displayLabel(context, true));
         applyStatusColor(holder, status);
