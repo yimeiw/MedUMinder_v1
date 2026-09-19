@@ -65,7 +65,7 @@ public class ReminderStockFragment extends Fragment {
             bundle.putString("medication_id", medicationId);
             bundle.putString("notification_id", notificationId);
             NavHostFragment.findNavController(ReminderStockFragment.this).
-                    navigate(R.id.editMedicineReminderFragment, bundle);
+                    navigate(R.id.editMedicineFragment, bundle);
         });
 
         return view;

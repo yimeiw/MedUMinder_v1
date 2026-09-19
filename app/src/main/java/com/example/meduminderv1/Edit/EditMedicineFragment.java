@@ -67,8 +67,7 @@ public class EditMedicineFragment extends Fragment {
     User user;
 
     private final ArrayList<TextView> timeViews = new ArrayList<>();
-    private String scheduleId;
-    private String medicationId;
+    private String scheduleId, medicationIdArg, notificationId, medicationId;
     private boolean endDateSelected = false;
     private List<String> originalTimesOfDay = new ArrayList<>();
 
@@ -115,19 +114,43 @@ public class EditMedicineFragment extends Fragment {
         Bundle bundle = getArguments();
         if (bundle != null) {
             scheduleId = bundle.getString("medication_schedules_id");
+            medicationIdArg = bundle.getString("medication_id");
+            notificationId = bundle.getString("notification_id");
         }
 
-        if (scheduleId == null || scheduleId.isEmpty()) {
-            Toast.makeText(requireContext(), getString(R.string.data_reminder_tidak_ditemukan), Toast.LENGTH_SHORT).show();
-        } else {
+        if (scheduleId != null && !scheduleId.isEmpty()) {
             loadExistingData();
+        } else if (medicationIdArg != null && !medicationIdArg.isEmpty()) {
+            resolveScheduleIdThenLoad();
+        } else {
+            Toast.makeText(requireContext(), getString(R.string.data_reminder_tidak_ditemukan), Toast.LENGTH_SHORT).show();
         }
+
 
         btnUpdateReminder.setOnClickListener(v -> updateReminder());
 
         return view;
     }
 
+    private void resolveScheduleIdThenLoad() {
+        db.collection("medication_schedules")
+                .whereEqualTo("medication_id", medicationIdArg)
+                .whereEqualTo("is_active", true)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!isAdded()) return;
+                    if (querySnapshot.isEmpty()) {
+                        Toast.makeText(requireContext(), getString(R.string.jadwal_tidak_ditemukan), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    scheduleId = querySnapshot.getDocuments().get(0).getId();
+                    loadExistingData(); // lanjut pakai alur yang sudah ada
+                })
+                .addOnFailureListener(e -> {
+                    if (isAdded()) Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
     private void loadExistingData() {
         medicationRepo.getScheduleById(scheduleId, new RepoCallback<MedicationSchedules>() {
             @Override
@@ -220,7 +243,16 @@ public class EditMedicineFragment extends Fragment {
                                 notifyReminderUpdated(medName);
 
                                 Toast.makeText(requireContext(), getString(R.string.reminder_berhasil_diperbarui), Toast.LENGTH_SHORT).show();
-                                NavHostFragment.findNavController(EditMedicineFragment.this).navigateUp();
+
+                                if (notificationId != null && !notificationId.isEmpty()) {
+                                    db.collection("notifications").document(notificationId)
+                                            .update("is_read", true, "updated_at", Timestamp.now())
+                                            .addOnCompleteListener(task -> {
+                                                if (isAdded()) NavHostFragment.findNavController(EditMedicineFragment.this).navigateUp();
+                                            });
+                                } else {
+                                    NavHostFragment.findNavController(EditMedicineFragment.this).navigateUp();
+                                }
                             })
                             .addOnFailureListener(e ->
                                     Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show());
@@ -230,11 +262,13 @@ public class EditMedicineFragment extends Fragment {
     }
 
     private void notifyReminderUpdated(String medName) {
+        if (!isAdded()) return;
         if (targetUid == null || user == null) return;
         String actorUid = user.getAuth_uid();
         boolean isForSelf = targetUid.equals(actorUid);
 
         if (!isForSelf) {
+            if (!isAdded()) return;
             Notification notifToConsumer = new Notification();
             notifToConsumer.setReceiver_uid(targetUid);
             notifToConsumer.setSender_uid(actorUid);
@@ -251,6 +285,7 @@ public class EditMedicineFragment extends Fragment {
         careRelationshipRepo.getCaregiverForConsumer(targetUid, new RepoCallback<List<CareRelationship>>() {
             @Override
             public void onSuccess(List<CareRelationship> relations) {
+                if (!isAdded()) return;
                 for (CareRelationship relation : relations) {
                     String caregiverUid = relation.getCaregiver_uid();
                     if (caregiverUid == null || caregiverUid.equals(actorUid)) continue;
