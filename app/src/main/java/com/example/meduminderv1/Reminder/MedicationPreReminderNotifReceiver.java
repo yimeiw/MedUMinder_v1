@@ -24,11 +24,13 @@ public class MedicationPreReminderNotifReceiver extends BroadcastReceiver {
                     if (consumerUid == null) return;
                     Map<String, Object> notif = new HashMap<>();
                     notif.put("receiver_uid", consumerUid);
+                    notif.put("reference_id", scheduleId);
                     notif.put("type", NotificationType.Medicine);
                     notif.put("title", "Segera Minum Obat");
                     notif.put("message", "5 menit lagi jadwal minum obat " + namaObat + ".");
                     notif.put("target_role", UserRole.Consumer);
                     notif.put("is_read", false);
+                    notif.put("is_new_schedule", true);
                     notif.put("created_at", Timestamp.now());
                     db.collection("notifications").add(notif);
                 });

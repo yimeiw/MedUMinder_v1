@@ -293,6 +293,10 @@ public class NotificationDetailFragment extends Fragment {
 
     // ================= MEDICINE =================
     private void showMedicine() {
+        android.util.Log.d("NOTIF_DETAIL",
+                "is_new_schedule = " + notification.isIs_new_schedule()
+                        + ", reference_id = " + notification.getReference_id());
+
         showMissedActionIfCaregiver();
         if (isNewScheduleNotif()) {
             loadNewMedicineScheduleDetail();
@@ -307,6 +311,11 @@ public class NotificationDetailFragment extends Fragment {
 
     private void loadNewMedicineScheduleDetail() {
         String scheduleId = notification.getReference_id();
+
+        android.util.Log.d("NOTIF_DETAIL",
+                "scheduleId = " + scheduleId);
+
+
         if (scheduleId == null) { notifDetail.setVisibility(View.GONE); return; }
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("medication_schedules").document(scheduleId).get().addOnSuccessListener(scheduleSnap -> {

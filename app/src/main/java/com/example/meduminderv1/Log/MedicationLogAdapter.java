@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,15 +25,19 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdapter.ViewHolder> {
     private List <MedicationLog> medicationLogs;
     private Context context;
     private FirebaseFirestore db;
     private Map<String, String> namaObatCache = new HashMap<>();
+    private Map<String, Integer> stockCache = new HashMap<>();
+    private Set<String> loadingScheduleIds = new HashSet<>();
     private OnMedLogClickListener listener;
     public MedicationLogAdapter(List<MedicationLog> medicationLogs, Context context) {
         this.medicationLogs = medicationLogs;
@@ -55,16 +60,34 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
     public void onBindViewHolder(@NonNull MedicationLogAdapter.ViewHolder holder, int position) {
         MedicationLog medicationLog = medicationLogs.get(position);
         String medication_schedules_id = medicationLog.getMedication_schedules_id();
+
         LogStatus statusLog = medicationLog.getStatusBasedOnDate();
 
         holder.itemView.setTag(medication_schedules_id);
+
+        holder.sisaStokLog.setText("-");
 
         if (namaObatCache.containsKey(medication_schedules_id)){
             holder.namaObatLog.setText(namaObatCache.get(medication_schedules_id));
         } else {
             holder.namaObatLog.setText(context.getString(R.string.loading));
-            loadNamaObat(medication_schedules_id, holder);
         }
+
+        if (stockCache.containsKey(medication_schedules_id)) {
+            int stock = stockCache.get(medication_schedules_id);
+
+            holder.sisaStokLog.setText(String.valueOf(stock));
+        } else {
+            holder.sisaStokLog.setText("-");
+        }
+
+        if (!namaObatCache.containsKey(medication_schedules_id) || !stockCache.containsKey(medication_schedules_id)) {
+            if (!loadingScheduleIds.contains(medication_schedules_id)) {
+                loadingScheduleIds.add(medication_schedules_id);
+                loadNamaObat(medication_schedules_id, holder);
+            }
+        }
+
         holder.currStatus.setText(statusLog.displayLabel(context, false));
         if (medicationLog.getScheduled_at() != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("EEEE, dd MMM - HH:mm", Locale.getDefault());
@@ -147,7 +170,10 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
                 .addOnSuccessListener(scheduleSnap -> {
                     MedicationSchedules schedules = scheduleSnap.toObject(MedicationSchedules.class);
 
-                    if (schedules == null) return;
+                    if (schedules == null){
+                        loadingScheduleIds.remove(medication_schedules_id);
+                        return;
+                    }
 
                     String medication_id = schedules.getMedication_id();
 
@@ -155,7 +181,29 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
                             .get()
                             .addOnSuccessListener(medSnap -> {
                                 Medication medication = medSnap.toObject(Medication.class);
-                                if (medication == null) return;
+                                if (medication == null){
+                                    loadingScheduleIds.remove(medication_schedules_id);
+                                    return;
+                                }
+
+                                int stock = 0;
+
+                                if (medication.getStock() != null
+                                        && medication.getStock().get("stok_obat") != null) {
+
+                                    Object stockObject =
+                                            medication.getStock().get("stok_obat");
+
+                                    if (stockObject instanceof Number) {
+                                        stock = ((Number) stockObject).intValue();
+                                    }
+                                }
+
+                                stockCache.put(medication_schedules_id, stock);
+
+                                if (medication_schedules_id.equals(holder.itemView.getTag())) {
+                                    holder.sisaStokLog.setText(String.valueOf(stock));
+                                }
 
                                 String customNama = medication.getCustom_medicine_name();
 
@@ -164,23 +212,33 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
                                     if (medication_schedules_id.equals(holder.itemView.getTag())){
                                         holder.namaObatLog.setText(customNama);
                                     }
+
+                                    loadingScheduleIds.remove(medication_schedules_id);
                                 } else {
                                     String catalog_id = medication.getCatalog_id();
                                     if (catalog_id == null) {
-                                        holder.namaObatLog.setText(context.getString(R.string.nama_obat_tidak_ditemukan));
+                                        if (medication_schedules_id.equals(holder.itemView.getTag())) {
+                                            holder.namaObatLog.setText(context.getString(R.string.nama_obat_tidak_ditemukan));
+                                        }
+                                        loadingScheduleIds.remove(medication_schedules_id);
                                         return;
                                     }
                                     db.collection("medicine_catalog").document(catalog_id)
                                             .get()
                                             .addOnSuccessListener(catalogSnap -> {
                                                 MedicineCatalog catalog = catalogSnap.toObject(MedicineCatalog.class);
-                                                if (catalog == null) return;
+                                                if (catalog == null) {
+                                                    loadingScheduleIds.remove(medication_schedules_id);
+                                                    return;
+                                                }
 
                                                 String catalogName = catalog.getNama_obat();
                                                 namaObatCache.put(medication_schedules_id, catalogName);
                                                 if (medication_schedules_id.equals(holder.itemView.getTag())){
                                                     holder.namaObatLog.setText(catalogName);
                                                 }
+
+                                                loadingScheduleIds.remove(medication_schedules_id);
                                             });
                                 }
                             });
