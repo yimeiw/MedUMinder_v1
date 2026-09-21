@@ -440,56 +440,61 @@ public class ReminderFragment extends Fragment {
     private void markAsTaken() {
         if (!isAdded()) return;
         if (scheduleId == null || scheduleId.isEmpty()) {
-
-            Toast.makeText(requireContext(), getString(R.string.schedule_id_tidak_ditemukan), Toast.LENGTH_SHORT
-            ).show();
-
+            Toast.makeText(requireContext(), getString(R.string.schedule_id_tidak_ditemukan), Toast.LENGTH_SHORT).show();
             return;
         }
-
         if (scheduledAt <= 0L) {
             Toast.makeText(requireContext(), getString(R.string.waktu_alarm_tidak_ditemukan), Toast.LENGTH_SHORT).show();
-            Log.e("REMINDER_FRAGMENT", "scheduledAt invalid: " + scheduledAt);
             return;
         }
+        // cegah klik dobel: matikan tombol begitu ditekan
+        if (!btnIsTaken.isEnabled()) return;
+        btnIsTaken.setEnabled(false);
+        btnTundaReminder.setEnabled(false);
+
         stopRingingAlarm();
         AlarmSchedulerHelper.cancelSnooze(requireContext(), scheduleId);
         AlarmSchedulerHelper.cancelOccurrenceForScheduledAt(requireContext(), scheduleId, scheduledAt);
 
         String logId = buildLogId(scheduleId, scheduledAt);
 
-        Log.d("REMINDER_FRAGMENT", "Mark as taken" + "\nscheduleId = " + scheduleId + "\nscheduledAt = " + scheduledAt+ "\nlogId = " + logId);
-
-        db.collection("medication_logs")
-                .document(logId)
-                .update(
-                        "status",
-                        "dikonsumsi",
-                        "taken_at",
-                        Timestamp.now()
-                )
-                .addOnSuccessListener(unused -> {
+        db.collection("medication_logs").document(logId).get()
+                .addOnSuccessListener(snapshot -> {
                     if (!isAdded()) return;
-                    Log.d("REMINDER_FRAGMENT", "Obat berhasil ditandai dikonsumsi");
-                    updateStatusUIFromRaw("dikonsumsi");
-                    Toast.makeText(requireContext(), getString(R.string.obat_ditandai_dikonsumsi), Toast.LENGTH_SHORT).show();
+                    String currentRaw = snapshot.getString("status");
+                    if ("dikonsumsi".equals(currentRaw)) {
+                        // sudah pernah dikonfirmasi sebelumnya, jangan proses lagi
+                        updateStatusUIFromRaw("dikonsumsi");
+                        return;
+                    }
 
-                    notifyCaregiverMedicineTaken(logId);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(
-                            "REMINDER_FRAGMENT",
-                            "Gagal update medication log"
-                                    + "\nlogId = " + logId,
-                            e
-                    );
-                    if (!isAdded()) return;
+                    db.collection("medication_logs").document(logId)
+                            .update("status", "dikonsumsi", "taken_at", Timestamp.now())
+                            .addOnSuccessListener(unused -> {
+                                if (!isAdded()) return;
+                                updateStatusUIFromRaw("dikonsumsi");
+                                Toast.makeText(requireContext(), getString(R.string.obat_ditandai_dikonsumsi), Toast.LENGTH_SHORT).show();
+                                notifyCaregiverMedicineTaken(logId);
 
-                    Toast.makeText(
-                            requireContext(),
-                            getString(R.string.gagal_mengubah_status_obat),
-                            Toast.LENGTH_SHORT
-                    ).show();
+                                // kurangi stok juga, biar sama seperti konfirmasi dari notifikasi/Home
+                                db.collection("medication_schedules").document(scheduleId).get()
+                                        .addOnSuccessListener(scheduleDoc -> {
+                                            String medicationId = scheduleDoc.getString("medication_id");
+                                            if (medicationId != null) {
+                                                new com.example.meduminderv1.Repo.MedicationRepo(requireContext())
+                                                        .decrementStock(medicationId, new RepoCallback<Void>() {
+                                                            @Override public void onSuccess(Void result) { }
+                                                            @Override public void onFailure(Exception e) { }
+                                                        });
+                                            }
+                                        });
+                            })
+                            .addOnFailureListener(e -> {
+                                if (!isAdded()) return;
+                                btnIsTaken.setEnabled(true);
+                                btnTundaReminder.setEnabled(true);
+                                Toast.makeText(requireContext(), getString(R.string.gagal_mengubah_status_obat), Toast.LENGTH_SHORT).show();
+                            });
                 });
     }
 

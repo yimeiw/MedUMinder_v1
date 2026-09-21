@@ -320,7 +320,22 @@ public class EditMedicineFragment extends Fragment {
 
         if (name.isEmpty()) { namaObat.setError(getString(R.string.nama_obat_wajib_diisi)); valid = false; }
         if (freq.isEmpty()) { freqMinumObat.setError(getString(R.string.frekuensi_minum_obat_wajib_diisi)); valid = false; }
-        if (stok.isEmpty()) { stokObat.setError(getString(R.string.stok_obat_wajib_diisi)); valid = false; }
+
+        if (stok.isEmpty()) {
+            stokObat.setError(getString(R.string.stok_obat_wajib_diisi));
+            valid = false;
+        } else {
+            try {
+                int stockValue = Integer.parseInt(stok);
+                if (stockValue <= 0) {
+                    stokObat.setError(getString(R.string.stok_harus_lebih_dari_0));
+                    valid = false;
+                }
+            } catch (NumberFormatException e) {
+                stokObat.setError(getString(R.string.stok_harus_angka));
+                valid = false;
+            }
+        }
 
         int frequency = convertFrequencyToNumber(freq);
         ArrayList<String> times = getSelectedTimes();

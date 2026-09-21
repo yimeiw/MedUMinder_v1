@@ -177,24 +177,21 @@ public class NotificationRepo {
     public void countUnread(String userUid, UserRole role, RepoCallback<Integer> callback) {
         db.collection("notifications")
                 .whereEqualTo("receiver_uid", userUid)
-                .addSnapshotListener((snapshot, e) -> {
-                    if (e != null) {
-                        callback.onFailure(e);
-                        return;
-                    } int count = 0;
-                    if (snapshot != null) {
-                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                            Notification notification = doc.toObject(Notification.class);
-                            if (notification == null || notification.isIs_read()) {
-                                continue;
-                            } UserRole effectiveRole = notification.getTargetRoleEnum();
-                            if (effectiveRole == null || effectiveRole == role) {
-                                count++;
-                            }
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    int count = 0;
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        Notification notification = doc.toObject(Notification.class);
+                        if (notification == null || notification.isIs_read()) {
+                            continue;
+                        } UserRole effectiveRole = notification.getTargetRoleEnum();
+                        if (effectiveRole == null || effectiveRole == role) {
+                            count++;
                         }
                     }
                     callback.onSuccess(count);
-                });
+                })
+                .addOnFailureListener(callback::onFailure);
     }
     public void deleteNotif(String notificationId, RepoCallback<Void> callback) {
         db.collection("notifications").document(notificationId).delete()

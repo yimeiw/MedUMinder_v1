@@ -160,11 +160,6 @@ public class AlarmActionReceiver extends BroadcastReceiver {
                         pendingResult.finish();
                     });
 
-            /*
-             * ============================================================
-             * APPOINTMENT DIHADIRI / TERLEWATKAN
-             * ============================================================
-             */
         } else if (
                 "ACTION_APPOINTMENT_ATTENDED".equals(action)
                         || "ACTION_APPOINTMENT_MISSED".equals(action)
@@ -264,56 +259,50 @@ public class AlarmActionReceiver extends BroadcastReceiver {
      * kemudian mengambil medication_id dari schedule
      * dan mengurangi stock obat.
      */
-    private void markAsTaken(
-            Context context,
-            String scheduleId,
-            long scheduledAtMillis,
-            PendingResult pendingResult
-    ) {
-
-        String logId =
-                buildLogId(
-                        scheduleId,
-                        scheduledAtMillis
-                );
-
+    private void markAsTaken(Context context, String scheduleId, long scheduledAtMillis, PendingResult pendingResult) {
+        String logId = buildLogId(scheduleId, scheduledAtMillis);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-
         db.collection("medication_logs")
                 .document(logId)
-                .update("status", "dikonsumsi", "taken_at", Timestamp.now())
-                .addOnSuccessListener(unused -> {
-                    db.collection("medication_schedules")
-                            .document(scheduleId)
-                            .get()
-                            .addOnSuccessListener(scheduleDoc -> {
-                                String medicationId = scheduleDoc.getString("medication_id");
-                                if (medicationId == null || medicationId.isEmpty()) {
-                                    stopAlarmService(context, pendingResult);
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    String currentStatus = snapshot.getString("status");
+                    if ("dikonsumsi".equals(currentStatus)) {
+                        stopAlarmService(context, pendingResult);
+                        return;
+                    }
 
-                                    return;
-                                }
+                    db.collection("medication_logs")
+                            .document(logId)
+                            .update("status", "dikonsumsi", "taken_at", Timestamp.now())
+                            .addOnSuccessListener(unused -> {
+                                db.collection("medication_schedules")
+                                        .document(scheduleId)
+                                        .get()
+                                        .addOnSuccessListener(scheduleDoc -> {
+                                            String medicationId = scheduleDoc.getString("medication_id");
+                                            if (medicationId == null || medicationId.isEmpty()) {
+                                                stopAlarmService(context, pendingResult);
+                                                return;
+                                            }
 
-                                MedicationRepo medicationRepo = new MedicationRepo(context);
-                                medicationRepo.decrementStock(medicationId, new RepoCallback<Void>() {
-                                            @Override
-                                            public void onSuccess(Void result) {
-                                                stopAlarmService(context, pendingResult);
-                                            }
-                                            @Override
-                                            public void onFailure(Exception e) {
-                                                stopAlarmService(context, pendingResult);
-                                            }
-                                        }
-                                );
+                                            MedicationRepo medicationRepo = new MedicationRepo(context);
+                                            medicationRepo.decrementStock(medicationId, new RepoCallback<Void>() {
+                                                @Override
+                                                public void onSuccess(Void result) {
+                                                    stopAlarmService(context, pendingResult);
+                                                }
+                                                @Override
+                                                public void onFailure(Exception e) {
+                                                    stopAlarmService(context, pendingResult);
+                                                }
+                                            });
+                                        })
+                                        .addOnFailureListener(e -> stopAlarmService(context, pendingResult));
                             })
-                            .addOnFailureListener(e -> {
-                                stopAlarmService(context, pendingResult);
-                            });
+                            .addOnFailureListener(e -> stopAlarmService(context, pendingResult));
                 })
-                .addOnFailureListener(e -> {
-                    stopAlarmService(context, pendingResult);
-                });
+                .addOnFailureListener(e -> stopAlarmService(context, pendingResult));
     }
 
     private void stopAlarmService(Context context, PendingResult pendingResult) {

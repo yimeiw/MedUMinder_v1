@@ -256,4 +256,13 @@ public class ScheduleFragment extends Fragment {
         btnAppoint.setBackgroundTintList(ColorStateList.valueOf(
                 currType == Type.Appointment ? activeColor : inactiveColor));
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (consumerPickerHelper != null) {
+            consumerPickerHelper.setup();
+        }
+        loadScheduleForDate();
+    }
 }

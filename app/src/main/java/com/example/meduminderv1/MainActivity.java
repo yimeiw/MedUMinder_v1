@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
     UserRole lastUserRole;
     FirebaseFirestore db;
 
+    private android.content.Intent pendingDeepLinkIntent;
     private static final String PREFS_ALARM_PERM = "alarm_perm";
     private static final String KEY_HAD_EXACT_ALARM_PERMISSION = "had_exact_alarm_permission";
 
@@ -114,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
             new LogGenerator().generateForAllActiveSchedules(user.getUid());
         }
 
-        handleReminderIntent(getIntent());
+        pendingDeepLinkIntent = getIntent();
 
         AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         boolean hasExactAlarmPermission = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
@@ -208,7 +209,11 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
-        handleReminderIntent(intent);
+        if (lastUserRole != null) {
+            handleReminderIntent(intent);
+        } else {
+            pendingDeepLinkIntent = intent;
+        }
     }
 
     private void handleReminderIntent(Intent intent) {
@@ -279,11 +284,17 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
             bottomNav.inflateMenu(R.menu.bottom_nav_consumer);
         } else {
             bottomNav.inflateMenu(R.menu.bottom_nav_caregiver);
-        } bottomNav.setOnItemSelectedListener(getBottomNavListener());
+        }
+        bottomNav.setOnItemSelectedListener(getBottomNavListener());
 
         navigateHome(role);
-    }
 
+        if (pendingDeepLinkIntent != null) {
+            Intent toHandle = pendingDeepLinkIntent;
+            pendingDeepLinkIntent = null;
+            handleReminderIntent(toHandle);
+        }
+    }
     private void navigateHome(UserRole role) {
         int destination;
         if (role == UserRole.Consumer){
