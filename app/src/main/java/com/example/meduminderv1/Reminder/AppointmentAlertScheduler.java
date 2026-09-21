@@ -15,7 +15,7 @@ public class AppointmentAlertScheduler {
         if (am == null) return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms()) return;
         long preoffsetMs = getPreReminderOffsetMs(context);
-        long preTrigger = appointmentAtMillis - PRE_OFFSET_MS;
+        long preTrigger = appointmentAtMillis - preoffsetMs;
         if (preTrigger > System.currentTimeMillis()){
             Intent preIntent = new Intent(context, AppointmentPreReminderNotifReceiver.class);
             preIntent.putExtra("appointment_id", appointmentId);

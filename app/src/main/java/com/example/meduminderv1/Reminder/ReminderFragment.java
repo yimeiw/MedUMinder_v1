@@ -5,6 +5,8 @@ import static android.content.Context.LAYOUT_INFLATER_SERVICE;
 import static androidx.core.content.ContextCompat.getSystemService;
 
 import android.app.appsearch.GetSchemaResponse;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -570,8 +572,39 @@ public class ReminderFragment extends Fragment {
         stopRingingAlarm();
 
         if (isAppointment) {
-            AlarmSchedulerHelper.scheduleSnooze(requireContext(), scheduleId, namaObat, scheduledAt, DEFAULT_SNOOZE_MINUTES);
-            Toast.makeText(requireContext(), getString(R.string.pengingat_ditunda_menit, DEFAULT_SNOOZE_MINUTES),Toast.LENGTH_SHORT).show();
+            android.content.SharedPreferences pref = requireContext()
+                    .getSharedPreferences("notification_settings", android.content.Context.MODE_PRIVATE);
+
+            String savedSnooze = pref.getString("snooze_duration", "5 menit");
+
+            int snoozeMinutes;
+
+            switch (savedSnooze) {
+                case "10 menit":
+                    snoozeMinutes = 10;
+                    break;
+                case "30 menit":
+                    snoozeMinutes = 30;
+                    break;
+                default:
+                    snoozeMinutes = 5;
+                    break;
+            }
+
+            AlarmSchedulerHelper.scheduleSnooze(
+                    requireContext(),
+                    scheduleId,
+                    namaObat,
+                    scheduledAt,
+                    snoozeMinutes
+            );
+
+            Toast.makeText(
+                    requireContext(),
+                    getString(R.string.pengingat_ditunda_menit, snoozeMinutes),
+                    Toast.LENGTH_SHORT
+            ).show();
+
             NavHostFragment.findNavController(ReminderFragment.this).navigateUp();
             return;
         }
@@ -591,13 +624,32 @@ public class ReminderFragment extends Fragment {
                         return;
                     }
 
-                    Long snoozeValue = document.getLong("snooze_minutes");
+                    SharedPreferences pref = requireContext()
+                            .getSharedPreferences(
+                                    "notification_settings",
+                                    Context.MODE_PRIVATE
+                            );
 
-                    // Fallback hanya jika field Firebase belum tersedia.
-                    int snoozeMinutes =
-                            (snoozeValue != null && snoozeValue > 0)
-                                    ? snoozeValue.intValue()
-                                    : 5;
+                    String savedSnooze = pref.getString(
+                            "snooze_duration",
+                            "5 menit"
+                    );
+
+                    int snoozeMinutes;
+
+                    switch (savedSnooze) {
+                        case "10 menit":
+                            snoozeMinutes = 10;
+                            break;
+
+                        case "30 menit":
+                            snoozeMinutes = 30;
+                            break;
+
+                        default:
+                            snoozeMinutes = 5;
+                            break;
+                    }
 
                     Log.d(
                             "REMINDER_FRAGMENT",
