@@ -67,6 +67,7 @@ public class AuthManager {
     private final InvitationRepo invitationRepo;
     private final NotificationRepo notificationRepo;
     private final CareRelationshipRepo relationshipRepo;
+    private interface SimpleCallback { void onDone(); }
 
     public AuthManager(Context context){
         this.context = context.getApplicationContext();
@@ -147,6 +148,78 @@ public class AuthManager {
             }
         });
     }
+//    public void loginWithEmail(String email, String password, AuthCallback<User> callback){
+//        if (email == null || email.trim().isEmpty()){
+//            callback.onFailure(context.getString(R.string.email_tidak_boleh_kosong));
+//            return;
+//        } if (!Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()){
+//            callback.onFailure(context.getString(R.string.format_email_tidak_valid));
+//            return;
+//        } if (password == null || password.isEmpty()){
+//            callback.onFailure(context.getString(R.string.password_tidak_boleh_kosong));
+//            return;
+//        } final String cleanEmail = email.trim().toLowerCase();
+//
+//        userRepository.getUserbyEmail(cleanEmail, new RepoCallback<User>() {
+//            @Override
+//            public void onSuccess(User result) {
+//                if (result == null){
+//                    callback.onFailure(context.getString(R.string.email_belum_terdaftar));
+//                    return;
+//                } if (result.getAuthProvider() == AuthProviderType.GOOGLE && !result.isGoogle_email_password_capable()){
+//                    callback.onFailure(context.getString(R.string.email_terdaftar_google_msg));
+//                    return;
+//                } performEmailSignIn(cleanEmail, password, callback);
+//            }
+//
+//            @Override
+//            public void onFailure(Exception e) {
+//                performEmailSignIn(cleanEmail, password, callback);
+//            }
+//        });
+//
+//        mAuth.signInWithEmailAndPassword(email, password).addOnSuccessListener(result -> {
+//            FirebaseUser firebaseUser = result.getUser();
+//            if (firebaseUser == null){
+//                callback.onFailure(context.getString(R.string.login_gagal_user_tidak_ditemukan));
+//                return;
+//            } firebaseUser.reload().addOnSuccessListener(unused -> {
+//                if (!firebaseUser.isEmailVerified()){
+//                    mAuth.signOut();
+//                    sessionManager.clearSession();
+//                    callback.onFailure("EMAIL_NOT_VERIFIED");
+//                    return;
+//                }
+//                userRepository.getUserbyUid(firebaseUser.getUid(), new RepoCallback<User>() {
+//                    @Override
+//                    public void onSuccess(User result) {
+//                        sessionManager.saveUser(result);
+//                        callback.onSuccess(result);
+//                    }
+//
+//                    @Override
+//                    public void onFailure(Exception e) {
+//                        mAuth.signOut();
+//                        sessionManager.clearSession();
+//                        callback.onFailure(e.getMessage());
+//                    }
+//                });
+//            }).addOnFailureListener(e -> {
+//                mAuth.signOut();
+//                callback.onFailure(e.getMessage());
+//            });
+//        }).addOnFailureListener(e -> {
+//            String message = context.getString(R.string.email_atau_password_salah);
+//            if (e instanceof FirebaseAuthInvalidUserException){
+//                message = context.getString(R.string.email_belum_terdaftar) + "\n\n"
+//                        + context.getString(R.string.akun_google_login);
+//            } else if (e instanceof FirebaseAuthInvalidCredentialsException){
+//                message = context.getString(R.string.password_salah) + "\n\n"
+//                        + context.getString(R.string.akun_google_login);
+//            } callback.onFailure(message);
+//        });
+//    }
+
     public void loginWithEmail(String email, String password, AuthCallback<User> callback){
         if (email == null || email.trim().isEmpty()){
             callback.onFailure(context.getString(R.string.email_tidak_boleh_kosong));
@@ -176,47 +249,7 @@ public class AuthManager {
                 performEmailSignIn(cleanEmail, password, callback);
             }
         });
-
-        mAuth.signInWithEmailAndPassword(email, password).addOnSuccessListener(result -> {
-            FirebaseUser firebaseUser = result.getUser();
-            if (firebaseUser == null){
-                callback.onFailure(context.getString(R.string.login_gagal_user_tidak_ditemukan));
-                return;
-            } firebaseUser.reload().addOnSuccessListener(unused -> {
-                if (!firebaseUser.isEmailVerified()){
-                    mAuth.signOut();
-                    sessionManager.clearSession();
-                    callback.onFailure("EMAIL_NOT_VERIFIED");
-                    return;
-                }
-                userRepository.getUserbyUid(firebaseUser.getUid(), new RepoCallback<User>() {
-                    @Override
-                    public void onSuccess(User result) {
-                        sessionManager.saveUser(result);
-                        callback.onSuccess(result);
-                    }
-
-                    @Override
-                    public void onFailure(Exception e) {
-                        mAuth.signOut();
-                        sessionManager.clearSession();
-                        callback.onFailure(e.getMessage());
-                    }
-                });
-            }).addOnFailureListener(e -> {
-                mAuth.signOut();
-                callback.onFailure(e.getMessage());
-            });
-        }).addOnFailureListener(e -> {
-            String message = context.getString(R.string.email_atau_password_salah);
-            if (e instanceof FirebaseAuthInvalidUserException){
-                message = context.getString(R.string.email_belum_terdaftar) + "\n\n"
-                        + context.getString(R.string.akun_google_login);
-            } else if (e instanceof FirebaseAuthInvalidCredentialsException){
-                message = context.getString(R.string.password_salah) + "\n\n"
-                        + context.getString(R.string.akun_google_login);
-            } callback.onFailure(message);
-        });
+        // sudah — HAPUS baris mAuth.signInWithEmailAndPassword(...) yang ada di bawah ini sebelumnya
     }
 
     private void performEmailSignIn(String email, String password, AuthCallback<User> callback) {
@@ -698,20 +731,45 @@ public class AuthManager {
         if (firebaseUser == null || user == null){
             callback.onFailure(context.getString(R.string.user_tidak_ditemukan));
             return;
-        } userRepository.deleteUser(user.getAuth_uid(), new RepoCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
-                firebaseUser.delete().addOnSuccessListener(unused -> {
-                    sessionManager.clearSession();
-                    callback.onSuccess(null);
-                }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
-            }
+        }
+        String uid = user.getAuth_uid();
 
-            @Override
-            public void onFailure(Exception e) {
-                callback.onFailure(e.getMessage());
-            }
+        cleanupRelationshipsForUser(uid, () -> {
+            userRepository.deleteUser(uid, new RepoCallback<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    firebaseUser.delete().addOnSuccessListener(unused -> {
+                        sessionManager.clearSession();
+                        callback.onSuccess(null);
+                    }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    callback.onFailure(e.getMessage());
+                }
+            });
         });
+    }
+    private void cleanupRelationshipsForUser(String uid, SimpleCallback onDone) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("care_relationships").whereEqualTo("consumer_uid", uid).get()
+                .addOnCompleteListener(t1 -> {
+                    if (t1.isSuccessful()) {
+                        for (com.google.firebase.firestore.DocumentSnapshot doc : t1.getResult()) {
+                            doc.getReference().delete();
+                        }
+                    }
+                    db.collection("care_relationships").whereEqualTo("caregiver_uid", uid).get()
+                            .addOnCompleteListener(t2 -> {
+                                if (t2.isSuccessful()) {
+                                    for (com.google.firebase.firestore.DocumentSnapshot doc : t2.getResult()) {
+                                        doc.getReference().delete();
+                                    }
+                                }
+                                onDone.onDone();
+                            });
+                });
     }
 
     //invitation & notification
@@ -734,12 +792,16 @@ public class AuthManager {
         } userRepository.getUserbyEmail(email, new RepoCallback<User>() {
             @Override
             public void onSuccess(User receiver) {
-                //user belum terdaftar
                 if (receiver == null){
                     createInvitation(sender, null, email, relationshipRole, callback);
                     return;
-                } //user sudah terdaftar
-                relationshipRepo.hasRelationship(sender.getAuth_uid(), receiver.getAuth_uid(), new RepoCallback<Boolean>() {
+                }
+                String consumerUidToCheck = (relationshipRole == UserRole.Caregiver)
+                        ? sender.getAuth_uid() : receiver.getAuth_uid();
+                String caregiverUidToCheck = (relationshipRole == UserRole.Caregiver)
+                        ? receiver.getAuth_uid() : sender.getAuth_uid();
+
+                relationshipRepo.hasRelationship(consumerUidToCheck, caregiverUidToCheck, new RepoCallback<Boolean>() {
                     @Override
                     public void onSuccess(Boolean hasRelationship) {
                         if (Boolean.TRUE.equals(hasRelationship)){
@@ -767,13 +829,12 @@ public class AuthManager {
                     }
                 });
             }
-
-
             @Override
             public void onFailure(Exception e) {
                 callback.onFailure(e.getMessage());
             }
         });
+
     }
     private void createInvitation(User sender, User receiver, String receiverEmail, UserRole relationshipRole, InvitationCallback callback) {
         Invitation invitation = new Invitation();

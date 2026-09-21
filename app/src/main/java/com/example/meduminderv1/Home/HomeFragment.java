@@ -300,39 +300,55 @@ public class HomeFragment extends Fragment {
     }
     private void confirmTaken() {
         if (nextLogId == null) return;
-        medicationRepo.markLogAsTaken(nextLogId, new RepoCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
-                loadStats();
-                if (nextMedId != null){
-                    medicationRepo.decrementStock(nextMedId, new RepoCallback<Void>() {
+        if (!btnKonfirmasi.isEnabled()) return;
+        btnKonfirmasi.setEnabled(false);
+
+        db.collection("medication_logs").document(nextLogId).get()
+                .addOnSuccessListener(snapshot -> {
+                    if (!isAdded()) return;
+                    String currentStatus = snapshot.getString("status");
+                    if ("dikonsumsi".equals(currentStatus)) {
+                        loadNextSchedule();
+                        return;
+                    }
+
+                    medicationRepo.markLogAsTaken(nextLogId, new RepoCallback<Void>() {
                         @Override
                         public void onSuccess(Void result) {
-                            if (!isAdded() || getContext() == null) return;
-                            Toast.makeText(requireContext(),getString(R.string.berhasil_dicatat), Toast.LENGTH_SHORT).show();
-                            loadNextSchedule();
-                            loadTodaySchedule();
+                            loadStats();
+                            if (nextMedId != null){
+                                medicationRepo.decrementStock(nextMedId, new RepoCallback<Void>() {
+                                    @Override
+                                    public void onSuccess(Void result) {
+                                        if (!isAdded() || getContext() == null) return;
+                                        Toast.makeText(requireContext(), getString(R.string.berhasil_dicatat), Toast.LENGTH_SHORT).show();
+                                        loadNextSchedule();
+                                        loadTodaySchedule();
+                                    }
+                                    @Override
+                                    public void onFailure(Exception e) {
+                                        if (!isAdded() || getContext() == null) return;
+                                        Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            } else {
+                                loadNextSchedule();
+                                loadTodaySchedule();
+                            }
                         }
 
                         @Override
                         public void onFailure(Exception e) {
-                            if(!isAdded() || getContext() == null) { return; }
+                            if (!isAdded() || getContext() == null) return;
+                            btnKonfirmasi.setEnabled(true);
                             Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     });
-                } else {
-                    loadNextSchedule();
-                    loadTodaySchedule();
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                if (!isAdded() || getContext() == null) return;
-                Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-
+                })
+                .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
+                    btnKonfirmasi.setEnabled(true);
+                });
     }
 
     private void resolveMedName(String schedulesId, MedResolveCallback callback) {
@@ -443,6 +459,7 @@ public class HomeFragment extends Fragment {
                     for (DocumentSnapshot doc : apptQuery.getDocuments()) {
                         Appointment appt = doc.toObject(Appointment.class);
                         if (appt == null) continue;
+                        if (appt.getDeleted_at() != null) continue;
                         combined.add(new LogItem("appointment", appt.getTitle(),
                                 sdf.format(appt.getAppointment_at().toDate()),
                                 appt.getAddress(), appt.getStatus(),

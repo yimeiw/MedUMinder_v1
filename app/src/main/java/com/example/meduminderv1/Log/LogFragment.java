@@ -317,7 +317,7 @@ public class LogFragment extends Fragment {
         String users_id = SessionManager.getInstance().getTargetUid();
         if (users_id == null){
             initialMedicine.setVisibility(View.VISIBLE);
-            return; //caregiver blm pilih consumer atau blm punya consumer
+            return;
         }
         Log.d("AUTH", users_id == null ? "NULL" : users_id);
         db.collection("appointments")
@@ -330,7 +330,7 @@ public class LogFragment extends Fragment {
                         Log.d("FIRESTORE", doc.getId() + " => " + doc.getData());
                         Log.d("DOC", doc.getData().toString());
                         Appointment appointment = doc.toObject(Appointment.class);
-                        if (appointment != null) {
+                        if (appointment != null && appointment.getDeleted_at() == null) {
                             appointment.setDocId(doc.getId());
                             allAppointLog.add(appointment);
                         }
@@ -500,5 +500,18 @@ public class LogFragment extends Fragment {
         initialMedicine.setVisibility(View.GONE);
 
         loadAppointmentLogs();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (consumerPickerHelper != null) {
+            consumerPickerHelper.setup();
+        }
+        if (currentType == LogType.MEDICATION) {
+            loadMedicationLogs();
+        } else {
+            loadAppointmentLogs();
+        }
     }
 }

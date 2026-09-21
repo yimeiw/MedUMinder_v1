@@ -402,6 +402,7 @@ public class CaregiverHomeFragment extends Fragment {
                     for (DocumentSnapshot doc : apptQuery.getDocuments()) {
                         Appointment appt = doc.toObject(Appointment.class);
                         if (appt == null) continue;
+                        if (appt.getDeleted_at() != null) continue;
                         combined.add(new LogItem("appointment", appt.getTitle(),
                                 sdf.format(appt.getAppointment_at().toDate()),
                                 appt.getAddress(), appt.getStatus(),
@@ -476,9 +477,11 @@ public class CaregiverHomeFragment extends Fragment {
         if (percent >= 50) return getString(R.string.desc_kepatuhan_okela);
         return getString(R.string.desc_kepatuhan_rendah);
     }
+
     @Override
     public void onResume() {
         super.onResume();
+        InvitationPopupHelper.checkAndShow(this, authManager);
         checkUnreadNotif();
         loadDrawerConsumerList();
         if (consumerPicker != null){
