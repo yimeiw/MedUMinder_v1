@@ -362,7 +362,7 @@ public class AuthManager {
             }
         });
     }
-    private void checkGoogleProfile(FirebaseUser firebaseUser,  AuthCallback<User> callback) {
+    private void checkGoogleProfile(FirebaseUser firebaseUser, AuthCallback<User> callback) {
         userRepository.getUserbyUid(firebaseUser.getUid(), new RepoCallback<User>() {
             @Override
             public void onSuccess(User result) {
@@ -372,11 +372,11 @@ public class AuthManager {
 
             @Override
             public void onFailure(Exception e) {
+                // User Google baru, belum ada datanya di database — buat profil baru
                 User user = new User();
                 user.setAuth_uid(firebaseUser.getUid());
                 user.setName(firebaseUser.getDisplayName());
                 user.setEmail(firebaseUser.getEmail().trim().toLowerCase());
-                user.setAuthProvider(AuthProviderType.valueOf("GOOGLE"));
                 user.setCurrent_role("Consumer");
                 user.setCaregiver_enabled(false);
                 user.setAuthProvider(AuthProviderType.GOOGLE);
@@ -385,14 +385,19 @@ public class AuthManager {
                 user.setCreated_at(Timestamp.now());
                 user.setUpdated_at(Timestamp.now());
                 user.setDeleted_at(null);
-                saveUserProfile(user, new AuthCallback<User>() {
+
+                // Simpan langsung ke database, TANPA proses verifikasi email & sign-out,
+                // karena akun Google sudah pasti terverifikasi.
+                userRepository.saveUser(user, new RepoCallback<Void>() {
                     @Override
-                    public void onSuccess(User user) {
+                    public void onSuccess(Void result) {
+                        sessionManager.saveUser(user);
+                        callback.onSuccess(user); // <-- ini yang bikin langsung pindah ke Home
                     }
 
                     @Override
-                    public void onFailure(String message) {
-                        callback.onFailure(message);
+                    public void onFailure(Exception e2) {
+                        callback.onFailure(e2.getMessage());
                     }
                 });
             }

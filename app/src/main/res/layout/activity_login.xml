@@ -16,7 +16,7 @@
         <ImageView
             android:id="@+id/capsule"
             android:layout_width="match_parent"
-            android:layout_height="620dp"
+            android:layout_height="630dp"
             android:src="@drawable/capsule_login_signup"
             android:layout_alignParentBottom="true"
             />
