@@ -530,11 +530,8 @@
     <string name="nama_file_laporan_statistik">Laporan_Statistik</string>
     <string name="belum_ada_caregiver_klik_undang">Belum ada caregiver. Ketuk untuk mengundang caregiver.</string>
     <string name="belum_ada_consumer_klik_undang">Belum ada consumer. Ketuk untuk mengundang consumer.</string>
-    <string name="btnMarkAll">Tandai Semua Telah Dibaca.</string>
     <string name="confirm_hapus_notif">Apakah Anda yakin ingin menghapus notifikasi?</string>
     <string name="title_hapus_notif">Hapus Notifikasi</string>
     <string name="confirm_read_notif">Apakah Anda yakin ingin menandai notifikasi telah dibaca?</string>
     <string name="title_read_notif">Tandai telah dibaca</string>
-    <string name="confirm_unread_notif">Apakah Anda yakin ingin menandai notifikasi belum dibaca?</string>
-    <string name="title_unread_notif">Tandai belum dibaca</string>
 </resources>

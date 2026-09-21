@@ -522,6 +522,9 @@
     <string name="nama_file_laporan_statistik">Statistics_Report</string>
     <string name="belum_ada_caregiver_klik_undang">There is no caregiver yet. Tap to invite a caregiver.</string>
     <string name="belum_ada_consumer_klik_undang">There is no consumer yet. Tap to invite a consumer.</string>
-    <string name="btnMarkAll">Marks All Read.</string>
+    <string name="confirm_hapus_notif">Are you sure you want to delete the notification?</string>
+    <string name="title_hapus_notif">Delete Notificatioin</string>
+    <string name="confirm_read_notif">Are you sure you want to mark the notification as read?</string>
+    <string name="title_read_notif">Mark As Read</string>
 
 </resources>

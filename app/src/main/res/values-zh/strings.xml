@@ -522,6 +522,9 @@
     <string name="nama_file_laporan_statistik">统计报告</string>
     <string name="belum_ada_caregiver_klik_undang">目前还没有照护人员。点击即可邀请照护人员。</string>
     <string name="belum_ada_consumer_klik_undang">目前还没有消费者。点击邀请消费者。</string>
-    <string name="btnMarkAll">标记全部已读。</string>
+    <string name="confirm_hapus_notif">您确定要删除该通知吗？</string>
+    <string name="title_hapus_notif">清除通知</string>
+    <string name="confirm_read_notif">您确定要将通知标记为已读吗？</string>
+    <string name="title_read_notif">标记为已读</string>
 
 </resources>
