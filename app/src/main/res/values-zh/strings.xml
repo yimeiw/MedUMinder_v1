@@ -520,4 +520,6 @@
     <string name="response_center_label">响应</string>
 
     <string name="nama_file_laporan_statistik">统计报告</string>
+    <string name="belum_ada_caregiver_klik_undang">目前还没有照护人员。点击即可邀请照护人员。</string>
+    <string name="belum_ada_consumer_klik_undang">目前还没有消费者。点击邀请消费者。</string>
 </resources>

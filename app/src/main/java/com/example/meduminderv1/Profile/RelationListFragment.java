@@ -23,26 +23,26 @@ import com.example.meduminderv1.Relation.RelationAdapter;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 
 public class RelationListFragment extends Fragment {
     public static final String ARG_MODE = "mode"; //mode caregiver atau consumer
 
-    ImageButton btnBack;
+    ImageButton btnBack, btnAddRelation;
     TextView tvHeader, emptyState;
     RecyclerView rvRelation;
     SessionManager sessionManager;
     CareRelationshipRepo relationshipRepo;
     boolean showingCaregivers; // kalau true berarti list caregiver yang muncul
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_relation_list, container, false);
 
         btnBack = view.findViewById(R.id.btnBack);
+        btnAddRelation = view.findViewById(R.id.btnAddRelation);
         tvHeader = view.findViewById(R.id.tvHeaderRelation);
         emptyState = view.findViewById(R.id.emptyState);
         rvRelation = view.findViewById(R.id.rvRelation);
@@ -51,20 +51,38 @@ public class RelationListFragment extends Fragment {
 
         String mode = getArguments() != null ? getArguments().getString(ARG_MODE) : "Caregiver";
         showingCaregivers = "Caregiver".equals(mode);
-        tvHeader.setText(showingCaregivers ? "List Caregiver" : "List Consumer");
+        tvHeader.setText(showingCaregivers ? getString(R.string.caregiverList) : getString(R.string.consumerList));
 
         btnBack.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());
+
+        btnAddRelation.setOnClickListener(v ->
+                NavHostFragment.findNavController(RelationListFragment.this).navigate(R.id.invitationFragment));
+
         rvRelation.setLayoutManager(new LinearLayoutManager(requireContext()));
         loadRelations();
 
-        return  view;
+        return view;
     }
+
+    private void showEmptyState() {
+        emptyState.setText(showingCaregivers
+                ? getString(R.string.belum_ada_caregiver_klik_undang)
+                : getString(R.string.belum_ada_consumer_klik_undang));
+        emptyState.setVisibility(View.VISIBLE);
+        // Sama seperti ConsumerPickerHelper: saat list kosong, empty state
+        // jadi ajakan yang bisa langsung diklik untuk mengundang.
+        emptyState.setOnClickListener(v ->
+                NavHostFragment.findNavController(RelationListFragment.this).navigate(R.id.invitationFragment));
+        btnAddRelation.setVisibility(View.GONE);
+    }
+
     private void loadRelations() {
         User user = sessionManager.getUser();
         if (user == null) return;
         RepoCallback<List<CareRelationship>> callback = new RepoCallback<List<CareRelationship>>() {
             @Override
             public void onSuccess(List<CareRelationship> result) {
+                if (!isAdded()) return;
                 List<CareRelationship> deduped = new ArrayList<>();
                 LinkedHashSet<String> seenUid = new LinkedHashSet<>();
                 for (CareRelationship relationship : result){
@@ -74,10 +92,18 @@ public class RelationListFragment extends Fragment {
                         deduped.add(relationship);
                     }
                 }
-                emptyState.setVisibility(result.isEmpty() ? View.VISIBLE : View.GONE);
-                RelationAdapter adapter = new RelationAdapter(result, requireContext(), showingCaregivers, relationship -> {
+
+                if (deduped.isEmpty()) {
+                    showEmptyState();
+                } else {
+                    emptyState.setVisibility(View.GONE);
+                    emptyState.setOnClickListener(null);
+                    btnAddRelation.setVisibility(View.VISIBLE);
+                }
+
+                RelationAdapter adapter = new RelationAdapter(deduped, requireContext(), showingCaregivers, relationship -> {
                     if (rvRelation.getAdapter() != null && rvRelation.getAdapter().getItemCount() == 0){
-                        emptyState.setVisibility(View.VISIBLE);
+                        showEmptyState();
                     }
                 });
                 rvRelation.setAdapter(adapter);
@@ -85,6 +111,7 @@ public class RelationListFragment extends Fragment {
 
             @Override
             public void onFailure(Exception e) {
+                if (!isAdded()) return;
                 Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         };

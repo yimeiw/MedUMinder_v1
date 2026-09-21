@@ -71,25 +71,11 @@ public class LoginActivity extends AppCompatActivity {
             loginUser();
         });
 
-        NavHostFragment navHostFragment =
-                (NavHostFragment) getSupportFragmentManager()
-                        .findFragmentById(R.id.navHostForgotPassword);
-
-        NavController navController =
-                navHostFragment.getNavController();
-
-        NavInflater navInflater = navController.getNavInflater();
-
-        NavGraph navGraph =
-                navInflater.inflate(R.navigation.nav_graph);
-
-        navGraph.setStartDestination(R.id.forgotPassFragment);
-
-        navController.setGraph(navGraph);
-
         forgotPassword.setOnClickListener(v -> {
-            findViewById(R.id.navHostForgotPassword)
-                    .setVisibility(View.VISIBLE);
+            Intent intent = new Intent(LoginActivity.this, ForgotPasswordActivity.class);
+            String currentEmail = emailInput.getText().toString().trim();
+            if (!currentEmail.isEmpty()) intent.putExtra("prefill_email", currentEmail);
+            startActivity(intent);
         });
 
         signUpButton.setOnClickListener(view -> {

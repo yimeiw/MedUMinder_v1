@@ -528,4 +528,6 @@
     <string name="response_center_label">Respon</string>
 
     <string name="nama_file_laporan_statistik">Laporan_Statistik</string>
+    <string name="belum_ada_caregiver_klik_undang">Belum ada caregiver. Ketuk untuk mengundang caregiver.</string>
+    <string name="belum_ada_consumer_klik_undang">Belum ada consumer. Ketuk untuk mengundang consumer.</string>
 </resources>

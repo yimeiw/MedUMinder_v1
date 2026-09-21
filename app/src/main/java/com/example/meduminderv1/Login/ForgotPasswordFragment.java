@@ -41,8 +41,13 @@ public class ForgotPasswordFragment extends Fragment {
         btnBack = view.findViewById(R.id.btnBack);
         btnKirim = view.findViewById(R.id.btnKirim);
 
+        if (getArguments() != null) {
+            String prefillEmail = getArguments().getString("prefill_email");
+            if (prefillEmail != null) emailInput.setText(prefillEmail);
+        }
+
         btnBack.setOnClickListener(v -> {
-            requireActivity().getSupportFragmentManager().popBackStack();
+            requireActivity().finish();
         });
 
         btnKirim.setOnClickListener(v -> {

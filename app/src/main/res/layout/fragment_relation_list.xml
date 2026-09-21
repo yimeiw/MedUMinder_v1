@@ -30,6 +30,15 @@
             android:layout_weight="1"
             android:gravity="center"
             android:textColor="?attr/colorOnSurface"/>
+
+        <!-- Tombol undang, SELALU aktif - tidak bergantung status caregiver_enabled -->
+        <ImageButton
+            android:layout_width="30dp"
+            android:layout_height="26dp"
+            android:background="@drawable/ic_add_people"
+            android:id="@+id/btnAddRelation"
+            android:layout_gravity="center"
+            app:tint="@color/hover_pressed" />
     </LinearLayout>
 
     <TextView
@@ -39,7 +48,15 @@
         android:layout_below="@id/headerSection"
         android:text="@string/belum_ada_relasi"
         android:gravity="center"
-        android:layout_marginTop="20dp"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="14dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="@drawable/border_wp"
+        android:drawableStart="@drawable/ic_add"
+        android:drawablePadding="10dp"
+        android:layout_marginVertical="10dp"
+        android:layout_marginHorizontal="20dp"
         android:visibility="gone"/>
 
     <androidx.recyclerview.widget.RecyclerView

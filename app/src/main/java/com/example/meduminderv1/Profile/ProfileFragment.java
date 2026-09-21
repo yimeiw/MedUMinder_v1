@@ -55,7 +55,7 @@ public class ProfileFragment extends Fragment {
     RelativeLayout themeSwitch;
     ImageView iconToggle, imgAktivasi;
     SharedPreferences prefs;
-    LinearLayout btnEditProfile, btnAktivasi, btnListRelation, btnChangeLanguage, btnNotificationSetting, cardStatistik, btnAddCaregiver;
+    LinearLayout btnEditProfile, btnAktivasi, btnListRelation, btnChangeLanguage, btnNotificationSetting, cardStatistik;
     MaterialButton btnSeeStatistic;
     ProgressView adherenceRing;
     StatistikRepo statistikRepo;
@@ -92,7 +92,6 @@ public class ProfileFragment extends Fragment {
         btnListRelation = view.findViewById(R.id.btnRelationList);
         btnChangeLanguage = view.findViewById(R.id.btnChangeLanguage);
         btnNotificationSetting = view.findViewById(R.id.btnNotificationSetting);
-        btnAddCaregiver = view.findViewById(R.id.btnAddCaregiver);
 
         if (user != null){
             loadUser();
@@ -140,7 +139,7 @@ public class ProfileFragment extends Fragment {
             }
         });
 
-        btnAddCaregiver.setOnClickListener(v -> {
+        btnListRelation.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
             bundle.putString("relationship_role", "Caregiver");
             NavHostFragment.findNavController(this).navigate(R.id.invitationFragment, bundle);
@@ -394,7 +393,6 @@ public class ProfileFragment extends Fragment {
         txtListRelation.setText(
                 isConsumer ? getString(R.string.caregiverList) : getString(R.string.consumerList)
         );
-        btnAddCaregiver.setVisibility(isConsumer ? View.VISIBLE : View.GONE);
         btnListRelation.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
             bundle.putString(RelationListFragment.ARG_MODE, isConsumer ? "Caregiver" : "Consumer");
