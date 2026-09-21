@@ -48,6 +48,29 @@ public class LanguageFragment extends Fragment {
         }
     }
 
+    private void initializeLanguage() {
+        String currentLanguage = AppCompatDelegate.getApplicationLocales().toLanguageTags();
+
+        if (!currentLanguage.isEmpty()) {
+            return;
+        }
+
+        String deviceLanguage = Locale.getDefault().getLanguage();
+
+        if ("id".equals(deviceLanguage)) {
+            currentLanguage = "id";
+        } else if ("zh".equals(deviceLanguage)) {
+            currentLanguage = "zh";
+        } else {
+            // Bahasa default yang ga tersedia otomatis diubah jadi English
+            currentLanguage = "en";
+        }
+
+        AppCompatDelegate.setApplicationLocales(
+                LocaleListCompat.forLanguageTags(currentLanguage)
+        );
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -81,6 +104,7 @@ public class LanguageFragment extends Fragment {
             );
         });
 
+        initializeLanguage();
         updateLanguageUI(view);
 
         return view;
