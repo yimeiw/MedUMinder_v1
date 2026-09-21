@@ -66,6 +66,8 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         holder.itemView.setOnClickListener(v ->
                 listener.onNotificationClick(notification)
         );
+        holder.itemView.setTranslationX(0f);
+        holder.itemView.setAlpha(1f);
     }
 
     @Override
@@ -99,5 +101,18 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
         void onNotificationClick(Notification notification);
 
+    }
+    public Notification getNotificationAt(int position){
+        return notificationList.get(position);
+    }
+    public void removeAt(int position){
+        notificationList.remove(position);
+        notifyItemRemoved(position);
+    }
+    public int getNotificationPositionById(String notificationId) {
+        for (int i = 0; i < notificationList.size(); i++) {
+            if (notificationId.equals(notificationList.get(i).getNotification_id())) return i;
+        }
+        return -1;
     }
 }

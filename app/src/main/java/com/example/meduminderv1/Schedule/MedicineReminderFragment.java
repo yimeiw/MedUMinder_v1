@@ -664,6 +664,7 @@ public class MedicineReminderFragment extends Fragment {
         notif.setReceiver_uid(targetUid);
         notif.setSender_uid(user.getAuth_uid());
         notif.setReference_id(scheduleId);
+        notif.setIs_new_schedule(true);
         notif.setType(NotificationType.Medicine);
         notif.setTitle(getString(R.string.jadwal_obat_baru_title));
         notif.setMessage(isForSelf
@@ -681,6 +682,7 @@ public class MedicineReminderFragment extends Fragment {
             selfNotif.setReceiver_uid(user.getAuth_uid());
             selfNotif.setSender_uid(user.getAuth_uid());
             selfNotif.setReference_id(scheduleId);
+            selfNotif.setIs_new_schedule(true);
             selfNotif.setType(NotificationType.Medicine);
             selfNotif.setTitle(getString(R.string.jadwal_obat_ditambahkan_title));
             selfNotif.setMessage(getString(R.string.anda_menambahkan_jadwal_minum_obat) + medName);

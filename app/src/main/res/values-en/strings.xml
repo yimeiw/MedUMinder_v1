@@ -522,5 +522,6 @@
     <string name="nama_file_laporan_statistik">Statistics_Report</string>
     <string name="belum_ada_caregiver_klik_undang">There is no caregiver yet. Tap to invite a caregiver.</string>
     <string name="belum_ada_consumer_klik_undang">There is no consumer yet. Tap to invite a consumer.</string>
+    <string name="btnMarkAll">Marks All Read.</string>
 
 </resources>

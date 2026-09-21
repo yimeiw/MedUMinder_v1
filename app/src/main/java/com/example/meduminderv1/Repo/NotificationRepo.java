@@ -65,58 +65,7 @@ public class NotificationRepo {
     }
 
     public void createStockNotification(String receiverUid, String medicationId, String medicineName, RepoCallback<Void> callback) {
-        // Buat notifikasi untuk consumer terlebih dahulu
-        createSingleStockNotification(receiverUid, medicationId, medicineName, new RepoCallback<Void>() {
-
-            @Override
-            public void onSuccess(Void result) {
-                // Cari caregiver yang terhubung dengan consumer
-                db.collection("care_relationships")
-                        .whereEqualTo("consumer_uid", receiverUid).get()
-                        .addOnSuccessListener(query -> {
-                            // Consumer tidak memiliki caregiver
-                            if (query.isEmpty()) {
-                                callback.onSuccess(null);
-                                return;
-                            }
-
-                            final int totalCaregiver = query.size();
-                            final int[] completed = {0};
-
-                            // Buat notifikasi untuk setiap caregiver
-                            for (DocumentSnapshot doc : query) {
-                                String caregiverUid = doc.getString("caregiver_uid");
-
-                                if (caregiverUid == null || caregiverUid.isEmpty()) {
-                                    completed[0]++;
-                                    if (completed[0] == totalCaregiver) {
-                                        callback.onSuccess(null);
-                                    }
-
-                                    continue;
-                                }
-
-                                createSingleStockNotification(caregiverUid, medicationId, medicineName, new RepoCallback<Void>() {
-                                    @Override
-                                    public void onSuccess(Void result) {
-                                        completed[0]++;
-                                        if (completed[0] == totalCaregiver) {
-                                            callback.onSuccess(null);
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onFailure(Exception e) {
-                                        callback.onFailure(e);
-                                    }
-                                });
-                            }
-                        }).addOnFailureListener(callback::onFailure);
-                    }
-                    @Override public void onFailure(Exception e) {
-                        callback.onFailure(e);
-                    }
-        });
+        createSingleStockNotification(receiverUid, medicationId, medicineName, callback);
     }
 
     private void createSingleStockNotification(String receiverUid, String medicationId, String medicineName, RepoCallback<Void> callback) {
@@ -128,7 +77,7 @@ public class NotificationRepo {
         notification.setTitle(context.getString(R.string.isi_ulang_obat_notif_title) + medicineName + ")");
         notification.setMessage(context.getString(R.string.stok_hampir_habis));
         notification.setType(NotificationType.Stock);
-        notification.setTarget_role(notification.getTarget_role());
+        notification.setTarget_role(UserRole.Consumer.name());
         notification.setIs_read(false);
         notification.setCreated_at(Timestamp.now());
 
@@ -158,21 +107,6 @@ public class NotificationRepo {
                 .update("is_read", true, "updated_at", Timestamp.now())
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
-    }
-
-    public void countUnread(String userUid, RepoCallback<Integer> callback) {
-        db.collection("notifications")
-                .whereEqualTo("receiver_uid", userUid)
-                .whereEqualTo("is_read", false)
-                .addSnapshotListener((snapshot, e) -> {
-                    if (e != null) {
-                        callback.onFailure(e);
-                        return;
-                    }
-
-                    int count = snapshot != null ? snapshot.size() : 0;
-                    callback.onSuccess(count);
-                });
     }
     public void countUnread(String userUid, UserRole role, RepoCallback<Integer> callback) {
         db.collection("notifications")

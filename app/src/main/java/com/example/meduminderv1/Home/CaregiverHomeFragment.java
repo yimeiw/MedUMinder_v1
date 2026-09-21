@@ -90,6 +90,7 @@ public class CaregiverHomeFragment extends Fragment {
     private List<CareRelationship> consumerRelations = new ArrayList<>();
     private String selectedConsumerUid;
     private String nextScheduleMedName;
+    private String nextScheduleId;
     private ListenerRegistration nextScheduleListener, todayScheduleListener;
     String targetUid;
     @Override
@@ -248,9 +249,12 @@ public class CaregiverHomeFragment extends Fragment {
                     } if (targetLog == null){
                         haveSchedule.setVisibility(View.GONE);
                         noSchedule.setVisibility(View.VISIBLE);
+                        nextScheduleId = null;
                         return;
                     } haveSchedule.setVisibility(View.VISIBLE);
                     noSchedule.setVisibility(View.GONE);
+                    nextScheduleId = targetLog.getMedication_schedules_id();
+
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                     tvDay.setText(formatDayLabel(targetLog.getScheduled_at().toDate()));
                     tvTime.setText(sdf.format(targetLog.getScheduled_at().toDate()));
@@ -288,6 +292,8 @@ public class CaregiverHomeFragment extends Fragment {
         notification.setReceiver_uid(consumerUid);
         notification.setSender_uid(caregiver.getAuth_uid());
         notification.setType(NotificationType.Medicine);
+        notification.setReference_id(nextScheduleId);
+        notification.setIs_new_schedule(true);
         notification.setMessage(getString(R.string.mengingatkan_minum_obat, caregiver.getName(), medName));
         notification.setIs_read(false);
         notificationRepo.createNotification(notification, new RepoCallback<Void>() {

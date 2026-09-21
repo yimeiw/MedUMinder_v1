@@ -275,6 +275,8 @@ public class EditMedicineFragment extends Fragment {
             notifToConsumer.setType(NotificationType.Medicine);
             notifToConsumer.setTitle(getString(R.string.jadwal_obat_diperbarui_title));
             notifToConsumer.setMessage(getString(R.string.caregiver_mengubah_jadwal_obat_anda_full, user.getName(), medName));
+            notifToConsumer.setReference_id(scheduleId);
+            notifToConsumer.setIs_new_schedule(true);
             notifToConsumer.setIs_read(false);
             notificationRepo.createNotification(notifToConsumer, new RepoCallback<Void>() {
                 @Override public void onSuccess(Void result) { }
@@ -298,6 +300,8 @@ public class EditMedicineFragment extends Fragment {
                     notifToCaregiver.setMessage(isForSelf
                             ? getString(R.string.consumer_mengubah_jadwal_obat_msg, user.getName(), medName)
                             : getString(R.string.jadwal_obat_consumer_diperbarui_msg, medName));
+                    notifToCaregiver.setReference_id(scheduleId);
+                    notifToCaregiver.setIs_new_schedule(true);
                     notifToCaregiver.setIs_read(false);
                     notificationRepo.createNotification(notifToCaregiver, new RepoCallback<Void>() {
                         @Override public void onSuccess(Void result) { }
