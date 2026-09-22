@@ -143,7 +143,8 @@ public class ReminderFragment extends Fragment {
             isAppointment = "appointment".equals(itemType);
 
             String source = bundle.getString("source", "");
-            btnOption.setVisibility("schedule".equals(source) ? View.VISIBLE : View.GONE);
+//            btnOption.setVisibility("schedule".equals(source) ? View.VISIBLE : View.GONE);
+            btnOption.setVisibility(LogStatus.fromRaw(currentStatus) == LogStatus.AKAN_DATANG ? View.VISIBLE : View.GONE);
 
             Date scheduledDate = new Date(scheduledAt);
             String formattedDate = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(scheduledDate);

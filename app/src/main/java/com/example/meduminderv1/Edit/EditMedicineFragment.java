@@ -233,7 +233,7 @@ public class EditMedicineFragment extends Fragment {
                                 AlarmSchedulerHelper.scheduleAll(requireContext(), scheduleId, medName, times, endMillis);
 
                                 new LogGenerator().replaceFutureLogs(
-                                        user.getAuth_uid(),
+                                        targetUid,
                                         scheduleId,
                                         times,
                                         Timestamp.now(),

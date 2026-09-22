@@ -92,6 +92,7 @@ public class CaregiverHomeFragment extends Fragment {
     private String nextScheduleMedName;
     private String nextScheduleId;
     private ListenerRegistration nextScheduleListener, todayScheduleListener;
+    private Timestamp nextScheduleScheduledAt;
     String targetUid;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -250,6 +251,7 @@ public class CaregiverHomeFragment extends Fragment {
                         haveSchedule.setVisibility(View.GONE);
                         noSchedule.setVisibility(View.VISIBLE);
                         nextScheduleId = null;
+                        nextScheduleScheduledAt = targetLog.getScheduled_at();
                         return;
                     } haveSchedule.setVisibility(View.VISIBLE);
                     noSchedule.setVisibility(View.GONE);
@@ -296,6 +298,7 @@ public class CaregiverHomeFragment extends Fragment {
         notification.setIs_new_schedule(true);
         notification.setMessage(getString(R.string.mengingatkan_minum_obat, caregiver.getName(), medName));
         notification.setIs_read(false);
+        notification.setScheduled_at(nextScheduleScheduledAt);
         notificationRepo.createNotification(notification, new RepoCallback<Void>() {
             @Override
             public void onSuccess(Void result) {

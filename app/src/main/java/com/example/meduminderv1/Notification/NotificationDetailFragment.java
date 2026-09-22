@@ -1,5 +1,6 @@
 package com.example.meduminderv1.Notification;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -47,7 +48,8 @@ public class NotificationDetailFragment extends Fragment {
     NotificationRepo notificationRepo;
     Notification notification;
     AuthManager authManager;
-
+    private String pendingMedName;
+    private String pendingMedicationId;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -297,11 +299,15 @@ public class NotificationDetailFragment extends Fragment {
                         + ", reference_id = " + notification.getReference_id());
 
         showMissedActionIfCaregiver();
-        if (isNewScheduleNotif()) {
+        if (notification.getScheduled_at() != null) {
+            showReminderActionButtons();
+            loadReminderActionDetail();
+        } else if (isNewScheduleNotif()) {
             loadNewMedicineScheduleDetail();
         } else {
             loadMedicationDetail();
         }
+
     }
 
     private boolean isNewScheduleNotif() {
@@ -597,5 +603,139 @@ public class NotificationDetailFragment extends Fragment {
             });
         }
         NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
+    }
+
+    private void showReminderActionButtons() {
+        if (!isAdded()) return;
+        btnAction.setVisibility(View.GONE);
+        layoutButton.setVisibility(View.VISIBLE);
+        btnAcc.setText(getString(R.string.sudah_diminum));
+        btnReject.setText(getString(R.string.tunda_pengingat));
+        btnAcc.setOnClickListener(v -> confirmMedicineTakenFromNotif());
+        btnReject.setOnClickListener(v -> snoozeMedicineFromNotif());
+    }
+
+    private void loadReminderActionDetail() {
+        String scheduleId = notification.getReference_id();
+        if (scheduleId == null || notification.getScheduled_at() == null) {
+            hideDetailCard();
+            return;
+        }
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("medication_schedules").document(scheduleId).get().addOnSuccessListener(scheduleSnap -> {
+            if (!isAdded()) return;
+            MedicationSchedules schedule = scheduleSnap.toObject(MedicationSchedules.class);
+            if (schedule == null) return;
+            pendingMedicationId = schedule.getMedication_id();
+            db.collection("medications").document(schedule.getMedication_id()).get().addOnSuccessListener(medSnap -> {
+                if (!isAdded()) return;
+                Medication med = medSnap.toObject(Medication.class);
+                int stock = 0;
+                if (med != null && med.getStock() != null && med.getStock().get("stok_obat") != null) {
+                    stock = ((Number) med.getStock().get("stok_obat")).intValue();
+                }
+                int finalStock = stock;
+
+                Runnable render = () -> {
+                    if (!isAdded()) return;
+                    notifDetail.setVisibility(View.VISIBLE);
+                    SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", Locale.getDefault());
+                    SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+                    Date d = notification.getScheduled_at().toDate();
+                    tvScheduleDayTime.setText(dayFormat.format(d) + " • " + timeFormat.format(d));
+                    if (med != null && "PIL".equalsIgnoreCase(med.getMed_type())) {
+                        tvStockInfo.setVisibility(View.VISIBLE);
+                        tvStockInfo.setText(getString(R.string.sisa_stok, finalStock));
+                    } else {
+                        tvStockInfo.setVisibility(View.GONE);
+                    }
+                };
+
+                if (med != null && med.getCustom_medicine_name() != null) {
+                    pendingMedName = med.getCustom_medicine_name();
+                    tvScheduleName.setText(getString(R.string.obat_label_colon) + pendingMedName);
+                    render.run();
+                } else if (med != null && med.getCatalog_id() != null) {
+                    db.collection("medicine_catalog").document(med.getCatalog_id()).get().addOnSuccessListener(catSnap -> {
+                        if (!isAdded()) return;
+                        MedicineCatalog cat = catSnap.toObject(MedicineCatalog.class);
+                        pendingMedName = cat != null ? cat.getNama_obat() : getString(R.string.obat_default);
+                        tvScheduleName.setText(getString(R.string.obat_label_colon) + pendingMedName);
+                        render.run();
+                    });
+                } else {
+                    pendingMedName = getString(R.string.obat_default);
+                    tvScheduleName.setText(getString(R.string.obat_kosong_placeholder));
+                    render.run();
+                }
+            });
+        }).addOnFailureListener(e -> { if (isAdded()) hideDetailCard(); });
+    }
+
+    private void confirmMedicineTakenFromNotif() {
+        if (!isAdded()) return;
+        String scheduleId = notification.getReference_id();
+        long scheduledAtMillis = notification.getScheduled_at().toDate().getTime();
+        String logId = buildLogId(scheduleId, scheduledAtMillis);
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        layoutButton.setVisibility(View.GONE);
+
+        db.collection("medication_logs").document(logId).get().addOnSuccessListener(snapshot -> {
+            if (!isAdded()) return;
+            if ("dikonsumsi".equals(snapshot.getString("status"))) {
+                Toast.makeText(requireContext(), getString(R.string.obat_ditandai_dikonsumsi), Toast.LENGTH_SHORT).show();
+                NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
+                return;
+            }
+            new com.example.meduminderv1.Repo.MedicationRepo(requireContext())
+                    .markTakenAndDecrement(logId, pendingMedicationId, new RepoCallback<Void>() {
+                        @Override public void onSuccess(Void result) {
+                            if (!isAdded()) return;
+                            requireContext().stopService(new Intent(requireContext(), com.example.meduminderv1.Reminder.AlarmRingingService.class));
+                            com.example.meduminderv1.Reminder.AlarmSchedulerHelper.cancelSnooze(requireContext(), scheduleId);
+                            com.example.meduminderv1.Reminder.AlarmSchedulerHelper.cancelOccurrenceForScheduledAt(requireContext(), scheduleId, scheduledAtMillis);
+                            Toast.makeText(requireContext(), getString(R.string.obat_ditandai_dikonsumsi), Toast.LENGTH_SHORT).show();
+                            NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
+                        }
+                        @Override public void onFailure(Exception e) {
+                            if (!isAdded()) return;
+                            layoutButton.setVisibility(View.VISIBLE);
+                            Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        }).addOnFailureListener(e -> {
+            if (!isAdded()) return;
+            layoutButton.setVisibility(View.VISIBLE);
+            Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    private void snoozeMedicineFromNotif() {
+        if (!isAdded()) return;
+        String scheduleId = notification.getReference_id();
+        long scheduledAtMillis = notification.getScheduled_at().toDate().getTime();
+        String medName = pendingMedName != null ? pendingMedName : "";
+
+        requireContext().stopService(new Intent(requireContext(), com.example.meduminderv1.Reminder.AlarmRingingService.class));
+
+        android.content.SharedPreferences pref = requireContext()
+                .getSharedPreferences("notification_settings", android.content.Context.MODE_PRIVATE);
+        String saved = pref.getString("snooze_duration", "5 menit");
+        int snoozeMinutes = "10 menit".equals(saved) ? 10 : "30 menit".equals(saved) ? 30 : 5;
+
+        com.example.meduminderv1.Reminder.AlarmSchedulerHelper.scheduleSnooze(
+                requireContext(), scheduleId, medName, scheduledAtMillis, snoozeMinutes);
+
+        Toast.makeText(requireContext(), getString(R.string.pengingat_ditunda_menit, snoozeMinutes), Toast.LENGTH_SHORT).show();
+        NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
+    }
+
+    private String buildLogId(String scheduleId, long scheduledAtMillis) {
+        java.time.LocalDateTime dt = java.time.LocalDateTime.ofInstant(
+                java.time.Instant.ofEpochMilli(scheduledAtMillis), java.time.ZoneId.systemDefault());
+        java.time.LocalDate date = dt.toLocalDate();
+        String cleanTime = dt.format(java.time.format.DateTimeFormatter.ofPattern("HHmm"));
+        return scheduleId + "_" + date + "_" + cleanTime;
     }
 }

@@ -20,6 +20,15 @@ public class Notification {
     private boolean is_read;
     private boolean is_new_schedule;
     private Timestamp created_at, updated_at;
+
+    private Timestamp scheduled_at;
+
+    public Timestamp getScheduled_at() {
+        return scheduled_at;
+    }
+    public void setScheduled_at(Timestamp scheduled_at) {
+        this.scheduled_at = scheduled_at;
+    }
     public String getNotification_id() {
         return notification_id;
     }
