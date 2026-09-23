@@ -284,7 +284,13 @@ public class AuthManager {
                 callback.onFailure(e.getMessage());
             });
         }).addOnFailureListener(e -> {
-            callback.onFailure(context.getString(R.string.password_salah));
+            if (e instanceof FirebaseAuthInvalidUserException){
+                callback.onFailure(context.getString(R.string.email_belum_terdaftar));
+            } else if (e instanceof  FirebaseAuthInvalidCredentialsException) {
+                callback.onFailure(context.getString(R.string.password_salah));
+            } else {
+                callback.onFailure(friendlyError(e));
+            }
         });
     }
 
@@ -295,19 +301,20 @@ public class AuthManager {
         } if (!Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()){
             callback.onFailure(context.getString(R.string.format_email_tidak_valid));
             return;
-        } final String cleanEmail = email.trim().toLowerCase();
-
-        FirebaseFirestore.getInstance().collection("user_emails").document(cleanEmail).get().addOnSuccessListener(doc -> {
-            if (!doc.exists()){
-                callback.onFailure(context.getString(R.string.email_belum_terdaftar));
-                return;
-            } sendResetPass(cleanEmail, callback);
-        }).addOnFailureListener(e -> callback.onFailure(friendlyError(e)));
+        }
+        final String cleanEmail = email.trim().toLowerCase();
+        sendResetPass(cleanEmail, callback);
     }
 
     private void sendResetPass(String email, AuthCallback<Void> callback) {
         mAuth.sendPasswordResetEmail(email).addOnSuccessListener(unused -> callback.onSuccess(null))
-                .addOnFailureListener(e -> callback.onFailure(friendlyError(e)));
+                .addOnFailureListener(e -> {
+                    if (e instanceof FirebaseAuthInvalidUserException) {
+                        callback.onFailure(context.getString(R.string.email_belum_terdaftar));
+                    } else {
+                        callback.onFailure(friendlyError(e));
+                    }
+                });
     }
 
     //    GOOGLE
@@ -823,6 +830,9 @@ public class AuthManager {
         if (email.isEmpty()){
             callback.onFailure(context.getString(R.string.email_wajib_diisi));
             return;
+        } if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
+            callback.onFailure(context.getString(R.string.format_email_tidak_valid));
+            return;
         } if (email.equalsIgnoreCase(sender.getEmail())){
             callback.onFailure(context.getString(R.string.tidak_dapat_mengundang_diri));
             return;
@@ -1087,6 +1097,7 @@ public class AuthManager {
         Notification notification = new Notification();
         notification.setNotification_id(UUID.randomUUID().toString());
         notification.setReceiver_uid(receiverUid);
+        notification.setSender_uid(invitation.getSender_uid());
         notification.setInvitation_id(invitation.getInvitation_id());
         notification.setType(NotificationType.Invitation);
         notification.setTitle(context.getString(R.string.invitation_title) + invitation.getInvite_role().name());

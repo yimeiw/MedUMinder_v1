@@ -250,7 +250,7 @@ public class CaregiverHomeFragment extends Fragment {
             return;
         } Timestamp now = Timestamp.now();
         nextScheduleListener = db.collection("medication_logs").whereEqualTo("users_id", consumerUid)
-                .whereGreaterThanOrEqualTo("schedule_at", now).orderBy("scheduled_at").addSnapshotListener((query, error) -> {
+                .whereGreaterThanOrEqualTo("scheduled_at", now).orderBy("scheduled_at").addSnapshotListener((query, error) -> {
                     //fragment sdh tdk attached
                     if (!isAdded()) return;
                     //query error
@@ -387,17 +387,36 @@ public class CaregiverHomeFragment extends Fragment {
         notification.setType(NotificationType.Medicine);
         notification.setReference_id(nextScheduleId);
         notification.setIs_new_schedule(true);
+        notification.setTitle(getString(R.string.pengingat_dari_caregiver_title));
         notification.setMessage(getString(R.string.mengingatkan_minum_obat, caregiver.getName(), medName));
         notification.setIs_read(false);
         notification.setScheduled_at(nextScheduleScheduledAt);
         notificationRepo.createNotification(notification, new RepoCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
+                if (!isAdded()) return;
                 Toast.makeText(requireContext(), getString(R.string.pengingat_terkirim), Toast.LENGTH_SHORT).show();
+
+                Notification confirmation = new Notification();
+                confirmation.setReceiver_uid(caregiver.getAuth_uid());
+                confirmation.setSender_uid(caregiver.getAuth_uid());
+                confirmation.setType(NotificationType.Medicine);
+                confirmation.setReference_id(nextScheduleId);
+                confirmation.setTitle(getString(R.string.pengingat_terkirim_title));
+                confirmation.setMessage(getString(R.string.pesan_pengingat_terkirim_consumer) + " (" + medName + ")");
+                confirmation.setIs_read(false);
+                notificationRepo.createNotification(confirmation, new RepoCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void result) {}
+
+                    @Override
+                    public void onFailure(Exception e) {}
+                });
             }
 
             @Override
             public void onFailure(Exception e) {
+                if (!isAdded()) return;
                 Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });

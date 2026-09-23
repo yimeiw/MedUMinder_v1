@@ -559,4 +559,10 @@
     <string name="oktober">Oct</string>
     <string name="november">Nov</string>
     <string name="desember">Dec</string>
+
+    <string name="anda_menerima_undangan_title">Invitation Accepted</string>
+    <string name="anda_menolak_undangan_title">Invitation Declined</string>
+    <string name="anda_menerima_undangan_dari_msg">You accepted an invitation from %1$s</string>
+    <string name="anda_menolak_undangan_dari_msg">You declined an invitation from %1$s</string>
+    <string name="lihat">See</string>
 </resources>

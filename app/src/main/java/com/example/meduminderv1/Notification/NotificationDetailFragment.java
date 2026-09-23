@@ -133,6 +133,9 @@ public class NotificationDetailFragment extends Fragment {
         btnReject.setVisibility(View.VISIBLE);
         notifDetail.setVisibility(View.VISIBLE);
 
+        String customTitle = notification.getTitle();
+        titleNotif.setText((customTitle != null && !customTitle.trim().isEmpty())
+                        ? customTitle : authManager.getNotificationTitle(notification.getType()));
         configureAction();
     }
 
@@ -167,19 +170,11 @@ public class NotificationDetailFragment extends Fragment {
         btnAction.setVisibility(View.GONE);
     }
 
-//    private void bindConsumerName() {
-//        if (tvConsumerName == null || notification == null) return;
-//        String consumerName = notification.getConsumer_name();
-//        tvConsumerName.setText(consumerName != null ? consumerName : "");
-//        tvConsumerName.setVisibility(consumerName != null ? View.VISIBLE : View.GONE);
-//    }
-
     private void showInvitation() {
         notifDetail.setVisibility(View.VISIBLE);
         tvScheduleName.setVisibility(View.GONE);
         tvScheduleDayTime.setVisibility(View.GONE);
         tvStockInfo.setVisibility(View.GONE);
-        //tvConsumerName.setVisibility(View.GONE);
 
         if (notification.getInvitation_id() == null) {
             cleanupOrphanNotification(getString(R.string.undangan_tidak_ditemukan));
@@ -195,8 +190,8 @@ public class NotificationDetailFragment extends Fragment {
                     return;
                 }
                 invitation = result;
-                boolean isPending = invitation.getStatus() == InvitationStatus.Pending;
 
+                boolean isPending = invitation.getStatus() == InvitationStatus.Pending;
                 if (isPending) {
                     headerNotif.setText(getString(R.string.undangan_baru_title));
                     titleNotif.setText(getString(R.string.undangan_label) + invitation.getInvite_role().name());
@@ -208,10 +203,18 @@ public class NotificationDetailFragment extends Fragment {
                 } else {
                     layoutButton.setVisibility(View.GONE);
                     boolean accepted = invitation.getStatus() == InvitationStatus.Accepted;
+
+                    boolean isReceiverCopy = notification.getReceiver_uid() != null && notification.getReceiver_uid().equals(invitation.getReceiver_uid());
+                    if (isReceiverCopy){
+                        headerNotif.setText(accepted ? getString(R.string.anda_menerima_undangan_title) : getString(R.string.anda_menolak_undangan_title));
+                        titleNotif.setText(headerNotif.getText());
+                        messageNotif.setText(getString(accepted ? R.string.anda_menerima_undangan_dari_msg : R.string.anda_menolak_undangan_dari_msg, invitation.getSender_name()));
+                        return;
+                    }
                     headerNotif.setText(accepted ? getString(R.string.undangan_diterima) : getString(R.string.undangan_ditolak));
                     titleNotif.setText(headerNotif.getText());
 
-                    String responderUid = notification.getSender_uid();
+                    String responderUid = notification.getReceiver_uid();
                     if (responderUid == null){
                         messageNotif.setText(accepted ? getString(R.string.undangan_diterima) : getString(R.string.undangan_ditolak));
                         return;
@@ -234,7 +237,12 @@ public class NotificationDetailFragment extends Fragment {
             @Override
             public void onFailure(Exception e) {
                 if (!isAdded()) return;
-                cleanupOrphanNotification(getString(R.string.undangan_sudah_tidak_tersedia));
+                if (e instanceof InvitationRepo.InvitationNotFoundException) {
+                    cleanupOrphanNotification(getString(R.string.undangan_sudah_tidak_tersedia));
+                } else {
+                    Toast.makeText(requireContext(), getString(R.string.error_koneksi_bermasalah), Toast.LENGTH_SHORT).show();
+                    hideDetailCard();
+                }
             }
         });
     }
@@ -256,11 +264,12 @@ public class NotificationDetailFragment extends Fragment {
     }
 
     private void rejectInvitation() {
+        String senderName = invitation != null ? invitation.getSender_name() : "";
         authManager.respondToInvitation(notification.getInvitation_id(), false, new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
                 if (!isAdded()) return;
-                Toast.makeText(requireContext(), getString(R.string.undangan_ditolak_toast), Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), getString(R.string.anda_menolak_undangan_dari_msg, senderName), Toast.LENGTH_SHORT).show();
                 NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
             }
 
@@ -273,10 +282,12 @@ public class NotificationDetailFragment extends Fragment {
     }
 
     private void acceptInvitation() {
+        String senderName = invitation != null ? invitation.getSender_name() : "";
         authManager.respondToInvitation(notification.getInvitation_id(), true, new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
                 if (!isAdded()) return;
+                Toast.makeText(requireContext(), getString(R.string.anda_menerima_undangan_dari_msg, senderName), Toast.LENGTH_SHORT).show();
                 if (result != null && result.getCurrentRole() == UserRole.Caregiver){
                     NavHostFragment.findNavController(NotificationDetailFragment.this).navigate(R.id.caregiverHomeFragment);
                 } else {
@@ -514,7 +525,6 @@ public class NotificationDetailFragment extends Fragment {
                 return;
             }
             notifDetail.setVisibility(View.VISIBLE);
-            //bindConsumerName();
 
             tvScheduleName.setText(getString(R.string.label_appointment_colon) + appointment.getTitle() + " (" + appointment.getAddress() + ")");
             SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", Locale.getDefault());
@@ -725,7 +735,7 @@ public class NotificationDetailFragment extends Fragment {
         int snoozeMinutes = "10 menit".equals(saved) ? 10 : "30 menit".equals(saved) ? 30 : 5;
 
         com.example.meduminderv1.Reminder.AlarmSchedulerHelper.scheduleSnooze(
-                requireContext(), scheduleId, medName, scheduledAtMillis, snoozeMinutes);
+                requireContext(), scheduleId, medName, scheduledAtMillis, snoozeMinutes, "medicine");
 
         Toast.makeText(requireContext(), getString(R.string.pengingat_ditunda_menit, snoozeMinutes), Toast.LENGTH_SHORT).show();
         NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();

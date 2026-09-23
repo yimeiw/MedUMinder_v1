@@ -462,7 +462,7 @@
     <string name="waktu_appointment_wajib_diisi">Waktu Appointment wajib diisi.</string>
     <string name="ya_btn">Ya</string>
     <string name="yakin_mau_menghapus_msg">Yakin mau menghapus </string>
-    <string name="format_tanggal_hint">dd/mm/yyyy</string>
+    <string name="format_tanggal_hint">hh/bb/tttt</string>
     <string name="placeholder_timestamp">timestamp</string>
     <string name="separator_pipe">|</string>
 
@@ -567,4 +567,10 @@
     <string name="oktober">Okt</string>
     <string name="november">Nov</string>
     <string name="desember">Des</string>
+
+    <string name="anda_menerima_undangan_title">Undangan Diterima</string>
+    <string name="anda_menolak_undangan_title">Undangan Ditolak</string>
+    <string name="anda_menerima_undangan_dari_msg">Anda menerima undangan dari %1$s</string>
+    <string name="anda_menolak_undangan_dari_msg">Anda menolak undangan dari %1$s</string>
+    <string name="lihat">Lihat</string>
 </resources>

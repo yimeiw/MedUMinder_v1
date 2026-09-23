@@ -34,12 +34,15 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Model.Appointment;
 import com.example.meduminderv1.Model.CareRelationship;
 import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.Model.MedicationLog;
 import com.example.meduminderv1.Model.MedicationSchedules;
+import com.example.meduminderv1.Model.User;
+import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
@@ -91,7 +94,8 @@ public class ReminderFragment extends Fragment {
     private boolean isAppointment;
     private FirebaseFirestore db;
     private static final int DEFAULT_SNOOZE_MINUTES = 5;
-
+    private boolean isCaregiverViewing = false;
+    private String targetConsumerUid;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -120,6 +124,11 @@ public class ReminderFragment extends Fragment {
         btnIsTaken = view.findViewById(R.id.btnIsTaken);
         btnTundaReminder = view.findViewById(R.id.btnTundaReminder);
         circleNamaObat = view.findViewById(R.id.circleNamaObat);
+
+        User currentUser = SessionManager.getInstance().getUser();
+        isCaregiverViewing = currentUser != null && currentUser.getCurrentRole() == UserRole.Caregiver;
+        targetConsumerUid = SessionManager.getInstance().getTargetUid();
+        
         btnBack.setOnClickListener(v -> {
             NavHostFragment.findNavController(ReminderFragment.this).navigateUp();
         });
@@ -164,6 +173,19 @@ public class ReminderFragment extends Fragment {
             } else {
                 refreshLiveStatus();
             }
+        } if (isCaregiverViewing){
+            btnIsTaken.setText(getString(R.string.remind_consumer));
+            btnTundaReminder.setVisibility(View.GONE);
+            btnIsTaken.setOnClickListener(v -> sendReminderToConsumer());
+        } else {
+            btnIsTaken.setOnClickListener(v -> {
+                if (isAppointment){
+                    markAppointmentAttended();
+                } else {
+                    markAsTaken();
+                }
+            });
+            btnTundaReminder.setOnClickListener(v -> snoozeReminder());
         }
         btnIsTaken.setOnClickListener(v -> {
             if (isAppointment) {
@@ -209,6 +231,29 @@ public class ReminderFragment extends Fragment {
             popupMenu.show();
         });
         return view;
+    }
+
+    private void sendReminderToConsumer() {
+        if (!isAdded() || targetConsumerUid == null) return;
+        User caregiver = SessionManager.getInstance().getUser();
+        Notification reminder = new Notification();
+        reminder.setReceiver_uid(targetConsumerUid);
+        reminder.setSender_uid(caregiver.getAuth_uid());
+        reminder.setType(isAppointment ? NotificationType.Appointment : NotificationType.Medicine);
+        reminder.setReference_id(scheduleId);
+        reminder.setTitle(getString(R.string.pengingat_dari_caregiver_title));
+        reminder.setMessage(getString(R.string.caregiver_mengingatkan_periksa_jadwal_msg, caregiver.getName()));
+        reminder.setIs_read(false);
+        notificationRepo.createNotification(reminder, new RepoCallback<Void>() {
+            @Override public void onSuccess(Void result) {
+                if (!isAdded()) return;
+                Toast.makeText(requireContext(), getString(R.string.pengingat_terkirim), Toast.LENGTH_SHORT).show();
+            }
+            @Override public void onFailure(Exception e) {
+                if (!isAdded()) return;
+                Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void confirmDeleteSchedule() {
@@ -597,7 +642,8 @@ public class ReminderFragment extends Fragment {
                     scheduleId,
                     namaObat,
                     scheduledAt,
-                    snoozeMinutes
+                    snoozeMinutes,
+                    "appointment"
             );
 
             Toast.makeText(
@@ -664,7 +710,8 @@ public class ReminderFragment extends Fragment {
                             scheduleId,
                             namaObat,
                             scheduledAt,
-                            snoozeMinutes
+                            snoozeMinutes,
+                            "medicine"
                     );
 
                     Toast.makeText(requireContext(), getString(R.string.pengingat_ditunda_menit, snoozeMinutes), Toast.LENGTH_SHORT).show();
@@ -779,10 +826,15 @@ public class ReminderFragment extends Fragment {
 
         boolean alreadyDone = logStatus == LogStatus.DIKONSUMSI;
 
-        btnIsTaken.setText(isAppointment ? getString(R.string.sudah_hadir_btn) : getString(R.string.sudah_diminum));
-        btnIsTaken.setVisibility(alreadyDone ? View.GONE : View.VISIBLE);
-
-        btnTundaReminder.setVisibility(alreadyDone ? View.GONE : View.VISIBLE);
+        if (isCaregiverViewing) {
+            btnIsTaken.setText(getString(R.string.remind_consumer));
+            btnIsTaken.setVisibility(alreadyDone ? View.GONE : View.VISIBLE);
+            btnTundaReminder.setVisibility(View.GONE);
+        } else {
+            btnIsTaken.setText(isAppointment ? getString(R.string.sudah_hadir_btn) : getString(R.string.sudah_diminum));
+            btnIsTaken.setVisibility(alreadyDone ? View.GONE : View.VISIBLE);
+            btnTundaReminder.setVisibility(alreadyDone ? View.GONE : View.VISIBLE);
+        }
     }
 
     private void updateStatusUIFromRaw(String rawStatus) {

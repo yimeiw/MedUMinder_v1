@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
+import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -93,6 +94,9 @@ public class InvitationFragment extends Fragment {
         String email = etEmail.getText().toString().trim();
         if (email.isEmpty()){
             etEmail.setError(getString(R.string.email_wajib_diisi));
+            return;
+        } if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
+            etEmail.setError(getString(R.string.format_email_tidak_valid));
             return;
         } UserRole currentRole = authManager.getCurrentUser().getCurrentRole();
         UserRole inviteRole = (currentRole == UserRole.Consumer) ? UserRole.Caregiver : UserRole.Consumer;

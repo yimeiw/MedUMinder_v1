@@ -32,17 +32,10 @@ public class AlarmActionReceiver extends BroadcastReceiver {
             return;
         }
 
-        String scheduleId =
-                intent.getStringExtra("schedule_id");
-
-        String namaObat =
-                intent.getStringExtra("nama_obat");
-
-        long scheduledAtMillis =
-                intent.getLongExtra("scheduled_at", 0L);
-
-        String action =
-                intent.getAction();
+        String scheduleId = intent.getStringExtra("schedule_id");
+        String namaObat = intent.getStringExtra("nama_obat");
+        long scheduledAtMillis = intent.getLongExtra("scheduled_at", 0L);
+        String action = intent.getAction();
 
         if (scheduleId == null || scheduleId.isEmpty()) {
             Log.e(TAG, "schedule_id tidak ditemukan");
@@ -55,21 +48,11 @@ public class AlarmActionReceiver extends BroadcastReceiver {
          * ============================================================
          */
         if ("ACTION_TAKEN".equals(action)) {
-
             PendingResult pendingResult = goAsync();
-
             // Batalkan snooze yang masih terjadwal.
-            AlarmSchedulerHelper.cancelSnooze(
-                    context,
-                    scheduleId
-            );
-
-            markAsTaken(
-                    context,
-                    scheduleId,
-                    scheduledAtMillis,
-                    pendingResult
-            );
+            AlarmSchedulerHelper.cancelSnooze(context, scheduleId);
+            AlarmSchedulerHelper.cancelOccurrenceForScheduledAt(context, scheduleId, scheduledAtMillis);
+            markAsTaken(context, scheduleId, scheduledAtMillis, pendingResult);
 
             /*
              * ============================================================
@@ -77,132 +60,111 @@ public class AlarmActionReceiver extends BroadcastReceiver {
              * ============================================================
              */
         } else if ("ACTION_SNOOZE".equals(action)) {
-
             PendingResult pendingResult = goAsync();
-
-            /*
-             * Increment snooze_count secara independen.
-             *
+            /* Increment snooze_count secara independen.
              * Tidak perlu menunggu operasi ini selesai karena
              * fungsi utama snooze tetap bisa berjalan.
              */
-            incrementSnoozeCount(
-                    scheduleId,
-                    scheduledAtMillis
-            );
-
+            incrementSnoozeCount(scheduleId, scheduledAtMillis);
+            notifySnoozed(scheduleId, namaObat, scheduledAtMillis, false);
             FirebaseFirestore.getInstance()
                     .collection("medication_schedules")
-                    .document(scheduleId)
-                    .get()
+                    .document(scheduleId).get()
                     .addOnSuccessListener(document -> {
-
                         int snoozeMinutes = 5;
-
                         if (document.exists()) {
-
-                            Long firebaseSnooze =
-                                    document.getLong(
-                                            "snooze_minutes"
-                                    );
-
-                            if (firebaseSnooze != null
-                                    && firebaseSnooze > 0) {
-
-                                snoozeMinutes =
-                                        firebaseSnooze.intValue();
+                            Long firebaseSnooze = document.getLong("snooze_minutes");
+                            if (firebaseSnooze != null && firebaseSnooze > 0) {
+                                snoozeMinutes = firebaseSnooze.intValue();
                             }
-                        }
-
-                        AlarmSchedulerHelper.scheduleSnooze(
-                                context,
-                                scheduleId,
-                                namaObat,
-                                scheduledAtMillis,
-                                snoozeMinutes
-                        );
-
-                        context.stopService(
-                                new Intent(
-                                        context,
-                                        AlarmRingingService.class
-                                )
-                        );
-
+                        } long snoozeUntil = System.currentTimeMillis() + snoozeMinutes * 60L * 1000;
+                        updateSnoozeUntil(scheduleId, scheduledAtMillis, snoozeUntil);
+                        AlarmSchedulerHelper.scheduleSnooze(context, scheduleId, namaObat,
+                                scheduledAtMillis, snoozeMinutes, "medicine");
+                        context.stopService(new Intent(context, AlarmRingingService.class));
                         pendingResult.finish();
                     })
                     .addOnFailureListener(e -> {
-
-                        Log.e(
-                                TAG,
-                                "Gagal mengambil snooze_minutes",
-                                e
-                        );
-
-                        /*
-                         * Fallback tetap 5 menit jika Firestore gagal.
-                         */
-                        AlarmSchedulerHelper.scheduleSnooze(
-                                context,
-                                scheduleId,
-                                namaObat,
-                                scheduledAtMillis,
-                                5
-                        );
-
-                        context.stopService(
-                                new Intent(
-                                        context,
-                                        AlarmRingingService.class
-                                )
-                        );
-
+                        Log.e(TAG, "Gagal mengambil snooze_minutes", e);
+                        //Fallback tetap 5 menit jika Firestore gagal.
+                        long snoozeUntil =System.currentTimeMillis() + 5 * 60L * 1000;
+                        updateSnoozeUntil(scheduleId, scheduledAtMillis, snoozeUntil);
+                        AlarmSchedulerHelper.scheduleSnooze(context, scheduleId, namaObat,
+                                scheduledAtMillis, 5, "medicine");
+                        context.stopService(new Intent(context, AlarmRingingService.class));
                         pendingResult.finish();
                     });
 
-        } else if (
-                "ACTION_APPOINTMENT_ATTENDED".equals(action)
-                        || "ACTION_APPOINTMENT_MISSED".equals(action)
-        ) {
+        } else if ("ACTION_APPOINTMENT_ATTENDED".equals(action)
+                        || "ACTION_APPOINTMENT_MISSED".equals(action)) {
 
             PendingResult pendingResult = goAsync();
-
-            String newStatus =
-                    "ACTION_APPOINTMENT_ATTENDED".equals(action)
-                            ? "dihadiri"
-                            : "terlewatkan";
+            AlarmSchedulerHelper.cancelAppointment(context, scheduleId);
+            AppointmentAlertScheduler.cancelAlerts(context, scheduleId);
+            String newStatus = "ACTION_APPOINTMENT_ATTENDED".equals(action)
+                            ? "dihadiri" : "terlewatkan";
 
             FirebaseFirestore.getInstance()
                     .collection("appointments")
                     .document(scheduleId)
-                    .update(
-                            "status",
-                            newStatus,
-                            "updated_at",
-                            Timestamp.now()
-                    )
+                    .update("status", newStatus, "updated_at", Timestamp.now())
                     .addOnCompleteListener(task -> {
 
                         if (!task.isSuccessful()) {
-
-                            Log.e(
-                                    TAG,
-                                    "Gagal update status appointment. id="
-                                            + scheduleId,
-                                    task.getException()
-                            );
+                            Log.e(TAG, "Gagal update status appointment. id=" + scheduleId, task.getException());
                         }
-
-                        context.stopService(
-                                new Intent(
-                                        context,
-                                        AlarmRingingService.class
-                                )
-                        );
-
+                        context.stopService(new Intent(context, AlarmRingingService.class));
                         pendingResult.finish();
                     });
         }
+    }
+
+    private void notifySnoozed(String scheduleId, String namaObat, long scheduledAtMillis, boolean isAppointment) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        String collection = isAppointment ? "appointments" : "medication_schedules";
+        db.collection(collection).document(scheduleId).get().addOnSuccessListener(doc -> {
+            String consumerUid = doc.getString("users_id");
+            if (consumerUid == null) return;
+            db.collection("users").document(consumerUid).get().addOnSuccessListener(userDoc -> {
+                String consumerName = userDoc.exists() ? userDoc.getString("name") : "Consumer";
+                // notif ke consumer sendiri (konfirmasi)
+                Map<String, Object> selfNotif = new HashMap<>();
+                selfNotif.put("receiver_uid", consumerUid);
+                selfNotif.put("type", isAppointment ? "Appointment" : "Medicine");
+                selfNotif.put("title", "Pengingat Ditunda");
+                selfNotif.put("message", "Pengingat " + namaObat + " ditunda 5 menit.");
+                selfNotif.put("is_read", false);
+                selfNotif.put("created_at", com.google.firebase.Timestamp.now());
+                db.collection("notifications").add(selfNotif);
+
+                // notif ke semua caregiver
+                db.collection("care_relationships").whereEqualTo("consumer_uid", consumerUid).get()
+                        .addOnSuccessListener(query -> {
+                            for (com.google.firebase.firestore.DocumentSnapshot rel : query.getDocuments()) {
+                                String caregiverUid = rel.getString("caregiver_uid");
+                                if (caregiverUid == null) continue;
+                                Map<String, Object> notifCaregiver = new HashMap<>();
+                                notifCaregiver.put("receiver_uid", caregiverUid);
+                                notifCaregiver.put("type", isAppointment ? "Appointment" : "Medicine");
+                                notifCaregiver.put("title", "Consumer Menunda Pengingat");
+                                notifCaregiver.put("message", consumerName + " menunda pengingat " + namaObat + ".");
+                                notifCaregiver.put("consumer_uid", consumerUid);
+                                notifCaregiver.put("consumer_name", consumerName);
+                                notifCaregiver.put("is_read", false);
+                                notifCaregiver.put("created_at", com.google.firebase.Timestamp.now());
+                                db.collection("notifications").add(notifCaregiver);
+                            }
+                        });
+            });
+        });
+    }
+
+    private void updateSnoozeUntil(String scheduleId, long scheduledAtMillis, long snoozeUntilMillis) {
+        String logId = buildLogId(scheduleId, scheduledAtMillis);
+        Map<String, Object> update = new HashMap<>();
+        update.put("snoozed_until", new com.google.firebase.Timestamp(new java.util.Date(snoozeUntilMillis)));
+        FirebaseFirestore.getInstance().collection("medication_logs").document(logId)
+                .set(update, com.google.firebase.firestore.SetOptions.merge());
     }
 
     /**

@@ -454,7 +454,7 @@
     <string name="waktu_appointment_wajib_diisi">请填写预约时间。</string>
     <string name="ya_btn">是</string>
     <string name="yakin_mau_menghapus_msg">您确定要删除 </string>
-    <string name="format_tanggal_hint">dd/mm/yyyy</string>
+    <string name="format_tanggal_hint">日日/月月/年年年年</string>
     <string name="placeholder_timestamp">时间戳</string>
     <string name="separator_pipe">|</string>
 
@@ -559,4 +559,11 @@
     <string name="oktober">十月</string>
     <string name="november">十一月</string>
     <string name="desember">十二月</string>
+
+    <string name="anda_menerima_undangan_title">已接受邀请</string>
+    <string name="anda_menolak_undangan_title">邀请被拒绝</string>
+    <string name="anda_menerima_undangan_dari_msg">您收到了一份来自%1$s的邀请</string>
+    <string name="anda_menolak_undangan_dari_msg">你拒绝了来自%1$s的邀请</string>
+    <string name="lihat">看</string>
+
 </resources>

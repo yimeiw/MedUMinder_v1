@@ -68,6 +68,9 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         );
         holder.itemView.setTranslationX(0f);
         holder.itemView.setAlpha(1f);
+        String customTitle = notification.getTitle();
+        holder.titleNotif.setText((customTitle != null && !customTitle.trim().isEmpty())
+                ? customTitle : authManager.getNotificationTitle(notification.getType()));
     }
 
     @Override

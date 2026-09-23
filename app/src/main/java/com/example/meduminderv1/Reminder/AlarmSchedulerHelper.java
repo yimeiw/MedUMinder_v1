@@ -185,6 +185,7 @@ public class AlarmSchedulerHelper {
         intent.putExtra("scheduled_at", logScheduledAtMillis);
         intent.putExtra("trigger_at", triggerMillis);
         intent.putExtra("type", type);
+        intent.putExtra("is_snooze_alarm", alarmId.endsWith("_snooze"));
 
         int requestCode = (alarmId + "_" + occurrenceKey).hashCode();
 
@@ -221,10 +222,10 @@ public class AlarmSchedulerHelper {
     }
 
     public static void scheduleSnooze(Context context, String scheduleId, String namaObat,
-                                      long originalScheduledAt, int snoozeMinutes) {
+                                      long originalScheduledAt, int snoozeMinutes, String type) {
         long triggerMillis = System.currentTimeMillis() + (snoozeMinutes * 60L * 1000);
         scheduleSingleAlarm(context, scheduleId + "_snooze", scheduleId, namaObat,
-                triggerMillis, originalScheduledAt, "0", "medicine");
+                triggerMillis, originalScheduledAt, "0", type);
     }
 
     public static void cancelSnooze(Context context, String scheduleId) {

@@ -71,7 +71,7 @@ public class InvitationRepo {
         db.collection("invitations").document(invitationId).get()
                 .addOnSuccessListener(doc -> {
                     if (!doc.exists()){
-                        callback.onFailure(new Exception("Invitation tidak ditemukan"));
+                        callback.onFailure(new InvitationNotFoundException("Invitation tidak ditemukan"));
                         return;
                     } Invitation invitation = doc.toObject(Invitation.class);
                     callback.onSuccess(invitation);
@@ -84,5 +84,11 @@ public class InvitationRepo {
         db.collection("invitations").document(invitationId).update(update)
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
+    }
+
+    public static class InvitationNotFoundException extends Exception{
+        public InvitationNotFoundException(String message){
+            super(message);
+        }
     }
 }

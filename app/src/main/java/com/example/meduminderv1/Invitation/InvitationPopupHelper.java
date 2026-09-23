@@ -36,8 +36,10 @@ public class InvitationPopupHelper {
                 .setMessage(fragment.getString(R.string.sender_mengundang_anda_msg,
                         invitation.getSender_name(), invitation.getInvite_role().name()))
                 .setCancelable(false)
-                .setPositiveButton(fragment.getString(R.string.terima), (d, w) -> respond(fragment, authManager, invitation, true))
-                .setNegativeButton(fragment.getString(R.string.tolak), (d, w) -> respond(fragment, authManager, invitation, false));
+                .setPositiveButton(fragment.getString(R.string.lihat), (d, w) -> {
+                    NavHostFragment.findNavController(fragment).navigate(R.id.notificationFragment);
+                })
+                .setNegativeButton(fragment.getString(R.string.nanti), null);
         AlertDialog dialog = builder.create();
         dialog.show();
         if (dialog.getWindow() != null) {
@@ -52,11 +54,9 @@ public class InvitationPopupHelper {
             @Override
             public void onSuccess(User result) {
                 if (!fragment.isAdded()) return;
-                if (accept) {
-                    Toast.makeText(fragment.requireContext(), fragment.getString(R.string.undangan_diterima), Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(fragment.requireContext(), fragment.getString(R.string.undangan_ditolak), Toast.LENGTH_SHORT).show();
-                }
+                String msg = accept ? fragment.getString(R.string.anda_menerima_undangan_dari_msg, invitation.getSender_name())
+                        : fragment.getString(R.string.anda_menolak_undangan_dari_msg, invitation.getSender_name());
+                Toast.makeText(fragment.requireContext(), msg, Toast.LENGTH_SHORT).show();
             }
 
             @Override
