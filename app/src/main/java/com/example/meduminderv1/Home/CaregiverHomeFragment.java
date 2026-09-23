@@ -10,14 +10,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,6 +37,7 @@ import com.example.meduminderv1.Model.MedicineCatalog;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
+import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
 import com.example.meduminderv1.Repo.MedicationRepo;
@@ -48,8 +46,6 @@ import com.example.meduminderv1.Repo.StatistikRepo;
 import com.example.meduminderv1.Repo.UserRepository;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
@@ -59,11 +55,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.UUID;
 
 public class CaregiverHomeFragment extends Fragment {
@@ -93,6 +87,7 @@ public class CaregiverHomeFragment extends Fragment {
     private String nextScheduleMedName;
     private String nextScheduleId;
     private ListenerRegistration nextScheduleListener, todayScheduleListener;
+    private ListenerRegistration invitationListener; // FIX: popup undangan realtime
     private Timestamp nextScheduleScheduledAt;
     String targetUid;
     @Override
@@ -246,8 +241,10 @@ public class CaregiverHomeFragment extends Fragment {
             btnRemindConsumer.setOnClickListener(null);
             return;
         } Timestamp now = Timestamp.now();
+        // FIX: ambil juga jadwal yang lewat sedikit (maks 6 jam) karena bisa sedang di-snooze
+        Timestamp windowStart = new Timestamp(new Date(now.toDate().getTime() - 6 * 60 * 60 * 1000L));
         nextScheduleListener = db.collection("medication_logs").whereEqualTo("users_id", consumerUid)
-                .whereGreaterThanOrEqualTo("scheduled_at", now).orderBy("scheduled_at").addSnapshotListener((query, error) -> {
+                .whereGreaterThanOrEqualTo("scheduled_at", windowStart).orderBy("scheduled_at").addSnapshotListener((query, error) -> {
                     //fragment sdh tdk attached
                     if (!isAdded()) return;
                     //query error
@@ -263,15 +260,19 @@ public class CaregiverHomeFragment extends Fragment {
                         return;
                     } MedicationLog targetLog = null;
                     //cari schedule future pertama yg bnr bnr akan datang
+                    long nowMs = System.currentTimeMillis();
                     for (DocumentSnapshot doc : query.getDocuments()){
                         MedicationLog log = doc.toObject(MedicationLog.class);
                         if (log == null) continue;
                         Timestamp scheduledAt = log.getScheduled_at();
                         if (scheduledAt == null) continue;
                         LogStatus status = log.getStatusBasedOnDate();
-                        if (status == LogStatus.AKAN_DATANG){
+                        if (status != LogStatus.AKAN_DATANG) continue;
+                        Timestamp eff = log.getEffectiveTime();
+                        boolean snoozed = log.getSnoozed_until() != null && eff == log.getSnoozed_until();
+                        if (!snoozed && eff.toDate().getTime() < nowMs) continue;
+                        if (targetLog == null || eff.compareTo(targetLog.getEffectiveTime()) < 0){
                             targetLog = log;
-                            break;
                         }
                     } if (targetLog == null){ //tidak ada schedule yang valid
                         if (!isAdded()) return;
@@ -296,7 +297,7 @@ public class CaregiverHomeFragment extends Fragment {
                     noSchedule.setVisibility(View.GONE);
                     nextScheduleId = targetLog.getMedication_schedules_id();
                     nextScheduleScheduledAt = scheduledAt;
-                    Date scheduleDate = scheduledAt.toDate();
+                    Date scheduleDate = targetLog.getEffectiveTime().toDate(); // FIX: waktu setelah snooze
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                     tvDay.setText(formatDayLabel(scheduleDate));
                     tvTime.setText(sdf.format(scheduleDate));
@@ -399,6 +400,10 @@ public class CaregiverHomeFragment extends Fragment {
                 confirmation.setSender_uid(caregiver.getAuth_uid());
                 confirmation.setType(NotificationType.Medicine);
                 confirmation.setReference_id(nextScheduleId);
+                // FIX: reference_id di sini adalah ID JADWAL, jadi tandai sebagai notif jadwal
+                // (kalau tidak, halaman detail mengira ini ID log -> toast "riwayat obat sudah tidak ada")
+                confirmation.setIs_new_schedule(true);
+                confirmation.setTarget_role(UserRole.Caregiver.name());
                 confirmation.setTitle(getString(R.string.pengingat_terkirim_title));
                 confirmation.setMessage(getString(R.string.pesan_pengingat_terkirim_consumer) + " (" + medName + ")");
                 confirmation.setIs_read(false);
@@ -494,7 +499,7 @@ public class CaregiverHomeFragment extends Fragment {
                             }
 
                             combined.add(new LogItem("medicine", medName,
-                                    sdf.format(log.getScheduled_at().toDate()), info, log.getStatus(),
+                                    sdf.format(log.getEffectiveTime().toDate()), info, log.getStatus(),
                                     log.getMedication_schedules_id(), log.getScheduled_at().toDate().getTime(),
                                     log.getCreated_at() != null ? log.getCreated_at().toDate().getTime() : 0));
                             remaining[0]--;
@@ -520,7 +525,7 @@ public class CaregiverHomeFragment extends Fragment {
                         if (appt == null) continue;
                         if (appt.getDeleted_at() != null) continue;
                         combined.add(new LogItem("appointment", appt.getTitle(),
-                                sdf.format(appt.getAppointment_at().toDate()),
+                                sdf.format(appt.getDisplayTime().toDate()),
                                 appt.getAddress(), appt.getStatus(),
                                 doc.getId(), appt.getAppointment_at().toDate().getTime(),
                                 appt.getCreated_at() != null ? appt.getCreated_at().toDate().getTime() : 0)); // <-- BARU
@@ -598,11 +603,19 @@ public class CaregiverHomeFragment extends Fragment {
     public void onResume() {
         super.onResume();
         InvitationPopupHelper.checkAndShow(this, authManager);
+        if (invitationListener != null) invitationListener.remove();
+        invitationListener = InvitationPopupHelper.listen(this, authManager);
         checkUnreadNotif();
         loadDrawerConsumerList();
         if (consumerPicker != null){
             consumerPicker.setup();
         }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (invitationListener != null) { invitationListener.remove(); invitationListener = null; }
     }
 
     private void checkUnreadNotif() {

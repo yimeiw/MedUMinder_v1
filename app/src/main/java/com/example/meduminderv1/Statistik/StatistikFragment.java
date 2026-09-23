@@ -502,10 +502,10 @@ public class StatistikFragment extends Fragment {
         paint.setTextSize(12);
 
         canvas1.drawText(
-                getString(
-                        R.string.totalObatDikonsumsi,
-                        currentTotalDikonsumsi
-                ),
+                // FIX: string "totalObatDikonsumsi" tidak punya %1$d, jadi angkanya tidak ikut tampil.
+                // Sekarang: label + ": " + jumlah (pakai string jumlah_obat yang ada angkanya)
+                getString(R.string.totalObatDikonsumsi) + ": "
+                        + getString(R.string.jumlah_obat, currentTotalDikonsumsi),
                 margin,
                 y,
                 paint
@@ -514,10 +514,10 @@ public class StatistikFragment extends Fragment {
         y += 20;
 
         canvas1.drawText(
-                getString(
-                        R.string.totalObatDiabaikan,
-                        currentTotalDiabaikan
-                ),
+                // FIX: string "totalObatDiabaikan" tidak punya %1$d, jadi angkanya tidak ikut tampil.
+                // Sekarang: label + ": " + jumlah (pakai string jumlah_obat yang ada angkanya)
+                getString(R.string.totalObatDiabaikan) + ": "
+                        + getString(R.string.jumlah_obat, currentTotalDiabaikan),
                 margin,
                 y,
                 paint
@@ -526,10 +526,10 @@ public class StatistikFragment extends Fragment {
         y += 20;
 
         canvas1.drawText(
-                getString(
-                        R.string.totalObatSnooze,
-                        currentTotalSnooze
-                ),
+                // FIX: string "totalObatSnooze" tidak punya %1$d, jadi angkanya tidak ikut tampil.
+                // Sekarang: label + ": " + jumlah (pakai string jumlah_obat yang ada angkanya)
+                getString(R.string.totalObatSnooze) + ": "
+                        + getString(R.string.jumlah_obat, currentTotalSnooze),
                 margin,
                 y,
                 paint

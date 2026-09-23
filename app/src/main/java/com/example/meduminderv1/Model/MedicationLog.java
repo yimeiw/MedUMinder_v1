@@ -3,9 +3,6 @@ package com.example.meduminderv1.Model;
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.google.firebase.Timestamp;
 
-import java.sql.Time;
-import java.util.Date;
-
 public class MedicationLog {
 
     private String users_id;
@@ -13,11 +10,36 @@ public class MedicationLog {
     private Timestamp scheduled_at;
     private Timestamp taken_at;
     private String status;
+    @com.google.firebase.firestore.Exclude
     public LogStatus getStatusEnum() {
         return LogStatus.fromRaw(status);
     }
     private Timestamp created_at;
     private Long snooze_count;
+    private Timestamp snoozed_until; // FIX: waktu baru setelah di-snooze
+
+    public Timestamp getSnoozed_until() {
+        return snoozed_until;
+    }
+
+    public void setSnoozed_until(Timestamp snoozed_until) {
+        this.snoozed_until = snoozed_until;
+    }
+
+    /**
+     * FIX: waktu yang harus DITAMPILKAN.
+     * Kalau jadwal sudah di-snooze (snoozed_until lebih lambat dari scheduled_at),
+     * pakai waktu snooze. Kalau tidak, pakai scheduled_at biasa.
+     */
+    @com.google.firebase.firestore.Exclude
+    public Timestamp getEffectiveTime() {
+        if (snoozed_until != null && scheduled_at != null
+                && snoozed_until.compareTo(scheduled_at) > 0
+                && LogStatus.fromRaw(status) != LogStatus.DIKONSUMSI) {
+            return snoozed_until;
+        }
+        return scheduled_at;
+    }
 
     public Long getSnooze_count() {
         return snooze_count;
@@ -53,15 +75,20 @@ public class MedicationLog {
     public Timestamp getCreated_at() {
         return created_at;
     }
+    @com.google.firebase.firestore.Exclude
     public LogStatus getStatusBasedOnDate() {
         LogStatus stored = LogStatus.fromRaw(status);
         if (stored == LogStatus.DIKONSUMSI) {
             return stored;
         }
 
-        if (scheduled_at != null && scheduled_at.toDate().getTime() + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS < System.currentTimeMillis()) {
+        // FIX: hitung "terlewat" dari waktu snooze kalau ada, supaya jadwal yang di-snooze
+        // tidak langsung dianggap terlewat
+        Timestamp effective = getEffectiveTime();
+        if (effective != null && effective.toDate().getTime() + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS < System.currentTimeMillis()) {
             return LogStatus.TERLEWATKAN;
         }
         return LogStatus.AKAN_DATANG;
     }
 }
+

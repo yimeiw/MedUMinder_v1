@@ -104,15 +104,18 @@ public class InvitationFragment extends Fragment {
             @Override
             public void onSuccess(boolean registered) {
                 if (registered){ // jika user sudah terdaftar
+                    if (!isAdded()) return;
                     Toast.makeText(requireContext(), getString(R.string.invitation_berhasil_dikirim), Toast.LENGTH_SHORT).show();
-                    NavHostFragment.findNavController(InvitationFragment.this).popBackStack();
+                    goHome(); // FIX: langsung ke Home, bukan balik ke halaman sebelumnya
                 } else {
+                    if (!isAdded()) return;
                     showShareDialog(email);
                 }
             }
 
             @Override
             public void onFailure(String message) {
+                if (!isAdded()) return;
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
@@ -122,9 +125,11 @@ public class InvitationFragment extends Fragment {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
         builder.setTitle(getString(R.string.undangan_berhasil_dibuat))
                 .setMessage(getString(R.string.email_belum_terdaftar_di_app_msg) + "\n" + getString(R.string.bagikan_link_aplikasi_msg))
-                .setNegativeButton(getString(R.string.nanti), null)
+                .setCancelable(false)
+                .setNegativeButton(getString(R.string.nanti), (dialog, which) -> goHome())
                 .setPositiveButton(getString(R.string.bagikan), (dialog, which) -> {
                     shareInvitation(email);
+                    goHome();
                 });
         AlertDialog dialog = builder.create();
         dialog.show();
@@ -134,6 +139,19 @@ public class InvitationFragment extends Fragment {
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.pink));
         }
     }
+    /** Setelah undangan terkirim -> kembali ke Home sesuai role, dan bersihkan back stack. */
+    private void goHome() {
+        if (!isAdded()) return;
+        User user = authManager.getCurrentUser();
+        int home = (user != null && user.getCurrentRole() == UserRole.Caregiver)
+                ? R.id.caregiverHomeFragment : R.id.homeFragment;
+        androidx.navigation.NavController nav = NavHostFragment.findNavController(this);
+        androidx.navigation.NavOptions options = new androidx.navigation.NavOptions.Builder()
+                .setPopUpTo(nav.getGraph().getStartDestinationId(), true)
+                .setLaunchSingleTop(true).build();
+        nav.navigate(home, null, options);
+    }
+
     private void shareInvitation(String email) {
         String message = getString(R.string.share_invitation_message, email);
         Intent intent = new Intent(Intent.ACTION_SEND);

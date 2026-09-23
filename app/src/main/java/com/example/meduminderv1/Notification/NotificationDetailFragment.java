@@ -204,7 +204,14 @@ public class NotificationDetailFragment extends Fragment {
                     layoutButton.setVisibility(View.GONE);
                     boolean accepted = invitation.getStatus() == InvitationStatus.Accepted;
 
-                    boolean isReceiverCopy = notification.getReceiver_uid() != null && notification.getReceiver_uid().equals(invitation.getReceiver_uid());
+                    // FIX: tentukan "ini notif milik penerima undangan" dengan lebih aman.
+                    // Notif undangan asli -> sender_uid = pengirim undangan, receiver_uid = penerima.
+                    // Notif hasil (diterima/ditolak) -> receiver_uid = pengirim undangan.
+                    // Jadi: kalau receiver notif ini BUKAN pengirim undangan, berarti ini milik penerima.
+                    String inviterUid = invitation.getSender_uid();
+                    boolean isReceiverCopy = notification.getReceiver_uid() != null
+                            && inviterUid != null
+                            && !notification.getReceiver_uid().equals(inviterUid);
                     if (isReceiverCopy){
                         headerNotif.setText(accepted ? getString(R.string.anda_menerima_undangan_title) : getString(R.string.anda_menolak_undangan_title));
                         titleNotif.setText(headerNotif.getText());
@@ -214,7 +221,9 @@ public class NotificationDetailFragment extends Fragment {
                     headerNotif.setText(accepted ? getString(R.string.undangan_diterima) : getString(R.string.undangan_ditolak));
                     titleNotif.setText(headerNotif.getText());
 
-                    String responderUid = notification.getReceiver_uid();
+                    // FIX: yang merespon undangan = pengirim notif ini (bukan penerimanya / diri sendiri)
+                    String responderUid = notification.getSender_uid() != null
+                            ? notification.getSender_uid() : invitation.getReceiver_uid();
                     if (responderUid == null){
                         messageNotif.setText(accepted ? getString(R.string.undangan_diterima) : getString(R.string.undangan_ditolak));
                         return;
@@ -223,6 +232,7 @@ public class NotificationDetailFragment extends Fragment {
                         @Override
                         public void onSuccess(User responder) {
                             if (!isAdded()) return;
+                            if (responder == null) return;
                             messageNotif.setText(buildInvitationResultMessage(responder.getName(), accepted));
                         }
                         @Override
@@ -311,7 +321,8 @@ public class NotificationDetailFragment extends Fragment {
 
         showMissedActionIfCaregiver();
         if (notification.getScheduled_at() != null) {
-            showReminderActionButtons();
+            // FIX: tombol "Sudah diminum" & "Tunda" hanya muncul kalau obat BELUM ditandai dikonsumsi
+            checkLogThenShowReminderButtons();
             loadReminderActionDetail();
         } else if (isNewScheduleNotif()) {
             loadNewMedicineScheduleDetail();
@@ -395,7 +406,17 @@ public class NotificationDetailFragment extends Fragment {
         db.collection("medication_logs").document(logId).get().addOnSuccessListener(logDoc -> {
             if (!isAdded()) return;
             if (!logDoc.exists()){
-                cleanupOrphanNotification(getString(R.string.riwayat_obat_sudah_tidak_tersedia));
+                // FIX: beberapa notifikasi (mis. "Pengingat terkirim" milik caregiver) menyimpan
+                // ID JADWAL di reference_id, bukan ID log. Cek dulu apakah itu ID jadwal,
+                // baru anggap "riwayat obat sudah tidak ada" kalau memang tidak ketemu.
+                db.collection("medication_schedules").document(logId).get().addOnSuccessListener(schedSnap -> {
+                    if (!isAdded()) return;
+                    if (schedSnap.exists()) {
+                        loadNewMedicineScheduleDetail();
+                    } else {
+                        cleanupOrphanNotification(getString(R.string.riwayat_obat_sudah_tidak_tersedia));
+                    }
+                }).addOnFailureListener(e -> { if (isAdded()) hideDetailCard(); });
                 return;
             }
             MedicationLog log = logDoc.toObject(MedicationLog.class);
@@ -440,6 +461,26 @@ public class NotificationDetailFragment extends Fragment {
                 });
             });
         }).addOnFailureListener(e -> { if (isAdded()) hideDetailCard(); });
+    }
+
+    /** Cek status log dulu. Kalau sudah "dikonsumsi", tombol aksi disembunyikan. */
+    private void checkLogThenShowReminderButtons() {
+        layoutButton.setVisibility(View.GONE);
+        String scheduleId = notification.getReference_id();
+        if (scheduleId == null || notification.getScheduled_at() == null) return;
+        String logId = buildLogId(scheduleId, notification.getScheduled_at().toDate().getTime());
+        FirebaseFirestore.getInstance().collection("medication_logs").document(logId).get()
+                .addOnSuccessListener(snap -> {
+                    if (!isAdded()) return;
+                    com.example.meduminderv1.Model.LogStatus st =
+                            com.example.meduminderv1.Model.LogStatus.fromRaw(snap.getString("status"));
+                    if (st == com.example.meduminderv1.Model.LogStatus.DIKONSUMSI) {
+                        layoutButton.setVisibility(View.GONE);
+                    } else {
+                        showReminderActionButtons();
+                    }
+                })
+                .addOnFailureListener(e -> { if (isAdded()) showReminderActionButtons(); });
     }
 
     private void showMissedActionIfCaregiver() {
@@ -704,7 +745,7 @@ public class NotificationDetailFragment extends Fragment {
                             if (!isAdded()) return;
                             requireContext().stopService(new Intent(requireContext(), com.example.meduminderv1.Reminder.AlarmRingingService.class));
                             com.example.meduminderv1.Reminder.AlarmSchedulerHelper.cancelSnooze(requireContext(), scheduleId);
-                            com.example.meduminderv1.Reminder.AlarmSchedulerHelper.cancelOccurrenceForScheduledAt(requireContext(), scheduleId, scheduledAtMillis);
+                            com.example.meduminderv1.Reminder.AlarmSchedulerHelper.onDoseTaken(requireContext(), scheduleId, pendingMedName, scheduledAtMillis);
                             Toast.makeText(requireContext(), getString(R.string.obat_ditandai_dikonsumsi), Toast.LENGTH_SHORT).show();
                             NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
                         }
@@ -726,16 +767,11 @@ public class NotificationDetailFragment extends Fragment {
         String scheduleId = notification.getReference_id();
         long scheduledAtMillis = notification.getScheduled_at().toDate().getTime();
         String medName = pendingMedName != null ? pendingMedName : "";
+        layoutButton.setVisibility(View.GONE);
 
-        requireContext().stopService(new Intent(requireContext(), com.example.meduminderv1.Reminder.AlarmRingingService.class));
-
-        android.content.SharedPreferences pref = requireContext()
-                .getSharedPreferences("notification_settings", android.content.Context.MODE_PRIVATE);
-        String saved = pref.getString("snooze_duration", "5 menit");
-        int snoozeMinutes = "10 menit".equals(saved) ? 10 : "30 menit".equals(saved) ? 30 : 5;
-
-        com.example.meduminderv1.Reminder.AlarmSchedulerHelper.scheduleSnooze(
-                requireContext(), scheduleId, medName, scheduledAtMillis, snoozeMinutes, "medicine");
+        // FIX: pakai SnoozeHelper -> waktu snooze tersimpan + notif ke consumer & caregiver
+        int snoozeMinutes = com.example.meduminderv1.Reminder.SnoozeHelper.snooze(
+                requireContext(), scheduleId, medName, scheduledAtMillis, false, null);
 
         Toast.makeText(requireContext(), getString(R.string.pengingat_ditunda_menit, snoozeMinutes), Toast.LENGTH_SHORT).show();
         NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();

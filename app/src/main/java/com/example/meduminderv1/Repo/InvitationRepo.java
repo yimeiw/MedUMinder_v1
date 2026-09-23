@@ -3,15 +3,11 @@ package com.example.meduminderv1.Repo;
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Invitation.Invitation;
 import com.example.meduminderv1.Invitation.InvitationStatus;
-import com.example.meduminderv1.Model.User;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class InvitationRepo {
@@ -27,6 +23,21 @@ public class InvitationRepo {
                 .limit(1).get().addOnSuccessListener(query -> {
                     callback.onSuccess(!query.isEmpty());
                 }).addOnFailureListener(callback::onFailure);
+    }
+
+    /** FIX: cek apakah orang yang mau diundang ternyata SUDAH mengundang kita (undangan masih pending). */
+    public void hasPendingInvitationFrom(String otherUid, String myUid, RepoCallback<Boolean> callback){
+        if (otherUid == null || myUid == null){
+            callback.onSuccess(false);
+            return;
+        }
+        db.collection("invitations")
+                .whereEqualTo("sender_uid", otherUid)
+                .whereEqualTo("receiver_uid", myUid)
+                .whereEqualTo("status", InvitationStatus.Pending.name())
+                .limit(1).get()
+                .addOnSuccessListener(query -> callback.onSuccess(!query.isEmpty()))
+                .addOnFailureListener(callback::onFailure);
     }
 
     public void createInvitation(Invitation invitation, RepoCallback<Void> callback){
@@ -92,3 +103,4 @@ public class InvitationRepo {
         }
     }
 }
+

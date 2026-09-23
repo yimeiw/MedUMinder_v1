@@ -4,11 +4,9 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -91,7 +89,8 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
         holder.currStatus.setText(statusLog.displayLabel(context, false));
         if (medicationLog.getScheduled_at() != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("EEEE, dd MMM - HH:mm", Locale.getDefault());
-            String dateTimeText = sdf.format(medicationLog.getScheduled_at().toDate());
+            // FIX: tampilkan waktu setelah snooze (kalau ada)
+            String dateTimeText = sdf.format(medicationLog.getEffectiveTime().toDate());
             holder.scheduledAt.setText(dateTimeText);
         }
 
@@ -246,3 +245,4 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
     }
 
 }
+

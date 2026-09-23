@@ -85,6 +85,15 @@ public class AlarmRingingService extends Service {
     }
 
     private void startLoopingSound(String soundUriExtra) {
+        // FIX: kalau alarm baru datang saat alarm lama masih bunyi, matikan pemutar lama dulu.
+        // Sebelumnya pemutar lama ditinggal -> bunyinya tidak bisa dimatikan / dobel.
+        if (mediaPlayer != null) {
+            try {
+                if (mediaPlayer.isPlaying()) mediaPlayer.stop();
+            } catch (IllegalStateException ignored) { }
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
 
         Uri soundUri =
                 soundUriExtra != null

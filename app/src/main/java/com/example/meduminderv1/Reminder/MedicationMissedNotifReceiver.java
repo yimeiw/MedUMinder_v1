@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.google.firebase.Timestamp;
@@ -29,6 +28,11 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
 
         db.collection("medication_logs").document(logId).get().addOnSuccessListener(doc -> {
             if (!doc.exists() || "dikonsumsi".equals(doc.getString("status"))) return;
+            // FIX: kalau jadwal sedang di-snooze dan belum lewat batasnya, jangan anggap terlewat
+            // (dan jangan matikan alarm snooze)
+            com.google.firebase.Timestamp snoozedUntil = doc.getTimestamp("snoozed_until");
+            if (snoozedUntil != null && System.currentTimeMillis()
+                    < snoozedUntil.toDate().getTime() + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS - 60_000L) return;
             String consumerUid = doc.getString("users_id");
             if (consumerUid == null) return;
             db.collection("users").document(consumerUid).get().addOnSuccessListener(userDoc -> {
@@ -75,3 +79,4 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
         return scheduleId + "_" + dt.toLocalDate() + "_" + dt.format(DateTimeFormatter.ofPattern("HHmm"));
     }
 }
+

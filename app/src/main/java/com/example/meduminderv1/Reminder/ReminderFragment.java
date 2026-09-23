@@ -268,6 +268,11 @@ public class ReminderFragment extends Fragment {
                                         ? NotificationType.Appointment
                                         : NotificationType.Medicine
                         );
+                        // FIX: simpan ID jadwal + tandai sebagai notif jadwal supaya
+                        // detail notifikasi caregiver bisa dibuka (tidak toast "riwayat obat sudah tidak ada")
+                        confirmation.setReference_id(scheduleId);
+                        if (!isAppointment) confirmation.setIs_new_schedule(true);
+                        confirmation.setTarget_role(UserRole.Caregiver.name());
                         confirmation.setTitle(
                                 getString(R.string.pengingat_terkirim_title)
                         );
@@ -527,6 +532,11 @@ public class ReminderFragment extends Fragment {
                     MedicationLog log = document.toObject(MedicationLog.class);
                     if (log != null) {
                         updateStatusUI(log.getStatusBasedOnDate());
+                        // FIX: kalau sudah di-snooze, tampilkan jam barunya
+                        if (log.getEffectiveTime() != null) {
+                            timeReminder.setText(new SimpleDateFormat("HH:mm", Locale.getDefault())
+                                    .format(log.getEffectiveTime().toDate()));
+                        }
                     }
                 })
                 .addOnFailureListener(e ->
@@ -551,7 +561,7 @@ public class ReminderFragment extends Fragment {
 
         stopRingingAlarm();
         AlarmSchedulerHelper.cancelSnooze(requireContext(), scheduleId);
-        AlarmSchedulerHelper.cancelOccurrenceForScheduledAt(requireContext(), scheduleId, scheduledAt);
+        AlarmSchedulerHelper.onDoseTaken(requireContext(), scheduleId, namaObat, scheduledAt);
 
         String logId = buildLogId(scheduleId, scheduledAt);
 
@@ -663,130 +673,20 @@ public class ReminderFragment extends Fragment {
             Toast.makeText(requireContext(), getString(R.string.schedule_id_tidak_ditemukan), Toast.LENGTH_SHORT).show();
             return;
         }
+        // cegah klik dobel
+        btnTundaReminder.setEnabled(false);
+        btnIsTaken.setEnabled(false);
 
-        stopRingingAlarm();
+        // FIX (app keluar sendiri): sebelumnya notifikasi ke caregiver dibuat di dalam callback
+        // Firestore yang memanggil getString() SETELAH halaman ditutup (navigateUp) -> crash
+        // "Fragment not attached". Sekarang semua proses snooze ada di SnoozeHelper yang
+        // memakai Application Context, jadi aman walaupun halaman sudah ditutup.
+        // Sekaligus: waktu snooze tersimpan (Home ikut update) + notif ke consumer & caregiver.
+        int snoozeMinutes = SnoozeHelper.snooze(requireContext(), scheduleId, namaObat,
+                scheduledAt, isAppointment, null);
 
-        if (isAppointment) {
-            android.content.SharedPreferences pref = requireContext()
-                    .getSharedPreferences("notification_settings", android.content.Context.MODE_PRIVATE);
-
-            String savedSnooze = pref.getString("snooze_duration", "5 menit");
-
-            int snoozeMinutes;
-
-            switch (savedSnooze) {
-                case "10 menit":
-                    snoozeMinutes = 10;
-                    break;
-                case "30 menit":
-                    snoozeMinutes = 30;
-                    break;
-                default:
-                    snoozeMinutes = 5;
-                    break;
-            }
-
-            AlarmSchedulerHelper.scheduleSnooze(
-                    requireContext(),
-                    scheduleId,
-                    namaObat,
-                    scheduledAt,
-                    snoozeMinutes,
-                    "appointment"
-            );
-
-            notifySnoozeToSelfAndCaregivers(namaObat, true);
-
-            Toast.makeText(
-                    requireContext(),
-                    getString(R.string.pengingat_ditunda_menit, snoozeMinutes),
-                    Toast.LENGTH_SHORT
-            ).show();
-
-            NavHostFragment.findNavController(ReminderFragment.this).navigateUp();
-            return;
-        }
-        stopRingingAlarm();
-
-        db.collection("medication_schedules")
-                .document(scheduleId)
-                .get()
-                .addOnSuccessListener(document -> {
-                    if (!isAdded()) return;
-                    if (!document.exists()) {
-                        Toast.makeText(
-                                requireContext(),
-                                getString(R.string.data_jadwal_obat_tidak_ditemukan),
-                                Toast.LENGTH_SHORT
-                        ).show();
-                        return;
-                    }
-
-                    SharedPreferences pref = requireContext()
-                            .getSharedPreferences(
-                                    "notification_settings",
-                                    Context.MODE_PRIVATE
-                            );
-
-                    String savedSnooze = pref.getString(
-                            "snooze_duration",
-                            "5 menit"
-                    );
-
-                    int snoozeMinutes;
-
-                    switch (savedSnooze) {
-                        case "10 menit":
-                            snoozeMinutes = 10;
-                            break;
-
-                        case "30 menit":
-                            snoozeMinutes = 30;
-                            break;
-
-                        default:
-                            snoozeMinutes = 5;
-                            break;
-                    }
-
-                    Log.d(
-                            "REMINDER_FRAGMENT",
-                            "Snooze reminder: "
-                                    + snoozeMinutes
-                                    + " menit"
-                    );
-
-                    AlarmSchedulerHelper.scheduleSnooze(
-                            requireContext(),
-                            scheduleId,
-                            namaObat,
-                            scheduledAt,
-                            snoozeMinutes,
-                            "medicine"
-                    );
-
-                    long snoozeUntilMillis = System.currentTimeMillis()
-                            + snoozeMinutes * 60L * 1000;
-
-                    persistMedicineSnooze(snoozeUntilMillis);
-                    notifySnoozeToSelfAndCaregivers(namaObat, false);
-
-                    Toast.makeText(requireContext(), getString(R.string.pengingat_ditunda_menit, snoozeMinutes), Toast.LENGTH_SHORT).show();
-                    NavHostFragment.findNavController(ReminderFragment.this).navigateUp();
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(
-                            "REMINDER_FRAGMENT",
-                            "Gagal mengambil snooze_minutes",
-                            e
-                    );
-                    if (!isAdded()) return;
-                    Toast.makeText(
-                            requireContext(),
-                            getString(R.string.gagal_mengambil_pengaturan_snooze),
-                            Toast.LENGTH_SHORT
-                    ).show();
-                });
+        Toast.makeText(requireContext(), getString(R.string.pengingat_ditunda_menit, snoozeMinutes), Toast.LENGTH_SHORT).show();
+        NavHostFragment.findNavController(ReminderFragment.this).navigateUp();
     }
 
     private void stopRingingAlarm() {

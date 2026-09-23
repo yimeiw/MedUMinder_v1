@@ -31,6 +31,23 @@ public class AppointmentAlertScheduler {
         am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, appointmentAtMillis + MISSED_DELAY_MS, missedPi);
     }
 
+    /**
+     * FIX: pindahkan cek "appointment terlewat" ke (waktu snooze + 5 menit).
+     * Sebelumnya cek ini tetap di (jam asli + 5 menit) = PAS jam snooze kalau ditunda 5 menit,
+     * dan receiver-nya mematikan bunyi alarm -> alarm snooze "tidak keluar".
+     */
+    public static void rescheduleMissed(Context context, String appointmentId, String title, long newBaseMillis) {
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (am == null) return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms()) return;
+        Intent missedIntent = new Intent(context, AppointmentMissedNotifReceiver.class);
+        missedIntent.putExtra("appointment_id", appointmentId);
+        missedIntent.putExtra("title", title);
+        PendingIntent missedPi = PendingIntent.getBroadcast(context, (appointmentId + "_missed").hashCode(), missedIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newBaseMillis + MISSED_DELAY_MS, missedPi);
+    }
+
     public static void cancelAlerts(Context context, String appointmentId) {
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (am == null) return;
@@ -58,3 +75,4 @@ public class AppointmentAlertScheduler {
         } return minutes * 60 * 1000L;
     }
 }
+

@@ -17,6 +17,9 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class InvitationPopupHelper {
 
+    // supaya popup tidak muncul dobel (dari onResume + dari listener realtime)
+    private static AlertDialog currentDialog;
+
     public static void checkAndShow(Fragment fragment, AuthManager authManager) {
         authManager.getPendingInvitation(new AuthCallback<Invitation>() {
             @Override
@@ -30,22 +33,80 @@ public class InvitationPopupHelper {
         });
     }
 
+    /**
+     * FIX: dengarkan undangan baru secara REALTIME.
+     * Sebelumnya popup hanya dicek saat onResume, jadi kalau user sedang di Home
+     * lalu ada undangan masuk, popup tidak muncul sama sekali.
+     * Panggil di onResume, dan hapus (remove) di onPause.
+     */
+    public static com.google.firebase.firestore.ListenerRegistration listen(Fragment fragment, AuthManager authManager) {
+        User user = authManager.getCurrentUser();
+        if (user == null || user.getAuth_uid() == null) return null;
+        return com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("invitations")
+                .whereEqualTo("receiver_uid", user.getAuth_uid())
+                .whereEqualTo("status", InvitationStatus.Pending.name())
+                .addSnapshotListener((snap, error) -> {
+                    if (error != null || snap == null || !fragment.isAdded()) return;
+                    for (com.google.firebase.firestore.DocumentChange change : snap.getDocumentChanges()) {
+                        if (change.getType() != com.google.firebase.firestore.DocumentChange.Type.ADDED) continue;
+                        Invitation inv = change.getDocument().toObject(Invitation.class);
+                        if (inv.getInvitation_id() == null) inv.setInvitation_id(change.getDocument().getId());
+                        showPopup(fragment, authManager, inv);
+                        break; // cukup satu popup
+                    }
+                });
+    }
+
     private static void showPopup(Fragment fragment, AuthManager authManager, Invitation invitation) {
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(fragment.requireContext());
-        builder.setTitle(fragment.getString(R.string.undangan_baru_title))
-                .setMessage(fragment.getString(R.string.sender_mengundang_anda_msg,
+        // FIX CRASH: jangan tampilkan popup kalau halaman (fragment) sudah tidak aktif
+        if (!fragment.isAdded() || fragment.getView() == null || fragment.getActivity() == null) return;
+        if (currentDialog != null && currentDialog.isShowing()) return;
+
+        final androidx.fragment.app.FragmentActivity activity = fragment.requireActivity();
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(activity);
+        builder.setTitle(activity.getString(R.string.undangan_baru_title))
+                .setMessage(activity.getString(R.string.sender_mengundang_anda_msg,
                         invitation.getSender_name(), invitation.getInvite_role().name()))
                 .setCancelable(false)
-                .setPositiveButton(fragment.getString(R.string.lihat), (d, w) -> {
-                    NavHostFragment.findNavController(fragment).navigate(R.id.notificationFragment);
+                .setPositiveButton(activity.getString(R.string.lihat), (d, w) -> {
+                    // FIX CRASH: sebelumnya memakai fragment lama (HomeFragment yang sudah dibuang
+                    // saat role berubah / Home dibuat ulang) -> "not associated with a fragment manager".
+                    // Sekarang ambil NavController dari Activity, yang selalu masih ada.
+                    openNotificationPage(activity);
                 })
-                .setNegativeButton(fragment.getString(R.string.nanti), null);
+                .setNegativeButton(activity.getString(R.string.nanti), null);
         AlertDialog dialog = builder.create();
+        currentDialog = dialog;
+        dialog.setOnDismissListener(d -> currentDialog = null);
+
+        // FIX: kalau halaman Home ditutup / dibuat ulang, tutup juga popup-nya
+        // (supaya tidak ada popup "yatim" yang tombolnya menunjuk ke halaman yang sudah hilang)
+        fragment.getViewLifecycleOwner().getLifecycle().addObserver(
+                (androidx.lifecycle.LifecycleEventObserver) (owner, event) -> {
+                    if (event == androidx.lifecycle.Lifecycle.Event.ON_DESTROY && dialog.isShowing()) {
+                        dialog.dismiss();
+                    }
+                });
+
         dialog.show();
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(fragment.requireContext(), R.color.green));
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(fragment.requireContext(), R.color.pink));
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(activity, R.color.green));
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(activity, R.color.pink));
+        }
+    }
+
+    /** Buka halaman notifikasi lewat NavController milik Activity (aman walau fragment lama sudah hilang). */
+    private static void openNotificationPage(androidx.fragment.app.FragmentActivity activity) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) return;
+        try {
+            androidx.navigation.NavController nav =
+                    androidx.navigation.Navigation.findNavController(activity, R.id.nav_host_fragment);
+            if (nav.getCurrentDestination() != null
+                    && nav.getCurrentDestination().getId() == R.id.notificationFragment) return;
+            nav.navigate(R.id.notificationFragment);
+        } catch (Exception e) {
+            android.util.Log.e("InvitationPopup", "Gagal buka halaman notifikasi", e);
         }
     }
 

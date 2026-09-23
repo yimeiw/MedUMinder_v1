@@ -45,6 +45,7 @@ import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.example.meduminderv1.Repo.InvitationRepo;
 import com.example.meduminderv1.Repo.MedicationRepo;
 import com.example.meduminderv1.Repo.StatistikRepo;
@@ -92,9 +93,12 @@ public class HomeFragment extends Fragment {
     MedicationRepo medicationRepo;
     private String nextLogId;
     private String nextMedId;
+    private String nextScheduleIdForAlarm;   // FIX: untuk mematikan alarm saat dikonfirmasi
+    private long nextScheduledAtMillis = -1;
     LineChart lineChart;
     StatistikRepo statistikRepo;
     private ListenerRegistration nextScheduleListener;
+    private ListenerRegistration invitationListener; // FIX: popup undangan realtime
     private final Handler refreshHandler = new Handler(Looper.getMainLooper());
     private long displayedScheduleAtMillis = -1;
     private final Runnable refreshRunnable = this::checkNextScheduleFreshness;
@@ -195,6 +199,8 @@ public class HomeFragment extends Fragment {
         super.onResume();
 
         InvitationPopupHelper.checkAndShow(this, authManager);
+        if (invitationListener != null) invitationListener.remove();
+        invitationListener = InvitationPopupHelper.listen(this, authManager);
         checkUnreadNotif();
         loadNextSchedule();
         loadTodaySchedule();
@@ -232,30 +238,46 @@ public class HomeFragment extends Fragment {
         String uid = firebaseUser.getUid();
         Timestamp now = Timestamp.now();
         if (nextScheduleListener != null) nextScheduleListener.remove();
+        // FIX: ambil juga jadwal yang sudah lewat sedikit (maks 6 jam), karena bisa saja
+        // jadwal itu sedang di-snooze -> waktu barunya (snoozed_until) masih akan datang
+        Timestamp windowStart = new Timestamp(new java.util.Date(now.toDate().getTime() - 6 * 60 * 60 * 1000L));
         nextScheduleListener = db.collection("medication_logs").whereEqualTo("users_id", uid)
-                .whereEqualTo("status", "akan datang").whereGreaterThanOrEqualTo("scheduled_at", now)
-                .orderBy("scheduled_at").limit(1).addSnapshotListener((query, error) -> {
+                .whereEqualTo("status", "akan datang").whereGreaterThanOrEqualTo("scheduled_at", windowStart)
+                .orderBy("scheduled_at").limit(30).addSnapshotListener((query, error) -> {
                     if (error != null || query == null || !isAdded()) return;
                     MedicationLog targetLog = null;
                     DocumentSnapshot target = null;
+                    long nowMs = System.currentTimeMillis();
                     for (DocumentSnapshot doc : query.getDocuments()){
                         MedicationLog log = doc.toObject(MedicationLog.class);
-                        if (log != null && log.getStatusBasedOnDate() == LogStatus.AKAN_DATANG){
+                        if (log == null || log.getStatusBasedOnDate() != LogStatus.AKAN_DATANG) continue;
+                        Timestamp eff = log.getEffectiveTime();
+                        if (eff == null) continue;
+                        // FIX: jadwal yang jamnya BARU lewat (alarm sedang bunyi) tetap ditampilkan
+                        // selama belum dianggap terlewat (15 menit), supaya tombol "Dikonsumsi"
+                        // di Home mengonfirmasi obat YANG SEDANG BUNYI, bukan jadwal berikutnya.
+                        if (eff.toDate().getTime() + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS < nowMs) continue;
+                        if (targetLog == null || eff.compareTo(targetLog.getEffectiveTime()) < 0){
                             target = doc;
                             targetLog = log;
-                            break;
                         }
                     } if (targetLog == null){
                         haveSchedule.setVisibility(View.GONE);
                         noSchedule.setVisibility(View.VISIBLE);
                         return;
                     } nextLogId = target.getId();
+                    nextScheduleIdForAlarm = targetLog.getMedication_schedules_id();
+                    nextScheduledAtMillis = targetLog.getScheduled_at().toDate().getTime();
+                    btnKonfirmasi.setEnabled(true); // FIX: tombol aktif lagi untuk jadwal berikutnya
                     haveSchedule.setVisibility(View.VISIBLE);
-                    displayedScheduleAtMillis = targetLog.getScheduled_at().toDate().getTime();
+                    // FIX: kartu diganti ke jadwal berikutnya setelah jadwal ini dianggap terlewat
+                    displayedScheduleAtMillis = targetLog.getEffectiveTime().toDate().getTime()
+                            + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS;
                     noSchedule.setVisibility(View.GONE);
-                    tvDay.setText(formatDayLabel(targetLog.getScheduled_at().toDate()));
+                    // FIX: tampilkan waktu setelah snooze (kalau ada)
+                    tvDay.setText(formatDayLabel(targetLog.getEffectiveTime().toDate()));
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                    tvTime.setText(sdf.format(targetLog.getScheduled_at().toDate()));
+                    tvTime.setText(sdf.format(targetLog.getEffectiveTime().toDate()));
                     resolveMedName(targetLog.getMedication_schedules_id(), (medName, stock, medId, medType) -> {
                         nextMedId = medId;
                         tvtitleCard.setText(medName);
@@ -307,7 +329,12 @@ public class HomeFragment extends Fragment {
                 .addOnSuccessListener(snapshot -> {
                     if (!isAdded()) return;
                     String currentStatus = snapshot.getString("status");
+                    final String schedId = nextScheduleIdForAlarm;
+                    final long schedAt = nextScheduledAtMillis;
+                    final String medName = tvtitleCard.getText().toString();
                     if ("dikonsumsi".equals(currentStatus)) {
+                        if (schedId != null) AlarmSchedulerHelper.onDoseTaken(requireContext(), schedId, medName, schedAt);
+                        btnKonfirmasi.setEnabled(true);
                         loadNextSchedule();
                         return;
                     }
@@ -315,6 +342,10 @@ public class HomeFragment extends Fragment {
                     medicationRepo.markLogAsTaken(nextLogId, new RepoCallback<Void>() {
                         @Override
                         public void onSuccess(Void result) {
+                            // FIX: matikan alarm yang sedang bunyi + batalkan snooze/alarm jam itu
+                            if (isAdded() && schedId != null) {
+                                AlarmSchedulerHelper.onDoseTaken(requireContext(), schedId, medName, schedAt);
+                            }
                             loadStats();
                             if (nextMedId != null){
                                 medicationRepo.decrementStock(nextMedId, new RepoCallback<Void>() {
@@ -329,6 +360,8 @@ public class HomeFragment extends Fragment {
                                     public void onFailure(Exception e) {
                                         if (!isAdded() || getContext() == null) return;
                                         Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        loadNextSchedule();
+                                        loadTodaySchedule();
                                     }
                                 });
                             } else {
@@ -434,7 +467,7 @@ public class HomeFragment extends Fragment {
                             }
                             if (!isAdded()) return;
                             combined.add(new LogItem("medicine", medName,
-                                    sdf.format(log.getScheduled_at().toDate()), info, log.getStatus(),
+                                    sdf.format(log.getEffectiveTime().toDate()), info, log.getStatus(),
                                     log.getMedication_schedules_id(), log.getScheduled_at().toDate().getTime(),
                                     log.getCreated_at() != null ? log.getCreated_at().toDate().getTime() : 0));
                             remaining[0]--;
@@ -461,7 +494,7 @@ public class HomeFragment extends Fragment {
                         if (appt == null) continue;
                         if (appt.getDeleted_at() != null) continue;
                         combined.add(new LogItem("appointment", appt.getTitle(),
-                                sdf.format(appt.getAppointment_at().toDate()),
+                                sdf.format(appt.getDisplayTime().toDate()),
                                 appt.getAddress(), appt.getStatus(),
                                 doc.getId(), appt.getAppointment_at().toDate().getTime(),
                                 appt.getCreated_at() != null ? appt.getCreated_at().toDate().getTime() : 0));
@@ -632,6 +665,7 @@ public class HomeFragment extends Fragment {
     public void onPause() {
         super.onPause();
         refreshHandler.removeCallbacks(refreshRunnable);
+        if (invitationListener != null) { invitationListener.remove(); invitationListener = null; }
     }
 
     @Override

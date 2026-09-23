@@ -2,7 +2,6 @@ package com.example.meduminderv1.Login;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -17,10 +16,6 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.credentials.CredentialManager;
-import androidx.navigation.NavController;
-import androidx.navigation.NavGraph;
-import androidx.navigation.NavInflater;
-import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Auth.SessionManager;
@@ -72,10 +67,27 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         forgotPassword.setOnClickListener(v -> {
-            Intent intent = new Intent(LoginActivity.this, ForgotPasswordActivity.class);
             String currentEmail = emailInput.getText().toString().trim();
-            if (!currentEmail.isEmpty()) intent.putExtra("prefill_email", currentEmail);
-            startActivity(intent);
+            // kalau input email kosong / formatnya belum benar -> langsung buka halaman lupa password
+            if (currentEmail.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(currentEmail).matches()){
+                startActivity(new Intent(LoginActivity.this, ForgotPasswordActivity.class));
+                return;
+            }
+            // FIX: kalau email sudah diisi, cek dulu. Kalau belum terdaftar -> toast, jangan buka halaman
+            forgotPassword.setEnabled(false);
+            authManager.checkEmailStatus(currentEmail, status -> {
+                forgotPassword.setEnabled(true);
+                if (status == AuthManager.EmailStatus.NOT_REGISTERED){
+                    Toast.makeText(LoginActivity.this, getString(R.string.email_belum_terdaftar), Toast.LENGTH_SHORT).show();
+                    return;
+                } if (status == AuthManager.EmailStatus.GOOGLE_ONLY){
+                    Toast.makeText(LoginActivity.this, getString(R.string.email_terdaftar_google_msg), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                Intent intent = new Intent(LoginActivity.this, ForgotPasswordActivity.class);
+                intent.putExtra("prefill_email", currentEmail);
+                startActivity(intent);
+            });
         });
 
         signUpButton.setOnClickListener(view -> {

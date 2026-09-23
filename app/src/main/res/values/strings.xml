@@ -584,4 +584,7 @@
     <string name="penjelasan_snooze">Remind Me Later: pengingat ditunda dan akan muncul kembali sesuai durasi snooze yang dipilih.</string>
     <string name="penjelasan_diabaikan">Diabaikan: pengingat obat tidak ditindaklanjuti hingga batas waktu yang ditentukan.</string>
 
+    <string name="user_sudah_mengundang_anda">Pengguna ini sudah lebih dulu mengundang kamu. Cek notifikasi untuk menerima atau menolak undangannya.</string>
+    <string name="snooze_waktu_baru">Waktu baru: %1$s.</string>
 </resources>
+

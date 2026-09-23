@@ -112,3 +112,4 @@ public class User {
         this.google_email_password_capable = google_email_password_capable;
     }
 }
+

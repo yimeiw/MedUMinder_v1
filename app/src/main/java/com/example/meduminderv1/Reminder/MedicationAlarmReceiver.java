@@ -35,7 +35,10 @@ public class MedicationAlarmReceiver extends BroadcastReceiver {
         // end_date) langsung dari Firestore, bukan dari occurrenceIndex/
         // endMillis lama yang dititipkan di intent alarm (itu sudah tidak
         // dikirim lagi sejak alarm dikunci berdasarkan jam, bukan nomor urut).
-        boolean isSnoozed = intent.getBooleanExtra("is_snoozed_alarm", false);
+        // FIX: nama extra salah ketik. Yang dikirim AlarmSchedulerHelper adalah "is_snooze_alarm",
+        // tapi di sini dibaca "is_snoozed_alarm" -> selalu false -> alarm snooze ikut
+        // membuat alarm "besok" di jam snooze (jadwal jadi kacau).
+        boolean isSnoozed = intent.getBooleanExtra("is_snooze_alarm", false);
         if ("medicine".equals(type)){
             if (!isSnoozed){
                 AlarmSchedulerHelper.rescheduleNextDay(context, scheduleId, namaObat, triggerAt);

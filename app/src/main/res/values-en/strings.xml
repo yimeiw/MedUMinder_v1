@@ -575,4 +575,6 @@
     <string name="penjelasan_dikonsumsi">Taken: the medication was taken as scheduled.</string>
     <string name="penjelasan_snooze">Remind Me Later: the reminder was postponed and will appear again according to the selected snooze duration.</string>
     <string name="penjelasan_diabaikan">Ignored: the medication reminder was not acted upon within the specified time limit.</string>
+    <string name="user_sudah_mengundang_anda">This user has already invited you. Check your notifications to accept or reject the invitation.</string>
+    <string name="snooze_waktu_baru">New time: %1$s.</string>
 </resources>

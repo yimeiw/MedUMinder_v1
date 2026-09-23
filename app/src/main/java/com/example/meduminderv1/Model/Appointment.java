@@ -1,11 +1,7 @@
 package com.example.meduminderv1.Model;
 
-import android.util.Log;
-
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.google.firebase.Timestamp;
-
-import java.util.Date;
 
 public class Appointment {
 
@@ -23,6 +19,22 @@ public class Appointment {
     private Timestamp created_at;
     private Timestamp updated_at;
     private Timestamp deleted_at;
+    private Timestamp snoozed_until; // FIX: waktu baru setelah di-snooze
+    private Long snooze_count;
+
+    public Timestamp getSnoozed_until() { return snoozed_until; }
+    public void setSnoozed_until(Timestamp snoozed_until) { this.snoozed_until = snoozed_until; }
+    public Long getSnooze_count() { return snooze_count; }
+    public void setSnooze_count(Long snooze_count) { this.snooze_count = snooze_count; }
+
+    /** Waktu yang ditampilkan: pakai waktu snooze kalau ada. */
+    @com.google.firebase.firestore.Exclude
+    public Timestamp getDisplayTime() {
+        if (snoozed_until != null && appointment_at != null && snoozed_until.compareTo(appointment_at) > 0) {
+            return snoozed_until;
+        }
+        return appointment_at;
+    }
 
     public Appointment(){}
     public Appointment(String users_id, String status, String address, String title, String created_by, String updated_by, Timestamp appointment_at, Timestamp created_at, Timestamp updated_at, Timestamp deleted_at){
@@ -122,3 +134,4 @@ public class Appointment {
     }
 
 }
+

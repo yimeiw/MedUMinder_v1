@@ -20,6 +20,10 @@ public class AppointmentMissedNotifReceiver extends BroadcastReceiver {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("appointments").document(appointmentId).get().addOnSuccessListener(doc -> {
             if (!doc.exists() || "dihadiri".equals(doc.getString("status"))) return;
+            // FIX: kalau appointment sedang di-snooze (waktu snooze belum lewat 5 menit), jangan anggap terlewat
+            com.google.firebase.Timestamp snoozedUntil = doc.getTimestamp("snoozed_until");
+            if (snoozedUntil != null && System.currentTimeMillis()
+                    < snoozedUntil.toDate().getTime() + 4 * 60_000L) return;
             String consumerUid = doc.getString("users_id");
             if (consumerUid == null) return;
 
@@ -56,3 +60,4 @@ public class AppointmentMissedNotifReceiver extends BroadcastReceiver {
         });
     }
 }
+

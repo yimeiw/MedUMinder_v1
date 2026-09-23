@@ -223,9 +223,58 @@ public class AlarmSchedulerHelper {
 
     public static void scheduleSnooze(Context context, String scheduleId, String namaObat,
                                       long originalScheduledAt, int snoozeMinutes, String type) {
-        long triggerMillis = System.currentTimeMillis() + (snoozeMinutes * 60L * 1000);
+        long triggerMillis = computeSnoozeUntil(originalScheduledAt, snoozeMinutes);
+        scheduleSnoozeAt(context, scheduleId, namaObat, originalScheduledAt, triggerMillis, type);
+    }
+
+    /**
+     * FIX: waktu snooze dihitung dari yang PALING AKHIR antara "sekarang" dan "jam jadwal".
+     * Contoh: jadwal 02:31, ditunda 5 menit SEBELUM 02:31 -> jadi 02:36 (bukan "sekarang + 5").
+     */
+    public static long computeSnoozeUntil(long originalScheduledAt, int snoozeMinutes) {
+        long base = Math.max(System.currentTimeMillis(), originalScheduledAt);
+        return base + snoozeMinutes * 60L * 1000L;
+    }
+
+    public static void scheduleSnoozeAt(Context context, String scheduleId, String namaObat,
+                                        long originalScheduledAt, long triggerMillis, String type) {
         scheduleSingleAlarm(context, scheduleId + "_snooze", scheduleId, namaObat,
                 triggerMillis, originalScheduledAt, "0", type);
+    }
+
+    /**
+     * FIX: dipanggil saat obat di-snooze.
+     * 1) Kalau jam asli BELUM lewat -> alarm jam asli dibatalkan (supaya tidak bunyi di jam lama),
+     *    lalu alarm untuk BESOK di jam yang sama dipasang lagi (supaya jadwal harian tetap jalan).
+     * 2) Cek "terlewat" dipindah ke (waktu snooze + 15 menit), supaya tidak mematikan alarm snooze
+     *    dan tidak mengirim notif "terlewat" padahal user sedang menunda.
+     */
+    public static void applyMedicineSnooze(Context context, String scheduleId, String namaObat,
+                                           long originalScheduledAt, long snoozeUntilMillis) {
+        SimpleDateFormat timeFormat = new SimpleDateFormat(TIME_FORMAT, Locale.getDefault());
+        String occurrenceKey = timeFormat.format(new Date(originalScheduledAt));
+        if (originalScheduledAt > System.currentTimeMillis()) {
+            cancelOccurrence(context, scheduleId, occurrenceKey);
+            rescheduleNextDay(context, scheduleId, namaObat, originalScheduledAt);
+        }
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (am == null || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms())) return;
+        Intent intent = new Intent(context, MedicationMissedNotifReceiver.class);
+        intent.putExtra("schedule_id", scheduleId);
+        intent.putExtra("nama_obat", namaObat);
+        intent.putExtra("scheduled_at", originalScheduledAt); // tetap jam asli -> id log tetap sama
+        PendingIntent pi = PendingIntent.getBroadcast(context, (scheduleId + "_missed_" + occurrenceKey).hashCode(), intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, snoozeUntilMillis + MISSED_CHECK_DELAY_MS, pi);
+    }
+
+    /** FIX: sama seperti di atas, tapi untuk appointment. */
+    public static void applyAppointmentSnooze(Context context, String appointmentId, String title,
+                                              long originalAt, long snoozeUntilMillis) {
+        if (originalAt > System.currentTimeMillis()) {
+            cancelAppointment(context, appointmentId); // jangan bunyi di jam lama
+        }
+        AppointmentAlertScheduler.rescheduleMissed(context, appointmentId, title, snoozeUntilMillis);
     }
 
     public static void cancelSnooze(Context context, String scheduleId) {
@@ -321,9 +370,29 @@ public class AlarmSchedulerHelper {
     }
 
     public static void cancelOccurrenceForScheduledAt(Context context, String scheduleId, long scheduledAtMillis) {
-        SimpleDateFormat timeFormat = new SimpleDateFormat(TIME_FORMAT, Locale.getDefault());
-        String occurrenceKey = timeFormat.format(new Date(scheduledAtMillis));
-        cancelOccurrence(context, scheduleId, occurrenceKey);
+        onDoseTaken(context, scheduleId, null, scheduledAtMillis);
+    }
+
+    /**
+     * FIX: dipanggil setiap kali obat ditandai "dikonsumsi" (dari Home, halaman reminder,
+     * notifikasi, atau tombol di notifikasi HP).
+     *
+     * 1) Matikan alarm yang sedang bunyi + batalkan alarm snooze.
+     * 2) Kalau obat diminum SEBELUM jamnya -> batalkan alarm jam itu (supaya tidak bunyi lagi),
+     *    lalu pasang alarm BESOK di jam yang sama.
+     * 3) Kalau jamnya SUDAH lewat -> JANGAN batalkan apa-apa lagi. Alarm jam itu sudah bunyi dan
+     *    sudah otomatis memasang alarm besok dengan "kunci" yang sama. Kalau dibatalkan,
+     *    yang ikut terhapus justru alarm BESOK (ini bug lama).
+     */
+    public static void onDoseTaken(Context context, String scheduleId, String namaObat, long scheduledAtMillis) {
+        context.stopService(new Intent(context, AlarmRingingService.class));
+        cancelSnooze(context, scheduleId);
+        if (scheduledAtMillis > System.currentTimeMillis()) {
+            SimpleDateFormat timeFormat = new SimpleDateFormat(TIME_FORMAT, Locale.getDefault());
+            String occurrenceKey = timeFormat.format(new Date(scheduledAtMillis));
+            cancelOccurrence(context, scheduleId, occurrenceKey);
+            rescheduleNextDay(context, scheduleId, namaObat != null ? namaObat : "", scheduledAtMillis);
+        }
     }
 
     private static void cancelOccurrence(Context context, String scheduleId, String occurrenceKey) {

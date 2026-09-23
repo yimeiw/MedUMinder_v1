@@ -51,7 +51,7 @@ public class AlarmActionReceiver extends BroadcastReceiver {
             PendingResult pendingResult = goAsync();
             // Batalkan snooze yang masih terjadwal.
             AlarmSchedulerHelper.cancelSnooze(context, scheduleId);
-            AlarmSchedulerHelper.cancelOccurrenceForScheduledAt(context, scheduleId, scheduledAtMillis);
+            AlarmSchedulerHelper.onDoseTaken(context, scheduleId, namaObat, scheduledAtMillis);
             markAsTaken(context, scheduleId, scheduledAtMillis, pendingResult);
 
             /*
@@ -61,39 +61,11 @@ public class AlarmActionReceiver extends BroadcastReceiver {
              */
         } else if ("ACTION_SNOOZE".equals(action)) {
             PendingResult pendingResult = goAsync();
-            /* Increment snooze_count secara independen.
-             * Tidak perlu menunggu operasi ini selesai karena
-             * fungsi utama snooze tetap bisa berjalan.
-             */
-            incrementSnoozeCount(scheduleId, scheduledAtMillis);
-            notifySnoozed(scheduleId, namaObat, scheduledAtMillis, false);
-            FirebaseFirestore.getInstance()
-                    .collection("medication_schedules")
-                    .document(scheduleId).get()
-                    .addOnSuccessListener(document -> {
-                        int snoozeMinutes = 5;
-                        if (document.exists()) {
-                            Long firebaseSnooze = document.getLong("snooze_minutes");
-                            if (firebaseSnooze != null && firebaseSnooze > 0) {
-                                snoozeMinutes = firebaseSnooze.intValue();
-                            }
-                        } long snoozeUntil = System.currentTimeMillis() + snoozeMinutes * 60L * 1000;
-                        updateSnoozeUntil(scheduleId, scheduledAtMillis, snoozeUntil);
-                        AlarmSchedulerHelper.scheduleSnooze(context, scheduleId, namaObat,
-                                scheduledAtMillis, snoozeMinutes, "medicine");
-                        context.stopService(new Intent(context, AlarmRingingService.class));
-                        pendingResult.finish();
-                    })
-                    .addOnFailureListener(e -> {
-                        Log.e(TAG, "Gagal mengambil snooze_minutes", e);
-                        //Fallback tetap 5 menit jika Firestore gagal.
-                        long snoozeUntil =System.currentTimeMillis() + 5 * 60L * 1000;
-                        updateSnoozeUntil(scheduleId, scheduledAtMillis, snoozeUntil);
-                        AlarmSchedulerHelper.scheduleSnooze(context, scheduleId, namaObat,
-                                scheduledAtMillis, 5, "medicine");
-                        context.stopService(new Intent(context, AlarmRingingService.class));
-                        pendingResult.finish();
-                    });
+            // FIX: pakai SnoozeHelper supaya sama dengan snooze dari dalam aplikasi:
+            // durasi ikut Pengaturan Notifikasi, waktu snooze tersimpan, notif pakai bahasa aplikasi
+            boolean isAppointment = "appointment".equals(intent.getStringExtra("type"));
+            SnoozeHelper.snooze(context, scheduleId, namaObat, scheduledAtMillis, isAppointment,
+                    pendingResult::finish);
 
         } else if ("ACTION_APPOINTMENT_ATTENDED".equals(action)
                         || "ACTION_APPOINTMENT_MISSED".equals(action)) {
