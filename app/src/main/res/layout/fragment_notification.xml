@@ -40,6 +40,18 @@
 
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/stateNoNotif"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/belum_ada_riwayat_notif"
+            android:textColor="?attr/colorOnSurface"
+            android:gravity="center_horizontal"
+            android:textSize="16sp"
+            android:layout_marginTop="20dp"
+            android:visibility="gone"
+            />
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvNotif"
             android:layout_below="@+id/headerSection"

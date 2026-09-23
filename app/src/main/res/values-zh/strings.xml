@@ -51,16 +51,22 @@
     <string name="currentLanguage">当前语言</string>
     <string name="langOption">语言选项</string>
 
+    <!-- notif setting -->
     <string name="notifSetting">通知设置</string>
     <string name="ringtone">铃声</string>
     <string name="customMsg">提醒消息设置</string>
     <string name="reminderMsg">提醒消息</string>
     <string name="time_to_consume_med">该吃药了</string>
-    <string name="snoozeDuration">延迟时长</string>
+    <string name="jangan_lupa_minum_obat">别忘了服药</string>
+    <string name="waktunya_minum_obat">吃药时间</string>
     <string name="fiveMin">五 分钟</string>
+    <string name="tenMin">十 分钟</string>
+    <string name="thirtyMin">三十 分钟</string>
+    <string name="oneHour">一 小时</string>
+    <string name="twoHour">二 小时</string>
+    <string name="snoozeDuration">延迟时长</string>
     <string name="appointmentReminder">预约提醒时间</string>
     <string name="remindMeBefore">提前提醒我</string>
-    <string name="thirtyMin">三十 分钟</string>
     <string name="remindUntilConfirm">重复提醒直到确认</string>
 
     <string name="jenisObat">药物类型</string>
@@ -527,4 +533,30 @@
     <string name="confirm_read_notif">您确定要将通知标记为已读吗？</string>
     <string name="title_read_notif">标记为已读</string>
 
+    <string name="error_permission_denied">访问数据时出现问题，请稍后再试。</string>
+    <string name="error_koneksi_bermasalah">您的网络连接出现问题。请检查您的网络连接并重试。</string>
+    <string name="error_umum">发生错误，请重试。</string>
+
+    <string name="belum_ada_riwayat_notif">还没有通知。</string>
+
+    <string name="senin">星期一</string>
+    <string name="selasa">星期二</string>
+    <string name="rabu">星期三</string>
+    <string name="kamis">星期四</string>
+    <string name="jumat">星期五</string>
+    <string name="sabtu">星期六</string>
+    <string name="minggu">星期七</string>
+
+    <string name="januari">一月</string>
+    <string name="februari">二月</string>
+    <string name="maret">三月</string>
+    <string name="april">四月</string>
+    <string name="mei">五月</string>
+    <string name="juni">六月</string>
+    <string name="juli">七月</string>
+    <string name="agustus">八月</string>
+    <string name="september">九月</string>
+    <string name="oktober">十月</string>
+    <string name="november">十一月</string>
+    <string name="desember">十二月</string>
 </resources>

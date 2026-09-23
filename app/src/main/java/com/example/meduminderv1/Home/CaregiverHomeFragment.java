@@ -9,6 +9,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -132,7 +133,7 @@ public class CaregiverHomeFragment extends Fragment {
         db = FirebaseFirestore.getInstance();
         authManager = AuthManager.getInstance(requireContext());
         notificationRepo = new NotificationRepo(requireContext());
-        statistikRepo = new StatistikRepo();
+        statistikRepo = new StatistikRepo(requireContext());
 
         rvDrawerConsumer.setLayoutManager(new LinearLayoutManager(requireContext()));
 
@@ -234,41 +235,131 @@ public class CaregiverHomeFragment extends Fragment {
         });
     }
 
-    private void loadNextSchedule(String consumerUid) {
-        if (nextScheduleListener != null) nextScheduleListener.remove();
-        Timestamp now = Timestamp.now();
+    private void loadNextSchedule(String consumerUid){
+        if (nextScheduleListener != null){
+            nextScheduleListener.remove();
+            nextScheduleListener = null;
+        } if (consumerUid == null || consumerUid.isEmpty()){
+            if (!isAdded()) return;
+            haveSchedule.setVisibility(View.GONE);
+            noSchedule.setVisibility(View.VISIBLE);
+            nextScheduleId = null;
+            nextScheduleScheduledAt = null;
+            nextScheduleMedName = null;
+            btnRemindConsumer.setOnClickListener(null);
+            return;
+        } Timestamp now = Timestamp.now();
         nextScheduleListener = db.collection("medication_logs").whereEqualTo("users_id", consumerUid)
-                .whereGreaterThanOrEqualTo("scheduled_at", now).orderBy("scheduled_at").limit(1).addSnapshotListener((query, error) -> {
-                    if (!isAdded() || error != null || query == null) return;
-                    MedicationLog targetLog = null;
-                    for (DocumentSnapshot doc : query.getDocuments()){
-                        MedicationLog log = doc.toObject(MedicationLog.class);
-                        if (log != null && log.getStatusBasedOnDate() == LogStatus.AKAN_DATANG){
-                            targetLog = log;
-                            break;
-                        }
-                    } if (targetLog == null){
+                .whereGreaterThanOrEqualTo("schedule_at", now).orderBy("scheduled_at").addSnapshotListener((query, error) -> {
+                    //fragment sdh tdk attached
+                    if (!isAdded()) return;
+                    //query error
+                    if (error != null){
+                        Log.e("NEXT_SCHEDULE", "Gagal mengambil jadwal berikutnya", error);
+                        if (!isAdded()) return;
                         haveSchedule.setVisibility(View.GONE);
                         noSchedule.setVisibility(View.VISIBLE);
                         nextScheduleId = null;
-                        nextScheduleScheduledAt = targetLog.getScheduled_at();
+                        nextScheduleScheduledAt = null;
+                        nextScheduleMedName = null;
+                        btnRemindConsumer.setOnClickListener(null);
+                        return;
+                    } MedicationLog targetLog = null;
+                    //cari schedule future pertama yg bnr bnr akan datang
+                    for (DocumentSnapshot doc : query.getDocuments()){
+                        MedicationLog log = doc.toObject(MedicationLog.class);
+                        if (log == null) continue;
+                        Timestamp scheduledAt = log.getScheduled_at();
+                        if (scheduledAt == null) continue;
+                        LogStatus status = log.getStatusBasedOnDate();
+                        if (status == LogStatus.AKAN_DATANG){
+                            targetLog = log;
+                            break;
+                        }
+                    } if (targetLog == null){ //tidak ada schedule yang valid
+                        if (!isAdded()) return;
+                        haveSchedule.setVisibility(View.GONE);
+                        noSchedule.setVisibility(View.VISIBLE);
+                        nextScheduleId = null;
+                        nextScheduleScheduledAt = null;
+                        nextScheduleMedName = null;
+                        btnRemindConsumer.setOnClickListener(null);
+                        return;
+                    } Timestamp scheduledAt = targetLog.getScheduled_at(); //pastikan scheduled_at tidak null
+                    if (scheduledAt == null){
+                        if (!isAdded()) return;
+                        haveSchedule.setVisibility(View.GONE);
+                        noSchedule.setVisibility(View.VISIBLE);
+                        nextScheduleId = null;
+                        nextScheduleScheduledAt = null;
+                        nextScheduleMedName = null;
+                        btnRemindConsumer.setOnClickListener(null);
                         return;
                     } haveSchedule.setVisibility(View.VISIBLE);
                     noSchedule.setVisibility(View.GONE);
                     nextScheduleId = targetLog.getMedication_schedules_id();
-
+                    nextScheduleScheduledAt = scheduledAt;
+                    Date scheduleDate = scheduledAt.toDate();
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                    tvDay.setText(formatDayLabel(targetLog.getScheduled_at().toDate()));
-                    tvTime.setText(sdf.format(targetLog.getScheduled_at().toDate()));
-                    resolveMedName(targetLog.getMedication_schedules_id(), (medName, stock, medType) -> {
+                    tvDay.setText(formatDayLabel(scheduleDate));
+                    tvTime.setText(sdf.format(scheduleDate));
+
+                    //pastikan id schedule tdk null
+                    if (nextScheduleId == null || nextScheduleId.isEmpty()){
+                        tvtitleCard.setText("-");
+                        tvStokNext.setText(getString(R.string.sisa_stok, 0));
+                        btnRemindConsumer.setOnClickListener(null);
+                        return;
+                    } resolveMedName(nextScheduleId, (medName, stock, medType)-> {
                         if (!isAdded()) return;
                         nextScheduleMedName = medName;
-                        tvtitleCard.setText(medName);
-                        tvStokNext.setText(getString(R.string.sisa_stok, stock));
-                        btnRemindConsumer.setOnClickListener(v -> sendReminder(consumerUid, medName));
+                        if (medName == null || medName.isEmpty()){
+                            tvtitleCard.setText("-");
+                        } else {
+                            tvtitleCard.setText(medName);
+                        } tvStokNext.setText(getString(R.string.sisa_stok, stock));
+                        btnRemindConsumer.setOnClickListener(v -> {
+                            if (medName == null || medName.isEmpty()) return;
+                            sendReminder(consumerUid, medName);
+                        });
                     });
                 });
     }
+//    private void loadNextSchedule(String consumerUid) {
+//        if (nextScheduleListener != null) nextScheduleListener.remove();
+//        Timestamp now = Timestamp.now();
+//        nextScheduleListener = db.collection("medication_logs").whereEqualTo("users_id", consumerUid)
+//                .whereGreaterThanOrEqualTo("scheduled_at", now).orderBy("scheduled_at").limit(1).addSnapshotListener((query, error) -> {
+//                    if (!isAdded() || error != null || query == null) return;
+//                    MedicationLog targetLog = null;
+//                    for (DocumentSnapshot doc : query.getDocuments()){
+//                        MedicationLog log = doc.toObject(MedicationLog.class);
+//                        if (log != null && log.getStatusBasedOnDate() == LogStatus.AKAN_DATANG){
+//                            targetLog = log;
+//                            break;
+//                        }
+//                    } if (targetLog == null){
+//                        haveSchedule.setVisibility(View.GONE);
+//                        noSchedule.setVisibility(View.VISIBLE);
+//                        nextScheduleId = null;
+//                        nextScheduleScheduledAt = targetLog.getScheduled_at();
+//                        return;
+//                    } haveSchedule.setVisibility(View.VISIBLE);
+//                    noSchedule.setVisibility(View.GONE);
+//                    nextScheduleId = targetLog.getMedication_schedules_id();
+//
+//                    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+//                    tvDay.setText(formatDayLabel(targetLog.getScheduled_at().toDate()));
+//                    tvTime.setText(sdf.format(targetLog.getScheduled_at().toDate()));
+//                    resolveMedName(targetLog.getMedication_schedules_id(), (medName, stock, medType) -> {
+//                        if (!isAdded()) return;
+//                        nextScheduleMedName = medName;
+//                        tvtitleCard.setText(medName);
+//                        tvStokNext.setText(getString(R.string.sisa_stok, stock));
+//                        btnRemindConsumer.setOnClickListener(v -> sendReminder(consumerUid, medName));
+//                    });
+//                });
+//    }
     private String formatDayLabel(Date date) {
         Calendar target = Calendar.getInstance();
         target.setTime(date);

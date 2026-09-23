@@ -53,16 +53,22 @@
     <string name="currentLanguage">Current Language</string>
     <string name="langOption">Language Options</string>
 
+    <!-- notif setting -->
     <string name="notifSetting">Notification Settings</string>
     <string name="ringtone">Ringtone</string>
     <string name="customMsg">Reminder Message Customization</string>
     <string name="reminderMsg">Reminder Message</string>
-    <string name="time_to_consume_med">Time to Take Medicine</string>
+    <string name="time_to_consume_med">It is time to take medicine</string>
+    <string name="jangan_lupa_minum_obat">Do not forget to take medication</string>
+    <string name="waktunya_minum_obat">Time to take medicine</string>
+    <string name="fiveMin">5 Minute</string>
+    <string name="tenMin">10 Minute</string>
+    <string name="thirtyMin">30 Minute</string>
+    <string name="oneHour">1 Hour</string>
+    <string name="twoHour">2 Hour</string>
     <string name="snoozeDuration">Snooze Duration</string>
-    <string name="fiveMin">5 Minutes</string>
     <string name="appointmentReminder">Appointment Reminder Time</string>
     <string name="remindMeBefore">Remind Me Before</string>
-    <string name="thirtyMin">30 Minutes</string>
     <string name="remindUntilConfirm">Repeat Reminder Until Confirmed</string>
     <string name="jenisObat">Medicine Type</string>
     <string name="obatPil">Pill</string>
@@ -527,4 +533,30 @@
     <string name="confirm_read_notif">Are you sure you want to mark the notification as read?</string>
     <string name="title_read_notif">Mark As Read</string>
 
+    <string name="error_permission_denied">There was a problem accessing the data. Please try again later.</string>
+    <string name="error_koneksi_bermasalah">There is a problem with your internet connection. Check your connection and try again.</string>
+    <string name="error_umum">An error occurred. Please try again.</string>
+
+    <string name="belum_ada_riwayat_notif">No notifications yet.</string>
+
+    <string name="senin">Monday</string>
+    <string name="selasa">Tuesday</string>
+    <string name="rabu">Wednesday</string>
+    <string name="kamis">Thursday</string>
+    <string name="jumat">Friday</string>
+    <string name="sabtu">Saturday</string>
+    <string name="minggu">Sunday</string>
+
+    <string name="januari">Jan</string>
+    <string name="februari">Feb</string>
+    <string name="maret">Mar</string>
+    <string name="april">Apr</string>
+    <string name="mei">May</string>
+    <string name="juni">Jun</string>
+    <string name="juli">Jul</string>
+    <string name="agustus">Aug</string>
+    <string name="september">Sep</string>
+    <string name="oktober">Oct</string>
+    <string name="november">Nov</string>
+    <string name="desember">Dec</string>
 </resources>

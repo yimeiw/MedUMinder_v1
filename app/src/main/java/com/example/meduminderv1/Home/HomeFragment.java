@@ -178,7 +178,7 @@ public class HomeFragment extends Fragment {
         });
 
         lineChart = view.findViewById(R.id.lineChart);
-        statistikRepo = new StatistikRepo();
+        statistikRepo = new StatistikRepo(requireContext());
         loadStats();
 
         return view;

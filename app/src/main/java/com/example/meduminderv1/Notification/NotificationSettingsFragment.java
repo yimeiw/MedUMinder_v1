@@ -131,7 +131,7 @@ public class NotificationSettingsFragment extends Fragment {
             stopRingtonePreview();
             super.onDestroyView();
         }
-
+ 
         private ArrayAdapter<String> createDropdownAdapter(List<String>items) {
             return new ArrayAdapter<String>(
                     requireContext(),
@@ -236,9 +236,9 @@ public class NotificationSettingsFragment extends Fragment {
         // reminder message
         private void setupReminderMessageDropdown() {
             String[] reminderMessages = {
-                    "Jangan lupa minum obat",
-                    "Waktunya minum obat",
-                    "Saatnya mengonsumsi obat"
+                    getString(R.string.jangan_lupa_minum_obat),
+                    getString(R.string.waktunya_minum_obat),
+                    getString(R.string.time_to_consume_med)
             };
 
             ArrayAdapter<String> adapter = createDropdownAdapter(
@@ -282,9 +282,9 @@ public class NotificationSettingsFragment extends Fragment {
         // snooze duration
         private void setupSnoozeDuration() {
             String[] snoozeOptions = {
-                    "5 menit",
-                    "10 menit",
-                    "30 menit"
+                    getString(R.string.fiveMin),
+                    getString(R.string.tenMin),
+                    getString(R.string.thirtyMin)
             };
 
             ArrayAdapter<String> adapter = createDropdownAdapter(
@@ -328,9 +328,9 @@ public class NotificationSettingsFragment extends Fragment {
         // appointment reminder
         private void setupAppointmentDropdown() {
             String[] appointmentOptions = {
-                    "30 menit",
-                    "1 jam",
-                    "2 jam"
+                    getString(R.string.thirtyMin),
+                    getString(R.string.oneHour),
+                    getString(R.string.twoHour)
             };
 
             ArrayAdapter<String> adapter =  createDropdownAdapter(
@@ -421,7 +421,7 @@ public class NotificationSettingsFragment extends Fragment {
             // reminder message
             String savedReminderMessage = pref.getString(
                     KEY_REMINDER_MESSAGE,
-                    "Jangan lupa minum obat"
+                    getString(R.string.jangan_lupa_minum_obat)
             );
 
             dropdownReminderMessage.setText(
@@ -430,7 +430,7 @@ public class NotificationSettingsFragment extends Fragment {
 
             // snooze duration
             String savedSnooze = pref.getString(
-                    KEY_SNOOZE_DURATION, "5 menit"
+                    KEY_SNOOZE_DURATION, getString(R.string.fiveMin)
             );
 
             dropdownSnoozeDuration.setText(
@@ -440,7 +440,7 @@ public class NotificationSettingsFragment extends Fragment {
             // appointment reminder
             String savedAppointment = pref.getString(
                     KEY_APPOINTMENT_REMINDER,
-                    "30 menit"
+                    getString(R.string.thirtyMin)
             );
 
             dropdownAppointmentReminder.setText(

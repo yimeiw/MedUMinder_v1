@@ -46,7 +46,8 @@
         android:layout_height="match_parent"
         android:layout_below="@+id/headerSection"
         android:fillViewport="true"
-        android:layout_marginHorizontal="15dp">
+        android:layout_marginHorizontal="15dp"
+        android:scrollbars="none">
 
         <LinearLayout
             android:layout_width="match_parent"

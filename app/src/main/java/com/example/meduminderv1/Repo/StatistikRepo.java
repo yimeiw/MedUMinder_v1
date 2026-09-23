@@ -1,9 +1,11 @@
 package com.example.meduminderv1.Repo;
 
+import android.content.Context;
 import android.util.Log;
 
 import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.Model.MedicationLog;
+import com.example.meduminderv1.R;
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -17,7 +19,9 @@ import java.util.List;
 public class StatistikRepo {
 
     private final FirebaseFirestore db;
-    public StatistikRepo() {
+    private final Context context;
+    public StatistikRepo(Context context) {
+        this.context = context.getApplicationContext();
         db = FirebaseFirestore.getInstance();
     }
     public static class DayStat {
@@ -207,31 +211,31 @@ public class StatistikRepo {
 
                         if ("weekly".equals(period)) {
                             String[] labels = {
-                                    "Senin",
-                                    "Selasa",
-                                    "Rabu",
-                                    "Kamis",
-                                    "Jumat",
-                                    "Sabtu",
-                                    "Minggu"
+                                    context.getString(R.string.senin),
+                                    context.getString(R.string.selasa),
+                                    context.getString(R.string.rabu),
+                                    context.getString(R.string.kamis),
+                                    context.getString(R.string.jumat),
+                                    context.getString(R.string.sabtu),
+                                    context.getString(R.string.minggu)
                             };
                             stat.label = labels[i];
                         } else if ("monthly".equals(period)) {
                             stat.label = String.valueOf(i + 1);
                         } else {
                             String[] labels = {
-                                    "Jan",
-                                    "Feb",
-                                    "Mar",
-                                    "Apr",
-                                    "Mei",
-                                    "Jun",
-                                    "Jul",
-                                    "Agu",
-                                    "Sep",
-                                    "Okt",
-                                    "Nov",
-                                    "Des"
+                                    context.getString(R.string.januari),
+                                    context.getString(R.string.februari),
+                                    context.getString(R.string.maret),
+                                    context.getString(R.string.april),
+                                    context.getString(R.string.mei),
+                                    context.getString(R.string.juni),
+                                    context.getString(R.string.juli),
+                                    context.getString(R.string.agustus),
+                                    context.getString(R.string.september),
+                                    context.getString(R.string.oktober),
+                                    context.getString(R.string.november),
+                                    context.getString(R.string.desember)
                             };
 
                             stat.label = labels[i];

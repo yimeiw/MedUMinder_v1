@@ -47,9 +47,11 @@ import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.auth.UserInfo;
 import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -249,7 +251,6 @@ public class AuthManager {
                 performEmailSignIn(cleanEmail, password, callback);
             }
         });
-        // sudah — HAPUS baris mAuth.signInWithEmailAndPassword(...) yang ada di bawah ini sebelumnya
     }
 
     private void performEmailSignIn(String email, String password, AuthCallback<User> callback) {
@@ -294,16 +295,19 @@ public class AuthManager {
         } if (!Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()){
             callback.onFailure(context.getString(R.string.format_email_tidak_valid));
             return;
-        }
+        } final String cleanEmail = email.trim().toLowerCase();
 
-        mAuth.sendPasswordResetEmail(email.trim()).addOnSuccessListener(unused -> callback.onSuccess(null))
-                .addOnFailureListener(e -> {
-                    if(e instanceof FirebaseAuthInvalidUserException){
-                        callback.onFailure(context.getString(R.string.email_belum_terdaftar));
-                    } else {
-                        callback.onFailure(e.getMessage());
-                    }
-                });
+        FirebaseFirestore.getInstance().collection("user_emails").document(cleanEmail).get().addOnSuccessListener(doc -> {
+            if (!doc.exists()){
+                callback.onFailure(context.getString(R.string.email_belum_terdaftar));
+                return;
+            } sendResetPass(cleanEmail, callback);
+        }).addOnFailureListener(e -> callback.onFailure(friendlyError(e)));
+    }
+
+    private void sendResetPass(String email, AuthCallback<Void> callback) {
+        mAuth.sendPasswordResetEmail(email).addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(e -> callback.onFailure(friendlyError(e)));
     }
 
     //    GOOGLE
@@ -526,18 +530,46 @@ public class AuthManager {
                 if (firebaseUser == null){
                     callback.onFailure(context.getString(R.string.user_tidak_ditemukan));
                     return;
-                } firebaseUser.sendEmailVerification().addOnSuccessListener(unused -> {
+                } FirebaseFirestore.getInstance().collection("user_emails").document(user.getEmail())
+                                .set(Collections.singletonMap("exists", true));
+                firebaseUser.sendEmailVerification().addOnSuccessListener(unused -> {
                     mAuth.signOut();
                     sessionManager.clearSession();
                     callback.onSuccess(user);
-                }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+                }).addOnFailureListener(e -> callback.onFailure(friendlyError(e)));
             }
 
             @Override
             public void onFailure(Exception e) {
-                callback.onFailure(e.getMessage());
+                FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                if (firebaseUser != null){
+                    firebaseUser.delete().addOnCompleteListener(deleteTask -> callback.onFailure(friendlyError(e)));
+                } else {
+                    callback.onFailure(friendlyError(e));
+                }
             }
         });
+    }
+
+    private String friendlyError(Exception e) {
+        if (e == null) return context.getString(R.string.error_umum);
+        if (e instanceof FirebaseFirestoreException){
+            FirebaseFirestoreException fe = (FirebaseFirestoreException) e;
+            switch (fe.getCode()){
+                case PERMISSION_DENIED:
+                    return context.getString(R.string.error_permission_denied);
+                case UNAVAILABLE:
+                    return context.getString(R.string.error_koneksi_bermasalah);
+                default:
+                    return context.getString(R.string.error_umum);
+            }
+        } if (e instanceof FirebaseAuthInvalidUserException){
+            return context.getString(R.string.email_belum_terdaftar);
+        } if (e instanceof FirebaseAuthInvalidCredentialsException){
+            return context.getString(R.string.password_salah);
+        } if (e instanceof FirebaseAuthUserCollisionException){
+            return context.getString(R.string.email_sudah_digunakan_msg);
+        } return context.getString(R.string.error_umum);
     }
 
     private void loadUserProfile(String uid, AuthCallback<User> callback) {
@@ -1094,7 +1126,7 @@ public class AuthManager {
 
             @Override
             public void onFailure(Exception e) {
-                callback.onFailure(e.getMessage());
+
             }
         });
     }

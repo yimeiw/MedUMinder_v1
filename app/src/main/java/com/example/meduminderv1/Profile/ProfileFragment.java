@@ -162,7 +162,7 @@ public class ProfileFragment extends Fragment {
         adherencePercent = view.findViewById(R.id.adherencePercent);
         adherenceRing = view.findViewById(R.id.adherenceRing);
 
-        statistikRepo = new StatistikRepo();
+        statistikRepo = new StatistikRepo(requireContext());
         loadAdherence();
 
         btnSeeStatistic.setOnClickListener(v -> {

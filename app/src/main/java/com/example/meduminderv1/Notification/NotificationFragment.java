@@ -36,6 +36,7 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class NotificationFragment extends Fragment {
@@ -45,6 +46,7 @@ public class NotificationFragment extends Fragment {
     NotificationAdapter adapter;
     NotificationRepo notificationRepo;
     RecyclerView rvNotif;
+    TextView stateNoNotif;
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     private ItemTouchHelper itemTouchHelper;
 
@@ -58,6 +60,7 @@ public class NotificationFragment extends Fragment {
         notificationRepo = new NotificationRepo(getContext());
 
         rvNotif = view.findViewById(R.id.rvNotif);
+        stateNoNotif = view.findViewById(R.id.stateNoNotif);
         btnBack = view.findViewById(R.id.btnBack);
 
         btnBack.setOnClickListener(v -> {
@@ -76,14 +79,24 @@ public class NotificationFragment extends Fragment {
         authManager.loadNotification(new AuthCallback<List<Notification>>() {
             @Override
             public void onSuccess(List<Notification> result) {
+                if (!isAdded()) return;
                 adapter.updateData(result);
+                toggleEmptyState(result);
             }
 
             @Override
             public void onFailure(String message) {
+                if (!isAdded()) return;
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                toggleEmptyState(null);
             }
         });
+    }
+
+    private void toggleEmptyState(List<Notification> result) {
+        boolean isEmpty = result == null || result.isEmpty();
+        stateNoNotif.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+        rvNotif.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
     }
 
     private void setupRecylerView() {
@@ -127,7 +140,7 @@ public class NotificationFragment extends Fragment {
             private final Paint readPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             private final Paint deletePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             private final Drawable readIcon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_mail);
-            private final Drawable deleteIcon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_delete);
+            private final Drawable deleteIcon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_delete_bw);
             private final float cornerRadius = dpToPx(14f); // samakan dengan radius background card kamu
 
             {
@@ -237,7 +250,7 @@ public class NotificationFragment extends Fragment {
                             int currentPos = adapter.getNotificationPositionById(target.getNotification_id());
                             if (currentPos != -1){
                                 adapter.removeAt(currentPos);
-                            }
+                            } toggleEmptyState(adapter.getItemCount() == 0 ? null : Collections.singletonList(target));
                         }
 
                         @Override

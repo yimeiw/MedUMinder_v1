@@ -133,7 +133,7 @@ public class StatistikFragment extends Fragment {
             }
         });
 
-        statistikRepo = new StatistikRepo();
+        statistikRepo = new StatistikRepo(requireContext());
         updatePeriodButton(view);
         loadStats();
 
