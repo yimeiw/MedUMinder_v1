@@ -23,9 +23,7 @@ public class LanguageFragment extends Fragment {
     ImageButton btnBack;
 
     private void updateLanguageUI(View view){
-        String currentLanguage =
-                AppCompatDelegate.getApplicationLocales().toLanguageTags();
-
+        String currentLanguage = resolveCurrentLanguage();
         TextView currentLanguageValue = view.findViewById(R.id.tvCurrentLanguageValue);
 
         View btnIndonesia = view.findViewById(R.id.btnIndonesia);
@@ -48,27 +46,23 @@ public class LanguageFragment extends Fragment {
         }
     }
 
-    private void initializeLanguage() {
+    private String resolveCurrentLanguage() {
         String currentLanguage = AppCompatDelegate.getApplicationLocales().toLanguageTags();
 
         if (!currentLanguage.isEmpty()) {
-            return;
+            return currentLanguage;
         }
 
         String deviceLanguage = Locale.getDefault().getLanguage();
 
         if ("id".equals(deviceLanguage)) {
-            currentLanguage = "id";
+            return "id";
         } else if ("zh".equals(deviceLanguage)) {
-            currentLanguage = "zh";
+            return "zh";
         } else {
             // Bahasa default yang ga tersedia otomatis diubah jadi English
-            currentLanguage = "en";
+            return "en";
         }
-
-        AppCompatDelegate.setApplicationLocales(
-                LocaleListCompat.forLanguageTags(currentLanguage)
-        );
     }
 
     @Nullable
@@ -104,7 +98,6 @@ public class LanguageFragment extends Fragment {
             );
         });
 
-        initializeLanguage();
         updateLanguageUI(view);
 
         return view;

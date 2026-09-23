@@ -53,7 +53,9 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.WriteBatch;
 
 import java.time.Instant;
@@ -187,16 +189,6 @@ public class ReminderFragment extends Fragment {
             });
             btnTundaReminder.setOnClickListener(v -> snoozeReminder());
         }
-        btnIsTaken.setOnClickListener(v -> {
-            if (isAppointment) {
-                markAppointmentAttended();
-            } else {
-                markAsTaken();
-            }
-        });
-        btnTundaReminder.setOnClickListener(v -> {
-            snoozeReminder();
-        });
         btnOption.setOnClickListener(v -> {
             Log.d("REMINDER_FRAGMENT", "titik-3 diklik, buka popup menu");
             PopupMenu popupMenu = new PopupMenu(requireContext(), btnOption);
@@ -235,25 +227,82 @@ public class ReminderFragment extends Fragment {
 
     private void sendReminderToConsumer() {
         if (!isAdded() || targetConsumerUid == null) return;
+
         User caregiver = SessionManager.getInstance().getUser();
+
         Notification reminder = new Notification();
         reminder.setReceiver_uid(targetConsumerUid);
         reminder.setSender_uid(caregiver.getAuth_uid());
         reminder.setType(isAppointment ? NotificationType.Appointment : NotificationType.Medicine);
         reminder.setReference_id(scheduleId);
         reminder.setTitle(getString(R.string.pengingat_dari_caregiver_title));
-        reminder.setMessage(getString(R.string.caregiver_mengingatkan_periksa_jadwal_msg, caregiver.getName()));
+        reminder.setMessage(getString(
+                R.string.caregiver_mengingatkan_periksa_jadwal_msg,
+                caregiver.getName()
+        ));
         reminder.setIs_read(false);
-        notificationRepo.createNotification(reminder, new RepoCallback<Void>() {
-            @Override public void onSuccess(Void result) {
-                if (!isAdded()) return;
-                Toast.makeText(requireContext(), getString(R.string.pengingat_terkirim), Toast.LENGTH_SHORT).show();
-            }
-            @Override public void onFailure(Exception e) {
-                if (!isAdded()) return;
-                Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
+
+        if (!isAppointment) {
+            reminder.setScheduled_at(new Timestamp(new Date(scheduledAt)));
+            reminder.setIs_new_schedule(true);
+        }
+
+        notificationRepo.createNotification(
+                reminder,
+                new RepoCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void result) {
+                        if (!isAdded()) return;
+
+                        Toast.makeText(
+                                requireContext(),
+                                getString(R.string.pengingat_terkirim),
+                                Toast.LENGTH_SHORT
+                        ).show();
+
+                        Notification confirmation = new Notification();
+                        confirmation.setReceiver_uid(caregiver.getAuth_uid());
+                        confirmation.setSender_uid(caregiver.getAuth_uid());
+                        confirmation.setType(
+                                isAppointment
+                                        ? NotificationType.Appointment
+                                        : NotificationType.Medicine
+                        );
+                        confirmation.setTitle(
+                                getString(R.string.pengingat_terkirim_title)
+                        );
+                        confirmation.setMessage(
+                                getString(R.string.pesan_pengingat_terkirim_consumer)
+                                        + (namaObat != null
+                                        ? " (" + namaObat + ")"
+                                        : "")
+                        );
+                        confirmation.setIs_read(false);
+
+                        notificationRepo.createNotification(
+                                confirmation,
+                                new RepoCallback<Void>() {
+                                    @Override
+                                    public void onSuccess(Void result) { }
+
+                                    @Override
+                                    public void onFailure(Exception e) { }
+                                }
+                        );
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        if (!isAdded()) return;
+
+                        Toast.makeText(
+                                requireContext(),
+                                e.getMessage(),
+                                Toast.LENGTH_SHORT
+                        ).show();
+                    }
+                }
+        );
     }
 
     private void confirmDeleteSchedule() {
@@ -646,6 +695,8 @@ public class ReminderFragment extends Fragment {
                     "appointment"
             );
 
+            notifySnoozeToSelfAndCaregivers(namaObat, true);
+
             Toast.makeText(
                     requireContext(),
                     getString(R.string.pengingat_ditunda_menit, snoozeMinutes),
@@ -713,6 +764,12 @@ public class ReminderFragment extends Fragment {
                             snoozeMinutes,
                             "medicine"
                     );
+
+                    long snoozeUntilMillis = System.currentTimeMillis()
+                            + snoozeMinutes * 60L * 1000;
+
+                    persistMedicineSnooze(snoozeUntilMillis);
+                    notifySnoozeToSelfAndCaregivers(namaObat, false);
 
                     Toast.makeText(requireContext(), getString(R.string.pengingat_ditunda_menit, snoozeMinutes), Toast.LENGTH_SHORT).show();
                     NavHostFragment.findNavController(ReminderFragment.this).navigateUp();
@@ -842,7 +899,6 @@ public class ReminderFragment extends Fragment {
     }
 
     private String buildLogId(String scheduleId, long scheduledAtMillis) {
-
         LocalDateTime dt = LocalDateTime.ofInstant(Instant.ofEpochMilli(scheduledAtMillis), ZoneId.systemDefault());
         LocalDate date = dt.toLocalDate();
         String cleanTime = dt.format(DateTimeFormatter.ofPattern("HHmm"));
@@ -893,6 +949,148 @@ public class ReminderFragment extends Fragment {
                 requireContext()
                         .getResources()
                         .getDisplayMetrics()
+        );
+    }
+
+//    private String buildLogId(String scheduleId, long scheduledAtMillis) {
+//
+//        LocalDateTime dt = LocalDateTime.ofInstant(
+//                Instant.ofEpochMilli(scheduledAtMillis),
+//                ZoneId.systemDefault()
+//        );
+//
+//        LocalDate date = dt.toLocalDate();
+//
+//        String cleanTime = dt.format(
+//                DateTimeFormatter.ofPattern("HHmm")
+//        );
+//
+//        return scheduleId + "_" + date + "_" + cleanTime;
+//    }
+
+    private void persistMedicineSnooze(long snoozeUntilMillis) {
+        String logId = buildLogId(scheduleId, scheduledAt);
+
+        Map<String, Object> update = new HashMap<>();
+
+        update.put(
+                "snoozed_until",
+                new Timestamp(new Date(snoozeUntilMillis))
+        );
+
+        update.put(
+                "snooze_count",
+                FieldValue.increment(1)
+        );
+
+        db.collection("medication_logs")
+                .document(logId)
+                .set(update, SetOptions.merge())
+                .addOnFailureListener(e ->
+                        Log.e(
+                                "REMINDER_FRAGMENT",
+                                "Gagal simpan snoozed_until/snooze_count. logId=" + logId,
+                                e
+                        )
+                );
+    }
+
+    private void notifySnoozeToSelfAndCaregivers(
+            String itemName,
+            boolean isAppointmentType
+    ) {
+        User consumer = SessionManager.getInstance().getUser();
+        if (consumer == null) return;
+
+        String consumerUid = consumer.getAuth_uid();
+
+        Notification selfNotif = new Notification();
+        selfNotif.setReceiver_uid(consumerUid);
+        selfNotif.setSender_uid(consumerUid);
+        selfNotif.setType(
+                isAppointmentType
+                        ? NotificationType.Appointment
+                        : NotificationType.Medicine
+        );
+        selfNotif.setReference_id(scheduleId);
+        selfNotif.setTitle(
+                getString(R.string.pengingat_ditunda_title)
+        );
+        selfNotif.setMessage(
+                getString(
+                        R.string.pengingat_x_ditunda_msg,
+                        itemName
+                )
+        );
+        selfNotif.setIs_read(false);
+
+        notificationRepo.createNotification(
+                selfNotif,
+                new RepoCallback<Void>() {
+                    @Override public void onSuccess(Void result) { }
+
+                    @Override public void onFailure(Exception e) { }
+                }
+        );
+
+        String consumerName = consumer.getName();
+
+        careRelationshipRepo.getCaregiverForConsumer(
+                consumerUid,
+                new RepoCallback<List<CareRelationship>>() {
+                    @Override
+                    public void onSuccess(
+                            List<CareRelationship> relations
+                    ) {
+                        if (relations == null) return;
+
+                        for (CareRelationship relation : relations) {
+                            Notification notifCaregiver =
+                                    new Notification();
+
+                            notifCaregiver.setReceiver_uid(
+                                    relation.getCaregiver_uid()
+                            );
+                            notifCaregiver.setSender_uid(consumerUid);
+                            notifCaregiver.setType(
+                                    isAppointmentType
+                                            ? NotificationType.Appointment
+                                            : NotificationType.Medicine
+                            );
+                            notifCaregiver.setReference_id(scheduleId);
+                            notifCaregiver.setConsumer_name(
+                                    consumerName
+                            );
+                            notifCaregiver.setTitle(
+                                    getString(
+                                            R.string.consumer_menunda_pengingat_title
+                                    )
+                            );
+                            notifCaregiver.setMessage(
+                                    getString(
+                                            R.string.consumer_menunda_pengingat_msg,
+                                            consumerName,
+                                            itemName
+                                    )
+                            );
+                            notifCaregiver.setIs_read(false);
+
+                            notificationRepo.createNotification(
+                                    notifCaregiver,
+                                    new RepoCallback<Void>() {
+                                        @Override
+                                        public void onSuccess(Void result) { }
+
+                                        @Override
+                                        public void onFailure(Exception e) { }
+                                    }
+                            );
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) { }
+                }
         );
     }
 }

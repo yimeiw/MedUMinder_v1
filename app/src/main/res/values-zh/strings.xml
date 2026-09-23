@@ -476,6 +476,10 @@
     <string name="waktu_alarm_tidak_ditemukan">未找到闹钟时间</string>
     <string name="gagal_mengubah_status_obat">更改用药状态失败</string>
     <string name="pengingat_ditunda_menit">提醒已推迟 %1$d 分钟</string>
+    <string name="pengingat_ditunda_title">提醒已推迟</string>
+    <string name="pengingat_x_ditunda_msg">%1$s 的提醒已被推迟。</string>
+    <string name="consumer_menunda_pengingat_title">Consumer 推迟了提醒</string>
+    <string name="consumer_menunda_pengingat_msg">%1$s 推迟了 %2$s 的提醒。</string>
     <string name="data_jadwal_obat_tidak_ditemukan">未找到用药安排数据</string>
     <string name="gagal_mengambil_pengaturan_snooze">获取推迟设置失败</string>
 
@@ -565,5 +569,11 @@
     <string name="anda_menerima_undangan_dari_msg">您收到了一份来自%1$s的邀请</string>
     <string name="anda_menolak_undangan_dari_msg">你拒绝了来自%1$s的邀请</string>
     <string name="lihat">看</string>
+
+    <string name="periode_laporan">报告周期</string>
+    <string name="nama_tidak_diketahui">未知姓名</string>
+    <string name="penjelasan_dikonsumsi">已服用：药物已按照计划服用。</string>
+    <string name="penjelasan_snooze">稍后提醒：提醒已被推迟，并会根据所选的延后时长再次出现。</string>
+    <string name="penjelasan_diabaikan">已忽略：药物提醒在规定时间内未被处理。</string>
 
 </resources>

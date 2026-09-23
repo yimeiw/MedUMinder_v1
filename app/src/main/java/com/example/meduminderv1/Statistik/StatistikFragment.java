@@ -1,7 +1,9 @@
 package com.example.meduminderv1.Statistik;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.pdf.PdfDocument;
 import android.os.Bundle;
@@ -61,8 +63,16 @@ public class StatistikFragment extends Fragment {
     private FrameLayout dailyChartContainer;
     private FrameLayout responsePieContainer;
     private Button btnDownloadReport;
-    private View statistikContent;
     private TextView tvAdherenceDescription;
+    private List<StatistikRepo.DayStat> currentStats = new ArrayList<>();
+    private int currentTotalDikonsumsi = 0;
+    private int currentTotalDiabaikan = 0;
+    private int currentTotalSnooze = 0;
+    private int currentPersentase = 0;
+
+    private BarChart adherenceChart;
+    private PieChart responseChart;
+
 
     public StatistikFragment() {
         // Required empty public constructor
@@ -115,8 +125,6 @@ public class StatistikFragment extends Fragment {
         dailyChartContainer = view.findViewById(R.id.dailyChartContainer);
         responsePieContainer = view.findViewById(R.id.responsePieContainer);
         btnDownloadReport = view.findViewById(R.id.btnDownloadReport);
-        ViewGroup scrollContent = (ViewGroup) view.findViewById(R.id.scrollView);
-        statistikContent = scrollContent.getChildAt(0);
         tvAdherenceDescription = view.findViewById(R.id.tvAdherenceDescription);
 
         btnDownloadReport.setOnClickListener(v -> {
@@ -179,6 +187,12 @@ public class StatistikFragment extends Fragment {
 
                 int persentase = totalSeharusnya == 0 ? 0 : (int) (totalDikonsumsi * 100f / totalSeharusnya);
 
+                currentStats = weekStats;
+                currentTotalDikonsumsi = totalDikonsumsi;
+                currentTotalDiabaikan = totalDiabaikan;
+                currentTotalSnooze = totalSnooze;
+                currentPersentase = persentase;
+
                 tvAdheranceRate.setText(persentase + "%");
                 adherenceRing.setProgress(persentase);
 
@@ -210,6 +224,7 @@ public class StatistikFragment extends Fragment {
     private void renderAdherenceChart(List<StatistikRepo.DayStat> stats) {
         dailyChartContainer.removeAllViews();
         BarChart chart = new BarChart(requireContext());
+        adherenceChart = chart;
         dailyChartContainer.addView(chart, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 
         ArrayList<BarEntry> entries = new ArrayList<>();
@@ -253,6 +268,7 @@ public class StatistikFragment extends Fragment {
         responsePieContainer.removeAllViews();
 
         PieChart chart = new PieChart(requireContext());
+        responseChart = chart;
 
         responsePieContainer.addView(
                 chart,
@@ -305,58 +321,558 @@ public class StatistikFragment extends Fragment {
     }
 
     private void downloadReport() {
-        if (statistikContent == null) {
-            Toast.makeText(requireContext(), getString(R.string.gagal_mengambil_laporan), Toast.LENGTH_SHORT).show();
+        if (currentStats == null || currentStats.isEmpty()) {
+            Toast.makeText(
+                    requireContext(),
+                    getString(R.string.gagal_mengambil_laporan),
+                    Toast.LENGTH_SHORT
+            ).show();
             return;
         }
 
-        int contentWidth = statistikContent.getWidth();
-        if (contentWidth <= 0) contentWidth = statistikContent.getMeasuredWidth();
-        if (contentWidth <= 0) {
-            Toast.makeText(requireContext(), getString(R.string.gagal_mengambil_ukuran_laporan), Toast.LENGTH_SHORT).show();
+        String uid = com.example.meduminderv1.Auth.SessionManager
+                .getInstance()
+                .getTargetUid();
+
+        if (uid == null || uid.isEmpty()) {
+            Toast.makeText(
+                    requireContext(),
+                    getString(R.string.data_pengguna_tidak_ditemukan),
+                    Toast.LENGTH_SHORT
+            ).show();
             return;
         }
 
-        statistikContent.measure(
-                View.MeasureSpec.makeMeasureSpec(contentWidth, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-        );
+        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("users")
+                .whereEqualTo("auth_uid", uid)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!isAdded()) return;
 
-        int width = statistikContent.getMeasuredWidth();
-        int height = statistikContent.getMeasuredHeight();
-        statistikContent.layout(0, 0, width, height);
+                    String consumerName;
 
-        if (width <= 0 || height <= 0) {
-            Toast.makeText(requireContext(), getString(R.string.laporan_ukuran_tidak_valid), Toast.LENGTH_SHORT).show();
-            return;
-        }
+                    if (!querySnapshot.isEmpty()) {
+                        com.google.firebase.firestore.DocumentSnapshot document =
+                                querySnapshot.getDocuments().get(0);
 
+                        com.example.meduminderv1.Model.User user =
+                                document.toObject(com.example.meduminderv1.Model.User.class);
+
+                        if (user != null
+                                && user.getName() != null
+                                && !user.getName().isEmpty()) {
+                            consumerName = user.getName();
+                        } else {
+                            consumerName = getString(R.string.nama_tidak_diketahui);
+                        }
+                    } else {
+                        consumerName = getString(R.string.nama_tidak_diketahui);
+                    }
+
+                    generateStatisticPdf(consumerName);
+                })
+                .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
+
+                    Toast.makeText(
+                            requireContext(),
+                            getString(R.string.gagal_mengambil_laporan),
+                            Toast.LENGTH_SHORT
+                    ).show();
+                });
+    }
+
+    @SuppressLint("StringFormatInvalid")
+    private void generateStatisticPdf(String consumerName) {
         PdfDocument document = new PdfDocument();
+
         int pageWidth = 595;
         int pageHeight = 842;
-        float scale = (float) pageWidth / width;
-        int scaledHeight = (int) (height * scale);
-        int pageCount = Math.max(1, (int) Math.ceil((double) scaledHeight / pageHeight));
+        float margin = 45;
 
-        for (int pageNumber = 0; pageNumber < pageCount; pageNumber++) {
-            PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber + 1).create();
-            PdfDocument.Page page = document.startPage(pageInfo);
-            Canvas canvas = page.getCanvas();
-            canvas.save();
-            canvas.scale(scale, scale);
-            canvas.translate(0, -(pageNumber * pageHeight) / scale);
-            statistikContent.draw(canvas);
-            canvas.restore();
-            document.finishPage(page);
+        android.graphics.Paint paint =
+                new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+
+        // =========================
+        // PAGE 1
+        // =========================
+        PdfDocument.PageInfo pageInfo1 =
+                new PdfDocument.PageInfo.Builder(
+                        pageWidth,
+                        pageHeight,
+                        1
+                ).create();
+
+        PdfDocument.Page page1 = document.startPage(pageInfo1);
+        Canvas canvas1 = page1.getCanvas();
+
+        float y = 50;
+
+        // Judul
+        paint.setTextAlign(android.graphics.Paint.Align.CENTER);
+        paint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        paint.setTextSize(22);
+
+        canvas1.drawText(
+                getString(R.string.laporanStatistik),
+                pageWidth / 2f,
+                y,
+                paint
+        );
+
+        y += 30;
+
+        // Nama Consumer
+        paint.setTypeface(android.graphics.Typeface.DEFAULT);
+        paint.setTextSize(15);
+
+        canvas1.drawText(
+                consumerName,
+                pageWidth / 2f,
+                y,
+                paint
+        );
+
+        y += 25;
+
+        // Periode
+        paint.setTextSize(11);
+
+        canvas1.drawText(
+                getString(R.string.periode_laporan)
+                        + ": "
+                        + getReportPeriod(),
+                pageWidth / 2f,
+                y,
+                paint
+        );
+
+        y += 40;
+
+        // Tingkat Kepatuhan
+        y = drawSectionTitle(
+                canvas1,
+                paint,
+                getString(R.string.tingkatKepatuhan),
+                margin,
+                y
+        );
+
+        // Ring adherence
+        Bitmap adherenceBitmap = getViewBitmap(adherenceRing);
+
+        if (adherenceBitmap != null) {
+            int ringSize = 130;
+            float ringLeft = (pageWidth - ringSize) / 2f;
+
+            canvas1.drawBitmap(
+                    adherenceBitmap,
+                    null,
+                    new android.graphics.RectF(
+                            ringLeft,
+                            y,
+                            ringLeft + ringSize,
+                            y + ringSize
+                    ),
+                    paint
+            );
+
+            y += ringSize + 10;
         }
 
-        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-        String fileName = getString(R.string.nama_file_laporan_statistik) + "_" + timestamp + ".pdf";
+        // Persentase
+        paint.setTextAlign(android.graphics.Paint.Align.CENTER);
+        paint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        paint.setTextSize(18);
+
+        canvas1.drawText(
+                currentPersentase + "%",
+                pageWidth / 2f,
+                y,
+                paint
+        );
+
+        y += 30;
+
+        // Total
+        paint.setTextAlign(android.graphics.Paint.Align.LEFT);
+        paint.setTypeface(android.graphics.Typeface.DEFAULT);
+        paint.setTextSize(12);
+
+        canvas1.drawText(
+                getString(
+                        R.string.totalObatDikonsumsi,
+                        currentTotalDikonsumsi
+                ),
+                margin,
+                y,
+                paint
+        );
+
+        y += 20;
+
+        canvas1.drawText(
+                getString(
+                        R.string.totalObatDiabaikan,
+                        currentTotalDiabaikan
+                ),
+                margin,
+                y,
+                paint
+        );
+
+        y += 20;
+
+        canvas1.drawText(
+                getString(
+                        R.string.totalObatSnooze,
+                        currentTotalSnooze
+                ),
+                margin,
+                y,
+                paint
+        );
+
+        y += 40;
+
+        // Adherence Chart
+        y = drawSectionTitle(
+                canvas1,
+                paint,
+                getString(R.string.grafikKepatuhan),
+                margin,
+                y
+        );
+
+        Bitmap barBitmap = getViewBitmap(adherenceChart);
+
+        if (barBitmap != null) {
+            int chartWidth = pageWidth - 2 * (int) margin;
+            int chartHeight = 300;
+
+            canvas1.drawBitmap(
+                    barBitmap,
+                    null,
+                    new android.graphics.RectF(
+                            margin,
+                            y,
+                            margin + chartWidth,
+                            y + chartHeight
+                    ),
+                    paint
+            );
+        }
+
+        document.finishPage(page1);
+
+
+        // =========================
+        // PAGE 2
+        // =========================
+        PdfDocument.PageInfo pageInfo2 =
+                new PdfDocument.PageInfo.Builder(
+                        pageWidth,
+                        pageHeight,
+                        2
+                ).create();
+
+        PdfDocument.Page page2 = document.startPage(pageInfo2);
+        Canvas canvas2 = page2.getCanvas();
+
+        y = 60;
+
+        // Analisis Response
+        y = drawSectionTitle(
+                canvas2,
+                paint,
+                getString(R.string.analisisRespon),
+                margin,
+                y
+        );
+
+        // Donut Chart
+        Bitmap pieBitmap = getViewBitmap(responseChart);
+
+        if (pieBitmap != null) {
+            int pieSize = 250;
+            float pieLeft = (pageWidth - pieSize) / 2f;
+
+            canvas2.drawBitmap(
+                    pieBitmap,
+                    null,
+                    new android.graphics.RectF(
+                            pieLeft,
+                            y,
+                            pieLeft + pieSize,
+                            y + pieSize
+                    ),
+                    paint
+            );
+
+            y += pieSize + 30;
+        }
+
+        // Legend / angka
+        paint.setTextAlign(android.graphics.Paint.Align.LEFT);
+        paint.setTypeface(android.graphics.Typeface.DEFAULT);
+        paint.setTextSize(12);
+
+        canvas2.drawText(
+                getString(
+                        R.string.legend_dikonsumsi,
+                        currentTotalDikonsumsi
+                ),
+                margin,
+                y,
+                paint
+        );
+
+        y += 22;
+
+        canvas2.drawText(
+                getString(
+                        R.string.legend_snooze,
+                        currentTotalSnooze
+                ),
+                margin,
+                y,
+                paint
+        );
+
+        y += 22;
+
+        canvas2.drawText(
+                getString(
+                        R.string.legend_ignored,
+                        currentTotalDiabaikan
+                ),
+                margin,
+                y,
+                paint
+        );
+
+        y += 35;
+
+        // Penjelasan
+        paint.setTextSize(11);
+
+        y = drawWrappedText(
+                canvas2,
+                paint,
+                getString(R.string.penjelasan_dikonsumsi),
+                margin,
+                y,
+                pageWidth - 2 * margin
+        );
+
+        y += 12;
+
+        y = drawWrappedText(
+                canvas2,
+                paint,
+                getString(R.string.penjelasan_snooze),
+                margin,
+                y,
+                pageWidth - 2 * margin
+        );
+
+        y += 12;
+
+        drawWrappedText(
+                canvas2,
+                paint,
+                getString(R.string.penjelasan_diabaikan),
+                margin,
+                y,
+                pageWidth - 2 * margin
+        );
+
+        document.finishPage(page2);
+
+
+        String timestamp = new SimpleDateFormat(
+                "MMddyyyy",
+                Locale.getDefault()
+        ).format(new Date());
+
+        String fileName =
+                "MedUMinder_" + timestamp + "_Statistics.pdf";
+
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
             saveViaMediaStore(document, fileName);
         } else {
             saveViaLegacyFile(document, fileName);
+        }
+    }
+
+    private float drawSectionTitle(
+            Canvas canvas,
+            android.graphics.Paint paint,
+            String title,
+            float x,
+            float y
+    ) {
+        paint.setTextAlign(android.graphics.Paint.Align.LEFT);
+        paint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        paint.setTextSize(16);
+
+        canvas.drawText(title, x, y, paint);
+
+        return y + 25;
+    }
+
+    private float drawWrappedText(
+            Canvas canvas,
+            android.graphics.Paint paint,
+            String text,
+            float x,
+            float y,
+            float maxWidth
+    ) {
+        String[] words = text.split(" ");
+        StringBuilder line = new StringBuilder();
+
+        float lineHeight = paint.getTextSize() + 5;
+
+        for (String word : words) {
+            String testLine;
+
+            if (line.length() == 0) {
+                testLine = word;
+            } else {
+                testLine = line + " " + word;
+            }
+
+            if (paint.measureText(testLine) > maxWidth) {
+                canvas.drawText(
+                        line.toString(),
+                        x,
+                        y,
+                        paint
+                );
+
+                y += lineHeight;
+                line = new StringBuilder(word);
+            } else {
+                line = new StringBuilder(testLine);
+            }
+        }
+
+        if (line.length() > 0) {
+            canvas.drawText(
+                    line.toString(),
+                    x,
+                    y,
+                    paint
+            );
+
+            y += lineHeight;
+        }
+
+        return y;
+    }
+
+    private Bitmap getViewBitmap(View view) {
+        if (view == null) {
+            return null;
+        }
+
+        int width = view.getWidth();
+        int height = view.getHeight();
+
+        if (width <= 0 || height <= 0) {
+            return null;
+        }
+
+        Bitmap bitmap = Bitmap.createBitmap(
+                width,
+                height,
+                Bitmap.Config.ARGB_8888
+        );
+
+        Canvas canvas = new Canvas(bitmap);
+        view.draw(canvas);
+
+        return bitmap;
+    }
+
+    private String getReportPeriod() {
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+
+        SimpleDateFormat dateFormat =
+                new SimpleDateFormat(
+                        "dd MMMM yyyy",
+                        Locale.getDefault()
+                );
+
+        if ("weekly".equals(selectedPeriod)) {
+            calendar.set(
+                    java.util.Calendar.DAY_OF_WEEK,
+                    java.util.Calendar.MONDAY
+            );
+
+            Date startDate = calendar.getTime();
+
+            calendar.add(
+                    java.util.Calendar.DAY_OF_MONTH,
+                    6
+            );
+
+            Date endDate = calendar.getTime();
+
+            return dateFormat.format(startDate)
+                    + " - "
+                    + dateFormat.format(endDate);
+
+        } else if ("monthly".equals(selectedPeriod)) {
+
+            calendar.set(
+                    java.util.Calendar.DAY_OF_MONTH,
+                    1
+            );
+
+            Date startDate = calendar.getTime();
+
+            calendar.set(
+                    java.util.Calendar.DAY_OF_MONTH,
+                    calendar.getActualMaximum(
+                            java.util.Calendar.DAY_OF_MONTH
+                    )
+            );
+
+            Date endDate = calendar.getTime();
+
+            return dateFormat.format(startDate)
+                    + " - "
+                    + dateFormat.format(endDate);
+
+        } else {
+
+            calendar.set(
+                    java.util.Calendar.DAY_OF_YEAR,
+                    1
+            );
+
+            Date startDate = calendar.getTime();
+
+            calendar.set(
+                    java.util.Calendar.MONTH,
+                    java.util.Calendar.DECEMBER
+            );
+
+            calendar.set(
+                    java.util.Calendar.DAY_OF_MONTH,
+                    31
+            );
+
+            Date endDate = calendar.getTime();
+
+            return dateFormat.format(startDate)
+                    + " - "
+                    + dateFormat.format(endDate);
         }
     }
 

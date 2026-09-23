@@ -484,6 +484,10 @@
     <string name="waktu_alarm_tidak_ditemukan">Waktu alarm tidak ditemukan</string>
     <string name="gagal_mengubah_status_obat">Gagal mengubah status obat</string>
     <string name="pengingat_ditunda_menit">Pengingat ditunda %1$d menit</string>
+    <string name="pengingat_ditunda_title">Pengingat Ditunda</string>
+    <string name="pengingat_x_ditunda_msg">Pengingat %1$s ditunda.</string>
+    <string name="consumer_menunda_pengingat_title">Consumer Menunda Pengingat</string>
+    <string name="consumer_menunda_pengingat_msg">%1$s menunda pengingat %2$s.</string>
     <string name="data_jadwal_obat_tidak_ditemukan">Data jadwal obat tidak ditemukan</string>
     <string name="gagal_mengambil_pengaturan_snooze">Gagal mengambil pengaturan snooze</string>
 
@@ -573,4 +577,11 @@
     <string name="anda_menerima_undangan_dari_msg">Anda menerima undangan dari %1$s</string>
     <string name="anda_menolak_undangan_dari_msg">Anda menolak undangan dari %1$s</string>
     <string name="lihat">Lihat</string>
+
+    <string name="periode_laporan">Periode Laporan</string>
+    <string name="nama_tidak_diketahui">Nama tidak diketahui</string>
+    <string name="penjelasan_dikonsumsi">Dikonsumsi: obat telah diminum sesuai jadwal.</string>
+    <string name="penjelasan_snooze">Remind Me Later: pengingat ditunda dan akan muncul kembali sesuai durasi snooze yang dipilih.</string>
+    <string name="penjelasan_diabaikan">Diabaikan: pengingat obat tidak ditindaklanjuti hingga batas waktu yang ditentukan.</string>
+
 </resources>

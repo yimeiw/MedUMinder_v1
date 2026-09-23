@@ -476,6 +476,10 @@
     <string name="waktu_alarm_tidak_ditemukan">Alarm time not found</string>
     <string name="gagal_mengubah_status_obat">Failed to change medication status</string>
     <string name="pengingat_ditunda_menit">Reminder snoozed for %1$d minutes</string>
+    <string name="pengingat_ditunda_title">Reminder Snoozed</string>
+    <string name="pengingat_x_ditunda_msg">Reminder for %1$s has been snoozed.</string>
+    <string name="consumer_menunda_pengingat_title">Consumer Snoozed a Reminder</string>
+    <string name="consumer_menunda_pengingat_msg">%1$s snoozed the reminder for %2$s.</string>
     <string name="data_jadwal_obat_tidak_ditemukan">Medication schedule data not found</string>
     <string name="gagal_mengambil_pengaturan_snooze">Failed to retrieve snooze settings</string>
 
@@ -565,4 +569,10 @@
     <string name="anda_menerima_undangan_dari_msg">You accepted an invitation from %1$s</string>
     <string name="anda_menolak_undangan_dari_msg">You declined an invitation from %1$s</string>
     <string name="lihat">See</string>
+
+    <string name="periode_laporan">Report Period</string>
+    <string name="nama_tidak_diketahui">Unknown name</string>
+    <string name="penjelasan_dikonsumsi">Taken: the medication was taken as scheduled.</string>
+    <string name="penjelasan_snooze">Remind Me Later: the reminder was postponed and will appear again according to the selected snooze duration.</string>
+    <string name="penjelasan_diabaikan">Ignored: the medication reminder was not acted upon within the specified time limit.</string>
 </resources>

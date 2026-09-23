@@ -303,7 +303,21 @@ public class AuthManager {
             return;
         }
         final String cleanEmail = email.trim().toLowerCase();
-        sendResetPass(cleanEmail, callback);
+
+        userRepository.getUserbyEmail(cleanEmail, new RepoCallback<User>() {
+            @Override
+            public void onSuccess(User result) {
+                if (result == null){
+                    callback.onFailure(context.getString(R.string.email_belum_terdaftar));
+                    return;
+                } sendResetPass(cleanEmail, callback);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                sendResetPass(cleanEmail, callback);
+            }
+        });
     }
 
     private void sendResetPass(String email, AuthCallback<Void> callback) {

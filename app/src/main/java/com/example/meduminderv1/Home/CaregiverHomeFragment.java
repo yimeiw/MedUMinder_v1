@@ -170,9 +170,6 @@ public class CaregiverHomeFragment extends Fragment {
             selectedConsumerUid(uid);
             if (drawerConsumerAdapter != null){
                 drawerConsumerAdapter.setActiveUid(uid);
-                loadNextSchedule(uid);
-                loadTodaySchedule(uid);
-                loadAdherenceAndStats(uid);
             }
         }); consumerPicker.setup();
 
