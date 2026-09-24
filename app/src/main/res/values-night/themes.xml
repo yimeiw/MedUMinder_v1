@@ -8,6 +8,7 @@
         <item name="colorTertiary">@color/white</item> <!--putih jadi ijo-->
         <item name="colorAccent">@color/white</item> <!--putih jadi pink-->
         <item name="colorOnPrimary">@color/white</item> <!--putih jadi itam-->
+        <item name="colorPrimaryVariant">@color/black</item><!-- ijo itam -->
         <item name="colorPrimaryFixed">@color/white</item>
         <item name="colorPrimaryFixedDim">@color/black</item>
         <item name="colorTertiaryFixed">@color/green</item>

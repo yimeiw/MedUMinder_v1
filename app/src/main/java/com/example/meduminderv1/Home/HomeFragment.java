@@ -48,6 +48,7 @@ import com.example.meduminderv1.R;
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.example.meduminderv1.Repo.InvitationRepo;
 import com.example.meduminderv1.Repo.MedicationRepo;
+import com.example.meduminderv1.Repo.NotificationRepo;
 import com.example.meduminderv1.Repo.StatistikRepo;
 import com.example.meduminderv1.Statistik.ChartMakerView;
 import com.github.mikephil.charting.charts.LineChart;
@@ -342,9 +343,13 @@ public class HomeFragment extends Fragment {
                     medicationRepo.markLogAsTaken(nextLogId, new RepoCallback<Void>() {
                         @Override
                         public void onSuccess(Void result) {
-                            // FIX: matikan alarm yang sedang bunyi + batalkan snooze/alarm jam itu
+                            //matikan alarm yang sedang bunyi + batalkan snooze/alarm jam itu
                             if (isAdded() && schedId != null) {
                                 AlarmSchedulerHelper.onDoseTaken(requireContext(), schedId, medName, schedAt);
+                            } User currentUser = SessionManager.getInstance().getUser();
+                            if (currentUser != null){
+                                new NotificationRepo(requireContext().getApplicationContext())
+                                        .notifyCaregiversMedicineTaken(currentUser.getAuth_uid(), nextLogId, medName, null);
                             }
                             loadStats();
                             if (nextMedId != null){

@@ -75,7 +75,7 @@
                     android:text="@string/mingguan"
                     android:textAllCaps="false"
                     android:textSize="12sp"
-                    android:textColor="?attr/colorOnSurface"
+                    android:textColor="?attr/colorOnPrimary"
                     android:background="@drawable/border"
                     app:backgroundTint="@null" />
 
@@ -88,7 +88,7 @@
                     android:text="@string/bulanan"
                     android:textAllCaps="false"
                     android:textSize="12sp"
-                    android:textColor="?attr/colorOnSurface"
+                    android:textColor="?attr/colorOnPrimary"
                     android:background="@drawable/border"
                     app:backgroundTint="@null" />
 
@@ -101,7 +101,7 @@
                     android:text="@string/tahunan"
                     android:textAllCaps="false"
                     android:textSize="12sp"
-                    android:textColor="?attr/colorOnSurface"
+                    android:textColor="?attr/colorOnPrimary"
                     android:background="@drawable/border"
                     app:backgroundTint="@null" />
             </LinearLayout>
@@ -125,6 +125,7 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:background="@drawable/border"
+                android:backgroundTint="?attr/colorOnSurface"
                 android:padding="15dp"
                 android:layout_marginBottom="15dp">
 
@@ -151,7 +152,7 @@
                         android:text="@string/kepatuhan"
                         android:textSize="14sp"
                         android:textStyle="bold"
-                        android:textColor="?attr/colorOnSurface"
+                        android:textColor="?attr/colorPrimary"
                         android:layout_marginTop="2dp" />
 
                     <TextView
@@ -160,7 +161,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/noConsumptionData"
                         android:textSize="13sp"
-                        android:textColor="?attr/colorOnSurface"
+                        android:textColor="?attr/colorPrimary"
                         android:layout_marginTop="8dp" />
                 </LinearLayout>
 
@@ -208,7 +209,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="0 Obat"
-                        android:textSize="22sp"
+                        android:textSize="20sp"
                         android:textStyle="bold"
                         android:gravity="center"
                         android:textColor="?attr/colorOnPrimary"
@@ -243,7 +244,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="0 Obat"
-                        android:textSize="22sp"
+                        android:textSize="20sp"
                         android:textStyle="bold"
                         android:gravity="center"
                         android:textColor="?attr/colorOnPrimary"

@@ -45,6 +45,7 @@ import com.example.meduminderv1.Repo.NotificationRepo;
 import com.example.meduminderv1.Repo.StatistikRepo;
 import com.example.meduminderv1.Repo.UserRepository;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.color.MaterialColors;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -564,6 +565,7 @@ public class CaregiverHomeFragment extends Fragment {
             public void onResult(int totalSeharusnya, int totalDikonsumsi, int percent) {
                 if (!isAdded()) return;
                 adherenceRing.setProgress(percent);
+                adherenceRing.setProgressColor(MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface));
                 tvAdherenceDesc.setText(adherenceDesc(percent));
             }
 

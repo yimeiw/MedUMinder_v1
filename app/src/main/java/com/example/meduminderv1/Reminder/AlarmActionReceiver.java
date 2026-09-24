@@ -7,6 +7,7 @@ import android.util.Log;
 
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Repo.MedicationRepo;
+import com.example.meduminderv1.Repo.NotificationRepo;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -73,21 +74,28 @@ public class AlarmActionReceiver extends BroadcastReceiver {
             PendingResult pendingResult = goAsync();
             AlarmSchedulerHelper.cancelAppointment(context, scheduleId);
             AppointmentAlertScheduler.cancelAlerts(context, scheduleId);
-            String newStatus = "ACTION_APPOINTMENT_ATTENDED".equals(action)
-                            ? "dihadiri" : "terlewatkan";
+            boolean isAttended = "ACTION_APPOINTMENT_ATTENDED".equals(action);
+            String newStatus = isAttended ? "dihadiri" : "terlewatkan";
 
-            FirebaseFirestore.getInstance()
-                    .collection("appointments")
-                    .document(scheduleId)
-                    .update("status", newStatus, "updated_at", Timestamp.now())
-                    .addOnCompleteListener(task -> {
-
-                        if (!task.isSuccessful()) {
-                            Log.e(TAG, "Gagal update status appointment. id=" + scheduleId, task.getException());
-                        }
-                        context.stopService(new Intent(context, AlarmRingingService.class));
-                        pendingResult.finish();
-                    });
+            FirebaseFirestore.getInstance().collection("appointments").document(scheduleId).get().addOnSuccessListener(doc -> {
+                String consumerUid = doc.getString("users_id");
+                String title = doc.getString("title");
+                FirebaseFirestore.getInstance()
+                        .collection("appointments")
+                        .document(scheduleId).update("status", newStatus, "updated_at", Timestamp.now())
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful() && isAttended){
+                                new NotificationRepo(context).notifyCaregiversAppointmentAttended(consumerUid, scheduleId, title, null);
+                            } else if (!task.isSuccessful()) {
+                                Log.e(TAG, "Gagal update status appointment. id=" + scheduleId, task.getException());
+                            }
+                            context.stopService(new Intent(context, AlarmRingingService.class));
+                            pendingResult.finish();
+                        });
+            }).addOnFailureListener(e -> {
+                context.stopService(new Intent(context, AlarmRingingService.class));
+                pendingResult.finish();
+            });
         }
     }
 
@@ -201,6 +209,7 @@ public class AlarmActionReceiver extends BroadcastReceiver {
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     String currentStatus = snapshot.getString("status");
+                    String consumerUid = snapshot.getString("users_id");
                     if ("dikonsumsi".equals(currentStatus)) {
                         stopAlarmService(context, pendingResult);
                         return;
@@ -221,22 +230,26 @@ public class AlarmActionReceiver extends BroadcastReceiver {
                                             }
 
                                             MedicationRepo medicationRepo = new MedicationRepo(context);
-                                            medicationRepo.decrementStock(medicationId, new RepoCallback<Void>() {
-                                                @Override
-                                                public void onSuccess(Void result) {
+                                            medicationRepo.resolveMedicationName(medicationId, medName -> {
+                                                new NotificationRepo(context).notifyCaregiversMedicineTaken(consumerUid, logId, medName, null);
+                                                if (medicationId == null || medicationId.isEmpty()){
                                                     stopAlarmService(context, pendingResult);
-                                                }
-                                                @Override
-                                                public void onFailure(Exception e) {
-                                                    stopAlarmService(context, pendingResult);
-                                                }
+                                                    return;
+                                                } medicationRepo.decrementStock(medicationId, new RepoCallback<Void>() {
+                                                    @Override
+                                                    public void onSuccess(Void result) {
+                                                        stopAlarmService(context, pendingResult);
+                                                    }
+                                                    @Override
+                                                    public void onFailure(Exception e) {
+                                                        stopAlarmService(context, pendingResult);
+                                                    }
+                                                });
                                             });
-                                        })
-                                        .addOnFailureListener(e -> stopAlarmService(context, pendingResult));
+                                        }).addOnFailureListener(e -> stopAlarmService(context, pendingResult));
                             })
                             .addOnFailureListener(e -> stopAlarmService(context, pendingResult));
-                })
-                .addOnFailureListener(e -> stopAlarmService(context, pendingResult));
+                }).addOnFailureListener(e -> stopAlarmService(context, pendingResult));
     }
 
     private void stopAlarmService(Context context, PendingResult pendingResult) {

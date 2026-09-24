@@ -2,12 +2,25 @@ package com.example.meduminderv1.Statistik;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.pdf.PdfDocument;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
 import android.os.Environment;
@@ -22,12 +35,17 @@ import android.widget.TextView;
 import android.graphics.Color;
 import android.widget.Toast;
 
+import com.example.meduminderv1.Auth.SessionManager;
+import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Home.ProgressView;
+import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Repo.NotificationRepo;
 import com.example.meduminderv1.Repo.StatistikRepo;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
@@ -35,6 +53,7 @@ import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.data.PieData;
+import com.google.android.material.color.MaterialColors;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -69,10 +88,12 @@ public class StatistikFragment extends Fragment {
     private int currentTotalDiabaikan = 0;
     private int currentTotalSnooze = 0;
     private int currentPersentase = 0;
-
     private BarChart adherenceChart;
     private PieChart responseChart;
-
+    private final ActivityResultLauncher<String> notifPermLauncher = registerForActivityResult(
+            new ActivityResultContracts.RequestPermission(), granted -> {}
+    );
+    private static final String DOWNLOAD_CHANNEL_ID = "report_download_channel";
 
     public StatistikFragment() {
         // Required empty public constructor
@@ -238,7 +259,7 @@ public class StatistikFragment extends Fragment {
 
         BarDataSet dataSet = new BarDataSet(entries, getString(R.string.persentaseKepatuhan));
 
-        int pink = requireContext().getColor(R.color.pink);
+        int pink = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorSecondary);
 
         dataSet.setColor(pink);
         dataSet.setValueTextSize(10f);
@@ -251,7 +272,9 @@ public class StatistikFragment extends Fragment {
         xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
         xAxis.setGranularity(1f);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setTextColor(pink);
 
+        chart.getAxisLeft().setTextColor(pink);
         chart.getAxisLeft().setAxisMinimum(0f);
         chart.getAxisLeft().setAxisMaximum(100f);
         chart.getAxisRight().setEnabled(false);
@@ -619,87 +642,67 @@ public class StatistikFragment extends Fragment {
         paint.setTypeface(android.graphics.Typeface.DEFAULT);
         paint.setTextSize(12);
 
-        canvas2.drawText(
-                getString(
-                        R.string.legend_dikonsumsi,
-                        currentTotalDikonsumsi
-                ),
-                margin,
-                y,
-                paint
-        );
+        String[] legendLabels = {
+                getString(R.string.legend_dikonsumsi_format, currentTotalDikonsumsi),
+                getString(R.string.legend_snooze_format, currentTotalSnooze),
+                getString(R.string.legend_ignored_format, currentTotalDiabaikan)
+        };
 
-        y += 22;
+        int[] legendColors = {
+                requireContext().getColor(R.color.green),
+                requireContext().getColor(R.color.gray),
+                requireContext().getColor(R.color.pink)
+        };
 
-        canvas2.drawText(
-                getString(
-                        R.string.legend_snooze,
-                        currentTotalSnooze
-                ),
-                margin,
-                y,
-                paint
-        );
+        float dotRadius = 5f, dotTextGap = 6f, itemGap = 20f;
 
-        y += 22;
+        //hitung total lebar biar barisnya bisa ditengahkan
+        float totalLegendWidth = 0f;
+        float[] labelWidths = new float[legendLabels.length];
+        for (int i = 0; i < legendLabels.length; i++){
+            labelWidths[i] = paint.measureText(legendLabels[i]);
+            totalLegendWidth += (dotRadius * 2) + dotTextGap +  labelWidths[i];
+            if (i < legendLabels.length - 1) totalLegendWidth += itemGap;
+        }
 
-        canvas2.drawText(
-                getString(
-                        R.string.legend_ignored,
-                        currentTotalDiabaikan
-                ),
-                margin,
-                y,
-                paint
-        );
+        float legendX = (pageWidth - totalLegendWidth) / 2f;
+        float dotCenterY = y - 4f; //biar titik sejajar vertikal dengan teks
 
-        y += 35;
+        for (int i = 0; i < legendLabels.length; i++){
+            paint.setColor(legendColors[i]);
+            canvas2.drawCircle(legendX + dotRadius, dotCenterY, dotRadius, paint);
+
+            paint.setColor(Color.BLACK);
+            canvas2.drawText(legendLabels[i], legendX + (dotRadius * 2) + dotTextGap, y, paint);
+
+            legendX += (dotRadius * 2) + dotTextGap + labelWidths[i] + itemGap;
+        } y+= 35;
 
         // Penjelasan
         paint.setTextSize(11);
 
-        y = drawWrappedText(
-                canvas2,
-                paint,
+        y = drawWrappedText(canvas2, paint,
                 getString(R.string.penjelasan_dikonsumsi),
-                margin,
-                y,
-                pageWidth - 2 * margin
-        );
-
+                margin, y, pageWidth - 2 * margin);
         y += 12;
 
-        y = drawWrappedText(
-                canvas2,
-                paint,
+        y = drawWrappedText(canvas2, paint,
                 getString(R.string.penjelasan_snooze),
-                margin,
-                y,
-                pageWidth - 2 * margin
-        );
-
+                margin, y, pageWidth - 2 * margin);
         y += 12;
 
-        drawWrappedText(
-                canvas2,
-                paint,
-                getString(R.string.penjelasan_diabaikan),
-                margin,
-                y,
-                pageWidth - 2 * margin
-        );
+        drawWrappedText(canvas2, paint,
+                getString(R.string.penjelasan_diabaikan), margin, y,
+                pageWidth - 2 * margin);
 
         document.finishPage(page2);
 
 
         String timestamp = new SimpleDateFormat(
-                "MMddyyyy",
-                Locale.getDefault()
+                "MMddyyyy", Locale.getDefault()
         ).format(new Date());
 
-        String fileName =
-                "MedUMinder_" + timestamp + "_Statistics.pdf";
-
+        String fileName = "MedUMinder_" + timestamp + "_Statistics.pdf";
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
             saveViaMediaStore(document, fileName);
@@ -898,8 +901,9 @@ public class StatistikFragment extends Fragment {
             values.clear();
             values.put(android.provider.MediaStore.Downloads.IS_PENDING, 0);
             resolver.update(itemUri, values, null, null);
-
             Toast.makeText(requireContext(), getString(R.string.laporan_berhasil_diunduh), Toast.LENGTH_LONG).show();
+            saveReportNotification(fileName, itemUri.toString(), null);
+            openPdf(itemUri);
         } catch (IOException e) {
             document.close();
             Toast.makeText(requireContext(), getString(R.string.gagal_mengunduh_laporan), Toast.LENGTH_LONG).show();
@@ -928,6 +932,9 @@ public class StatistikFragment extends Fragment {
             outputStream.close();
             document.close();
             Toast.makeText(requireContext(), getString(R.string.laporan_berhasil_diunduh), Toast.LENGTH_LONG).show();
+            saveReportNotification(fileName, null, pdfFile.getAbsolutePath());
+            Uri contentUri = FileProvider.getUriForFile(requireContext(), requireContext().getPackageName() + ".fileprovider", pdfFile);
+            openPdf(contentUri);
         } catch (IOException e) {
             document.close();
             Toast.makeText(requireContext(), getString(R.string.gagal_mengunduh_laporan), Toast.LENGTH_LONG).show();
@@ -954,5 +961,31 @@ public class StatistikFragment extends Fragment {
         } else if ("yearly".equals(selectedPeriod)) {
             btnYearly.setBackgroundTintList(android.content.res.ColorStateList.valueOf(activeColor));
         }
+    }
+
+    private void openPdf(android.net.Uri uri) {
+        if (!isAdded()) return;
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(uri, "application/pdf");
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            startActivity(intent);
+        } catch (android.content.ActivityNotFoundException e) {
+            Toast.makeText(requireContext(), getString(R.string.aplikasi_pembaca_pdf_tidak_ditemukan), Toast.LENGTH_SHORT).show();
+        }
+    }
+    private void saveReportNotification(String fileName, String mediaStoreUri, String legacyFilePath){
+        if (!isAdded()) return;
+        User user = SessionManager.getInstance().getUser();
+        if (user == null) return;
+        new NotificationRepo(requireContext()).createReportNotif(user.getAuth_uid(), getString(R.string.laporan_berhasil_diunduh),
+                fileName, mediaStoreUri, legacyFilePath, new RepoCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void result) {}
+
+                    @Override
+                    public void onFailure(Exception e) {}
+        });
     }
 }

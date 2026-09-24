@@ -207,16 +207,26 @@ public class EditAppointmentFragment extends Fragment {
     }
 
     private void notifyAppointmentUpdated(String title, String actorUid) {
+        if (!isAdded()) return;
         if (targetUid == null) return;
         boolean isForSelf = targetUid.equals(actorUid);
+
+        final String consumerNotifTitle = getString(R.string.jadwal_appointment_diperbarui_title);
+        final String consumerNotifMsg = getString(R.string.caregiver_mengubah_jadwal_appointment_anda_full, title);
+        final String caregiverNotifTitle = getString(R.string.jadwal_appointment_diperbarui_title);
+        final String caregiverNotifMsgSelf = getString(R.string.consumer_mengubah_jadwal_appointment_msg, title);
+        final String caregiverNotifMsgOther = getString(R.string.jadwal_appointment_consumer_diperbarui_msg, title);
+
+        NotificationRepo appNotificationRepo = new NotificationRepo(requireContext().getApplicationContext());
+        CareRelationshipRepo appRelationshipRepo = new CareRelationshipRepo();
 
         if (!isForSelf) {
             Notification notifToConsumer = new Notification();
             notifToConsumer.setReceiver_uid(targetUid);
             notifToConsumer.setSender_uid(actorUid);
             notifToConsumer.setType(NotificationType.Appointment);
-            notifToConsumer.setTitle(getString(R.string.jadwal_appointment_diperbarui_title));
-            notifToConsumer.setMessage(getString(R.string.caregiver_mengubah_jadwal_appointment_anda_full, title));
+            notifToConsumer.setTitle(consumerNotifTitle);
+            notifToConsumer.setMessage(consumerNotifMsg);
             notifToConsumer.setIs_read(false);
             notificationRepo.createNotification(notifToConsumer, new RepoCallback<Void>() {
                 @Override public void onSuccess(Void result) { }
@@ -224,7 +234,7 @@ public class EditAppointmentFragment extends Fragment {
             });
         }
 
-        careRelationshipRepo.getCaregiverForConsumer(targetUid, new RepoCallback<List<CareRelationship>>() {
+        appRelationshipRepo.getCaregiverForConsumer(targetUid, new RepoCallback<List<CareRelationship>>() {
             @Override
             public void onSuccess(List<CareRelationship> relations) {
                 for (CareRelationship relation : relations) {
@@ -235,12 +245,10 @@ public class EditAppointmentFragment extends Fragment {
                     notifToCaregiver.setReceiver_uid(caregiverUid);
                     notifToCaregiver.setSender_uid(actorUid);
                     notifToCaregiver.setType(NotificationType.Appointment);
-                    notifToCaregiver.setTitle(getString(R.string.jadwal_appointment_diperbarui_title));
-                    notifToCaregiver.setMessage(isForSelf
-                            ? getString(R.string.consumer_mengubah_jadwal_appointment_msg, title)
-                            : getString(R.string.jadwal_appointment_consumer_diperbarui_msg, title));
+                    notifToCaregiver.setTitle(caregiverNotifTitle);
+                    notifToCaregiver.setMessage(isForSelf ? caregiverNotifMsgSelf : caregiverNotifMsgOther);
                     notifToCaregiver.setIs_read(false);
-                    notificationRepo.createNotification(notifToCaregiver, new RepoCallback<Void>() {
+                    appNotificationRepo.createNotification(notifToCaregiver, new RepoCallback<Void>() {
                         @Override public void onSuccess(Void result) { }
                         @Override public void onFailure(Exception e) { }
                     });

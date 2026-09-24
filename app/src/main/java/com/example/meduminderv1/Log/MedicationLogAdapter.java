@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -114,7 +115,7 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        TextView namaObatLog, sisaStokLog, currStatus, scheduledAt;
+        TextView namaObatLog, sisaStokLog, currStatus, scheduledAt, tvWaktu, tvStok;
         View shadowLog, capsuleMedicineLog;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -125,32 +126,41 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
             shadowLog = itemView.findViewById(R.id.shadow_medicine_log);
             capsuleMedicineLog = itemView.findViewById(R.id.capsule_medicine_log);
             scheduledAt = itemView.findViewById(R.id.scheduled_at);
+            tvWaktu = itemView.findViewById(R.id.tvWaktu);
+            tvStok = itemView.findViewById(R.id.tvStok);
         }
-    }
-
-    private String setUpperCase(String status) {
-        if (status == null || status.trim().isEmpty()) return "";
-
-        String[] words = status.trim().toLowerCase().split("\\s+");
-        StringBuilder result = new StringBuilder();
-
-        for (String word: words) {
-            if (word.isEmpty()) continue;
-            result.append(Character.toUpperCase(word.charAt(0)))
-                    .append(word.substring(1))
-                    .append(" ");
-        }
-        return result.toString().trim();
     }
     private void applyStatusColor(ViewHolder holder, LogStatus status) {
-        int colorRes;
+        int colorAttr;
+        int teksColorAttr;
 
+        //tentukan attr theme(warna) berdasarkan status
         if (status == null) {
-            colorRes = R.color.white;
+            colorAttr = com.google.android.material.R.attr.colorPrimaryFixed; //putih
+            teksColorAttr = com.google.android.material.R.attr.colorOnSurface;
         } else {
-            colorRes = status.getColorRes();
+            switch (status) {
+                case DIKONSUMSI:
+                    colorAttr = com.google.android.material.R.attr.colorTertiaryFixed; //hijau
+                    teksColorAttr = com.google.android.material.R.attr.colorTertiaryFixed;
+                    break;
+                case TERLEWATKAN:
+                    colorAttr = com.google.android.material.R.attr.colorSecondary; //pink
+                    teksColorAttr = com.google.android.material.R.attr.colorSecondary;
+                    break;
+                case AKAN_DATANG:
+                    colorAttr = com.google.android.material.R.attr.colorSecondaryFixed; //abu
+                    teksColorAttr = com.google.android.material.R.attr.colorOnPrimary;
+                    break;
+                default:
+                    colorAttr = com.google.android.material.R.attr.colorPrimaryFixed; //putih
+                    teksColorAttr = com.google.android.material.R.attr.colorPrimaryFixed;
+                    break;
+            }
         }
-        int color = ContextCompat.getColor(context, colorRes);
+        //ambil warna asli dari attr theme
+        int color = getColorFromAttr(context, colorAttr);
+        int teksColor = getColorFromAttr(context, teksColorAttr);
 
         holder.currStatus.setBackgroundTintList(ColorStateList.valueOf(color));
         holder.shadowLog.setBackgroundTintList(ColorStateList.valueOf(color));
@@ -158,8 +168,18 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
         if (bg instanceof GradientDrawable) {
             ((GradientDrawable) bg).setStroke(dpToPx(1.5f), color);
         }
-    }
 
+        holder.namaObatLog.setTextColor(teksColor);
+        holder.sisaStokLog.setTextColor(teksColor);
+        holder.scheduledAt.setTextColor(teksColor);
+        holder.tvWaktu.setTextColor(teksColor);
+        holder.tvStok.setTextColor(teksColor);
+    }
+    private int getColorFromAttr(Context context, int colorAttr) {
+        TypedValue typedValue = new TypedValue();
+        context.getTheme().resolveAttribute(colorAttr, typedValue, true);
+        return typedValue.data;
+    }
     private int dpToPx(float dp) {
         return (int) (dp * context.getResources().getDisplayMetrics().density);
     }

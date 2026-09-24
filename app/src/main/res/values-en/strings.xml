@@ -141,6 +141,9 @@
     <string name="legend_dikonsumsi">● Taken</string>
     <string name="legend_snooze">● Remind Me Later</string>
     <string name="legend_ignored">● Ignored</string>
+    <string name="legend_dikonsumsi_format">Taken (%1$d)</string>
+    <string name="legend_snooze_format">Remind Me Later (%1$d)</string>
+    <string name="legend_ignored_format">Ignored (%1$d)</string>
 
     <string name="mengingatkan_minum_obat">%1$s reminded you to take %2$s</string>
 
@@ -577,4 +580,19 @@
     <string name="penjelasan_diabaikan">Ignored: the medication reminder was not acted upon within the specified time limit.</string>
     <string name="user_sudah_mengundang_anda">This user has already invited you. Check your notifications to accept or reject the invitation.</string>
     <string name="snooze_waktu_baru">New time: %1$s.</string>
+
+    <string name="aplikasi_pembaca_pdf_tidak_ditemukan">No PDF reader app was found on your device.</string>
+    <string name="pilih_jenis_hapus_msg">Delete just this log entry, or the entire future schedule?</string>
+    <string name="hapus_entri_ini_saja">This Entry Only</string>
+    <string name="hapus_seluruh_jadwal">All Schedules</string>
+
+    <string name="lihat_laporan">View Report</string>
+    <string name="file_laporan_tidak_ditemukan">Report file not found.</string>
+
+    <string name="reminder_appointment_menit_title">Appointment Coming Soon</string>
+    <string name="durasi_menit">In %1$d minutes</string>
+    <string name="durasi_jam">In %1$d hour</string>
+    <string name="reminder_appointment_menit_msg"> you have a schedule %2$s.</string>
+    <string name="reminder_appointment_menit_caregiver_title">Consumers Will Have an Appointment Soon</string>
+    <string name="reminder_appointment_menit_caregiver_msg"> %2$s has a schedule %3$s.</string>
 </resources>

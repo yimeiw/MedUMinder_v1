@@ -1,8 +1,10 @@
 package com.example.meduminderv1.Notification;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
@@ -27,12 +29,14 @@ import com.example.meduminderv1.Model.MedicineCatalog;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.example.meduminderv1.Repo.InvitationRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
 import com.example.meduminderv1.Repo.UserRepository;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -143,6 +147,9 @@ public class NotificationDetailFragment extends Fragment {
         if (notification.getType() == null){
             hideDetailCard();
             return;
+        } if (notification.isIs_deleted()){
+            showDeletedScheduleInfo();
+            return;
         }
         switch (notification.getType()){
             case Invitation:
@@ -157,10 +164,78 @@ public class NotificationDetailFragment extends Fragment {
             case Stock:
                 showLowStock();
                 break;
+            case Report:
+                showReport();
             default:
                 hideDetailCard();
                 break;
         }
+    }
+
+    private void showReport() {
+        if (!isAdded()) return;
+        notifDetail.setVisibility(View.VISIBLE);
+        tvScheduleDayTime.setVisibility(View.GONE);
+        tvStockInfo.setVisibility(View.GONE);
+        layoutButton.setVisibility(View.GONE);
+
+        boolean hasFile = notification.getReport_file_path() != null || notification.getReference_id() != null;
+
+        if (hasFile) {
+            tvScheduleName.setVisibility(View.GONE);
+            btnAction.setVisibility(View.VISIBLE);
+            btnAction.setText(getString(R.string.lihat_laporan));
+            btnAction.setOnClickListener(v -> openReportPdf());
+        } else {
+            tvScheduleName.setVisibility(View.VISIBLE);
+            tvScheduleName.setText(getString(R.string.file_laporan_tidak_ditemukan));
+            btnAction.setVisibility(View.GONE);
+        }
+    }
+
+    private void openReportPdf() {
+        if (!isAdded()) return;
+        Uri uri;
+
+        if (notification.getReport_file_path() != null) {
+            File file = new File(notification.getReport_file_path());
+            if (!file.exists()) {
+                Toast.makeText(requireContext(), getString(R.string.file_laporan_tidak_ditemukan), Toast.LENGTH_SHORT).show();
+                return;
+            } uri = FileProvider.getUriForFile(requireContext(),
+                    requireContext().getPackageName() + ".fileprovider", file);
+        } else if (notification.getReference_id() != null) {
+            uri = Uri.parse(notification.getReference_id());
+        } else {
+            Toast.makeText(requireContext(), getString(R.string.file_laporan_tidak_ditemukan), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(uri, "application/pdf");
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            startActivity(intent);
+        } catch (android.content.ActivityNotFoundException e) {
+            Toast.makeText(requireContext(), getString(R.string.aplikasi_pembaca_pdf_tidak_ditemukan), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showDeletedScheduleInfo() {
+        if (!isAdded()) return;
+        notifDetail.setVisibility(View.VISIBLE);
+        tvScheduleName.setVisibility(View.VISIBLE);
+        tvScheduleDayTime.setVisibility(View.GONE);
+        tvStockInfo.setVisibility(View.GONE);
+        layoutButton.setVisibility(View.GONE);
+        btnAction.setVisibility(View.GONE);
+
+        boolean isAppointment = notification.getType() == NotificationType.Appointment;
+        String name = notification.getDeleted_item_name();
+        String label = isAppointment ? getString(R.string.label_appointment_colon) : getString(R.string.obat_label_colon);
+        tvScheduleName.setText(label + (name != null && !name.isEmpty() ? name
+                : (isAppointment ? getString(R.string.default_appointment_label) : getString(R.string.default_jadwal_label))));
     }
 
     private void hideDetailCard() {
@@ -579,7 +654,7 @@ public class NotificationDetailFragment extends Fragment {
             }
             notifDetail.setVisibility(View.VISIBLE);
 
-            tvScheduleName.setText(getString(R.string.label_appointment_colon) + appointment.getTitle() + " (" + appointment.getAddress() + ")");
+            tvScheduleName.setText(getString(R.string.label_appointment_colon) + " " + appointment.getTitle());
             SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", Locale.getDefault());
             SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
             Date appointmentDate = appointment.getAppointment_at().toDate();
@@ -750,14 +825,16 @@ public class NotificationDetailFragment extends Fragment {
                 Toast.makeText(requireContext(), getString(R.string.obat_ditandai_dikonsumsi), Toast.LENGTH_SHORT).show();
                 NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
                 return;
-            }
+            } String consumerUid = snapshot.getString("users_id");
             new com.example.meduminderv1.Repo.MedicationRepo(requireContext())
                     .markTakenAndDecrement(logId, pendingMedicationId, new RepoCallback<Void>() {
                         @Override public void onSuccess(Void result) {
                             if (!isAdded()) return;
                             requireContext().stopService(new Intent(requireContext(), com.example.meduminderv1.Reminder.AlarmRingingService.class));
-                            com.example.meduminderv1.Reminder.AlarmSchedulerHelper.cancelSnooze(requireContext(), scheduleId);
-                            com.example.meduminderv1.Reminder.AlarmSchedulerHelper.onDoseTaken(requireContext(), scheduleId, pendingMedName, scheduledAtMillis);
+                            AlarmSchedulerHelper.cancelSnooze(requireContext(), scheduleId);
+                            AlarmSchedulerHelper.onDoseTaken(requireContext(), scheduleId, pendingMedName, scheduledAtMillis);
+                            new NotificationRepo(requireContext().getApplicationContext())
+                                    .notifyCaregiversMedicineTaken(consumerUid, logId, pendingMedName, null);
                             Toast.makeText(requireContext(), getString(R.string.obat_ditandai_dikonsumsi), Toast.LENGTH_SHORT).show();
                             NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
                         }

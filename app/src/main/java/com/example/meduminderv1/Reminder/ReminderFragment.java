@@ -30,6 +30,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
@@ -47,6 +48,7 @@ import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
+import com.example.meduminderv1.Repo.MedicationRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -78,7 +80,6 @@ public class ReminderFragment extends Fragment {
     TextView dateReminder;
     TextView timeReminder;
     TextView statusReminder;
-
     LinearLayout statusMedicine;
     LinearLayout statusAppoint;
     TextView dateReminderAppoint, timeReminderAppoint, statusReminderAppoint;
@@ -95,9 +96,9 @@ public class ReminderFragment extends Fragment {
     private String itemType;
     private boolean isAppointment;
     private FirebaseFirestore db;
-    private static final int DEFAULT_SNOOZE_MINUTES = 5;
     private boolean isCaregiverViewing = false;
     private String targetConsumerUid;
+    private String source = "";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -134,9 +135,7 @@ public class ReminderFragment extends Fragment {
         btnBack.setOnClickListener(v -> {
             NavHostFragment.findNavController(ReminderFragment.this).navigateUp();
         });
-
-        btnOption.setVisibility(View.GONE);
-
+        
         Bundle bundle = getArguments();
         if (bundle != null) {
             scheduleId = bundle.getString("medication_schedules_id");
@@ -153,9 +152,7 @@ public class ReminderFragment extends Fragment {
             itemType = bundle.getString("type", "medicine");
             isAppointment = "appointment".equals(itemType);
 
-            String source = bundle.getString("source", "");
-//            btnOption.setVisibility("schedule".equals(source) ? View.VISIBLE : View.GONE);
-            btnOption.setVisibility(LogStatus.fromRaw(currentStatus) == LogStatus.AKAN_DATANG ? View.VISIBLE : View.GONE);
+            btnOption.setVisibility(View.VISIBLE);
 
             Date scheduledDate = new Date(scheduledAt);
             String formattedDate = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(scheduledDate);
@@ -189,6 +186,7 @@ public class ReminderFragment extends Fragment {
             });
             btnTundaReminder.setOnClickListener(v -> snoozeReminder());
         }
+
         btnOption.setOnClickListener(v -> {
             Log.d("REMINDER_FRAGMENT", "titik-3 diklik, buka popup menu");
             PopupMenu popupMenu = new PopupMenu(requireContext(), btnOption);
@@ -212,17 +210,90 @@ public class ReminderFragment extends Fragment {
                                 .navigate(R.id.editMedicineFragment, editBundle);
                     }
                     return true;
-                }
-                if (menuItem.getItemId() == R.id.deleteMedicine) {
-                    Log.d("REMINDER_FRAGMENT", "menu Hapus dipilih");
-                    confirmDeleteSchedule();
-                    return true;
-                }
-                return false;
+                } if (menuItem.getItemId() == R.id.deleteMedicine) {
+                    if (!isAppointment){
+                        showDeleteChoiceDialog();
+                    } else {
+                        Log.d("REMINDER_FRAGMENT", "menu Hapus dipilih");
+                        confirmDeleteSchedule();
+                    } return true;
+                } return false;
             });
             popupMenu.show();
         });
         return view;
+    }
+
+    private boolean shouldShowOption() {
+        boolean isUpcoming = LogStatus.fromRaw(currentStatus) == LogStatus.AKAN_DATANG;
+        boolean isFromLog = "log".equals(source);
+        return isUpcoming || isFromLog;
+    }
+
+    private void showDeleteChoiceDialog() {
+        if (!isAdded()) return;
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
+                builder.setTitle(getString(R.string.hapus_jadwal_obat_title))
+                .setMessage(getString(R.string.pilih_jenis_hapus_msg)) // "Hapus entri ini saja, atau seluruh jadwal?"
+                .setNeutralButton(getString(R.string.cancel), null)
+                .setNegativeButton(getString(R.string.hapus_entri_ini_saja), (d, w) -> confirmDeleteSingleLog())
+                .setPositiveButton(getString(R.string.hapus_seluruh_jadwal), (d, w) -> confirmDeleteSchedule());
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        if (dialog.getWindow() != null){
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.green));
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.pink));
+        }
+    }
+
+    private void confirmDeleteSingleLog() {
+        if (!isAdded()) return;
+        String label = namaObat != null ? namaObat : getString(R.string.default_jadwal_label);
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
+                builder.setTitle(getString(R.string.hapus_jadwal_obat_title))
+                .setMessage(getString(R.string.konfirmasi_hapus_item_msg, label))
+                .setNegativeButton(getString(R.string.cancel), null)
+                .setPositiveButton(getString(R.string.delete), (d, w) -> deleteSingleLogEntry());
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        if (dialog.getWindow() != null){
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.green));
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.pink));
+        }
+    }
+
+    private void deleteSingleLogEntry() {
+        if (!isAdded()) return;
+        if (scheduleId == null || scheduledAt <= 0L) {
+            Toast.makeText(requireContext(), getString(R.string.schedule_id_tidak_ditemukan), Toast.LENGTH_SHORT).show();
+            return;
+        } stopRingingAlarm();
+
+        AlarmSchedulerHelper.cancelOccurrenceForScheduledAt(requireContext(), scheduleId, scheduledAt);
+        String logId = buildLogId(scheduleId, scheduledAt);
+
+        db.collection("medication_schedules").document(scheduleId).get()
+                .addOnSuccessListener(scheduleDoc -> {
+                    String consumerUid = scheduleDoc.exists() ? scheduleDoc.getString("users_id") : null;
+
+                    new com.example.meduminderv1.Repo.MedicationRepo(requireContext())
+                            .deleteSingleLog(logId, new RepoCallback<Void>() {
+                                @Override
+                                public void onSuccess(Void result) {
+                                    if (!isAdded()) return;
+                                    Toast.makeText(requireContext(), getString(R.string.jadwal_berhasil_dihapus), Toast.LENGTH_SHORT).show();
+                                    notifyScheduleDeleted(consumerUid, namaObat, false);
+                                    NavHostFragment.findNavController(ReminderFragment.this).navigateUp();
+                                }
+                                @Override
+                                public void onFailure(Exception e) {
+                                    if (!isAdded()) return;
+                                    Toast.makeText(requireContext(), getString(R.string.gagal_menghapus_jadwal), Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                });
     }
 
     private void sendReminderToConsumer() {
@@ -314,8 +385,8 @@ public class ReminderFragment extends Fragment {
         if (!isAdded()) return;
         Log.d("REMINDER_FRAGMENT", "confirmDeleteSchedule() dipanggil, tampilkan dialog konfirmasi");
         String label = namaObat != null ? namaObat : (isAppointment ? getString(R.string.default_appointment_label) : getString(R.string.default_jadwal_label));
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(isAppointment ? getString(R.string.hapus_appointment_title) : getString(R.string.hapus_jadwal_obat_title))
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
+                builder.setTitle(isAppointment ? getString(R.string.hapus_appointment_title) : getString(R.string.hapus_jadwal_obat_title))
                 .setMessage(getString(R.string.konfirmasi_hapus_item_msg, label))
                 .setNegativeButton(getString(R.string.cancel), null)
                 .setPositiveButton(getString(R.string.delete), (dialog, which) -> {
@@ -325,8 +396,14 @@ public class ReminderFragment extends Fragment {
                     } else {
                         deleteMedicationSchedule();
                     }
-                })
-                .show();
+                });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        if (dialog.getWindow() != null){
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.green));
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.pink));
+        }
     }
 
     private void deleteMedicationSchedule() {
@@ -429,6 +506,8 @@ public class ReminderFragment extends Fragment {
             notifToConsumer.setType(appointment ? NotificationType.Appointment : NotificationType.Medicine);
             notifToConsumer.setTitle(appointment ? getString(R.string.jadwal_appointment_dihapus_title) : getString(R.string.jadwal_obat_dihapus_title));
             notifToConsumer.setMessage(getString(R.string.caregiver_menghapus_jadwal_anda_full, displayName));
+            notifToConsumer.setIs_deleted(true);
+            notifToConsumer.setDeleted_item_name(displayName);
             notifToConsumer.setIs_read(false);
             notificationRepo.createNotification(notifToConsumer, new RepoCallback<Void>() {
                 @Override public void onSuccess(Void result) { }
@@ -452,6 +531,8 @@ public class ReminderFragment extends Fragment {
                     notifToCaregiver.setMessage(isForSelf
                             ? getString(R.string.consumer_menghapus_jadwal_msg, displayName)
                             : getString(R.string.jadwal_consumer_telah_dihapus_msg, displayName));
+                    notifToCaregiver.setIs_deleted(true);
+                    notifToCaregiver.setDeleted_item_name(displayName);
                     notifToCaregiver.setIs_read(false);
                     notificationRepo.createNotification(notifToCaregiver, new RepoCallback<Void>() {
                         @Override public void onSuccess(Void result) { }

@@ -6,6 +6,8 @@ import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Model.Medication;
 import com.example.meduminderv1.Model.MedicationSchedules;
 import com.example.meduminderv1.Model.MedicineCatalog;
+import com.example.meduminderv1.Notification.Notification;
+import com.example.meduminderv1.Notification.NotificationType;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -23,15 +25,33 @@ public class MedicationRepo {
         this.context = context.getApplicationContext();
         db = FirebaseFirestore.getInstance();
     }
-
-
+    public interface MedNameCallback{
+        void onResolved(String name);
+    }
     //med
     public void saveMedication(Medication medication, RepoCallback<String> callback){
         DocumentReference doc = db.collection("medications").document();
         doc.set(medication).addOnSuccessListener(unused -> callback.onSuccess(doc.getId()))
                 .addOnFailureListener(callback::onFailure);
     }
-
+    public void resolveMedicationName(String medicationId, MedNameCallback callback) {
+        if (medicationId == null || medicationId.isEmpty()) { callback.onResolved("Obat"); return; }
+        db.collection("medications").document(medicationId).get().addOnSuccessListener(medDoc -> {
+            Medication med = medDoc.toObject(Medication.class);
+            if (med == null) { callback.onResolved("Obat"); return; }
+            if (med.getCustom_medicine_name() != null && !med.getCustom_medicine_name().isEmpty()) {
+                callback.onResolved(med.getCustom_medicine_name());
+            } else if (med.getCatalog_id() != null && !med.getCatalog_id().isEmpty()) {
+                db.collection("medicine_catalog").document(med.getCatalog_id()).get()
+                        .addOnSuccessListener(catDoc -> {
+                            MedicineCatalog cat = catDoc.toObject(MedicineCatalog.class);
+                            callback.onResolved(cat != null && cat.getNama_obat() != null ? cat.getNama_obat() : "Obat");
+                        }).addOnFailureListener(e -> callback.onResolved("Obat"));
+            } else {
+                callback.onResolved("Obat");
+            }
+        }).addOnFailureListener(e -> callback.onResolved("Obat"));
+    }
     public void getMedicationById(String medicationId, RepoCallback<Medication> callback){
         db.collection("medications").document(medicationId).get()
                 .addOnSuccessListener(snapshot -> {
@@ -47,21 +67,10 @@ public class MedicationRepo {
                     callback.onSuccess(schedule);
                 }).addOnFailureListener(callback::onFailure);
     }
-
-    public void getMedicationByUser(String uid, RepoCallback<QuerySnapshot> callback){
-        db.collection("medications").whereEqualTo("users_id", uid).whereEqualTo("is_active", true)
-                .get().addOnSuccessListener(callback::onSuccess).addOnFailureListener(callback::onFailure);
-    }
-
     //med schedule
     public void saveMedSchedule(MedicationSchedules schedules, RepoCallback<String> callback){
         DocumentReference doc = db.collection("medication_schedules").document();
         doc.set(schedules).addOnSuccessListener(unused -> callback.onSuccess(doc.getId()))
-                .addOnFailureListener(callback::onFailure);
-    }
-    public void updateMedSchedule(String scheduleId, MedicationSchedules schedules, RepoCallback<Void> callback){
-        db.collection("medication_schedules").document(scheduleId).set(schedules)
-                .addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
     }
     public void markLogAsTaken(String logId, RepoCallback<Void> callback){
@@ -210,5 +219,10 @@ public class MedicationRepo {
                 callback.onFailure(e);
             }
         });
+    }
+    public void deleteSingleLog(String logId, RepoCallback<Void> callback){
+        db.collection("medication_logs").document(logId).delete()
+                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onFailure);
     }
 }

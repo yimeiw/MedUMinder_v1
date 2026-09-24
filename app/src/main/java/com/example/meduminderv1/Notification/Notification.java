@@ -16,11 +16,37 @@ public class Notification {
     private String message;
     private NotificationType type;
     private String target_role;
-
     private boolean is_read;
     private boolean is_new_schedule;
-    private Timestamp created_at, updated_at;
+    private boolean is_deleted;
+    private String deleted_item_name;
+    private String report_file_path;
 
+    public String getReport_file_path() {
+        return report_file_path;
+    }
+
+    public void setReport_file_path(String report_file_path) {
+        this.report_file_path = report_file_path;
+    }
+
+    public boolean isIs_deleted() {
+        return is_deleted;
+    }
+
+    public void setIs_deleted(boolean is_deleted) {
+        this.is_deleted = is_deleted;
+    }
+
+    public String getDeleted_item_name() {
+        return deleted_item_name;
+    }
+
+    public void setDeleted_item_name(String deleted_item_name) {
+        this.deleted_item_name = deleted_item_name;
+    }
+
+    private Timestamp created_at, updated_at;
     private Timestamp scheduled_at;
 
     public Timestamp getScheduled_at() {

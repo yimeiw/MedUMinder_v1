@@ -10,6 +10,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -32,7 +33,6 @@ public class AppointmentLogAdapter extends RecyclerView.Adapter<AppointmentLogAd
     private Context context;
     private FirebaseFirestore db;
     private OnAppointClickListener listener;
-
     public AppointmentLogAdapter(List<Appointment> appointmentLog, Context context) {
         this.appointmentLog = appointmentLog;
         this.context = context;
@@ -77,6 +77,7 @@ public class AppointmentLogAdapter extends RecyclerView.Adapter<AppointmentLogAd
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         TextView namaAppointment, namaLokasi, timeAppointment, currStatus;
+        ImageView locationIcon, timeIcon;
         View capsuleAppointLog;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -85,48 +86,42 @@ public class AppointmentLogAdapter extends RecyclerView.Adapter<AppointmentLogAd
             timeAppointment = itemView.findViewById(R.id.timeAppointment);
             currStatus = itemView.findViewById(R.id.curr_status_appoint);
             capsuleAppointLog = itemView.findViewById(R.id.capsule_appointment_log);
+            locationIcon = itemView.findViewById(R.id.ic_location);
+            timeIcon = itemView.findViewById(R.id.ic_time);
         }
-    }
-
-    private String setUpperCase(String status) {
-        if (status == null || status.trim().isEmpty()) return "";
-
-        String[] words = status.trim().toLowerCase().split("\\s+");
-        StringBuilder result = new StringBuilder();
-
-        for (String word: words) {
-            if (word.isEmpty()) continue;
-            result.append(Character.toUpperCase(word.charAt(0)))
-                    .append(word.substring(1))
-                    .append(" ");
-        }
-        return result.toString().trim();
     }
 
     private void applyStatusColor(AppointmentLogAdapter.ViewHolder holder, LogStatus status) {
         int colorAttr;
+        int teksColorAttr;
 
         //tentukan attr theme(warna) berdasarkan status
         if (status == null) {
             colorAttr = com.google.android.material.R.attr.colorPrimaryFixed; //putih
+            teksColorAttr = com.google.android.material.R.attr.colorOnSurface;
         } else {
             switch (status) {
                 case DIKONSUMSI:
                     colorAttr = com.google.android.material.R.attr.colorTertiaryFixed; //hijau
+                    teksColorAttr = com.google.android.material.R.attr.colorTertiaryFixed;
                     break;
                 case TERLEWATKAN:
                     colorAttr = com.google.android.material.R.attr.colorSecondary; //pink
+                    teksColorAttr = com.google.android.material.R.attr.colorSecondary;
                     break;
                 case AKAN_DATANG:
                     colorAttr = com.google.android.material.R.attr.colorSecondaryFixed; //abu
+                    teksColorAttr = com.google.android.material.R.attr.colorOnPrimary;
                     break;
                 default:
                     colorAttr = com.google.android.material.R.attr.colorPrimaryFixed; //putih
+                    teksColorAttr = com.google.android.material.R.attr.colorPrimaryFixed;
                     break;
             }
         }
         //ambil warna asli dari attr theme
         int color = getColorFromAttr(context, colorAttr);
+        int teksColor = getColorFromAttr(context, teksColorAttr);
 
         //apply warna ke layerdrawable (bg_lef_offset)
         Drawable bg = holder.capsuleAppointLog.getBackground();
@@ -147,7 +142,15 @@ public class AppointmentLogAdapter extends RecyclerView.Adapter<AppointmentLogAd
                 }
             }
         }
+        //ubah warna status log
         holder.currStatus.setBackgroundTintList(ColorStateList.valueOf(color));
+        //ubah wrna teks
+        holder.namaAppointment.setTextColor(teksColor);
+        holder.namaLokasi.setTextColor(teksColor);
+        holder.timeAppointment.setTextColor(teksColor);
+        //ubah wrna icon
+        holder.locationIcon.setColorFilter(teksColor);
+        holder.timeIcon.setColorFilter(teksColor);
     }
 
     private int getColorFromAttr(Context context, int colorAttr) {

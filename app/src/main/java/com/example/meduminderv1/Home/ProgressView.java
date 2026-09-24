@@ -26,7 +26,7 @@ public class ProgressView extends View {
     public ProgressView(Context context, @Nullable AttributeSet attrs) { super(context, attrs); init(); }
 
     int itam = MaterialColors.getColor(getRootView(), com.google.android.material.R.attr.colorOnSurface);
-    int ijo = MaterialColors.getColor(getRootView(), com.google.android.material.R.attr.colorTertiary);
+    int ijo = MaterialColors.getColor(getRootView(), com.google.android.material.R.attr.colorPrimaryVariant);
     private void init() {
         bgPaint.setStyle(Paint.Style.STROKE);
         bgPaint.setStrokeWidth(strokeWidth);
@@ -46,7 +46,10 @@ public class ProgressView extends View {
         this.progress = Math.max(0, Math.min(100, percent));
         invalidate();
     }
-
+    public void setProgressColor(int color) {
+        progressPaint.setColor(color);
+        invalidate();
+    }
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -54,8 +57,11 @@ public class ProgressView extends View {
         float pad = strokeWidth / 2f + 4;
         rectF.set(pad, pad, size - pad, size - pad);
 
-        canvas.drawArc(rectF, 0, 360, false, bgPaint);
-        canvas.drawArc(rectF, -90, (360f * progress / 100f), false, progressPaint);
+        float bgSweep = 359.99f;
+        canvas.drawArc(rectF, 0, bgSweep, false, bgPaint);
+
+        float progressSweep = Math.min(360f * progress / 100f, 359.99f);
+        canvas.drawArc(rectF, -90, progressSweep, false, progressPaint);
 
         textPaint.setTextSize(size * 0.22f);
         float textY = size / 2f - ((textPaint.descent() + textPaint.ascent()) / 2f);

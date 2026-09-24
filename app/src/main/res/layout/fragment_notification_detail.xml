@@ -128,7 +128,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/button_selector"
-                    app:backgroundTint="?attr/colorTertiary"
+                    app:backgroundTint="?attr/colorTertiaryFixed"
                     android:text="@string/terima"
                     android:textColor="?attr/colorPrimary"
                     android:textAllCaps="false"/>
@@ -143,7 +143,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/button_selector"
-                    app:backgroundTint="?attr/colorAccent"
+                    app:backgroundTint="?attr/colorSecondary"
                     android:text="@string/tolak"
                     android:textColor="?attr/colorPrimary"
                     android:textAllCaps="false"/>

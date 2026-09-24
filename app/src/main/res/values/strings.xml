@@ -144,9 +144,13 @@
     <string name="berhasil_dicatat">Berhasil dicatat</string>
     <string name="pengingat_terkirim">Pengingat terkirim.</string>
 
+    <!-- stat -->
     <string name="legend_dikonsumsi">● Dikonsumsi</string>
     <string name="legend_snooze">● Ingatkan Nanti</string>
     <string name="legend_ignored">● Diabaikan</string>
+    <string name="legend_dikonsumsi_format">Dikonsumsi (%1$d)</string>
+    <string name="legend_snooze_format">Ingatkan Nanti (%1$d)</string>
+    <string name="legend_ignored_format">Diabaikan (%1$d)</string>
 
     <string name="mengingatkan_minum_obat">%1$s mengingatkan Anda untuk minum obat %2$s</string>
 
@@ -586,5 +590,21 @@
 
     <string name="user_sudah_mengundang_anda">Pengguna ini sudah lebih dulu mengundang kamu. Cek notifikasi untuk menerima atau menolak undangannya.</string>
     <string name="snooze_waktu_baru">Waktu baru: %1$s.</string>
+
+    <string name="aplikasi_pembaca_pdf_tidak_ditemukan">Aplikasi pembaca PDF tidak ditemukan di perangkat Anda.</string>
+
+    <string name="pilih_jenis_hapus_msg">Hapus entri log ini saja, atau seluruh jadwal ke depannya?</string>
+    <string name="hapus_entri_ini_saja">Entri Ini Saja</string>
+    <string name="hapus_seluruh_jadwal">Seluruh Jadwal</string>
+
+    <string name="lihat_laporan">Lihat Laporan</string>
+    <string name="file_laporan_tidak_ditemukan">File laporan tidak ditemukan.</string>
+
+    <string name="reminder_appointment_menit_title">Segera Ada Janji Temu</string>
+    <string name="durasi_menit">%1$d Menit</string>
+    <string name="durasi_jam">%1$d Jam</string>
+    <string name="reminder_appointment_menit_msg"> lagi Anda memiliki jadwal %2$s.</string>
+    <string name="reminder_appointment_menit_caregiver_title">Consumer Segera Ada Janji Temu</string>
+    <string name="reminder_appointment_menit_caregiver_msg"> lagi %2$s memiliki jadwal %3$s.</string>
 </resources>
 

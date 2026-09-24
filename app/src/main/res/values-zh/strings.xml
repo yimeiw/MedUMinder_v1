@@ -140,6 +140,9 @@
     <string name="legend_dikonsumsi">● 已服用</string>
     <string name="legend_snooze">● 稍后提醒</string>
     <string name="legend_ignored">● 已忽略</string>
+    <string name="legend_dikonsumsi_format">已服用 (%1$d)</string>
+    <string name="legend_snooze_format">稍后提醒 (%1$d)</string>
+    <string name="legend_ignored_format">已忽略 (%1$d)</string>
 
     <string name="mengingatkan_minum_obat">%1$s 提醒您服用 %2$s</string>
 
@@ -578,4 +581,19 @@
 
     <string name="user_sudah_mengundang_anda">该用户已经邀请了您。请查看通知以接受或拒绝邀请。</string>
     <string name="snooze_waktu_baru">新时间：%1$s。</string>
+    <string name="aplikasi_pembaca_pdf_tidak_ditemukan">您的设备上未找到PDF阅读器应用程序。</string>
+
+    <string name="pilih_jenis_hapus_msg">是只删除这条日志条目，还是删除整个未来的日程安排？</string>
+    <string name="hapus_entri_ini_saja">仅此条目</string>
+    <string name="hapus_seluruh_jadwal">整个时间表</string>
+
+    <string name="lihat_laporan">查看报告</string>
+    <string name="file_laporan_tidak_ditemukan">未找到报告文件。</string>
+
+    <string name="reminder_appointment_menit_title">预约即将到来</string>
+    <string name="durasi_menit">%1$d 分钟</string>
+    <string name="durasi_jam">%1$d 时间</string>
+    <string name="reminder_appointment_menit_msg"> 后您将收到 %2$s 日程表。</string>
+    <string name="reminder_appointment_menit_caregiver_title">消费者很快就能预约到服务了。</string>
+    <string name="reminder_appointment_menit_caregiver_msg"> 后，%2$s 有 %3$s 课程表</string>
 </resources>

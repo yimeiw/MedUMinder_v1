@@ -209,11 +209,13 @@ public class EditMedicineFragment extends Fragment {
         Collections.sort(times);
 
         Timestamp endDate = endDateSelected ? new Timestamp(selectedCalendar.getTime()) : null;
+        Timestamp now = Timestamp.now();
 
         Map<String, Object> scheduleUpdate = new HashMap<>();
         scheduleUpdate.put("frequency", frequency);
         scheduleUpdate.put("times_of_day", times);
         scheduleUpdate.put("end_date", endDate);
+        scheduleUpdate.put("start_date", now);
         scheduleUpdate.put("updated_at", Timestamp.now());
 
         db.collection("medication_schedules").document(scheduleId)
@@ -231,17 +233,9 @@ public class EditMedicineFragment extends Fragment {
 
                                 long endMillis = (endDate != null) ? endDate.toDate().getTime() : 0;
                                 AlarmSchedulerHelper.scheduleAll(requireContext(), scheduleId, medName, times, endMillis);
-
-                                new LogGenerator().replaceFutureLogs(
-                                        targetUid,
-                                        scheduleId,
-                                        times,
-                                        Timestamp.now(),
-                                        endDate
-                                );
+                                new LogGenerator().replaceFutureLogs(targetUid, scheduleId, times, now, endDate);
 
                                 notifyReminderUpdated(medName);
-
                                 Toast.makeText(requireContext(), getString(R.string.reminder_berhasil_diperbarui), Toast.LENGTH_SHORT).show();
 
                                 if (notificationId != null && !notificationId.isEmpty()) {

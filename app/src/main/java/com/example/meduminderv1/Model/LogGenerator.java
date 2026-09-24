@@ -115,6 +115,8 @@ public class LogGenerator {
         LocalDate genUntil = (endDate != null) ? toLocalDate(endDate) : LocalDate.now().plusDays(DAYS_AHEAD_IF_NO_END);
         if (start.isAfter(genUntil)) return;
 
+        long startMillis = startDate.toDate().getTime();
+
         WriteBatch batch = db.batch();
         int count = 0;
 
@@ -127,6 +129,7 @@ public class LogGenerator {
 
                 Timestamp scheduledAt = toTimestamp(date, time);
                 if (scheduledAt == null) continue;
+                if (scheduledAt.toDate().getTime() < startMillis) continue;
 
                 Map<String, Object> log = new HashMap<>();
                 log.put("users_id", userId);

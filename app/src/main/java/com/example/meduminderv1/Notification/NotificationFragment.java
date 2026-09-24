@@ -28,12 +28,14 @@ import android.widget.Toast;
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Callback.AuthCallback;
 import com.example.meduminderv1.Callback.RepoCallback;
+import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.NotificationRepo;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.api.Context;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,7 +51,7 @@ public class NotificationFragment extends Fragment {
     TextView stateNoNotif;
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     private ItemTouchHelper itemTouchHelper;
-
+    private ListenerRegistration notifListener;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -70,7 +72,6 @@ public class NotificationFragment extends Fragment {
 
         setupRecylerView();
         setupSwipeActions();
-        loadNotification();
 
         return view;
     }
@@ -127,12 +128,6 @@ public class NotificationFragment extends Fragment {
             bundle.putString("notification_id", notification.getNotification_id());
             NavHostFragment.findNavController(this).navigate(R.id.notificationDetailFragment, bundle);
         }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        loadNotification();
     }
     private void setupSwipeActions(){
         ItemTouchHelper.SimpleCallback callback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
@@ -294,6 +289,31 @@ public class NotificationFragment extends Fragment {
             dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.green));
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.pink));
+        }
+    }
+    private void startListening() {
+        User user = authManager.getCurrentUser();
+        if (user == null) return;
+        if (notifListener != null) notifListener.remove();
+        notifListener = notificationRepo.listenNotification(user.getAuth_uid(), user.getCurrentRole(), result -> {
+            if (!isAdded()) return;
+            adapter.updateData(result);
+            toggleEmptyState(result);
+        });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        startListening();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (notifListener != null) {
+            notifListener.remove();
+            notifListener = null;
         }
     }
 }
