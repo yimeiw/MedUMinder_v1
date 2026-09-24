@@ -193,13 +193,25 @@ public class NotificationDetailFragment extends Fragment {
 
                 boolean isPending = invitation.getStatus() == InvitationStatus.Pending;
                 if (isPending) {
-                    headerNotif.setText(getString(R.string.undangan_baru_title));
-                    titleNotif.setText(getString(R.string.undangan_label) + invitation.getInvite_role().name());
-                    messageNotif.setText(getString(R.string.sender_mengundang_anda_msg, invitation.getSender_name(), roleLabel(invitation.getInvite_role())));
-                    layoutButton.setVisibility(View.VISIBLE);
-                    btnAction.setVisibility(View.GONE);
-                    btnAcc.setOnClickListener(v -> acceptInvitation());
-                    btnReject.setOnClickListener(v -> rejectInvitation());
+                    boolean isOwnSentCopy = notification.getReceiver_uid() != null
+                            && notification.getReceiver_uid().equals(invitation.getSender_uid());
+                    if (isOwnSentCopy){
+                        headerNotif.setText(getString(R.string.undangan_terkirim_title));
+                        titleNotif.setText(headerNotif.getText());
+                        messageNotif.setText(getString(R.string.undangan_terkirim_full_msg,
+                                invitation.getReceiver_email(), roleLabel(invitation.getInvite_role())));
+                        layoutButton.setVisibility(View.GONE);
+                        btnAction.setVisibility(View.GONE);
+                    } else {
+                        headerNotif.setText(getString(R.string.undangan_baru_title));
+                        titleNotif.setText(getString(R.string.undangan_label) + invitation.getInvite_role().name());
+                        messageNotif.setText(getString(R.string.sender_mengundang_anda_msg,
+                                invitation.getSender_name(), roleLabel(invitation.getInvite_role())));
+                        layoutButton.setVisibility(View.VISIBLE);
+                        btnAction.setVisibility(View.GONE);
+                        btnAcc.setOnClickListener(v -> acceptInvitation());
+                        btnReject.setOnClickListener(v -> rejectInvitation());
+                    }
                 } else {
                     layoutButton.setVisibility(View.GONE);
                     boolean accepted = invitation.getStatus() == InvitationStatus.Accepted;

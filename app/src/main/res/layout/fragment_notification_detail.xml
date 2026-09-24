@@ -119,7 +119,8 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:id="@+id/layoutButton"
-                android:visibility="gone">
+                android:visibility="gone"
+                android:layout_marginTop="10dp">
 
                 <com.google.android.material.button.MaterialButton
                     android:layout_weight="1"

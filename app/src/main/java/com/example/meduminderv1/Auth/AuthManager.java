@@ -762,7 +762,7 @@ public class AuthManager {
             callback.onFailure(context.getString(R.string.user_belum_login));
             return;
         } final String finalName = newName.trim();
-        if (finalName.length() < 4){
+        if (finalName.length() <= 3){
             callback.onFailure(context.getString(R.string.nama_minimal));
             return;
         } UserProfileChangeRequest profileChangeRequest = new UserProfileChangeRequest.Builder().setDisplayName(finalName).build();
@@ -1013,7 +1013,7 @@ public class AuthManager {
         invitationRepo.createInvitation(invitation, new RepoCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                notifySenderInvitationSent(sender, receiverEmail, relationshipRole);
+                notifySenderInvitationSent(sender, invitation.getInvitation_id(), receiverEmail, relationshipRole);
                 //user belum terdaftar
                 if (receiver == null) {
                     callback.onSuccess(false);
@@ -1039,11 +1039,12 @@ public class AuthManager {
         });
     }
 
-    private void notifySenderInvitationSent(User sender, String receiverEmail, UserRole relationshipRole) {
+    private void notifySenderInvitationSent(User sender, String invitatiodId, String receiverEmail, UserRole relationshipRole) {
         Notification selfNotif = new Notification();
         selfNotif.setNotification_id(UUID.randomUUID().toString());
         selfNotif.setReceiver_uid(sender.getAuth_uid());
         selfNotif.setSender_uid(sender.getAuth_uid());
+        selfNotif.setInvitation_id(invitatiodId);
         selfNotif.setType(NotificationType.Invitation);
         selfNotif.setTitle(context.getString(R.string.undangan_terkirim_title));
         selfNotif.setMessage(context.getString(R.string.undangan_terkirim_full_msg, receiverEmail, relationshipRole.name()));
