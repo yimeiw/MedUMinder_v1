@@ -51,9 +51,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
                 authManager.getNotificationTitle(notification.getType())
         );
 
-        holder.messageNotif.setText(
-                notification.getMessage()
-        );
+        holder.messageNotif.setText(NotificationText.message(holder.itemView.getContext(), notification));
 
         holder.timeNotif.setText(
                 authManager.formatNotificationTime(notification.getCreated_at())
@@ -68,7 +66,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         );
         holder.itemView.setTranslationX(0f);
         holder.itemView.setAlpha(1f);
-        String customTitle = notification.getTitle();
+        String customTitle = NotificationText.title(holder.itemView.getContext(), notification);
         holder.titleNotif.setText((customTitle != null && !customTitle.trim().isEmpty())
                 ? customTitle : authManager.getNotificationTitle(notification.getType()));
     }

@@ -596,4 +596,19 @@
     <string name="reminder_appointment_menit_msg"> 后您将收到 %2$s 日程表。</string>
     <string name="reminder_appointment_menit_caregiver_title">消费者很快就能预约到服务了。</string>
     <string name="reminder_appointment_menit_caregiver_msg"> 后，%2$s 有 %3$s 课程表</string>
+
+    <!-- 药物 -->
+    <string name="caregiver_mengubah_jadwal_obat_anda_detail">%1$s 更改了您的 %2$s 用药计划：%3$s。</string>
+    <string name="anda_memperbarui_jadwal_obat_detail">您更新了 %1$s 的用药计划：%2$s。</string>
+    <string name="ubah_jam_minum">服药时间改为 %1$s</string>
+    <string name="ubah_end_date">结束日期改为 %1$s</string>
+    <string name="ubah_end_date_dihapus">已删除结束日期</string>
+    <string name="ubah_stok">库存改为 %1$s</string>
+
+    <!-- 预约 -->
+    <string name="caregiver_mengubah_jadwal_appointment_anda_detail">%1$s 更改了您的 %2$s 预约安排：%3$s。</string>
+    <string name="anda_memperbarui_jadwal_appointment_detail">您更新了 %1$s 的预约安排：%2$s。</string>
+    <string name="ubah_nama_appointment">名称改为 %1$s</string>
+    <string name="ubah_lokasi_appointment">地点改为 %1$s</string>
+    <string name="ubah_waktu_appointment">时间改为 %1$s</string>
 </resources>

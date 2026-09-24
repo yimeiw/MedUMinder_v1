@@ -13,6 +13,8 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -99,6 +101,12 @@ public class ReminderFragment extends Fragment {
     private boolean isCaregiverViewing = false;
     private String targetConsumerUid;
     private String source = "";
+
+    private final Handler statusHandler = new Handler(Looper.getMainLooper());
+    private final Runnable statusTick = () -> {
+        if (!isAdded()) return;
+        if (isAppointment) refreshLiveStatusAppoint(); else refreshLiveStatus();
+    };
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -1074,4 +1082,30 @@ public class ReminderFragment extends Fragment {
                 }
         );
     }
+
+    private LogStatus resolveStatus(String raw) {
+        LogStatus s = LogStatus.fromRaw(raw);
+        if (s == LogStatus.DIKONSUMSI) return s;
+        if (scheduledAt > 0 && scheduledAt + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS < System.currentTimeMillis()) {
+            return LogStatus.TERLEWATKAN;
+        }
+        return LogStatus.AKAN_DATANG;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (scheduledAt <= 0L) return;
+        if (isAppointment) refreshLiveStatusAppoint(); else refreshLiveStatus();
+        long delay = scheduledAt + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS - System.currentTimeMillis() + 1000;
+        statusHandler.removeCallbacks(statusTick);
+        if (delay > 0) statusHandler.postDelayed(statusTick, delay);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        statusHandler.removeCallbacks(statusTick);
+    }
+
 }
