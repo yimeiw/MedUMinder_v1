@@ -17,12 +17,14 @@ public class AppointmentMissedNotifReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String appointmentId = intent.getStringExtra("appointment_id");
         String title = intent.getStringExtra("title");
+        final boolean force = intent.getBooleanExtra("force", false);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("appointments").document(appointmentId).get().addOnSuccessListener(doc -> {
             if (!doc.exists() || "dihadiri".equals(doc.getString("status"))) return;
             // FIX: kalau appointment sedang di-snooze (waktu snooze belum lewat 5 menit), jangan anggap terlewat
             com.google.firebase.Timestamp snoozedUntil = doc.getTimestamp("snoozed_until");
-            if (snoozedUntil != null && System.currentTimeMillis()
+            // "force" = dikirim karena user menghapus notifikasi alarm -> langsung dianggap terlewat
+            if (!force && snoozedUntil != null && System.currentTimeMillis()
                     < snoozedUntil.toDate().getTime() + 4 * 60_000L) return;
             String consumerUid = doc.getString("users_id");
             if (consumerUid == null) return;
@@ -60,4 +62,5 @@ public class AppointmentMissedNotifReceiver extends BroadcastReceiver {
         });
     }
 }
+
 

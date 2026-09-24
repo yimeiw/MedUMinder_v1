@@ -258,21 +258,31 @@ public class EditMedicineFragment extends Fragment {
     private void notifyReminderUpdated(String medName) {
         if (!isAdded()) return;
         if (targetUid == null || user == null) return;
-        String actorUid = user.getAuth_uid();
-        boolean isForSelf = targetUid.equals(actorUid);
+        final String actorUid = user.getAuth_uid();
+        final boolean isForSelf = targetUid.equals(actorUid);
+        final String schedId = scheduleId;
+
+        // FIX: semua teks disiapkan SEKARANG. Sebelumnya teks untuk caregiver diambil di dalam
+        // callback Firestore dengan cek isAdded(). Karena halaman edit langsung ditutup setelah
+        // simpan, cek itu gagal -> notifikasi ke caregiver TIDAK PERNAH terkirim.
+        final String title = getString(R.string.jadwal_obat_diperbarui_title);
+        final String msgToConsumer = getString(R.string.caregiver_mengubah_jadwal_obat_anda_full, user.getName(), medName);
+        final String msgToCaregiver = isForSelf
+                ? getString(R.string.consumer_mengubah_jadwal_obat_msg, user.getName(), medName)
+                : getString(R.string.jadwal_obat_consumer_diperbarui_msg, medName);
+        final NotificationRepo appRepo = new NotificationRepo(requireContext().getApplicationContext());
 
         if (!isForSelf) {
-            if (!isAdded()) return;
             Notification notifToConsumer = new Notification();
             notifToConsumer.setReceiver_uid(targetUid);
             notifToConsumer.setSender_uid(actorUid);
             notifToConsumer.setType(NotificationType.Medicine);
-            notifToConsumer.setTitle(getString(R.string.jadwal_obat_diperbarui_title));
-            notifToConsumer.setMessage(getString(R.string.caregiver_mengubah_jadwal_obat_anda_full, user.getName(), medName));
-            notifToConsumer.setReference_id(scheduleId);
+            notifToConsumer.setTitle(title);
+            notifToConsumer.setMessage(msgToConsumer);
+            notifToConsumer.setReference_id(schedId);
             notifToConsumer.setIs_new_schedule(true);
             notifToConsumer.setIs_read(false);
-            notificationRepo.createNotification(notifToConsumer, new RepoCallback<Void>() {
+            appRepo.createNotification(notifToConsumer, new RepoCallback<Void>() {
                 @Override public void onSuccess(Void result) { }
                 @Override public void onFailure(Exception e) { }
             });
@@ -281,7 +291,7 @@ public class EditMedicineFragment extends Fragment {
         careRelationshipRepo.getCaregiverForConsumer(targetUid, new RepoCallback<List<CareRelationship>>() {
             @Override
             public void onSuccess(List<CareRelationship> relations) {
-                if (!isAdded()) return;
+                if (relations == null) return;
                 for (CareRelationship relation : relations) {
                     String caregiverUid = relation.getCaregiver_uid();
                     if (caregiverUid == null || caregiverUid.equals(actorUid)) continue;
@@ -290,14 +300,12 @@ public class EditMedicineFragment extends Fragment {
                     notifToCaregiver.setReceiver_uid(caregiverUid);
                     notifToCaregiver.setSender_uid(actorUid);
                     notifToCaregiver.setType(NotificationType.Medicine);
-                    notifToCaregiver.setTitle(getString(R.string.jadwal_obat_diperbarui_title));
-                    notifToCaregiver.setMessage(isForSelf
-                            ? getString(R.string.consumer_mengubah_jadwal_obat_msg, user.getName(), medName)
-                            : getString(R.string.jadwal_obat_consumer_diperbarui_msg, medName));
-                    notifToCaregiver.setReference_id(scheduleId);
+                    notifToCaregiver.setTitle(title);
+                    notifToCaregiver.setMessage(msgToCaregiver);
+                    notifToCaregiver.setReference_id(schedId);
                     notifToCaregiver.setIs_new_schedule(true);
                     notifToCaregiver.setIs_read(false);
-                    notificationRepo.createNotification(notifToCaregiver, new RepoCallback<Void>() {
+                    appRepo.createNotification(notifToCaregiver, new RepoCallback<Void>() {
                         @Override public void onSuccess(Void result) { }
                         @Override public void onFailure(Exception e) { }
                     });

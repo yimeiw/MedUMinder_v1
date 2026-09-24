@@ -227,6 +227,8 @@ public class EditAppointmentFragment extends Fragment {
             notifToConsumer.setType(NotificationType.Appointment);
             notifToConsumer.setTitle(consumerNotifTitle);
             notifToConsumer.setMessage(consumerNotifMsg);
+            // FIX: simpan id appointment, supaya halaman detail tahu appointment MANA yang diperbarui
+            notifToConsumer.setReference_id(appointmentId);
             notifToConsumer.setIs_read(false);
             notificationRepo.createNotification(notifToConsumer, new RepoCallback<Void>() {
                 @Override public void onSuccess(Void result) { }
@@ -247,6 +249,7 @@ public class EditAppointmentFragment extends Fragment {
                     notifToCaregiver.setType(NotificationType.Appointment);
                     notifToCaregiver.setTitle(caregiverNotifTitle);
                     notifToCaregiver.setMessage(isForSelf ? caregiverNotifMsgSelf : caregiverNotifMsgOther);
+                    notifToCaregiver.setReference_id(appointmentId); // FIX: sama seperti di atas
                     notifToCaregiver.setIs_read(false);
                     appNotificationRepo.createNotification(notifToCaregiver, new RepoCallback<Void>() {
                         @Override public void onSuccess(Void result) { }

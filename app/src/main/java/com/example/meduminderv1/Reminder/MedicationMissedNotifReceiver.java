@@ -24,6 +24,7 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
         String namaObat = intent.getStringExtra("nama_obat");
         long scheduledAtMillis = intent.getLongExtra("scheduled_at", 0L);
         String logId = buildLogId(scheduleId, scheduledAtMillis);
+        final boolean force = intent.getBooleanExtra("force", false);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         db.collection("medication_logs").document(logId).get().addOnSuccessListener(doc -> {
@@ -31,7 +32,8 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
             // FIX: kalau jadwal sedang di-snooze dan belum lewat batasnya, jangan anggap terlewat
             // (dan jangan matikan alarm snooze)
             com.google.firebase.Timestamp snoozedUntil = doc.getTimestamp("snoozed_until");
-            if (snoozedUntil != null && System.currentTimeMillis()
+            // "force" = dikirim karena user menghapus notifikasi alarm -> langsung dianggap terlewat
+            if (!force && snoozedUntil != null && System.currentTimeMillis()
                     < snoozedUntil.toDate().getTime() + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS - 60_000L) return;
             String consumerUid = doc.getString("users_id");
             if (consumerUid == null) return;
@@ -79,4 +81,5 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
         return scheduleId + "_" + dt.toLocalDate() + "_" + dt.format(DateTimeFormatter.ofPattern("HHmm"));
     }
 }
+
 

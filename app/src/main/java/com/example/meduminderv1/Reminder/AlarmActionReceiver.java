@@ -68,6 +68,52 @@ public class AlarmActionReceiver extends BroadcastReceiver {
             SnoozeHelper.snooze(context, scheduleId, namaObat, scheduledAtMillis, isAppointment,
                     pendingResult::finish);
 
+        } else if ("ACTION_DISMISS".equals(action)) {
+            // FIX: notifikasi alarm dihapus -> matikan bunyi + langsung tandai TERLEWAT
+            PendingResult pendingResult = goAsync();
+            boolean isAppointment = "appointment".equals(intent.getStringExtra("type"));
+            context.stopService(new Intent(context, AlarmRingingService.class));
+            if (isAppointment) {
+                AlarmSchedulerHelper.cancelSnooze(context, scheduleId);
+                AlarmSchedulerHelper.cancelAppointment(context, scheduleId);
+                AppointmentAlertScheduler.cancelAlerts(context, scheduleId);
+                FirebaseFirestore.getInstance().collection("appointments").document(scheduleId).get()
+                        .addOnSuccessListener(doc -> {
+                            if ("dihadiri".equals(doc.getString("status"))) { pendingResult.finish(); return; }
+                            doc.getReference().update("status", "terlewatkan", "updated_at", Timestamp.now())
+                                    .addOnCompleteListener(t -> {
+                                        // kirim notif "terlewat" ke consumer & caregiver sekarang juga
+                                        Intent missed = new Intent(context, AppointmentMissedNotifReceiver.class)
+                                                .putExtra("appointment_id", scheduleId)
+                                                .putExtra("title", namaObat)
+                                                .putExtra("force", true);
+                                        context.sendBroadcast(missed);
+                                        pendingResult.finish();
+                                    });
+                        })
+                        .addOnFailureListener(e -> pendingResult.finish());
+            } else {
+                AlarmSchedulerHelper.cancelSnooze(context, scheduleId);
+                // cek "terlewat" terjadwal untuk jadwal ini dibatalkan, karena notifnya dikirim sekarang
+                AlarmSchedulerHelper.cancelMissedCheckFor(context, scheduleId, scheduledAtMillis);
+                String logId = buildLogId(scheduleId, scheduledAtMillis);
+                FirebaseFirestore.getInstance().collection("medication_logs").document(logId).get()
+                        .addOnSuccessListener(doc -> {
+                            if (!doc.exists() || "dikonsumsi".equals(doc.getString("status"))) { pendingResult.finish(); return; }
+                            doc.getReference().update("status", "terlewatkan", "updated_at", Timestamp.now())
+                                    .addOnCompleteListener(t -> {
+                                        Intent missed = new Intent(context, MedicationMissedNotifReceiver.class)
+                                                .putExtra("schedule_id", scheduleId)
+                                                .putExtra("nama_obat", namaObat)
+                                                .putExtra("scheduled_at", scheduledAtMillis)
+                                                .putExtra("force", true);
+                                        context.sendBroadcast(missed);
+                                        pendingResult.finish();
+                                    });
+                        })
+                        .addOnFailureListener(e -> pendingResult.finish());
+            }
+
         } else if ("ACTION_APPOINTMENT_ATTENDED".equals(action)
                         || "ACTION_APPOINTMENT_MISSED".equals(action)) {
 
@@ -264,3 +310,4 @@ public class AlarmActionReceiver extends BroadcastReceiver {
         return scheduleId + "_" + date + "_" + cleanTime;
     }
 }
+
