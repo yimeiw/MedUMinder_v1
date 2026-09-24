@@ -68,6 +68,8 @@ public class AlarmActionReceiver extends BroadcastReceiver {
             SnoozeHelper.snooze(context, scheduleId, namaObat, scheduledAtMillis, isAppointment,
                     pendingResult::finish);
 
+        } else if ("ACTION_DISMISS".equals(action)) {
+            context.stopService(new Intent(context, AlarmRingingService.class));
         } else if ("ACTION_APPOINTMENT_ATTENDED".equals(action)
                         || "ACTION_APPOINTMENT_MISSED".equals(action)) {
 
@@ -264,3 +266,4 @@ public class AlarmActionReceiver extends BroadcastReceiver {
         return scheduleId + "_" + date + "_" + cleanTime;
     }
 }
+

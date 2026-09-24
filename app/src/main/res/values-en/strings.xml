@@ -595,4 +595,19 @@
     <string name="reminder_appointment_menit_msg"> you have a schedule %2$s.</string>
     <string name="reminder_appointment_menit_caregiver_title">Consumers Will Have an Appointment Soon</string>
     <string name="reminder_appointment_menit_caregiver_msg"> %2$s has a schedule %3$s.</string>
+
+    <!-- Medication -->
+    <string name="caregiver_mengubah_jadwal_obat_anda_detail">%1$s changed your medication schedule for %2$s: %3$s.</string>
+    <string name="anda_memperbarui_jadwal_obat_detail">You updated the medication schedule for %1$s: %2$s.</string>
+    <string name="ubah_jam_minum">medication time to %1$s</string>
+    <string name="ubah_end_date">end date to %1$s</string>
+    <string name="ubah_end_date_dihapus">end date removed</string>
+    <string name="ubah_stok">stock to %1$s</string>
+
+    <!-- Appointment -->
+    <string name="caregiver_mengubah_jadwal_appointment_anda_detail">%1$s changed your appointment schedule for %2$s: %3$s.</string>
+    <string name="anda_memperbarui_jadwal_appointment_detail">You updated the appointment schedule for %1$s: %2$s.</string>
+    <string name="ubah_nama_appointment">name to %1$s</string>
+    <string name="ubah_lokasi_appointment">location to %1$s</string>
+    <string name="ubah_waktu_appointment">time to %1$s</string>
 </resources>

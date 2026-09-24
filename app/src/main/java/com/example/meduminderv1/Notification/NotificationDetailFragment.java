@@ -128,7 +128,7 @@ public class NotificationDetailFragment extends Fragment {
     private void bindNotification() {
         if (!isAdded()) return;
         titleNotif.setText(authManager.getNotificationTitle(notification.getType()));
-        messageNotif.setText(notification.getMessage());
+        messageNotif.setText(NotificationText.message(requireContext(), notification));
         timeNotif.setText(authManager.formatNotificationTime(notification.getCreated_at()));
 
         layoutButton.setVisibility(View.GONE);
@@ -137,7 +137,7 @@ public class NotificationDetailFragment extends Fragment {
         btnReject.setVisibility(View.VISIBLE);
         notifDetail.setVisibility(View.VISIBLE);
 
-        String customTitle = notification.getTitle();
+        String customTitle = NotificationText.title(requireContext(), notification);
         titleNotif.setText((customTitle != null && !customTitle.trim().isEmpty())
                         ? customTitle : authManager.getNotificationTitle(notification.getType()));
         configureAction();
@@ -425,6 +425,8 @@ public class NotificationDetailFragment extends Fragment {
     }
 
     private void loadNewMedicineScheduleDetail() {
+        if (renderScheduleSnapshot(false)) return;
+
         String scheduleId = notification.getReference_id();
 
         android.util.Log.d("NOTIF_DETAIL",
@@ -634,6 +636,7 @@ public class NotificationDetailFragment extends Fragment {
     }
 
     private void loadAppointmentDetail() {
+        if (renderScheduleSnapshot(true)) return;
         String appointId = notification.getReference_id();
         if (appointId == null){
             notifDetail.setVisibility(View.GONE);
@@ -873,5 +876,24 @@ public class NotificationDetailFragment extends Fragment {
         java.time.LocalDate date = dt.toLocalDate();
         String cleanTime = dt.format(java.time.format.DateTimeFormatter.ofPattern("HHmm"));
         return scheduleId + "_" + date + "_" + cleanTime;
+    }
+
+    /** Tampilkan data jadwal yang tersimpan saat notifikasi dibuat. false = tidak ada snapshot. */
+    private boolean renderScheduleSnapshot(boolean isAppointment) {
+        String detail = NotificationText.snapshotDetail(requireContext(), notification, isAppointment);
+        if (detail == null) return false;
+        notifDetail.setVisibility(View.VISIBLE);
+        String name = notification.getSnapshot_name() != null ? notification.getSnapshot_name() : "";
+        tvScheduleName.setText(isAppointment
+                ? getString(R.string.label_appointment_colon) + " " + name
+                : getString(R.string.obat_label_colon) + name);
+        tvScheduleDayTime.setText(detail);
+        if (notification.getSnapshot_stock() != null) {
+            tvStockInfo.setVisibility(View.VISIBLE);
+            tvStockInfo.setText(getString(R.string.sisa_stok, notification.getSnapshot_stock()));
+        } else {
+            tvStockInfo.setVisibility(View.GONE);
+        }
+        return true;
     }
 }

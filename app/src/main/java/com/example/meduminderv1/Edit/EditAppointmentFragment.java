@@ -18,6 +18,7 @@ import android.widget.Toast;
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Model.Appointment;
 import com.example.meduminderv1.Model.CareRelationship;
+import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
@@ -33,6 +34,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -179,7 +181,9 @@ public class EditAppointmentFragment extends Fragment {
         selectedCalendar.set(Calendar.SECOND, 0);
         selectedCalendar.set(Calendar.MILLISECOND, 0);
         Timestamp appointmentAt = new Timestamp(selectedCalendar.getTime());
-
+        final String snapshotDetail = new SimpleDateFormat("EEEE, dd MMM yyyy", Locale.getDefault()).format(appointmentAt.toDate())
+                        + " • "
+                        + new SimpleDateFormat("HH:mm", Locale.getDefault()).format(appointmentAt.toDate());
         db.collection("appointments").document(appointmentId)
                 .update(
                         "title", nameAppoint,
@@ -197,8 +201,7 @@ public class EditAppointmentFragment extends Fragment {
                     AppointmentAlertScheduler.scheduleAlerts(
                             requireContext(), appointmentId, nameAppoint, appointmentAt.toDate().getTime());
 
-                    notifyAppointmentUpdated(nameAppoint, uid);
-
+                    notifyAppointmentUpdated(nameAppoint, uid, appointmentAt);
                     Toast.makeText(requireContext(), getString(R.string.appointment_berhasil_diperbarui), Toast.LENGTH_SHORT).show();
                     NavHostFragment.findNavController(EditAppointmentFragment.this).navigateUp();
                 })
@@ -206,7 +209,7 @@ public class EditAppointmentFragment extends Fragment {
                         Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
-    private void notifyAppointmentUpdated(String title, String actorUid) {
+    private void notifyAppointmentUpdated(String title, String actorUid, Timestamp appointmentAt) {
         if (!isAdded()) return;
         if (targetUid == null) return;
         boolean isForSelf = targetUid.equals(actorUid);
@@ -227,6 +230,14 @@ public class EditAppointmentFragment extends Fragment {
             notifToConsumer.setType(NotificationType.Appointment);
             notifToConsumer.setTitle(consumerNotifTitle);
             notifToConsumer.setMessage(consumerNotifMsg);
+            notifToConsumer.setTitle_key("jadwal_appointment_diperbarui_title");
+            notifToConsumer.setMessage_key("caregiver_mengubah_jadwal_appointment_anda_full");
+            notifToConsumer.setMessage_args(java.util.Arrays.asList(title));
+            notifToConsumer.setSnapshot_name(title);
+            notifToConsumer.setSnapshot_at(appointmentAt);
+            notifToConsumer.setTarget_role(UserRole.Consumer.name());
+            // FIX: simpan id appointment, supaya halaman detail tahu appointment MANA yang diperbarui
+            notifToConsumer.setReference_id(appointmentId);
             notifToConsumer.setIs_read(false);
             notificationRepo.createNotification(notifToConsumer, new RepoCallback<Void>() {
                 @Override public void onSuccess(Void result) { }
@@ -239,7 +250,7 @@ public class EditAppointmentFragment extends Fragment {
             public void onSuccess(List<CareRelationship> relations) {
                 for (CareRelationship relation : relations) {
                     String caregiverUid = relation.getCaregiver_uid();
-                    if (caregiverUid == null || caregiverUid.equals(actorUid)) continue;
+                    if (caregiverUid == null) continue;
 
                     Notification notifToCaregiver = new Notification();
                     notifToCaregiver.setReceiver_uid(caregiverUid);
@@ -247,6 +258,16 @@ public class EditAppointmentFragment extends Fragment {
                     notifToCaregiver.setType(NotificationType.Appointment);
                     notifToCaregiver.setTitle(caregiverNotifTitle);
                     notifToCaregiver.setMessage(isForSelf ? caregiverNotifMsgSelf : caregiverNotifMsgOther);
+                    notifToCaregiver.setReference_id(appointmentId); // FIX: sama seperti di atas
+                    notifToCaregiver.setTitle_key("jadwal_appointment_diperbarui_title");
+                    notifToCaregiver.setMessage_key(isForSelf
+                            ? "consumer_mengubah_jadwal_appointment_msg"
+                            : "jadwal_appointment_consumer_diperbarui_msg");
+                    notifToCaregiver.setMessage_args(java.util.Arrays.asList(title));
+                    notifToCaregiver.setSnapshot_name(title);
+                    notifToCaregiver.setSnapshot_at(appointmentAt);
+                    notifToCaregiver.setTarget_role(UserRole.Caregiver.name());
+
                     notifToCaregiver.setIs_read(false);
                     appNotificationRepo.createNotification(notifToCaregiver, new RepoCallback<Void>() {
                         @Override public void onSuccess(Void result) { }

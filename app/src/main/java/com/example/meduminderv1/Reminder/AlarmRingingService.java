@@ -400,6 +400,19 @@ public class AlarmRingingService extends Service {
                             );
         }
 
+        // FIX: kalau notifikasi alarm di-swipe / dihapus, kirim "ACTION_DISMISS".
+        // Sebelumnya menghapus notifikasi hanya menghilangkan tampilannya, sedangkan
+        // service pemutar suara tetap jalan -> alarm terus bunyi.
+        Intent dismissIntent = new Intent(this, AlarmActionReceiver.class)
+                .setAction("ACTION_DISMISS")
+                .putExtra("schedule_id", scheduleId)
+                .putExtra("nama_obat", namaObat)
+                .putExtra("scheduled_at", scheduledAt)
+                .putExtra("type", isAppointment ? "appointment" : "medicine");
+        PendingIntent dismissPending = PendingIntent.getBroadcast(this, safeId(scheduleId) + 7, dismissIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        builder.setDeleteIntent(dismissPending);
+
         return builder.build();
     }
 
@@ -473,3 +486,4 @@ public class AlarmRingingService extends Service {
         return null;
     }
 }
+

@@ -134,6 +134,17 @@ public class AlarmSchedulerHelper {
         am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, preTrigger, pi);
     }
 
+    /**
+     * FIX: kode unik alarm "cek terlewat" sekarang ikut TANGGAL.
+     * Sebelumnya kodenya hanya id jadwal + jam, sama untuk hari ini dan besok. Waktu alarm hari ini
+     * berbunyi, aplikasi memasang alarm besok dengan kode yang SAMA, jadi "cek terlewat" hari ini
+     * ikut tertimpa dan tidak pernah jalan.
+     */
+    static int missedRequestCode(String scheduleId, String occurrenceKey, long dayMillis) {
+        String day = new SimpleDateFormat("yyyyMMdd", Locale.US).format(new Date(dayMillis));
+        return (scheduleId + "_missed_" + occurrenceKey + "_" + day).hashCode();
+    }
+
     private static void scheduleMedicineMissedCheck(Context context, String scheduleId, String namaObat, long mainTrigger, String occurrenceKey) {
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (am == null || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms())) return;
@@ -141,7 +152,7 @@ public class AlarmSchedulerHelper {
         intent.putExtra("schedule_id", scheduleId);
         intent.putExtra("nama_obat", namaObat);
         intent.putExtra("scheduled_at", mainTrigger);
-        PendingIntent pi = PendingIntent.getBroadcast(context, (scheduleId + "_missed_" + occurrenceKey).hashCode(), intent,
+        PendingIntent pi = PendingIntent.getBroadcast(context, missedRequestCode(scheduleId, occurrenceKey, mainTrigger), intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, mainTrigger + MISSED_CHECK_DELAY_MS, pi);
     }
@@ -263,7 +274,7 @@ public class AlarmSchedulerHelper {
         intent.putExtra("schedule_id", scheduleId);
         intent.putExtra("nama_obat", namaObat);
         intent.putExtra("scheduled_at", originalScheduledAt); // tetap jam asli -> id log tetap sama
-        PendingIntent pi = PendingIntent.getBroadcast(context, (scheduleId + "_missed_" + occurrenceKey).hashCode(), intent,
+        PendingIntent pi = PendingIntent.getBroadcast(context, missedRequestCode(scheduleId, occurrenceKey, originalScheduledAt), intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, snoozeUntilMillis + MISSED_CHECK_DELAY_MS, pi);
     }
@@ -409,9 +420,26 @@ public class AlarmSchedulerHelper {
         alarmManager.cancel(PendingIntent.getBroadcast(context, preRequestCode, preIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
 
+        // cek "terlewat" sekarang punya kode per tanggal -> batalkan untuk kemarin s/d 8 hari ke depan
         Intent missedIntent = new Intent(context, MedicationMissedNotifReceiver.class);
-        int missedRequestCode = (scheduleId + "_missed_" + occurrenceKey).hashCode();
-        alarmManager.cancel(PendingIntent.getBroadcast(context, missedRequestCode, missedIntent,
+        long day = 24L * 60 * 60 * 1000;
+        for (int i = -1; i <= 8; i++) {
+            long d = System.currentTimeMillis() + i * day;
+            alarmManager.cancel(PendingIntent.getBroadcast(context, missedRequestCode(scheduleId, occurrenceKey, d), missedIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+        }
+        // kode lama (sebelum perbaikan) juga dibatalkan supaya tidak ada sisa alarm
+        alarmManager.cancel(PendingIntent.getBroadcast(context, (scheduleId + "_missed_" + occurrenceKey).hashCode(), missedIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+    }
+
+    /** Batalkan cek "terlewat" untuk SATU jadwal di tanggal tertentu saja (tidak menyentuh hari lain). */
+    public static void cancelMissedCheckFor(Context context, String scheduleId, long scheduledAtMillis) {
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (alarmManager == null) return;
+        String occurrenceKey = new SimpleDateFormat(TIME_FORMAT, Locale.getDefault()).format(new Date(scheduledAtMillis));
+        Intent missedIntent = new Intent(context, MedicationMissedNotifReceiver.class);
+        alarmManager.cancel(PendingIntent.getBroadcast(context, missedRequestCode(scheduleId, occurrenceKey, scheduledAtMillis), missedIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
     }
 
@@ -462,3 +490,4 @@ public class AlarmSchedulerHelper {
     }
 
 }
+

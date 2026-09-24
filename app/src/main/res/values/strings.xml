@@ -606,5 +606,20 @@
     <string name="reminder_appointment_menit_msg"> lagi Anda memiliki jadwal %2$s.</string>
     <string name="reminder_appointment_menit_caregiver_title">Consumer Segera Ada Janji Temu</string>
     <string name="reminder_appointment_menit_caregiver_msg"> lagi %2$s memiliki jadwal %3$s.</string>
+
+    <!-- Obat -->
+    <string name="caregiver_mengubah_jadwal_obat_anda_detail">%1$s mengubah jadwal obat %2$s Anda: %3$s.</string>
+    <string name="anda_memperbarui_jadwal_obat_detail">Anda memperbarui jadwal obat %1$s: %2$s.</string>
+    <string name="ubah_jam_minum">jam minum menjadi %1$s</string>
+    <string name="ubah_end_date">tanggal berakhir menjadi %1$s</string>
+    <string name="ubah_end_date_dihapus">tanggal berakhir dihapus</string>
+    <string name="ubah_stok">stok menjadi %1$s</string>
+
+    <!-- Appointment -->
+    <string name="caregiver_mengubah_jadwal_appointment_anda_detail">%1$s mengubah jadwal appointment %2$s Anda: %3$s.</string>
+    <string name="anda_memperbarui_jadwal_appointment_detail">Anda memperbarui jadwal appointment %1$s: %2$s.</string>
+    <string name="ubah_nama_appointment">nama menjadi %1$s</string>
+    <string name="ubah_lokasi_appointment">lokasi menjadi %1$s</string>
+    <string name="ubah_waktu_appointment">waktu menjadi %1$s</string>
 </resources>
 

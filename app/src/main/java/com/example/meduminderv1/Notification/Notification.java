@@ -4,6 +4,8 @@ import com.example.meduminderv1.Model.UserRole;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.Exclude;
 
+import java.util.List;
+
 public class Notification {
     private String notification_id;
     private String invitation_id;
@@ -21,6 +23,40 @@ public class Notification {
     private boolean is_deleted;
     private String deleted_item_name;
     private String report_file_path;
+
+    private String snapshot_name;
+    private String snapshot_detail;
+    private Integer snapshot_stock;
+
+    private String title_key;
+    private String message_key;
+    private List<String> message_args;
+    private List<String> change_items;      // contoh: "times|08:00, 12:00", "stock|30", "end|25/09/2026", "end_removed"
+    private Integer snapshot_frequency;
+    private List<String> snapshot_times;
+    private Timestamp snapshot_at;          // untuk appointment
+
+    public String getTitle_key() { return title_key; }
+    public void setTitle_key(String v) { this.title_key = v; }
+    public String getMessage_key() { return message_key; }
+    public void setMessage_key(String v) { this.message_key = v; }
+    public List<String> getMessage_args() { return message_args; }
+    public void setMessage_args(List<String> v) { this.message_args = v; }
+    public List<String> getChange_items() { return change_items; }
+    public void setChange_items(List<String> v) { this.change_items = v; }
+    public Integer getSnapshot_frequency() { return snapshot_frequency; }
+    public void setSnapshot_frequency(Integer v) { this.snapshot_frequency = v; }
+    public List<String> getSnapshot_times() { return snapshot_times; }
+    public void setSnapshot_times(List<String> v) { this.snapshot_times = v; }
+    public Timestamp getSnapshot_at() { return snapshot_at; }
+    public void setSnapshot_at(Timestamp v) { this.snapshot_at = v; }
+
+    public String getSnapshot_name() { return snapshot_name; }
+    public void setSnapshot_name(String snapshot_name) { this.snapshot_name = snapshot_name; }
+    public String getSnapshot_detail() { return snapshot_detail; }
+    public void setSnapshot_detail(String snapshot_detail) { this.snapshot_detail = snapshot_detail; }
+    public Integer getSnapshot_stock() { return snapshot_stock; }
+    public void setSnapshot_stock(Integer snapshot_stock) { this.snapshot_stock = snapshot_stock; }
 
     public String getReport_file_path() {
         return report_file_path;

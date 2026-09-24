@@ -7,6 +7,8 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
+import android.text.TextUtils;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,7 +21,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
+import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
@@ -47,6 +51,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -74,6 +79,9 @@ public class EditMedicineFragment extends Fragment {
     NotificationRepo notificationRepo;
     CareRelationshipRepo careRelationshipRepo;
     private String targetUid;
+    private long originalEndMillis = 0;   // 0 = tanpa end date
+    private String originalStock = "";
+    private String medType = "";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -171,6 +179,7 @@ public class EditMedicineFragment extends Fragment {
                 createTimeFields(frequency, schedule.getTimes_of_day());
 
                 if (schedule.getEnd_date() != null) {
+                    originalEndMillis = schedule.getEnd_date().toDate().getTime();
                     selectedCalendar.setTime(schedule.getEnd_date().toDate());
                     endDateSelected = true;
                     endDateReminder.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
@@ -210,6 +219,10 @@ public class EditMedicineFragment extends Fragment {
 
         Timestamp endDate = endDateSelected ? new Timestamp(selectedCalendar.getTime()) : null;
         Timestamp now = Timestamp.now();
+        final List<String> changeItems = buildChangeItems(times, String.valueOf(Integer.parseInt(stok)), endDate);
+        final ArrayList<String> snapshotTimes = new ArrayList<>(times);
+        final Integer snapshotStock = "PIL".equalsIgnoreCase(medType)
+                ? Integer.valueOf(Integer.parseInt(stok)) : null;
 
         Map<String, Object> scheduleUpdate = new HashMap<>();
         scheduleUpdate.put("frequency", frequency);
@@ -235,7 +248,7 @@ public class EditMedicineFragment extends Fragment {
                                 AlarmSchedulerHelper.scheduleAll(requireContext(), scheduleId, medName, times, endMillis);
                                 new LogGenerator().replaceFutureLogs(targetUid, scheduleId, times, now, endDate);
 
-                                notifyReminderUpdated(medName);
+                                notifyReminderUpdated(medName, changeItems, frequency, snapshotTimes, snapshotStock);
                                 Toast.makeText(requireContext(), getString(R.string.reminder_berhasil_diperbarui), Toast.LENGTH_SHORT).show();
 
                                 if (notificationId != null && !notificationId.isEmpty()) {
@@ -255,57 +268,126 @@ public class EditMedicineFragment extends Fragment {
                         Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
-    private void notifyReminderUpdated(String medName) {
-        if (!isAdded()) return;
-        if (targetUid == null || user == null) return;
-        String actorUid = user.getAuth_uid();
-        boolean isForSelf = targetUid.equals(actorUid);
+    private String buildChangeSummary(List<String> newTimes, String newStock, Timestamp newEnd) {
+        List<String> parts = new ArrayList<>();
 
-        if (!isForSelf) {
-            if (!isAdded()) return;
-            Notification notifToConsumer = new Notification();
-            notifToConsumer.setReceiver_uid(targetUid);
-            notifToConsumer.setSender_uid(actorUid);
-            notifToConsumer.setType(NotificationType.Medicine);
-            notifToConsumer.setTitle(getString(R.string.jadwal_obat_diperbarui_title));
-            notifToConsumer.setMessage(getString(R.string.caregiver_mengubah_jadwal_obat_anda_full, user.getName(), medName));
-            notifToConsumer.setReference_id(scheduleId);
-            notifToConsumer.setIs_new_schedule(true);
-            notifToConsumer.setIs_read(false);
-            notificationRepo.createNotification(notifToConsumer, new RepoCallback<Void>() {
-                @Override public void onSuccess(Void result) { }
-                @Override public void onFailure(Exception e) { }
-            });
+        List<String> oldTimes = new ArrayList<>(originalTimesOfDay);
+        Collections.sort(oldTimes);
+        if (!oldTimes.equals(newTimes)) {
+            parts.add(getString(R.string.ubah_jam_minum, TextUtils.join(", ", newTimes)));
         }
 
+        SimpleDateFormat f = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        String oldEnd = originalEndMillis == 0 ? "" : f.format(new Date(originalEndMillis));
+        String newEndStr = newEnd == null ? "" : f.format(newEnd.toDate());
+        if (!oldEnd.equals(newEndStr)) {
+            parts.add(newEndStr.isEmpty()
+                    ? getString(R.string.ubah_end_date_dihapus)
+                    : getString(R.string.ubah_end_date, newEndStr));
+        }
+
+        if (!originalStock.equals(newStock)) {
+            parts.add(getString(R.string.ubah_stok, newStock));
+        }
+        return TextUtils.join("; ", parts);
+    }
+    private void notifyReminderUpdated(String medName, List<String> changeItems, int frequency,
+                                       List<String> times, Integer snapshotStock) {
+        if (!isAdded()) return;
+        if (targetUid == null || user == null) return;
+        if (changeItems == null || changeItems.isEmpty()) return;
+
+        final String changes = NotificationText.buildChanges(requireContext(), changeItems);
+
+
+        final String actorUid = user.getAuth_uid();
+        final String actorName = user.getName() != null ? user.getName() : "";
+        final boolean isForSelf = targetUid.equals(actorUid);
+        final String schedId = scheduleId;
+
+        final String title = getString(R.string.jadwal_obat_diperbarui_title);
+        final String msgToConsumer = isForSelf
+                ? getString(R.string.anda_memperbarui_jadwal_obat_detail, medName, changes)
+                : getString(R.string.caregiver_mengubah_jadwal_obat_anda_detail, actorName, medName, changes);
+        final String msgToCaregiver = isForSelf
+                ? getString(R.string.consumer_mengubah_jadwal_obat_msg, actorName, medName)
+                : getString(R.string.jadwal_obat_consumer_diperbarui_msg, medName);
+        final NotificationRepo appRepo = new NotificationRepo(requireContext().getApplicationContext());
+
+        Notification notifToConsumer = new Notification();
+        notifToConsumer.setReceiver_uid(targetUid);
+        notifToConsumer.setSender_uid(actorUid);
+        notifToConsumer.setType(NotificationType.Medicine);
+        notifToConsumer.setTarget_role(UserRole.Consumer.name());
+        notifToConsumer.setTitle(title);
+        notifToConsumer.setMessage(msgToConsumer);
+        notifToConsumer.setReference_id(schedId);
+        notifToConsumer.setIs_new_schedule(true);
+        notifToConsumer.setIs_read(false);
+        notifToConsumer.setTitle_key("jadwal_obat_diperbarui_title");
+        if (isForSelf) {
+            notifToConsumer.setMessage_key("anda_memperbarui_jadwal_obat_detail");
+            notifToConsumer.setMessage_args(java.util.Arrays.asList(medName));
+        } else {
+            notifToConsumer.setMessage_key("caregiver_mengubah_jadwal_obat_anda_detail");
+            notifToConsumer.setMessage_args(java.util.Arrays.asList(actorName, medName));
+        }
+        notifToConsumer.setChange_items(changeItems);
+        notifToConsumer.setSnapshot_name(medName);
+        notifToConsumer.setSnapshot_frequency(frequency);
+        notifToConsumer.setSnapshot_times(times);
+        notifToConsumer.setSnapshot_stock(snapshotStock);
+        appRepo.createNotification(notifToConsumer, new RepoCallback<Void>() {
+            @Override public void onSuccess(Void result) { }
+            @Override public void onFailure(Exception e) {
+                Log.e("NOTIF", "Gagal kirim notif update ke consumer", e);
+            }
+        });
+
+        // Notifikasi ke caregiver lain (selain yang mengedit)
         careRelationshipRepo.getCaregiverForConsumer(targetUid, new RepoCallback<List<CareRelationship>>() {
             @Override
             public void onSuccess(List<CareRelationship> relations) {
-                if (!isAdded()) return;
+                if (relations == null) return;
                 for (CareRelationship relation : relations) {
                     String caregiverUid = relation.getCaregiver_uid();
-                    if (caregiverUid == null || caregiverUid.equals(actorUid)) continue;
+                    if (caregiverUid == null) continue;
 
-                    Notification notifToCaregiver = new Notification();
-                    notifToCaregiver.setReceiver_uid(caregiverUid);
-                    notifToCaregiver.setSender_uid(actorUid);
-                    notifToCaregiver.setType(NotificationType.Medicine);
-                    notifToCaregiver.setTitle(getString(R.string.jadwal_obat_diperbarui_title));
-                    notifToCaregiver.setMessage(isForSelf
-                            ? getString(R.string.consumer_mengubah_jadwal_obat_msg, user.getName(), medName)
-                            : getString(R.string.jadwal_obat_consumer_diperbarui_msg, medName));
-                    notifToCaregiver.setReference_id(scheduleId);
-                    notifToCaregiver.setIs_new_schedule(true);
-                    notifToCaregiver.setIs_read(false);
-                    notificationRepo.createNotification(notifToCaregiver, new RepoCallback<Void>() {
+                    Notification n = new Notification();
+                    n.setReceiver_uid(caregiverUid);
+                    n.setSender_uid(actorUid);
+                    n.setType(NotificationType.Medicine);
+                    n.setTarget_role(UserRole.Caregiver.name());
+                    n.setTitle(title);
+                    n.setMessage(msgToCaregiver);
+                    n.setReference_id(schedId);
+                    n.setIs_new_schedule(true);
+                    n.setIs_read(false);
+                    n.setTitle_key("jadwal_obat_diperbarui_title");
+                    if (isForSelf) {
+                        n.setMessage_key("consumer_mengubah_jadwal_obat_msg");
+                        n.setMessage_args(java.util.Arrays.asList(actorName, medName));
+                    } else {
+                        n.setMessage_key("jadwal_obat_consumer_diperbarui_msg");
+                        n.setMessage_args(java.util.Arrays.asList(medName));
+                    }
+                    n.setSnapshot_name(medName);
+                    n.setSnapshot_frequency(frequency);
+                    n.setSnapshot_times(times);
+                    n.setSnapshot_stock(snapshotStock);
+                    appRepo.createNotification(n, new RepoCallback<Void>() {
                         @Override public void onSuccess(Void result) { }
-                        @Override public void onFailure(Exception e) { }
+                        @Override public void onFailure(Exception e) {
+                            Log.e("NOTIF", "Gagal kirim notif update ke caregiver", e);
+                        }
                     });
                 }
             }
 
             @Override
-            public void onFailure(Exception e) { }
+            public void onFailure(Exception e) {
+                Log.e("NOTIF", "Gagal ambil daftar caregiver", e);
+            }
         });
     }
 
@@ -367,9 +449,11 @@ public class EditMedicineFragment extends Fragment {
             @Override
             public void onSuccess(Medication medication) {
                 if (medication == null) return;
+                medType = medication.getMed_type() != null ? medication.getMed_type() : "";
 
                 if (medication.getStock() != null && medication.getStock().get("stok_obat") != null) {
-                    stokObat.setText(String.valueOf(medication.getStock().get("stok_obat")));
+                    originalStock = String.valueOf(medication.getStock().get("stok_obat"));
+                    stokObat.setText(originalStock);
                 }
 
                 if (medication.getCustom_medicine_name() != null) {
@@ -460,5 +544,27 @@ public class EditMedicineFragment extends Fragment {
             return options[frequency - 1];
         }
         return "";
+    }
+
+    private List<String> buildChangeItems(List<String> newTimes, String newStock, Timestamp newEnd) {
+        List<String> items = new ArrayList<>();
+
+        List<String> oldTimes = new ArrayList<>(originalTimesOfDay);
+        Collections.sort(oldTimes);
+        if (!oldTimes.equals(newTimes)) {
+            items.add("times|" + TextUtils.join(", ", newTimes));
+        }
+
+        SimpleDateFormat f = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        String oldEnd = originalEndMillis == 0 ? "" : f.format(new Date(originalEndMillis));
+        String newEndStr = newEnd == null ? "" : f.format(newEnd.toDate());
+        if (!oldEnd.equals(newEndStr)) {
+            items.add(newEndStr.isEmpty() ? "end_removed" : "end|" + newEndStr);
+        }
+
+        if (!originalStock.equals(newStock)) {
+            items.add("stock|" + newStock);
+        }
+        return items;
     }
 }
