@@ -166,6 +166,7 @@ public class NotificationDetailFragment extends Fragment {
                 break;
             case Report:
                 showReport();
+                break;
             default:
                 hideDetailCard();
                 break;
