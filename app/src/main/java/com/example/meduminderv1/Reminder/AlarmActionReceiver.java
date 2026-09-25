@@ -70,6 +70,7 @@ public class AlarmActionReceiver extends BroadcastReceiver {
 
         } else if ("ACTION_DISMISS".equals(action)) {
             context.stopService(new Intent(context, AlarmRingingService.class));
+
         } else if ("ACTION_APPOINTMENT_ATTENDED".equals(action)
                         || "ACTION_APPOINTMENT_MISSED".equals(action)) {
 

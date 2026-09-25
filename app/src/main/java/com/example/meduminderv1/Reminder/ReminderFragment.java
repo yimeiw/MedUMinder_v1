@@ -162,6 +162,7 @@ public class ReminderFragment extends Fragment {
 
             btnOption.setVisibility(View.VISIBLE);
 
+//            updateStatusUI(resolveStatus(currentStatus));
             Date scheduledDate = new Date(scheduledAt);
             String formattedDate = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(scheduledDate);
             String formattedTime = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(scheduledDate);
@@ -849,8 +850,11 @@ public class ReminderFragment extends Fragment {
                 .document(scheduleId)
                 .get()
                 .addOnSuccessListener(document -> {
-                    if (!isAdded() || document == null || !document.exists()) return;
-
+                    if (!isAdded() || document == null) return;
+//                    if (!document.exists()) {
+//                        updateStatusUI(resolveStatus(currentStatus));
+//                        return;
+//                    }
                     Appointment appointment = document.toObject(Appointment.class);
                     if (appointment != null) {
                         updateStatusUI(appointment.getStatusBasedOnDate());
@@ -858,8 +862,8 @@ public class ReminderFragment extends Fragment {
                     }
                 })
                 .addOnFailureListener(e -> {
-                        Log.e("REMINDER_FRAGMENT", "Gagal ambil status appointment untuk id=" + scheduleId, e);
-                        if (!isAdded()) return;
+                    Log.e("REMINDER_FRAGMENT", "Gagal ambil status appointment untuk id=" + scheduleId, e);
+                    if (!isAdded()) return;
                 });
     }
     private void updateStatusUI(LogStatus logStatus) {
@@ -1083,29 +1087,30 @@ public class ReminderFragment extends Fragment {
         );
     }
 
-    private LogStatus resolveStatus(String raw) {
-        LogStatus s = LogStatus.fromRaw(raw);
-        if (s == LogStatus.DIKONSUMSI) return s;
-        if (scheduledAt > 0 && scheduledAt + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS < System.currentTimeMillis()) {
-            return LogStatus.TERLEWATKAN;
-        }
-        return LogStatus.AKAN_DATANG;
-    }
+//    private LogStatus resolveStatus(String raw) {
+//        LogStatus s = LogStatus.fromRaw(raw);
+//        if (s == LogStatus.DIKONSUMSI) return s;
+//        if (scheduledAt > 0 && scheduledAt + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS < System.currentTimeMillis()) {
+//            return LogStatus.TERLEWATKAN;
+//        }
+//        return LogStatus.AKAN_DATANG;
+//    }
+//
+//    @Override
+//    public void onResume() {
+//        super.onResume();
+//        if (scheduledAt <= 0L) return;
+//        if (isAppointment) refreshLiveStatusAppoint(); else refreshLiveStatus();
+//        long delay = scheduledAt + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS - System.currentTimeMillis() + 1000;
+//        statusHandler.removeCallbacks(statusTick);
+//        if (delay > 0) statusHandler.postDelayed(statusTick, delay);
+//    }
+//
+//    @Override
+//    public void onPause() {
+//        super.onPause();
+//        statusHandler.removeCallbacks(statusTick);
+//    }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (scheduledAt <= 0L) return;
-        if (isAppointment) refreshLiveStatusAppoint(); else refreshLiveStatus();
-        long delay = scheduledAt + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS - System.currentTimeMillis() + 1000;
-        statusHandler.removeCallbacks(statusTick);
-        if (delay > 0) statusHandler.postDelayed(statusTick, delay);
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        statusHandler.removeCallbacks(statusTick);
-    }
 
 }
