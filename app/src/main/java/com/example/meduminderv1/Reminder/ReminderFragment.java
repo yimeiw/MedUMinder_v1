@@ -486,7 +486,7 @@ public class ReminderFragment extends Fragment {
             notifToConsumer.setSender_uid(actorUid);
             notifToConsumer.setType(appointment ? NotificationType.Appointment : NotificationType.Medicine);
             notifToConsumer.setTitle(appointment ? getString(R.string.jadwal_appointment_dihapus_title) : getString(R.string.jadwal_obat_dihapus_title));
-            notifToConsumer.setMessage(getString(R.string.caregiver_menghapus_jadwal_anda_full, displayName));
+            notifToConsumer.setMessage(getString(R.string.caregiver_menghapus_jadwal_anda_full) + " " + displayName);
             notifToConsumer.setIs_deleted(true);
             notifToConsumer.setDeleted_item_name(displayName);
             notifToConsumer.setIs_read(false);

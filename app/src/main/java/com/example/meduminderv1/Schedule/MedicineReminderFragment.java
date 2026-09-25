@@ -32,12 +32,14 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.meduminderv1.Caregiver.ConsumerPickerHelper;
+import com.example.meduminderv1.Model.CareRelationship;
 import com.example.meduminderv1.Model.LogGenerator;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
+import com.example.meduminderv1.Repo.CareRelationshipRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
@@ -59,6 +61,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -692,5 +695,40 @@ public class MedicineReminderFragment extends Fragment {
                 public void onFailure(Exception e) {}
             });
         }
+        //untuk caregiver
+        String actourUid = user.getAuth_uid(),
+                targetUidFinal = targetUid;
+        final String cgTitle = getString(R.string.jadwal_obat_ditambahkan_title),
+                cgMsg = getString(R.string.consumer_mengubah_jadwal_obat_msg) + medName;
+        new CareRelationshipRepo().getCaregiverForConsumer(targetUidFinal, new RepoCallback<List<CareRelationship>>() {
+            @Override
+            public void onSuccess(List<CareRelationship> result) {
+                for (CareRelationship relation : result){
+                    String caregiverUid = relation.getCaregiver_uid();
+                    if (caregiverUid == null || caregiverUid.equals(actourUid)) continue;
+
+                    Notification cgNotif = new Notification();
+                    cgNotif.setReceiver_uid(caregiverUid);
+                    cgNotif.setSender_uid(actourUid);
+                    cgNotif.setReference_id(scheduleId);
+                    cgNotif.setIs_new_schedule(true);
+                    cgNotif.setType(NotificationType.Medicine);
+                    cgNotif.setTarget_role(UserRole.Caregiver.name());
+                    cgNotif.setTitle(cgTitle);
+                    cgNotif.setMessage(cgMsg);
+                    cgNotif.setIs_read(false);
+                    notificationRepo.createNotification(cgNotif, new RepoCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void result) {}
+
+                        @Override
+                        public void onFailure(Exception e) {}
+                    });
+                }
+            }
+
+            @Override
+            public void onFailure(Exception e) {}
+        });
     }
 }

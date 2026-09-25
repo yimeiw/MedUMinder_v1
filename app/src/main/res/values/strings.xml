@@ -515,7 +515,7 @@
     <string name="jadwal_obat_sudah_tidak_tersedia">Jadwal obat sudah tidak tersedia.</string>
     <string name="riwayat_obat_sudah_tidak_tersedia">Riwayat obat sudah tidak tersedia.</string>
     <string name="jadwal_appointment_sudah_tidak_tersedia">Jadwal appointment sudah tidak tersedia.</string>
-    <string name="obat_label_colon">Obat: </string>
+    <string name="obat_label_colon">Obat:</string>
     <string name="frekuensi_x_sehari_format">%1$dx sehari</string>
     <string name="caregiver_mengingatkan_periksa_jadwal_msg">%1$s mengingatkan Anda untuk segera memeriksa jadwal Anda.</string>
 

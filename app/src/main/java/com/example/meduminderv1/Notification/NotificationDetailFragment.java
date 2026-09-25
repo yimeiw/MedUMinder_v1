@@ -110,7 +110,7 @@ public class NotificationDetailFragment extends Fragment {
                             if (notification != null) notification.setIs_read(true);
                         }
                         @Override
-                        public void onFailure(String message) { /* diamkan, tidak kritis */ }
+                        public void onFailure(String message) {  }
                     });
                 }
                 bindNotification();
@@ -234,7 +234,7 @@ public class NotificationDetailFragment extends Fragment {
 
         boolean isAppointment = notification.getType() == NotificationType.Appointment;
         String name = notification.getDeleted_item_name();
-        String label = isAppointment ? getString(R.string.label_appointment_colon) : getString(R.string.obat_label_colon);
+        String label = isAppointment ? getString(R.string.label_appointment_colon) + " " : getString(R.string.obat_label_colon) + " " ;
         tvScheduleName.setText(label + (name != null && !name.isEmpty() ? name
                 : (isAppointment ? getString(R.string.default_appointment_label) : getString(R.string.default_jadwal_label))));
     }
@@ -280,7 +280,7 @@ public class NotificationDetailFragment extends Fragment {
                         btnAction.setVisibility(View.GONE);
                     } else {
                         headerNotif.setText(getString(R.string.undangan_baru_title));
-                        titleNotif.setText(getString(R.string.undangan_label) + invitation.getInvite_role().name());
+                        titleNotif.setText(getString(R.string.undangan_label) + " " + invitation.getInvite_role().name());
                         messageNotif.setText(getString(R.string.sender_mengundang_anda_msg,
                                 invitation.getSender_name(), roleLabel(invitation.getInvite_role())));
                         layoutButton.setVisibility(View.VISIBLE);
@@ -468,13 +468,13 @@ public class NotificationDetailFragment extends Fragment {
                 });
 
                 if (med != null && med.getCustom_medicine_name() != null) {
-                    tvScheduleName.setText(getString(R.string.obat_label_colon) + med.getCustom_medicine_name());
+                    tvScheduleName.setText(getString(R.string.obat_label_colon)+ " " + med.getCustom_medicine_name());
                     render.run();
                 } else if (med != null && med.getCatalog_id() != null) {
                     db.collection("medicine_catalog").document(med.getCatalog_id()).get().addOnSuccessListener(catSnap -> {
                         if (!isAdded()) return;
                         MedicineCatalog cat = catSnap.toObject(MedicineCatalog.class);
-                        tvScheduleName.setText(getString(R.string.obat_label_colon) + (cat != null ? cat.getNama_obat() : "Obat"));
+                        tvScheduleName.setText(getString(R.string.obat_label_colon) + " " + (cat != null ? cat.getNama_obat() : "Obat"));
                         render.run();
                     });
                 } else {
@@ -524,7 +524,6 @@ public class NotificationDetailFragment extends Fragment {
                     Runnable render = () -> {
                         if (!isAdded()) return;
                         notifDetail.setVisibility(View.VISIBLE);
-
                         SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", Locale.getDefault());
                         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
                         Date scheduleDate = log.getScheduled_at().toDate();
@@ -533,13 +532,13 @@ public class NotificationDetailFragment extends Fragment {
                         tvStockInfo.setText(getString(R.string.sisa_stok_obat_label) + finalStock);
                     };
                     if (med != null && med.getCustom_medicine_name() != null){
-                        tvScheduleName.setText(getString(R.string.obat_label_colon) + med.getCustom_medicine_name());
+                        tvScheduleName.setText(getString(R.string.obat_label_colon) + " " + med.getCustom_medicine_name());
                         render.run();
                     } else if (med != null && med.getCatalog_id() != null){
                         db.collection("medicine_catalog").document(med.getCatalog_id()).get().addOnSuccessListener(catSnap -> {
                             if (!isAdded()) return;
                             MedicineCatalog cat = catSnap.toObject(MedicineCatalog.class);
-                            tvScheduleName.setText(getString(R.string.obat_label_colon) + (cat != null ? cat.getNama_obat() : getString(R.string.obat_default)));
+                            tvScheduleName.setText(getString(R.string.obat_label_colon) + " " + (cat != null ? cat.getNama_obat() : getString(R.string.obat_default)));
                             render.run();
                         });
                     } else {
@@ -699,13 +698,13 @@ public class NotificationDetailFragment extends Fragment {
                 tvStockInfo.setVisibility(View.VISIBLE);
                 tvStockInfo.setText(getString(R.string.sisa_stok, finalStock));
             }; if (med.getCustom_medicine_name() != null){
-                tvScheduleName.setText(getString(R.string.obat_label_colon) + med.getCustom_medicine_name());
+                tvScheduleName.setText(getString(R.string.obat_label_colon) + " " + med.getCustom_medicine_name());
                 render.run();
             } else if (med.getCatalog_id() != null) {
                 db.collection("medicine_catalog").document(med.getCatalog_id()).get().addOnSuccessListener(catSnap -> {
                     if (!isAdded()) return;
                     MedicineCatalog cat = catSnap.toObject(MedicineCatalog.class);
-                    tvScheduleName.setText(getString(R.string.obat_label_colon) + (cat != null ? cat.getNama_obat() : getString(R.string.obat_default)));
+                    tvScheduleName.setText(getString(R.string.obat_label_colon) + " " + (cat != null ? cat.getNama_obat() : getString(R.string.obat_default)));
                     render.run();
                 });
             } else {
@@ -793,14 +792,14 @@ public class NotificationDetailFragment extends Fragment {
 
                 if (med != null && med.getCustom_medicine_name() != null) {
                     pendingMedName = med.getCustom_medicine_name();
-                    tvScheduleName.setText(getString(R.string.obat_label_colon) + pendingMedName);
+                    tvScheduleName.setText(getString(R.string.obat_label_colon) + " " + pendingMedName);
                     render.run();
                 } else if (med != null && med.getCatalog_id() != null) {
                     db.collection("medicine_catalog").document(med.getCatalog_id()).get().addOnSuccessListener(catSnap -> {
                         if (!isAdded()) return;
                         MedicineCatalog cat = catSnap.toObject(MedicineCatalog.class);
                         pendingMedName = cat != null ? cat.getNama_obat() : getString(R.string.obat_default);
-                        tvScheduleName.setText(getString(R.string.obat_label_colon) + pendingMedName);
+                        tvScheduleName.setText(getString(R.string.obat_label_colon) + " " + pendingMedName);
                         render.run();
                     });
                 } else {
