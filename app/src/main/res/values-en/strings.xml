@@ -610,4 +610,7 @@
     <string name="ubah_nama_appointment">name to %1$s</string>
     <string name="ubah_lokasi_appointment">location to %1$s</string>
     <string name="ubah_waktu_appointment">time to %1$s</string>
+
+<!--    <string name="snoozeDuration">Snooze Duration</string>-->
+<!--    <string name="remindMeBefore">Remind Me Before</string>-->
 </resources>

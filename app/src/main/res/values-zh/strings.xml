@@ -611,4 +611,7 @@
     <string name="ubah_nama_appointment">名称改为 %1$s</string>
     <string name="ubah_lokasi_appointment">地点改为 %1$s</string>
     <string name="ubah_waktu_appointment">时间改为 %1$s</string>
+
+<!--    <string name="snoozeDuration">延迟提醒时长</string>-->
+<!--    <string name="remindMeBefore">提前提醒时间</string>-->
 </resources>
