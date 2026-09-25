@@ -5,9 +5,7 @@ import com.google.firebase.Timestamp;
 public class MedicineCatalog {
     private String nama_obat;
     private Timestamp created_at;
-
     public MedicineCatalog(){}
-
     public MedicineCatalog(String nama_obat, Timestamp created_at){
         super();
         this.nama_obat = nama_obat;

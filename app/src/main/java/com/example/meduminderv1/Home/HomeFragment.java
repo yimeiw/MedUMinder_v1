@@ -82,24 +82,22 @@ import java.util.UUID;
 public class HomeFragment extends Fragment {
     TextView tvGreeting, tvtitleCard, tvTime, tvDay, tvStokObat, tvTotalStok, btnLihatSemua, emptyTodaySchedule;
     ImageButton btnNotif;
-    // MERGE: btnProfile dibawa dari versi satunya (tombol ke halaman Profile).
     ImageButton btnProfile;
     MaterialButton addNoSchedule, btnKonfirmasi;
     RecyclerView rvTodaySchedule;
     LinearLayout addMed, addAppoint, viewLog, haveSchedule, noSchedule;
-//    LinearLayout addDoc;
     SharedPreferences prefs;
     AuthManager authManager;
     FirebaseFirestore db;
     MedicationRepo medicationRepo;
     private String nextLogId;
     private String nextMedId;
-    private String nextScheduleIdForAlarm;   // FIX: untuk mematikan alarm saat dikonfirmasi
+    private String nextScheduleIdForAlarm;   // untuk mematikan alarm saat dikonfirmasi
     private long nextScheduledAtMillis = -1;
     LineChart lineChart;
     StatistikRepo statistikRepo;
     private ListenerRegistration nextScheduleListener;
-    private ListenerRegistration invitationListener; // FIX: popup undangan realtime
+    private ListenerRegistration invitationListener; // popup undangan realtime
     private final Handler refreshHandler = new Handler(Looper.getMainLooper());
     private long displayedScheduleAtMillis = -1;
     private final Runnable refreshRunnable = this::checkNextScheduleFreshness;
@@ -117,10 +115,8 @@ public class HomeFragment extends Fragment {
         tvStokObat = view.findViewById(R.id.tvStokObat);
         tvTotalStok = view.findViewById(R.id.tvTotalStok);
         btnNotif = view.findViewById(R.id.btnNotif);
-//        btnProfile = view.findViewById(R.id.btnProfile);
         addMed = view.findViewById(R.id.layoutAddMed);
         addAppoint = view.findViewById(R.id.layoutAddAppoint);
-//        addDoc = view.findViewById(R.id.layoutDoc);
         viewLog = view.findViewById(R.id.layoutLog);
         haveSchedule = view.findViewById(R.id.haveSchedule);
         noSchedule = view.findViewById(R.id.noSchedule);
@@ -146,7 +142,6 @@ public class HomeFragment extends Fragment {
         AppCompatDelegate.setDefaultNightMode(isDark ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
 
         btnNotif.setOnClickListener(v -> {
-            //    btnNotif.setImageDrawable(requireContext().getDrawable(R.drawable.ic_notif_hover));
             NavHostFragment.findNavController(this)
                     .navigate(R.id.notificationFragment);
         });
@@ -239,8 +234,8 @@ public class HomeFragment extends Fragment {
         String uid = firebaseUser.getUid();
         Timestamp now = Timestamp.now();
         if (nextScheduleListener != null) nextScheduleListener.remove();
-        // FIX: ambil juga jadwal yang sudah lewat sedikit (maks 6 jam), karena bisa saja
-        // jadwal itu sedang di-snooze -> waktu barunya (snoozed_until) masih akan datang
+        // ambil juga jadwal yang sudah lewat sedikit (maks 6 jam), karena bisa saja
+        // jadwal nya lagi di-snooze -> waktu barunya (snoozed_until) masih akan datang
         Timestamp windowStart = new Timestamp(new java.util.Date(now.toDate().getTime() - 6 * 60 * 60 * 1000L));
         nextScheduleListener = db.collection("medication_logs").whereEqualTo("users_id", uid)
                 .whereEqualTo("status", "akan datang").whereGreaterThanOrEqualTo("scheduled_at", windowStart)
@@ -254,7 +249,7 @@ public class HomeFragment extends Fragment {
                         if (log == null || log.getStatusBasedOnDate() != LogStatus.AKAN_DATANG) continue;
                         Timestamp eff = log.getEffectiveTime();
                         if (eff == null) continue;
-                        // FIX: jadwal yang jamnya BARU lewat (alarm sedang bunyi) tetap ditampilkan
+                        // jadwal yang jamnya BARU lewat (alarm sedang bunyi) tetap ditampilkan
                         // selama belum dianggap terlewat (15 menit), supaya tombol "Dikonsumsi"
                         // di Home mengonfirmasi obat YANG SEDANG BUNYI, bukan jadwal berikutnya.
                         if (eff.toDate().getTime() + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS < nowMs) continue;
@@ -269,13 +264,13 @@ public class HomeFragment extends Fragment {
                     } nextLogId = target.getId();
                     nextScheduleIdForAlarm = targetLog.getMedication_schedules_id();
                     nextScheduledAtMillis = targetLog.getScheduled_at().toDate().getTime();
-                    btnKonfirmasi.setEnabled(true); // FIX: tombol aktif lagi untuk jadwal berikutnya
+                    btnKonfirmasi.setEnabled(true);
                     haveSchedule.setVisibility(View.VISIBLE);
-                    // FIX: kartu diganti ke jadwal berikutnya setelah jadwal ini dianggap terlewat
+                    // kartu diganti ke jadwal berikutnya setelah jadwal ini dianggap terlewat
                     displayedScheduleAtMillis = targetLog.getEffectiveTime().toDate().getTime()
                             + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS;
                     noSchedule.setVisibility(View.GONE);
-                    // FIX: tampilkan waktu setelah snooze (kalau ada)
+                    // tampilkan waktu setelah snooze (kalau ada)
                     tvDay.setText(formatDayLabel(targetLog.getEffectiveTime().toDate()));
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                     tvTime.setText(sdf.format(targetLog.getEffectiveTime().toDate()));
@@ -463,7 +458,6 @@ public class HomeFragment extends Fragment {
                                     "Obat: " + medName +
                                             " | Type: " + medType +
                                             " | Stock: " + stock);
-
 
                             String info = "";
 

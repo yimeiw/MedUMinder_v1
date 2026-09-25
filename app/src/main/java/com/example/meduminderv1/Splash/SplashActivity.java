@@ -74,9 +74,6 @@ public class SplashActivity extends AppCompatActivity {
 
         letterU.post(() -> {
 
-            View rootLayout = (View) letterU.getParent();
-            float screenCenterX = rootLayout.getWidth() / 2f;
-
             float medWidth = med.getWidth();
             float minderWidth = minder.getWidth();
             float uWidth = letterU.getWidth();

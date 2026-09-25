@@ -17,7 +17,6 @@ import java.util.Date;
 import java.util.List;
 
 public class StatistikRepo {
-
     private final FirebaseFirestore db;
     private final Context context;
     public StatistikRepo(Context context) {
@@ -55,14 +54,11 @@ public class StatistikRepo {
                     for (DocumentSnapshot doc : query) {
                         MedicationLog log = doc.toObject(MedicationLog.class);
                         if (log == null || log.getScheduled_at() == null) continue;
-
                         // skip yang belum due (masih akan datang)
                         if (log.getScheduled_at().toDate().getTime()
                                 + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS > System.currentTimeMillis()) {
                             continue;
-                        }
-
-                        totalSeharusnya++;
+                        } totalSeharusnya++;
                         if (log.getTaken_at() != null) {
                             totalDikonsumsi++;
                         }
@@ -72,8 +68,7 @@ public class StatistikRepo {
                             : (int) (totalDikonsumsi * 100f / totalSeharusnya);
 
                     callback.onResult(totalSeharusnya, totalDikonsumsi, percent);
-                })
-                .addOnFailureListener(callback::onFailure);
+                }).addOnFailureListener(callback::onFailure);
     }
 
     public void getAdherence(String uid, String period, StatsCallback callback) {
@@ -99,16 +94,13 @@ public class StatistikRepo {
             start.add(Calendar.DAY_OF_YEAR, diffToMonday);
             end = (Calendar) start.clone();
             end.add(Calendar.DAY_OF_YEAR, 7);
-
             numberOfPeriods = 7;
-        }
-        else if ("monthly".equals(period)) {
+        } else if ("monthly".equals(period)) {
             start.set(Calendar.DAY_OF_MONTH, 1);
             end = (Calendar) start.clone();
             end.add(Calendar.MONTH, 1);
             numberOfPeriods = start.getActualMaximum(Calendar.DAY_OF_MONTH);
-        }
-        else {
+        } else {
             start.set(Calendar.MONTH, Calendar.JANUARY);
             start.set(Calendar.DAY_OF_MONTH, 1);
             end = (Calendar) start.clone();
@@ -119,33 +111,19 @@ public class StatistikRepo {
         Timestamp startTimestamp = new Timestamp(start.getTime());
         Timestamp endTimestamp = new Timestamp(end.getTime());
 
-        android.util.Log.d(
-                "STAT_DEBUG",
-                "PERIOD=" + period
+        android.util.Log.d("STAT_DEBUG", "PERIOD=" + period
                         + " | START=" + start.getTime()
                         + " | END=" + end.getTime()
         );
 
         db.collection("medication_logs")
-                .whereEqualTo(
-                        "users_id",
-                        uid
-                )
-                .whereGreaterThanOrEqualTo(
-                        "scheduled_at",
-                        startTimestamp
-                )
-                .whereLessThan(
-                        "scheduled_at",
-                        endTimestamp
-                )
+                .whereEqualTo("users_id", uid)
+                .whereGreaterThanOrEqualTo("scheduled_at", startTimestamp)
+                .whereLessThan("scheduled_at", endTimestamp)
                 .get()
                 .addOnSuccessListener(query -> {
 
-                    android.util.Log.d(
-                            "STAT_DEBUG",
-                            "QUERY RESULT " + period + " = " + query.size()
-                    );
+                    android.util.Log.d("STAT_DEBUG", "QUERY RESULT " + period + " = " + query.size());
 
                     int[] total = new int[numberOfPeriods];
                     int[] taken = new int[numberOfPeriods];
@@ -178,19 +156,15 @@ public class StatistikRepo {
                         if ("weekly".equals(period)) {
                             int day = logDate.get(Calendar.DAY_OF_WEEK);
                             index = (day == Calendar.SUNDAY) ? 6 : day - 2;
-                        }
-                        else if ("monthly".equals(period)) {
+                        } else if ("monthly".equals(period)) {
                             index = logDate.get(Calendar.DAY_OF_MONTH) - 1;
-                        }
-                        else {
+                        } else {
                             index = logDate.get(Calendar.MONTH);
                         }
 
                         if (index < 0 || index >= numberOfPeriods) {
                             continue;
-                        }
-
-                        total[index]++;
+                        } total[index]++;
 
                         if (log.getTaken_at() != null) {
                             taken[index]++;
@@ -252,21 +226,10 @@ public class StatistikRepo {
 
                     callback.onResult(result);
 
-                })
-                .addOnFailureListener(
-                        callback::onFailure
-                );
+                }).addOnFailureListener(callback::onFailure);
     }
 
-    public void getWeeklyAdherence(
-            String uid,
-            StatsCallback callback
-    ) {
-
-        getAdherence(
-                uid,
-                "weekly",
-                callback
-        );
+    public void getWeeklyAdherence(String uid, StatsCallback callback) {
+        getAdherence(uid, "weekly", callback);
     }
 }

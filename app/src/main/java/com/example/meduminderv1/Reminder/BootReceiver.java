@@ -42,18 +42,6 @@ public class BootReceiver extends BroadcastReceiver {
                             if (schedules != null){
                                 AlarmSchedulerHelper.resolveAndScheduleForBoot(appContext, doc.getId(), schedules);
                             }
-//                            String scheduleId = doc.getId();
-//                            String namaObat = doc.getString("nama_obat");
-//                            List<String> times = (List<String>) doc.get("times_of_day");
-//                            Long endDate = doc.getLong("end_date");
-//
-//                            AlarmSchedulerHelper.scheduleAll(
-//                                    appContext,
-//                                    scheduleId,
-//                                    namaObat != null ? namaObat : "Obat",
-//                                    times,
-//                                    endDate != null ? endDate : 0L
-//                            );
                         }
                     }
                     pendingResult.finish();

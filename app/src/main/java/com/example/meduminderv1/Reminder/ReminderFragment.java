@@ -1,12 +1,5 @@
 package com.example.meduminderv1.Reminder;
 
-import static android.content.Context.LAYOUT_INFLATER_SERVICE;
-
-import static androidx.core.content.ContextCompat.getSystemService;
-
-import android.app.appsearch.GetSchemaResponse;
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -18,9 +11,6 @@ import android.os.Looper;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -31,7 +21,6 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -50,7 +39,6 @@ import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
-import com.example.meduminderv1.Repo.MedicationRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -102,11 +90,6 @@ public class ReminderFragment extends Fragment {
     private String targetConsumerUid;
     private String source = "";
 
-    private final Handler statusHandler = new Handler(Looper.getMainLooper());
-    private final Runnable statusTick = () -> {
-        if (!isAdded()) return;
-        if (isAppointment) refreshLiveStatusAppoint(); else refreshLiveStatus();
-    };
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -231,12 +214,6 @@ public class ReminderFragment extends Fragment {
             popupMenu.show();
         });
         return view;
-    }
-
-    private boolean shouldShowOption() {
-        boolean isUpcoming = LogStatus.fromRaw(currentStatus) == LogStatus.AKAN_DATANG;
-        boolean isFromLog = "log".equals(source);
-        return isUpcoming || isFromLog;
     }
 
     private void showDeleteChoiceDialog() {
@@ -379,12 +356,7 @@ public class ReminderFragment extends Fragment {
                     @Override
                     public void onFailure(Exception e) {
                         if (!isAdded()) return;
-
-                        Toast.makeText(
-                                requireContext(),
-                                e.getMessage(),
-                                Toast.LENGTH_SHORT
-                        ).show();
+                        Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 }
         );
@@ -592,22 +564,6 @@ public class ReminderFragment extends Fragment {
         });
     }
 
-    private void showOptionPopup() {
-        View popUpView = LayoutInflater.from(requireContext()).inflate(R.layout.popup_edit_medicine, null);
-
-        PopupWindow optionPopup = new PopupWindow(
-                popUpView,
-                dpToPx(160),
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                true
-        );
-
-        optionPopup.setBackgroundDrawable(
-                new ColorDrawable(Color.TRANSPARENT)
-        );
-
-    }
-
     private void refreshLiveStatus() {
         if (!isAdded()) return;
         if (scheduleId == null || scheduleId.isEmpty() || scheduledAt <= 0L) return;
@@ -767,7 +723,7 @@ public class ReminderFragment extends Fragment {
         btnTundaReminder.setEnabled(false);
         btnIsTaken.setEnabled(false);
 
-        // FIX (app keluar sendiri): sebelumnya notifikasi ke caregiver dibuat di dalam callback
+        // sebelumnya notifikasi ke caregiver dibuat di dalam callback
         // Firestore yang memanggil getString() SETELAH halaman ditutup (navigateUp) -> crash
         // "Fragment not attached". Sekarang semua proses snooze ada di SnoozeHelper yang
         // memakai Application Context, jadi aman walaupun halaman sudah ditutup.
@@ -781,10 +737,7 @@ public class ReminderFragment extends Fragment {
 
     private void stopRingingAlarm() {
         requireContext().stopService(
-                new android.content.Intent(
-                        requireContext(),
-                        AlarmRingingService.class
-                )
+                new android.content.Intent(requireContext(), AlarmRingingService.class)
         );
     }
 
@@ -899,218 +852,20 @@ public class ReminderFragment extends Fragment {
     }
 
     private void applyCircleStatusColor(View circleView, LogStatus status) {
-        int statusColor =
-                ContextCompat.getColor(
-                        requireContext(),
-                        status.getColorRes()
-                );
-
-
-        Drawable bg =
-                circleView
-                        .getBackground()
-                        .mutate();
-
+        int statusColor = ContextCompat.getColor(requireContext(), status.getColorRes());
+        Drawable bg = circleView.getBackground().mutate();
 
         if (bg instanceof GradientDrawable) {
-
-            ((GradientDrawable) bg)
-                    .setStroke(
-                            dpToPx(4),
-                            statusColor
-                    );
-        }
-
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-
-            circleView.setOutlineAmbientShadowColor(
-                    statusColor
-            );
-
-            circleView.setOutlineSpotShadowColor(
-                    statusColor
-            );
+            ((GradientDrawable) bg).setStroke(dpToPx(4), statusColor);
+        } if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            circleView.setOutlineAmbientShadowColor(statusColor);
+            circleView.setOutlineSpotShadowColor(statusColor);
         }
     }
-
     private int dpToPx(float dp) {
-
         return (int) TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP,
-                dp,
-                requireContext()
-                        .getResources()
-                        .getDisplayMetrics()
+                dp, requireContext().getResources().getDisplayMetrics()
         );
     }
-
-//    private String buildLogId(String scheduleId, long scheduledAtMillis) {
-//
-//        LocalDateTime dt = LocalDateTime.ofInstant(
-//                Instant.ofEpochMilli(scheduledAtMillis),
-//                ZoneId.systemDefault()
-//        );
-//
-//        LocalDate date = dt.toLocalDate();
-//
-//        String cleanTime = dt.format(
-//                DateTimeFormatter.ofPattern("HHmm")
-//        );
-//
-//        return scheduleId + "_" + date + "_" + cleanTime;
-//    }
-
-    private void persistMedicineSnooze(long snoozeUntilMillis) {
-        String logId = buildLogId(scheduleId, scheduledAt);
-
-        Map<String, Object> update = new HashMap<>();
-
-        update.put(
-                "snoozed_until",
-                new Timestamp(new Date(snoozeUntilMillis))
-        );
-
-        update.put(
-                "snooze_count",
-                FieldValue.increment(1)
-        );
-
-        db.collection("medication_logs")
-                .document(logId)
-                .set(update, SetOptions.merge())
-                .addOnFailureListener(e ->
-                        Log.e(
-                                "REMINDER_FRAGMENT",
-                                "Gagal simpan snoozed_until/snooze_count. logId=" + logId,
-                                e
-                        )
-                );
-    }
-
-    private void notifySnoozeToSelfAndCaregivers(
-            String itemName,
-            boolean isAppointmentType
-    ) {
-        User consumer = SessionManager.getInstance().getUser();
-        if (consumer == null) return;
-
-        String consumerUid = consumer.getAuth_uid();
-
-        Notification selfNotif = new Notification();
-        selfNotif.setReceiver_uid(consumerUid);
-        selfNotif.setSender_uid(consumerUid);
-        selfNotif.setType(
-                isAppointmentType
-                        ? NotificationType.Appointment
-                        : NotificationType.Medicine
-        );
-        selfNotif.setReference_id(scheduleId);
-        selfNotif.setTitle(
-                getString(R.string.pengingat_ditunda_title)
-        );
-        selfNotif.setMessage(
-                getString(
-                        R.string.pengingat_x_ditunda_msg,
-                        itemName
-                )
-        );
-        selfNotif.setIs_read(false);
-
-        notificationRepo.createNotification(
-                selfNotif,
-                new RepoCallback<Void>() {
-                    @Override public void onSuccess(Void result) { }
-
-                    @Override public void onFailure(Exception e) { }
-                }
-        );
-
-        String consumerName = consumer.getName();
-
-        careRelationshipRepo.getCaregiverForConsumer(
-                consumerUid,
-                new RepoCallback<List<CareRelationship>>() {
-                    @Override
-                    public void onSuccess(
-                            List<CareRelationship> relations
-                    ) {
-                        if (relations == null) return;
-
-                        for (CareRelationship relation : relations) {
-                            Notification notifCaregiver =
-                                    new Notification();
-
-                            notifCaregiver.setReceiver_uid(
-                                    relation.getCaregiver_uid()
-                            );
-                            notifCaregiver.setSender_uid(consumerUid);
-                            notifCaregiver.setType(
-                                    isAppointmentType
-                                            ? NotificationType.Appointment
-                                            : NotificationType.Medicine
-                            );
-                            notifCaregiver.setReference_id(scheduleId);
-                            notifCaregiver.setConsumer_name(
-                                    consumerName
-                            );
-                            notifCaregiver.setTitle(
-                                    getString(
-                                            R.string.consumer_menunda_pengingat_title
-                                    )
-                            );
-                            notifCaregiver.setMessage(
-                                    getString(
-                                            R.string.consumer_menunda_pengingat_msg,
-                                            consumerName,
-                                            itemName
-                                    )
-                            );
-                            notifCaregiver.setIs_read(false);
-
-                            notificationRepo.createNotification(
-                                    notifCaregiver,
-                                    new RepoCallback<Void>() {
-                                        @Override
-                                        public void onSuccess(Void result) { }
-
-                                        @Override
-                                        public void onFailure(Exception e) { }
-                                    }
-                            );
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Exception e) { }
-                }
-        );
-    }
-
-//    private LogStatus resolveStatus(String raw) {
-//        LogStatus s = LogStatus.fromRaw(raw);
-//        if (s == LogStatus.DIKONSUMSI) return s;
-//        if (scheduledAt > 0 && scheduledAt + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS < System.currentTimeMillis()) {
-//            return LogStatus.TERLEWATKAN;
-//        }
-//        return LogStatus.AKAN_DATANG;
-//    }
-//
-//    @Override
-//    public void onResume() {
-//        super.onResume();
-//        if (scheduledAt <= 0L) return;
-//        if (isAppointment) refreshLiveStatusAppoint(); else refreshLiveStatus();
-//        long delay = scheduledAt + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS - System.currentTimeMillis() + 1000;
-//        statusHandler.removeCallbacks(statusTick);
-//        if (delay > 0) statusHandler.postDelayed(statusTick, delay);
-//    }
-//
-//    @Override
-//    public void onPause() {
-//        super.onPause();
-//        statusHandler.removeCallbacks(statusTick);
-//    }
-
-
 }

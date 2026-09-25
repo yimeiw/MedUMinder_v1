@@ -73,7 +73,7 @@ public class LoginActivity extends AppCompatActivity {
                 startActivity(new Intent(LoginActivity.this, ForgotPasswordActivity.class));
                 return;
             }
-            // FIX: kalau email sudah diisi, cek dulu. Kalau belum terdaftar -> toast, jangan buka halaman
+            // kalau email sudah diisi, cek dulu. Kalau belum terdaftar -> toast, jangan buka halaman
             forgotPassword.setEnabled(false);
             authManager.checkEmailStatus(currentEmail, status -> {
                 forgotPassword.setEnabled(true);

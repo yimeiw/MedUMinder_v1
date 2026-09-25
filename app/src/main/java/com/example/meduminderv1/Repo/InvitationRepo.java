@@ -25,7 +25,7 @@ public class InvitationRepo {
                 }).addOnFailureListener(callback::onFailure);
     }
 
-    /** FIX: cek apakah orang yang mau diundang ternyata SUDAH mengundang kita (undangan masih pending). */
+    //cek apakah orang yang mau diundang ternyata SUDAH mengundang kita (undangan masih pending)
     public void hasPendingInvitationFrom(String otherUid, String myUid, RepoCallback<Boolean> callback){
         if (otherUid == null || myUid == null){
             callback.onSuccess(false);

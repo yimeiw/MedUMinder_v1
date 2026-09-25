@@ -68,8 +68,7 @@ public class CaregiverHomeFragment extends Fragment {
             labelListConsumer;
     DrawerLayout drawerLayout;
     ImageButton btnSideNav, btnNotif;
-    LinearLayout haveSchedule, noSchedule,  groupGeneralMenu,
-            navDocument, navRiwayat, navStatistik;
+    LinearLayout haveSchedule, noSchedule,  groupGeneralMenu, navRiwayat, navStatistik;
     RecyclerView rvTodaySchedule, rvDrawerConsumer;
     DrawerConsumerAdapter drawerConsumerAdapter;
     MaterialButton btnRemindConsumer;
@@ -88,7 +87,7 @@ public class CaregiverHomeFragment extends Fragment {
     private String nextScheduleMedName;
     private String nextScheduleId;
     private ListenerRegistration nextScheduleListener, todayScheduleListener;
-    private ListenerRegistration invitationListener; // FIX: popup undangan realtime
+    private ListenerRegistration invitationListener; // popup undangan realtime
     private Timestamp nextScheduleScheduledAt;
     String targetUid;
     @Override
@@ -242,7 +241,7 @@ public class CaregiverHomeFragment extends Fragment {
             btnRemindConsumer.setOnClickListener(null);
             return;
         } Timestamp now = Timestamp.now();
-        // FIX: ambil juga jadwal yang lewat sedikit (maks 6 jam) karena bisa sedang di-snooze
+        // ambil juga jadwal yang lewat sedikit (maks 6 jam) karena bisa jd lg di-snooze
         Timestamp windowStart = new Timestamp(new Date(now.toDate().getTime() - 6 * 60 * 60 * 1000L));
         nextScheduleListener = db.collection("medication_logs").whereEqualTo("users_id", consumerUid)
                 .whereGreaterThanOrEqualTo("scheduled_at", windowStart).orderBy("scheduled_at").addSnapshotListener((query, error) -> {
@@ -298,7 +297,7 @@ public class CaregiverHomeFragment extends Fragment {
                     noSchedule.setVisibility(View.GONE);
                     nextScheduleId = targetLog.getMedication_schedules_id();
                     nextScheduleScheduledAt = scheduledAt;
-                    Date scheduleDate = targetLog.getEffectiveTime().toDate(); // FIX: waktu setelah snooze
+                    Date scheduleDate = targetLog.getEffectiveTime().toDate();
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                     tvDay.setText(formatDayLabel(scheduleDate));
                     tvTime.setText(sdf.format(scheduleDate));
@@ -324,41 +323,6 @@ public class CaregiverHomeFragment extends Fragment {
                     });
                 });
     }
-//    private void loadNextSchedule(String consumerUid) {
-//        if (nextScheduleListener != null) nextScheduleListener.remove();
-//        Timestamp now = Timestamp.now();
-//        nextScheduleListener = db.collection("medication_logs").whereEqualTo("users_id", consumerUid)
-//                .whereGreaterThanOrEqualTo("scheduled_at", now).orderBy("scheduled_at").limit(1).addSnapshotListener((query, error) -> {
-//                    if (!isAdded() || error != null || query == null) return;
-//                    MedicationLog targetLog = null;
-//                    for (DocumentSnapshot doc : query.getDocuments()){
-//                        MedicationLog log = doc.toObject(MedicationLog.class);
-//                        if (log != null && log.getStatusBasedOnDate() == LogStatus.AKAN_DATANG){
-//                            targetLog = log;
-//                            break;
-//                        }
-//                    } if (targetLog == null){
-//                        haveSchedule.setVisibility(View.GONE);
-//                        noSchedule.setVisibility(View.VISIBLE);
-//                        nextScheduleId = null;
-//                        nextScheduleScheduledAt = targetLog.getScheduled_at();
-//                        return;
-//                    } haveSchedule.setVisibility(View.VISIBLE);
-//                    noSchedule.setVisibility(View.GONE);
-//                    nextScheduleId = targetLog.getMedication_schedules_id();
-//
-//                    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-//                    tvDay.setText(formatDayLabel(targetLog.getScheduled_at().toDate()));
-//                    tvTime.setText(sdf.format(targetLog.getScheduled_at().toDate()));
-//                    resolveMedName(targetLog.getMedication_schedules_id(), (medName, stock, medType) -> {
-//                        if (!isAdded()) return;
-//                        nextScheduleMedName = medName;
-//                        tvtitleCard.setText(medName);
-//                        tvStokNext.setText(getString(R.string.sisa_stok, stock));
-//                        btnRemindConsumer.setOnClickListener(v -> sendReminder(consumerUid, medName));
-//                    });
-//                });
-//    }
     private String formatDayLabel(Date date) {
         Calendar target = Calendar.getInstance();
         target.setTime(date);
@@ -401,8 +365,6 @@ public class CaregiverHomeFragment extends Fragment {
                 confirmation.setSender_uid(caregiver.getAuth_uid());
                 confirmation.setType(NotificationType.Medicine);
                 confirmation.setReference_id(nextScheduleId);
-                // FIX: reference_id di sini adalah ID JADWAL, jadi tandai sebagai notif jadwal
-                // (kalau tidak, halaman detail mengira ini ID log -> toast "riwayat obat sudah tidak ada")
                 confirmation.setIs_new_schedule(true);
                 confirmation.setTarget_role(UserRole.Caregiver.name());
                 confirmation.setTitle(getString(R.string.pengingat_terkirim_title));

@@ -598,12 +598,10 @@ public class MedicineReminderFragment extends Fragment {
         if (name.isEmpty()) {
             namaObat.setError(getString(R.string.nama_obat_wajib_diisi));
             valid = false;
-        }
-        if (freq.isEmpty()) {
+        } if (freq.isEmpty()) {
             freqMinumObat.setError(getString(R.string.frekuensi_minum_obat_wajib_diisi));
             valid = false;
-        }
-        if (radioPil.isChecked()) {
+        } if (radioPil.isChecked()) {
             if (stok.isEmpty()) {
                 stokObat.setError(getString(R.string.stok_obat_wajib_diisi));
                 valid = false;
@@ -627,13 +625,11 @@ public class MedicineReminderFragment extends Fragment {
         if (times.size() != frequency) {
             Toast.makeText(requireContext(), getString(R.string.semua_jam_minum_harus_dipilih), Toast.LENGTH_SHORT).show();
             valid = false;
-        }
-        HashSet<String> unique = new HashSet<>(times);
+        } HashSet<String> unique = new HashSet<>(times);
         if (unique.size() != times.size()) {
             Toast.makeText(requireContext(), getString(R.string.jam_minum_tidak_boleh_sama), Toast.LENGTH_SHORT).show();
             valid = false;
-        }
-        return valid;
+        } return valid;
     }
 
     private ArrayList<String> getSelectedTimes() {
@@ -690,14 +686,10 @@ public class MedicineReminderFragment extends Fragment {
             selfNotif.setIs_read(false);
             notificationRepo.createNotification(selfNotif, new RepoCallback<Void>() {
                 @Override
-                public void onSuccess(Void result) {
-
-                }
+                public void onSuccess(Void result) {}
 
                 @Override
-                public void onFailure(Exception e) {
-
-                }
+                public void onFailure(Exception e) {}
             });
         }
     }

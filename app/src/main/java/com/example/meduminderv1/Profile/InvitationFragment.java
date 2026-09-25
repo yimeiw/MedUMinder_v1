@@ -106,7 +106,7 @@ public class InvitationFragment extends Fragment {
                 if (registered){ // jika user sudah terdaftar
                     if (!isAdded()) return;
                     Toast.makeText(requireContext(), getString(R.string.invitation_berhasil_dikirim), Toast.LENGTH_SHORT).show();
-                    goHome(); // FIX: langsung ke Home, bukan balik ke halaman sebelumnya
+                    goHome(); // langsung ke Home, bukan balik ke halaman sebelumnya
                 } else {
                     if (!isAdded()) return;
                     showShareDialog(email);

@@ -1,10 +1,13 @@
 package com.example.meduminderv1.Repo;
 
 import android.content.Context;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
 import com.example.meduminderv1.Callback.RepoCallback;
+import com.example.meduminderv1.Invitation.Invitation;
+import com.example.meduminderv1.Invitation.InvitationStatus;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
@@ -16,6 +19,7 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class NotificationRepo {
@@ -63,8 +67,10 @@ public class NotificationRepo {
         db.collection("notifications").document(id).set(notification)
                 .addOnSuccessListener(unused ->
                         callback.onSuccess(null)
-                )
-                .addOnFailureListener(callback::onFailure);
+                ).addOnFailureListener(e -> {
+                    Log.e("NOTIF_REPO", "Gagal buat notifikasi untuk " + notification.getReceiver_uid(), e);
+                    callback.onFailure(e);
+                });
     }
 
     public void createStockNotification(String receiverUid, String medicationId, String medicineName, RepoCallback<Void> callback) {
@@ -207,23 +213,64 @@ public class NotificationRepo {
                     }).addOnFailureListener(e -> { if (callback != null) callback.onFailure(e); });
         }).addOnFailureListener(e -> { if (callback != null) callback.onFailure(e); });
     }
-    public ListenerRegistration listenNotification(String uid, UserRole role, NotificationListListener callback){
-        return db.collection("notifications").whereEqualTo("receiver_uid", uid)
+    public ListenerRegistration listenNotification(String uid, UserRole role, NotificationListListener callback) {
+        List<Notification> fromNotif = new ArrayList<>();
+        List<Notification> fromInvite = new ArrayList<>();
+
+        Runnable merge = () -> {
+            List<Notification> combined = new ArrayList<>();
+            combined.addAll(fromNotif);
+            combined.addAll(fromInvite);
+            Collections.sort(combined, (a, b) -> {
+                Timestamp ta = a.getCreated_at(), tb = b.getCreated_at();
+                if (ta == null || tb == null) return 0;
+                return tb.compareTo(ta); // terbaru dulu
+            });
+            callback.onChanged(combined);
+        };
+
+        ListenerRegistration regNotif = db.collection("notifications")
+                .whereEqualTo("receiver_uid", uid)
                 .orderBy("created_at", Query.Direction.DESCENDING)
                 .addSnapshotListener((snap, error) -> {
                     if (error != null || snap == null) return;
-                    List<Notification> list = new ArrayList<>();
+                    fromNotif.clear();
                     for (DocumentSnapshot doc : snap.getDocuments()) {
-                        Notification notification = doc.toObject(Notification.class);
-                        if (notification == null) continue;
-                        notification.setNotification_id(doc.getId());
-                        UserRole effectiveRole = notification.getTargetRoleEnum();
-                        if (effectiveRole == null || effectiveRole == role) {
-                            list.add(notification);
-                        }
+                        Notification n = doc.toObject(Notification.class);
+                        if (n == null) continue;
+                        n.setNotification_id(doc.getId());
+                        UserRole effectiveRole = n.getTargetRoleEnum();
+                        if (effectiveRole == null || effectiveRole == role) fromNotif.add(n);
                     }
-                    callback.onChanged(list);
+                    merge.run();
                 });
+
+        ListenerRegistration regInvite = db.collection("invitations")
+                .whereEqualTo("receiver_uid", uid)
+                .addSnapshotListener((snap, error) -> {
+                    if (error != null || snap == null) return;
+                    fromInvite.clear();
+                    for (DocumentSnapshot doc : snap.getDocuments()) {
+                        Invitation inv = doc.toObject(Invitation.class);
+                        if (inv == null) continue;
+                        Notification n = new Notification();
+                        n.setNotification_id("invite_" + doc.getId()); // prefix biar unik & bisa dibedain di klik handler
+                        n.setInvitation_id(doc.getId());
+                        n.setType(NotificationType.Invitation);
+                        n.setSender_uid(inv.getSender_uid());
+                        n.setReceiver_uid(inv.getReceiver_uid());
+                        n.setTitle(context.getString(R.string.undangan_baru_title));
+                        n.setMessage(context.getString(R.string.sender_mengundang_anda_msg,
+                                inv.getSender_name(), inv.getInvite_role().name()));
+                        n.setCreated_at(inv.getCreated_at());
+                        n.setIs_read(inv.getStatus() != InvitationStatus.Pending); // anggap "read" begitu direspon
+                        fromInvite.add(n);
+                    }
+                    merge.run();
+                });
+
+        // bungkus dua listener supaya bisa di-remove bareng
+        return () -> { regNotif.remove(); regInvite.remove(); };
     }
     public interface NotificationListListener {
         void onChanged(List<Notification> list);

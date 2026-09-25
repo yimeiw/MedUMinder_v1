@@ -30,7 +30,7 @@ public class AppointmentPreReminderNotifReceiver extends BroadcastReceiver {
             notif.put("receiver_uid", consumerUid);
             notif.put("type", "Appointment");
             notif.put("title", context.getString(R.string.reminder_appointment_menit_caregiver_title));
-            notif.put("message", context.getString(R.string.reminder_appointment_menit_caregiver_title) + " " + title + ".");
+            notif.put("message", context.getString(R.string.reminder_appointment_menit_msg, durasiText, title));
             notif.put("target_role", UserRole.Consumer);
             notif.put("reference_id", appointmentId);
             notif.put("is_read", false);
@@ -48,7 +48,7 @@ public class AppointmentPreReminderNotifReceiver extends BroadcastReceiver {
                         notifCaregiver.put("receiver_uid", caregiverUid);
                         notifCaregiver.put("type", "Appointment");
                         notifCaregiver.put("title", context.getString(R.string.reminder_appointment_menit_caregiver_title));
-                        notifCaregiver.put("message", context.getString(R.string.reminder_appointment_menit_caregiver_msg, offsetMinutes, consumerName, title));
+                        notifCaregiver.put("message", context.getString(R.string.reminder_appointment_menit_caregiver_msg, durasiText, consumerName, title));
                         notifCaregiver.put("target_role", UserRole.Caregiver);
                         notifCaregiver.put("reference_id", appointmentId);
                         notifCaregiver.put("consumer_uid", consumerUid);

@@ -76,24 +76,6 @@ public class NotificationFragment extends Fragment {
         return view;
     }
 
-    private void loadNotification() {
-        authManager.loadNotification(new AuthCallback<List<Notification>>() {
-            @Override
-            public void onSuccess(List<Notification> result) {
-                if (!isAdded()) return;
-                adapter.updateData(result);
-                toggleEmptyState(result);
-            }
-
-            @Override
-            public void onFailure(String message) {
-                if (!isAdded()) return;
-                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
-                toggleEmptyState(null);
-            }
-        });
-    }
-
     private void toggleEmptyState(List<Notification> result) {
         boolean isEmpty = result == null || result.isEmpty();
         stateNoNotif.setVisibility(isEmpty ? View.VISIBLE : View.GONE);

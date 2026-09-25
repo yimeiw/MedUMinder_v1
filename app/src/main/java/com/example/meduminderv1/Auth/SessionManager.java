@@ -20,9 +20,6 @@ public class SessionManager {
         }
         return instance;
     }
-    public boolean isLoggedIn(){
-        return auth.getCurrentUser() != null;
-    }
     public User getUser(){
         return currentUser;
     }
@@ -32,23 +29,6 @@ public class SessionManager {
     public void clearSession(){
         currentUser = null;
         auth.signOut();
-    }
-    public void refreshCurrentUser(UserRepository repo, RepoCallback<User> callback){
-        if (currentUser == null){
-            callback.onFailure(new Exception("Session kosong"));
-            return;
-        } repo.getUserbyUid(currentUser.getAuth_uid(), new RepoCallback<User>() {
-            @Override
-            public void onSuccess(User result) {
-                currentUser = result;
-                callback.onSuccess(result);
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                callback.onFailure(e);
-            }
-        });
     }
     public void setActiveConsumerUid(String uid){
         this.activeConsumerUid = uid;

@@ -45,12 +45,10 @@ public class EditAppointmentFragment extends Fragment {
     EditText namaAppointment, location_input;
     MaterialButton btnSaveAppoint;
     View consumerPickerRoot;
-
     FirebaseFirestore db;
     NotificationRepo notificationRepo;
     CareRelationshipRepo careRelationshipRepo;
     Calendar selectedCalendar;
-
     private String appointmentId;
     private String targetUid;
     private boolean isDatePicked = false;
@@ -95,7 +93,6 @@ public class EditAppointmentFragment extends Fragment {
         }
 
         tvDate.setOnClickListener(v -> {
-            Calendar today = Calendar.getInstance();
             DatePickerDialog dialog = new DatePickerDialog(requireContext(), (dp, year, month, day) -> {
                 selectedCalendar.set(Calendar.YEAR, year);
                 selectedCalendar.set(Calendar.MONTH, month);
@@ -181,9 +178,6 @@ public class EditAppointmentFragment extends Fragment {
         selectedCalendar.set(Calendar.SECOND, 0);
         selectedCalendar.set(Calendar.MILLISECOND, 0);
         Timestamp appointmentAt = new Timestamp(selectedCalendar.getTime());
-        final String snapshotDetail = new SimpleDateFormat("EEEE, dd MMM yyyy", Locale.getDefault()).format(appointmentAt.toDate())
-                        + " • "
-                        + new SimpleDateFormat("HH:mm", Locale.getDefault()).format(appointmentAt.toDate());
         db.collection("appointments").document(appointmentId)
                 .update(
                         "title", nameAppoint,
@@ -236,7 +230,7 @@ public class EditAppointmentFragment extends Fragment {
             notifToConsumer.setSnapshot_name(title);
             notifToConsumer.setSnapshot_at(appointmentAt);
             notifToConsumer.setTarget_role(UserRole.Consumer.name());
-            // FIX: simpan id appointment, supaya halaman detail tahu appointment MANA yang diperbarui
+            // simpan id appointment, supaya halaman detail tahu appointment mana yang diperbarui
             notifToConsumer.setReference_id(appointmentId);
             notifToConsumer.setIs_read(false);
             notificationRepo.createNotification(notifToConsumer, new RepoCallback<Void>() {
@@ -258,7 +252,7 @@ public class EditAppointmentFragment extends Fragment {
                     notifToCaregiver.setType(NotificationType.Appointment);
                     notifToCaregiver.setTitle(caregiverNotifTitle);
                     notifToCaregiver.setMessage(isForSelf ? caregiverNotifMsgSelf : caregiverNotifMsgOther);
-                    notifToCaregiver.setReference_id(appointmentId); // FIX: sama seperti di atas
+                    notifToCaregiver.setReference_id(appointmentId);
                     notifToCaregiver.setTitle_key("jadwal_appointment_diperbarui_title");
                     notifToCaregiver.setMessage_key(isForSelf
                             ? "consumer_mengubah_jadwal_appointment_msg"

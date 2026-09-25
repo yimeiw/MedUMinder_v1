@@ -29,16 +29,9 @@ public class InvitationPopupHelper {
             }
 
             @Override
-            public void onFailure(String message) { /* diamkan, tidak ganggu UX home */ }
+            public void onFailure(String message) {  }
         });
     }
-
-    /**
-     * FIX: dengarkan undangan baru secara REALTIME.
-     * Sebelumnya popup hanya dicek saat onResume, jadi kalau user sedang di Home
-     * lalu ada undangan masuk, popup tidak muncul sama sekali.
-     * Panggil di onResume, dan hapus (remove) di onPause.
-     */
     public static com.google.firebase.firestore.ListenerRegistration listen(Fragment fragment, AuthManager authManager) {
         User user = authManager.getCurrentUser();
         if (user == null || user.getAuth_uid() == null) return null;
@@ -58,7 +51,7 @@ public class InvitationPopupHelper {
     }
 
     private static void showPopup(Fragment fragment, AuthManager authManager, Invitation invitation) {
-        // FIX CRASH: jangan tampilkan popup kalau halaman (fragment) sudah tidak aktif
+        // jangan tampilkan popup kalau halaman (fragment) sudah tidak aktif
         if (!fragment.isAdded() || fragment.getView() == null || fragment.getActivity() == null) return;
         if (currentDialog != null && currentDialog.isShowing()) return;
 
@@ -69,9 +62,6 @@ public class InvitationPopupHelper {
                         invitation.getSender_name(), invitation.getInvite_role().name()))
                 .setCancelable(false)
                 .setPositiveButton(activity.getString(R.string.lihat), (d, w) -> {
-                    // FIX CRASH: sebelumnya memakai fragment lama (HomeFragment yang sudah dibuang
-                    // saat role berubah / Home dibuat ulang) -> "not associated with a fragment manager".
-                    // Sekarang ambil NavController dari Activity, yang selalu masih ada.
                     openNotificationPage(activity);
                 })
                 .setNegativeButton(activity.getString(R.string.nanti), null);
@@ -79,8 +69,6 @@ public class InvitationPopupHelper {
         currentDialog = dialog;
         dialog.setOnDismissListener(d -> currentDialog = null);
 
-        // FIX: kalau halaman Home ditutup / dibuat ulang, tutup juga popup-nya
-        // (supaya tidak ada popup "yatim" yang tombolnya menunjuk ke halaman yang sudah hilang)
         fragment.getViewLifecycleOwner().getLifecycle().addObserver(
                 (androidx.lifecycle.LifecycleEventObserver) (owner, event) -> {
                     if (event == androidx.lifecycle.Lifecycle.Event.ON_DESTROY && dialog.isShowing()) {
@@ -96,7 +84,6 @@ public class InvitationPopupHelper {
         }
     }
 
-    /** Buka halaman notifikasi lewat NavController milik Activity (aman walau fragment lama sudah hilang). */
     private static void openNotificationPage(androidx.fragment.app.FragmentActivity activity) {
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) return;
         try {
@@ -108,23 +95,5 @@ public class InvitationPopupHelper {
         } catch (Exception e) {
             android.util.Log.e("InvitationPopup", "Gagal buka halaman notifikasi", e);
         }
-    }
-
-    private static void respond(Fragment fragment, AuthManager authManager, Invitation invitation, boolean accept) {
-        authManager.linkAndRespondInvitation(invitation.getInvitation_id(), accept, new AuthCallback<User>() {
-            @Override
-            public void onSuccess(User result) {
-                if (!fragment.isAdded()) return;
-                String msg = accept ? fragment.getString(R.string.anda_menerima_undangan_dari_msg, invitation.getSender_name())
-                        : fragment.getString(R.string.anda_menolak_undangan_dari_msg, invitation.getSender_name());
-                Toast.makeText(fragment.requireContext(), msg, Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onFailure(String message) {
-                if (fragment.isAdded())
-                    Toast.makeText(fragment.requireContext(), message, Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 }

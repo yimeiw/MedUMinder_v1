@@ -30,7 +30,7 @@ public class MedicationAlarmReceiver extends BroadcastReceiver {
         String type = intent.getStringExtra("type");
         long triggerAt = intent.getLongExtra("trigger_at", System.currentTimeMillis());
 
-        // FIX: rescheduleNextDay sekarang cuma butuh 4 argumen -- versi baru
+        // rescheduleNextDay sekarang cuma butuh 4 argumen -- versi baru
         // AlarmSchedulerHelper mengambil ulang data schedule (is_active,
         // end_date) langsung dari Firestore, bukan dari occurrenceIndex/
         // endMillis lama yang dititipkan di intent alarm (itu sudah tidak

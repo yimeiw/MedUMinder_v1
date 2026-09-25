@@ -67,7 +67,6 @@ public class EditMedicineFragment extends Fragment {
     MedicationRepo medicationRepo;
     Calendar selectedCalendar;
     MaterialButton btnUpdateReminder;
-
     SessionManager sessionManager;
     User user;
 
@@ -75,7 +74,6 @@ public class EditMedicineFragment extends Fragment {
     private String scheduleId, medicationIdArg, notificationId, medicationId;
     private boolean endDateSelected = false;
     private List<String> originalTimesOfDay = new ArrayList<>();
-
     NotificationRepo notificationRepo;
     CareRelationshipRepo careRelationshipRepo;
     private String targetUid;
@@ -267,30 +265,6 @@ public class EditMedicineFragment extends Fragment {
                 .addOnFailureListener(e ->
                         Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show());
     }
-
-    private String buildChangeSummary(List<String> newTimes, String newStock, Timestamp newEnd) {
-        List<String> parts = new ArrayList<>();
-
-        List<String> oldTimes = new ArrayList<>(originalTimesOfDay);
-        Collections.sort(oldTimes);
-        if (!oldTimes.equals(newTimes)) {
-            parts.add(getString(R.string.ubah_jam_minum, TextUtils.join(", ", newTimes)));
-        }
-
-        SimpleDateFormat f = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-        String oldEnd = originalEndMillis == 0 ? "" : f.format(new Date(originalEndMillis));
-        String newEndStr = newEnd == null ? "" : f.format(newEnd.toDate());
-        if (!oldEnd.equals(newEndStr)) {
-            parts.add(newEndStr.isEmpty()
-                    ? getString(R.string.ubah_end_date_dihapus)
-                    : getString(R.string.ubah_end_date, newEndStr));
-        }
-
-        if (!originalStock.equals(newStock)) {
-            parts.add(getString(R.string.ubah_stok, newStock));
-        }
-        return TextUtils.join("; ", parts);
-    }
     private void notifyReminderUpdated(String medName, List<String> changeItems, int frequency,
                                        List<String> times, Integer snapshotStock) {
         if (!isAdded()) return;
@@ -298,8 +272,6 @@ public class EditMedicineFragment extends Fragment {
         if (changeItems == null || changeItems.isEmpty()) return;
 
         final String changes = NotificationText.buildChanges(requireContext(), changeItems);
-
-
         final String actorUid = user.getAuth_uid();
         final String actorName = user.getName() != null ? user.getName() : "";
         final boolean isForSelf = targetUid.equals(actorUid);
@@ -536,7 +508,6 @@ public class EditMedicineFragment extends Fragment {
         }
         return 0;
     }
-
 
     private String convertNumberToFrequency(int frequency) {
         String[] options = getResources().getStringArray(R.array.frekuensi_array);

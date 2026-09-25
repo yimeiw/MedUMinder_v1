@@ -33,14 +33,10 @@ import java.util.List;
 
 public class NotificationSettingsFragment extends Fragment {
     private ImageButton btnBack;
-    private AutoCompleteTextView dropdownRingtone;
-    private AutoCompleteTextView dropdownReminderMessage;
-    private AutoCompleteTextView dropdownSnoozeDuration;
-    private AutoCompleteTextView dropdownAppointmentReminder;
+    private AutoCompleteTextView dropdownRingtone, dropdownReminderMessage,
+            dropdownSnoozeDuration, dropdownAppointmentReminder;
     private SwitchCompat switchRepeatReminder;
-    private View layoutReminderMessage;
-    private View layoutAppointmentReminder;
-    private View layoutRepeatReminder;
+    private View layoutReminderMessage, layoutAppointmentReminder, layoutRepeatReminder;
     private SharedPreferences pref;
     private Ringtone previewRingtone;
     private static final String PREF_NAME = "notification_settings";

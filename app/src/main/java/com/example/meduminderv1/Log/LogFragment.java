@@ -73,17 +73,14 @@ public class LogFragment extends Fragment {
     //List semua data dari firestore
     private List<MedicationLog> allMedLog = new ArrayList<>();
     private List<Appointment> allAppointLog = new ArrayList<>();
-
     //List hasil filter
     private List<MedicationLog> medLog = new ArrayList<>();
     private List<Appointment> appointLog = new ArrayList<>();
-
     private MedicationLogAdapter medAdapter;
     private AppointmentLogAdapter appointAdapter;
     private FirebaseFirestore db;
     MaterialButton btnAll, btnUpcoming, btnTaken, btnMissed;
     ImageButton btnBack;
-
     private enum FilterType { ALL, UPCOMING, TAKEN, MISSED }
     private enum LogType { MEDICATION, APPOINTMENT }
     private FilterType currentFilter = FilterType.ALL;

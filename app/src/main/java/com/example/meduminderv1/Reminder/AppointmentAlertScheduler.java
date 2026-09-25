@@ -8,7 +8,6 @@ import android.content.SharedPreferences;
 import android.os.Build;
 
 public class AppointmentAlertScheduler {
-    private static final long PRE_OFFSET_MS = 5 * 60 * 1000L;
     private static final long MISSED_DELAY_MS = 5 * 60 * 1000L;
     public static void scheduleAlerts(Context context, String appointmentId, String title, long appointmentAtMillis){
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
@@ -45,7 +44,7 @@ public class AppointmentAlertScheduler {
     }
 
     /**
-     * FIX: pindahkan cek "appointment terlewat" ke (waktu snooze + 5 menit).
+     * pindahkan cek "appointment terlewat" ke (waktu snooze + 5 menit).
      * Sebelumnya cek ini tetap di (jam asli + 5 menit) = PAS jam snooze kalau ditunda 5 menit,
      * dan receiver-nya mematikan bunyi alarm -> alarm snooze "tidak keluar".
      */
@@ -72,20 +71,6 @@ public class AppointmentAlertScheduler {
         Intent missedIntent = new Intent(context, AppointmentMissedNotifReceiver.class);
         am.cancel(PendingIntent.getBroadcast(context, (appointmentId + "_missed").hashCode(), missedIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
-    }
-
-    private static long getPreReminderOffsetMs(Context context) {
-        SharedPreferences pref = context.getSharedPreferences("notification_settings", Context.MODE_PRIVATE);
-        String saved = pref.getString("appointment_reminder", "30 menit");
-        long minutes;
-        switch (saved){
-            case "1 jam": minutes = 60;
-            break;
-            case "2 jam": minutes = 120;
-            break;
-            default: minutes = 30;
-            break;
-        } return minutes * 60 * 1000L;
     }
 }
 

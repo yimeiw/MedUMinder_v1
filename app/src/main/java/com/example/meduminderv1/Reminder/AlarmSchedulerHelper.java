@@ -27,7 +27,7 @@ public class AlarmSchedulerHelper {
     private static final String TIME_FORMAT = "HH:mm";
     private static final long DEFAULT_WINDOW_MILLIS = 7L * 24 * 60 * 60 * 1000;
     private static final long PRE_REMINDER_OFFSET_MS = 5 * 60 * 1000L;
-    // FIX: dulu private, tapi StatistikRepo.java butuh baca konstanta ini
+    // dulu private, tapi StatistikRepo.java butuh baca konstanta ini
     // dari luar kelas (buat tahu "berapa lama setelah jadwal baru dianggap
     // benar-benar terlewat"), jadi sekarang dibuka jadi public.
     public static final long MISSED_CHECK_DELAY_MS = 15 * 60 * 1000L;
@@ -63,7 +63,7 @@ public class AlarmSchedulerHelper {
         scheduleAllInternal(context, scheduleId, namaObat, timesOfDay, endMillis);
     }
 
-    // FIX: dulu endDateMillis == 0 (tidak ada end_date) dan endDateMillis di masa
+    // kondisi dulu, endDateMillis == 0 (tidak ada end_date) dan endDateMillis di masa
     // lalu (end_date sudah lewat) sama-sama masuk cabang "else" dan dikasih
     // window baru 7 hari dari SEKARANG. Akibatnya, schedule yang end_date-nya
     // sudah lewat (tapi is_active masih true di Firestore) ikut di-reschedule
@@ -94,7 +94,7 @@ public class AlarmSchedulerHelper {
         return EXPIRED;
     }
 
-    // FIX: dulu ada 2 versi terpisah yang duplikat logic + occurrenceIndex.
+    // dulu ada 2 versi terpisah yang duplikat logic + occurrenceIndex.
     // Sekarang satu jalur, dan yang dipakai sebagai "kunci" occurrence adalah
     // string jam-nya sendiri ("08:00"), BUKAN posisi/index di list. Ini penting
     // karena occurrenceKey ini harus PERSIS SAMA baik pas schedule maupun pas
@@ -134,12 +134,6 @@ public class AlarmSchedulerHelper {
         am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, preTrigger, pi);
     }
 
-    /**
-     * FIX: kode unik alarm "cek terlewat" sekarang ikut TANGGAL.
-     * Sebelumnya kodenya hanya id jadwal + jam, sama untuk hari ini dan besok. Waktu alarm hari ini
-     * berbunyi, aplikasi memasang alarm besok dengan kode yang SAMA, jadi "cek terlewat" hari ini
-     * ikut tertimpa dan tidak pernah jalan.
-     */
     static int missedRequestCode(String scheduleId, String occurrenceKey, long dayMillis) {
         String day = new SimpleDateFormat("yyyyMMdd", Locale.US).format(new Date(dayMillis));
         return (scheduleId + "_missed_" + occurrenceKey + "_" + day).hashCode();
@@ -221,7 +215,7 @@ public class AlarmSchedulerHelper {
         scheduleSingleAlarm(context, appointmentId, appointmentId, title, triggerMillis, triggerMillis, "0", "appointment");
     }
 
-    // FIX: dulu cancelAll cuma cancel alarm UTAMA (MedicationAlarmReceiver),
+    // dulu cancelAll cuma cancel alarm UTAMA (MedicationAlarmReceiver),
     // pre-reminder & missed-check-nya nggak ikut dibatalin -> nyisa alarm liar
     // tiap kali user edit jadwal. Sekarang minta list JAM LAMA (bukan cuma count),
     // dan cancel ketiga jenis alarm per jam lama itu lewat cancelOccurrence().
@@ -231,17 +225,6 @@ public class AlarmSchedulerHelper {
             cancelOccurrence(context, scheduleId, oldTime);
         }
     }
-
-    public static void scheduleSnooze(Context context, String scheduleId, String namaObat,
-                                      long originalScheduledAt, int snoozeMinutes, String type) {
-        long triggerMillis = computeSnoozeUntil(originalScheduledAt, snoozeMinutes);
-        scheduleSnoozeAt(context, scheduleId, namaObat, originalScheduledAt, triggerMillis, type);
-    }
-
-    /**
-     * FIX: waktu snooze dihitung dari yang PALING AKHIR antara "sekarang" dan "jam jadwal".
-     * Contoh: jadwal 02:31, ditunda 5 menit SEBELUM 02:31 -> jadi 02:36 (bukan "sekarang + 5").
-     */
     public static long computeSnoozeUntil(long originalScheduledAt, int snoozeMinutes) {
         long base = Math.max(System.currentTimeMillis(), originalScheduledAt);
         return base + snoozeMinutes * 60L * 1000L;
@@ -254,7 +237,6 @@ public class AlarmSchedulerHelper {
     }
 
     /**
-     * FIX: dipanggil saat obat di-snooze.
      * 1) Kalau jam asli BELUM lewat -> alarm jam asli dibatalkan (supaya tidak bunyi di jam lama),
      *    lalu alarm untuk BESOK di jam yang sama dipasang lagi (supaya jadwal harian tetap jalan).
      * 2) Cek "terlewat" dipindah ke (waktu snooze + 15 menit), supaya tidak mematikan alarm snooze
@@ -279,7 +261,7 @@ public class AlarmSchedulerHelper {
         am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, snoozeUntilMillis + MISSED_CHECK_DELAY_MS, pi);
     }
 
-    /** FIX: sama seperti di atas, tapi untuk appointment. */
+    //sama seperti di atas, tapi untuk appointment.
     public static void applyAppointmentSnooze(Context context, String appointmentId, String title,
                                               long originalAt, long snoozeUntilMillis) {
         if (originalAt > System.currentTimeMillis()) {
@@ -308,7 +290,7 @@ public class AlarmSchedulerHelper {
         }
     }
 
-    // FIX: dulu query cuma filter is_active == true, tanpa peduli end_date.
+    // dulu query cuma filter is_active == true, tanpa peduli end_date.
     // Akibatnya schedule yang end_date-nya sudah lewat (tapi is_active masih
     // true karena belum ada job yang mematikannya) tetap ikut ke-reschedule
     // tiap kali fungsi ini dipanggil (mis. saat permission exact alarm baru
@@ -385,7 +367,7 @@ public class AlarmSchedulerHelper {
     }
 
     /**
-     * FIX: dipanggil setiap kali obat ditandai "dikonsumsi" (dari Home, halaman reminder,
+     * dipanggil setiap kali obat ditandai "dikonsumsi" (dari Home, halaman reminder,
      * notifikasi, atau tombol di notifikasi HP).
      *
      * 1) Matikan alarm yang sedang bunyi + batalkan alarm snooze.
@@ -433,17 +415,7 @@ public class AlarmSchedulerHelper {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
     }
 
-    /** Batalkan cek "terlewat" untuk SATU jadwal di tanggal tertentu saja (tidak menyentuh hari lain). */
-    public static void cancelMissedCheckFor(Context context, String scheduleId, long scheduledAtMillis) {
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager == null) return;
-        String occurrenceKey = new SimpleDateFormat(TIME_FORMAT, Locale.getDefault()).format(new Date(scheduledAtMillis));
-        Intent missedIntent = new Intent(context, MedicationMissedNotifReceiver.class);
-        alarmManager.cancel(PendingIntent.getBroadcast(context, missedRequestCode(scheduleId, occurrenceKey, scheduledAtMillis), missedIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
-    }
-
-    // FIX (baru): pengganti rescheduleNextDay lama yang berbasis occurrenceIndex.
+    // pengganti rescheduleNextDay lama yang berbasis occurrenceIndex.
     // Dipanggil MedicationAlarmReceiver setelah alarm utama berbunyi, supaya
     // alarm untuk jam yang sama terpasang lagi besok. Sengaja mengambil ULANG
     // data schedule dari Firestore (bukan percaya ke data lama yang dititipkan

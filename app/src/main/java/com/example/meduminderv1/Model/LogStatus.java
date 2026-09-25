@@ -9,20 +9,17 @@ public enum LogStatus {
     DIKONSUMSI("dikonsumsi"),
     TERLEWATKAN("terlewatkan"),
     UNKNOWN("");
-
     private final String value;
     LogStatus(String value) {
         this.value = value;
     }
-
     public String getValue() {
         return value;
     }
-
     public static LogStatus fromRaw(String value) {
         if (value == null) return UNKNOWN;
 
-        // FIX: sebelumnya cuma trim().toLowerCase() lalu dicocokkan ke string
+        // sebelumnya cuma trim().toLowerCase() lalu dicocokkan ke string
         // ber-spasi ("akan datang"). Tapi beberapa tempat di app (MainActivity,
         // LogFragment.navigateToReminder) ngirim value.name() dari enum ini
         // sendiri, misalnya "AKAN_DATANG" — hasil toLowerCase()-nya jadi
@@ -32,8 +29,8 @@ public enum LogStatus {
         // Normalisasi underscore -> spasi di sini biar kedua bentuk sama-sama
         // kebaca dengan benar, tanpa perlu ubah semua caller satu-satu.
         //
-        // CATATAN BAHASA: nilai "akan datang" / "dikonsumsi" / "terlewatkan" di
-        // sini adalah nilai INTERNAL (disimpan di database & dipakai untuk
+        // CATATAN: nilai "akan datang" / "dikonsumsi" / "terlewatkan" di
+        // sini itu nilai INTERNAL (disimpan di database & dipakai untuk
         // membandingkan status), BUKAN teks yang dilihat user — jadi sengaja
         // tetap Bahasa Indonesia dan tidak perlu ikut berubah saat bahasa
         // aplikasi diganti. Yang perlu ikut berubah bahasa itu displayLabel().

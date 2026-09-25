@@ -45,19 +45,13 @@ public class ReminderStockFragment extends Fragment {
 
         // Tombol kembali
         btnBack.setOnClickListener(v ->
-                NavHostFragment.findNavController(
-                        ReminderStockFragment.this
-                ).navigateUp()
+                NavHostFragment.findNavController(ReminderStockFragment.this).navigateUp()
         );
 
         // Tombol isi ulang obat
         btnRefillStock.setOnClickListener(v -> {
             if (medicationId == null || medicationId.isEmpty()) {
-                Toast.makeText(
-                        requireContext(),
-                        "Data obat tidak ditemukan",
-                        Toast.LENGTH_SHORT
-                ).show();
+                Toast.makeText(requireContext(), "Data obat tidak ditemukan", Toast.LENGTH_SHORT).show();
                 return;
             }
 

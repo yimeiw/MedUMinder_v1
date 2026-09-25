@@ -90,7 +90,7 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
         holder.currStatus.setText(statusLog.displayLabel(context, false));
         if (medicationLog.getScheduled_at() != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("EEEE, dd MMM - HH:mm", Locale.getDefault());
-            // FIX: tampilkan waktu setelah snooze (kalau ada)
+            // tampilkan waktu setelah snooze (kalau ada)
             String dateTimeText = sdf.format(medicationLog.getEffectiveTime().toDate());
             holder.scheduledAt.setText(dateTimeText);
         }

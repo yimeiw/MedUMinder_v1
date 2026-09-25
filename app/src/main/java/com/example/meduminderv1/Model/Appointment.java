@@ -8,9 +8,6 @@ public class Appointment {
     private String docId;
     private String users_id;
     private String status;
-    public LogStatus getStatusEnum() {
-        return LogStatus.fromRaw(status);
-    }
     private String address;
     private String title;
     private String created_by;
@@ -19,15 +16,9 @@ public class Appointment {
     private Timestamp created_at;
     private Timestamp updated_at;
     private Timestamp deleted_at;
-    private Timestamp snoozed_until; // FIX: waktu baru setelah di-snooze
-    private Long snooze_count;
+    private Timestamp snoozed_until; // waktu baru setelah di-snooze
 
-    public Timestamp getSnoozed_until() { return snoozed_until; }
-    public void setSnoozed_until(Timestamp snoozed_until) { this.snoozed_until = snoozed_until; }
-    public Long getSnooze_count() { return snooze_count; }
-    public void setSnooze_count(Long snooze_count) { this.snooze_count = snooze_count; }
-
-    /** Waktu yang ditampilkan: pakai waktu snooze kalau ada. */
+    //waktu yg ditampilkan (pake yg snooze kalau ad snooze)
     @com.google.firebase.firestore.Exclude
     public Timestamp getDisplayTime() {
         if (snoozed_until != null && appointment_at != null && snoozed_until.compareTo(appointment_at) > 0) {

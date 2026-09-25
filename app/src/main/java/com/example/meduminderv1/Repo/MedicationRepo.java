@@ -127,82 +127,36 @@ public class MedicationRepo {
                                 if (!shouldNotify) {
                                     callback.onSuccess(null);
                                     return;
-                                }
-
-                                String medicineName =
-                                        med.getCustom_medicine_name();
+                                } String medicineName = med.getCustom_medicine_name();
 
                                 // Kalau obat custom
-                                if (medicineName != null
-                                        && !medicineName.trim().isEmpty()) {
-
-                                    createStockNotification(
-                                            med,
-                                            medicationId,
-                                            medicineName,
-                                            callback
-                                    );
+                                if (medicineName != null && !medicineName.trim().isEmpty()) {
+                                    createStockNotification(med, medicationId, medicineName, callback);
                                     return;
                                 }
 
                                 // Kalau obat dari catalog
-                                if (med.getCatalog_id() != null
-                                        && !med.getCatalog_id().trim().isEmpty()) {
-
+                                if (med.getCatalog_id() != null && !med.getCatalog_id().trim().isEmpty()) {
                                     db.collection("medicine_catalog")
                                             .document(med.getCatalog_id())
-                                            .get()
-                                            .addOnSuccessListener(catalogSnap -> {
-
-                                                MedicineCatalog catalog =
-                                                        catalogSnap.toObject(
-                                                                MedicineCatalog.class
-                                                        );
-
+                                            .get().addOnSuccessListener(catalogSnap -> {
+                                                MedicineCatalog catalog = catalogSnap.toObject(MedicineCatalog.class);
                                                 String name = "Obat";
-
-                                                if (catalog != null
-                                                        && catalog.getNama_obat() != null) {
+                                                if (catalog != null && catalog.getNama_obat() != null) {
                                                     name = catalog.getNama_obat();
-                                                }
-
-                                                createStockNotification(
-                                                        med,
-                                                        medicationId,
-                                                        name,
-                                                        callback
-                                                );
-                                            })
-                                            .addOnFailureListener(
-                                                    callback::onFailure
-                                            );
-
+                                                } createStockNotification(med, medicationId, name, callback);
+                                            }).addOnFailureListener(callback::onFailure);
                                     return;
                                 }
-
                                 // Fallback
-                                createStockNotification(
-                                        med,
-                                        medicationId,
-                                        "Obat",
-                                        callback
-                                );
-                            })
-                            .addOnFailureListener(callback::onFailure);
-
-                })
-                .addOnFailureListener(callback::onFailure);
+                                createStockNotification(med, medicationId, "Obat", callback);
+                            }).addOnFailureListener(callback::onFailure);
+                }).addOnFailureListener(callback::onFailure);
     }
 
     private void createStockNotification(Medication med, String medicationId, String medicineName, RepoCallback<Void> callback) {
         NotificationRepo notificationRepo = new NotificationRepo(context);
-
-        notificationRepo.createStockNotification(
-                med.getUsers_id(),
-                medicationId,
-                medicineName,
-                callback
-        );
+        notificationRepo.createStockNotification(med.getUsers_id(), medicationId, medicineName, callback);
     }
     public void markTakenAndDecrement(String logId, String medId, RepoCallback<Void> callback){
         markLogAsTaken(logId, new RepoCallback<Void>() {

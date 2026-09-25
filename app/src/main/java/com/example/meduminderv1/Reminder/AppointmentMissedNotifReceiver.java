@@ -93,8 +93,7 @@ public class AppointmentMissedNotifReceiver extends BroadcastReceiver {
                         writes.add(db.collection("notifications").add(n));
                     }
                     Tasks.whenAllComplete(writes).addOnCompleteListener(t -> pendingResult.finish());
-                })
-                .addOnFailureListener(e ->
+                }).addOnFailureListener(e ->
                         Tasks.whenAllComplete(writes).addOnCompleteListener(t -> pendingResult.finish()));
     }
 }

@@ -292,7 +292,7 @@ public class NotificationDetailFragment extends Fragment {
                     layoutButton.setVisibility(View.GONE);
                     boolean accepted = invitation.getStatus() == InvitationStatus.Accepted;
 
-                    // FIX: tentukan "ini notif milik penerima undangan" dengan lebih aman.
+                    // tentukan "ini notif milik penerima undangan" dengan lebih aman.
                     // Notif undangan asli -> sender_uid = pengirim undangan, receiver_uid = penerima.
                     // Notif hasil (diterima/ditolak) -> receiver_uid = pengirim undangan.
                     // Jadi: kalau receiver notif ini BUKAN pengirim undangan, berarti ini milik penerima.
@@ -309,7 +309,7 @@ public class NotificationDetailFragment extends Fragment {
                     headerNotif.setText(accepted ? getString(R.string.undangan_diterima) : getString(R.string.undangan_ditolak));
                     titleNotif.setText(headerNotif.getText());
 
-                    // FIX: yang merespon undangan = pengirim notif ini (bukan penerimanya / diri sendiri)
+                    // yang merespon undangan = pengirim notif ini (bukan penerimanya / diri sendiri)
                     String responderUid = notification.getSender_uid() != null
                             ? notification.getSender_uid() : invitation.getReceiver_uid();
                     if (responderUid == null){
@@ -409,7 +409,7 @@ public class NotificationDetailFragment extends Fragment {
 
         showMissedActionIfCaregiver();
         if (notification.getScheduled_at() != null) {
-            // FIX: tombol "Sudah diminum" & "Tunda" hanya muncul kalau obat BELUM ditandai dikonsumsi
+            // tombol "Sudah diminum" & "Tunda" hanya muncul kalau obat BELUM ditandai dikonsumsi
             checkLogThenShowReminderButtons();
             loadReminderActionDetail();
         } else if (isNewScheduleNotif()) {
@@ -453,7 +453,6 @@ public class NotificationDetailFragment extends Fragment {
                 Runnable render = (() -> {
                     if (!isAdded()) return;
                     notifDetail.setVisibility(View.VISIBLE);
-                    //bindConsumerName();
 
                     int freqNum = schedule.getFrequency() != null ? schedule.getFrequency() : 0;
                     String frekuensi = getString(R.string.frekuensi_x_sehari_format, freqNum);
@@ -496,7 +495,7 @@ public class NotificationDetailFragment extends Fragment {
         db.collection("medication_logs").document(logId).get().addOnSuccessListener(logDoc -> {
             if (!isAdded()) return;
             if (!logDoc.exists()){
-                // FIX: beberapa notifikasi (mis. "Pengingat terkirim" milik caregiver) menyimpan
+                // beberapa notifikasi (mis. "Pengingat terkirim" milik caregiver) menyimpan
                 // ID JADWAL di reference_id, bukan ID log. Cek dulu apakah itu ID jadwal,
                 // baru anggap "riwayat obat sudah tidak ada" kalau memang tidak ketemu.
                 db.collection("medication_schedules").document(logId).get().addOnSuccessListener(schedSnap -> {
@@ -525,7 +524,6 @@ public class NotificationDetailFragment extends Fragment {
                     Runnable render = () -> {
                         if (!isAdded()) return;
                         notifDetail.setVisibility(View.VISIBLE);
-                        //bindConsumerName();
 
                         SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", Locale.getDefault());
                         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
@@ -862,7 +860,7 @@ public class NotificationDetailFragment extends Fragment {
         String medName = pendingMedName != null ? pendingMedName : "";
         layoutButton.setVisibility(View.GONE);
 
-        // FIX: pakai SnoozeHelper -> waktu snooze tersimpan + notif ke consumer & caregiver
+        // pakai SnoozeHelper -> waktu snooze tersimpan + notif ke consumer & caregiver
         int snoozeMinutes = com.example.meduminderv1.Reminder.SnoozeHelper.snooze(
                 requireContext(), scheduleId, medName, scheduledAtMillis, false, null);
 

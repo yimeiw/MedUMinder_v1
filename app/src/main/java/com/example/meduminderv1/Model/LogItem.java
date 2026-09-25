@@ -9,25 +9,10 @@ public class LogItem {
     private String status;
     private int stock;
     private String location;
-
     private String scheduleId;
     private long scheduledAtMillis;
     private long createdAtMillis;
 
-    public LogItem(){}
-
-    public LogItem(String type,
-                   String namaJadwal,
-                   String time,
-                   String informasiJadwal,
-                   String status){
-
-        this.type = type;
-        this.namaJadwal = namaJadwal;
-        this.time = time;
-        this.informasiJadwal = informasiJadwal;
-        this.status = status;
-    }
     public LogItem(String type,
                    String namaJadwal,
                    String time,

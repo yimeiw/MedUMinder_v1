@@ -2,24 +2,16 @@ package com.example.meduminderv1.Statistik;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
@@ -45,7 +37,6 @@ import com.example.meduminderv1.Repo.StatistikRepo;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
@@ -65,10 +56,6 @@ import java.util.List;
 import java.util.Locale;
 
 public class StatistikFragment extends Fragment {
-
-    private String mParam1;
-    private String mParam2;
-
     private StatistikRepo statistikRepo;
     private Button btnWeekly;
     private Button btnMonthly;
@@ -90,10 +77,6 @@ public class StatistikFragment extends Fragment {
     private int currentPersentase = 0;
     private BarChart adherenceChart;
     private PieChart responseChart;
-    private final ActivityResultLauncher<String> notifPermLauncher = registerForActivityResult(
-            new ActivityResultContracts.RequestPermission(), granted -> {}
-    );
-    private static final String DOWNLOAD_CHANNEL_ID = "report_download_channel";
 
     public StatistikFragment() {
         // Required empty public constructor
@@ -525,7 +508,7 @@ public class StatistikFragment extends Fragment {
         paint.setTextSize(12);
 
         canvas1.drawText(
-                // FIX: string "totalObatDikonsumsi" tidak punya %1$d, jadi angkanya tidak ikut tampil.
+                // string "totalObatDikonsumsi" tidak punya %1$d, jadi angkanya tidak ikut tampil.
                 // Sekarang: label + ": " + jumlah (pakai string jumlah_obat yang ada angkanya)
                 getString(R.string.totalObatDikonsumsi) + ": "
                         + getString(R.string.jumlah_obat, currentTotalDikonsumsi),
@@ -537,7 +520,7 @@ public class StatistikFragment extends Fragment {
         y += 20;
 
         canvas1.drawText(
-                // FIX: string "totalObatDiabaikan" tidak punya %1$d, jadi angkanya tidak ikut tampil.
+                // string "totalObatDiabaikan" tidak punya %1$d, jadi angkanya tidak ikut tampil.
                 // Sekarang: label + ": " + jumlah (pakai string jumlah_obat yang ada angkanya)
                 getString(R.string.totalObatDiabaikan) + ": "
                         + getString(R.string.jumlah_obat, currentTotalDiabaikan),
@@ -549,7 +532,7 @@ public class StatistikFragment extends Fragment {
         y += 20;
 
         canvas1.drawText(
-                // FIX: string "totalObatSnooze" tidak punya %1$d, jadi angkanya tidak ikut tampil.
+                // string "totalObatSnooze" tidak punya %1$d, jadi angkanya tidak ikut tampil.
                 // Sekarang: label + ": " + jumlah (pakai string jumlah_obat yang ada angkanya)
                 getString(R.string.totalObatSnooze) + ": "
                         + getString(R.string.jumlah_obat, currentTotalSnooze),

@@ -215,61 +215,28 @@ public class LogGenerator {
 
                             if (deleteCount >= BATCH_LIMIT) {
                                 // Untuk kasus normal jumlah log tidak akan sebesar ini.
-                                Log.w(
-                                        "LogGenerator",
-                                        "Jumlah future logs melebihi BATCH_LIMIT"
-                                );
+                                Log.w("LogGenerator",
+                                        "Jumlah future logs melebihi BATCH_LIMIT");
                             }
                         }
-                    }
-
-                    if (deleteCount > 0) {
-
+                    } if (deleteCount > 0) {
                         deleteBatch.commit()
                                 .addOnSuccessListener(unused -> {
-
-                                    Log.d(
-                                            "LogGenerator",
-                                            "Future logs berhasil dihapus untuk schedule "
-                                                    + scheduleId
-                                    );
-
+                                    Log.d("LogGenerator", "Future logs berhasil dihapus untuk schedule "
+                                                    + scheduleId);
                                     // Setelah log lama dihapus,
                                     // generate ulang berdasarkan waktu baru.
-                                    ensureLogsGenerated(
-                                            userId,
-                                            scheduleId,
-                                            timesOfDay,
-                                            startDate,
-                                            endDate
-                                    );
-                                })
-                                .addOnFailureListener(e ->
-                                        Log.e(
-                                                "LogGenerator",
-                                                "Gagal menghapus future logs",
-                                                e
-                                        )
-                                );
+                                    ensureLogsGenerated(userId, scheduleId, timesOfDay, startDate, endDate);
+                                }).addOnFailureListener(e ->
+                                        Log.e("LogGenerator",
+                                                "Gagal menghapus future logs", e));
 
                     } else {
-
                         // Tidak ada future log.
-                        ensureLogsGenerated(
-                                userId,
-                                scheduleId,
-                                timesOfDay,
-                                startDate,
-                                endDate
-                        );
+                        ensureLogsGenerated(userId, scheduleId, timesOfDay, startDate, endDate);
                     }
-                })
-                .addOnFailureListener(e ->
-                        Log.e(
-                                "LogGenerator",
-                                "Gagal mengambil medication_logs",
-                                e
-                        )
-                );
+                }).addOnFailureListener(e ->
+                        Log.e("LogGenerator",
+                                "Gagal mengambil medication_logs", e));
     }
 }

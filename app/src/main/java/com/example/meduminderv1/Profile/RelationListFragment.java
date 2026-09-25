@@ -28,7 +28,6 @@ import java.util.List;
 
 public class RelationListFragment extends Fragment {
     public static final String ARG_MODE = "mode"; //mode caregiver atau consumer
-
     ImageButton btnBack, btnAddRelation;
     TextView tvHeader, emptyState;
     RecyclerView rvRelation;

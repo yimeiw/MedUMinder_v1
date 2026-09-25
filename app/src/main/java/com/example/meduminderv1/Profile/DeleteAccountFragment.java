@@ -38,7 +38,6 @@ public class DeleteAccountFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_delete_account, container, false);
 
         authManager = AuthManager.getInstance(requireContext());
-        User user = authManager.getCurrentUser();
 
         btnBack = view.findViewById(R.id.btnBack);
         btnCancel = view.findViewById(R.id.btnCancel);

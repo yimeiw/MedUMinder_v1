@@ -62,7 +62,7 @@ public class AlarmActionReceiver extends BroadcastReceiver {
              */
         } else if ("ACTION_SNOOZE".equals(action)) {
             PendingResult pendingResult = goAsync();
-            // FIX: pakai SnoozeHelper supaya sama dengan snooze dari dalam aplikasi:
+            // pakai SnoozeHelper supaya sama dengan snooze dari dalam aplikasi:
             // durasi ikut Pengaturan Notifikasi, waktu snooze tersimpan, notif pakai bahasa aplikasi
             boolean isAppointment = "appointment".equals(intent.getStringExtra("type"));
             SnoozeHelper.snooze(context, scheduleId, namaObat, scheduledAtMillis, isAppointment,
@@ -100,103 +100,6 @@ public class AlarmActionReceiver extends BroadcastReceiver {
                 pendingResult.finish();
             });
         }
-    }
-
-    private void notifySnoozed(String scheduleId, String namaObat, long scheduledAtMillis, boolean isAppointment) {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        String collection = isAppointment ? "appointments" : "medication_schedules";
-        db.collection(collection).document(scheduleId).get().addOnSuccessListener(doc -> {
-            String consumerUid = doc.getString("users_id");
-            if (consumerUid == null) return;
-            db.collection("users").document(consumerUid).get().addOnSuccessListener(userDoc -> {
-                String consumerName = userDoc.exists() ? userDoc.getString("name") : "Consumer";
-                // notif ke consumer sendiri (konfirmasi)
-                Map<String, Object> selfNotif = new HashMap<>();
-                selfNotif.put("receiver_uid", consumerUid);
-                selfNotif.put("type", isAppointment ? "Appointment" : "Medicine");
-                selfNotif.put("title", "Pengingat Ditunda");
-                selfNotif.put("message", "Pengingat " + namaObat + " ditunda 5 menit.");
-                selfNotif.put("is_read", false);
-                selfNotif.put("created_at", com.google.firebase.Timestamp.now());
-                db.collection("notifications").add(selfNotif);
-
-                // notif ke semua caregiver
-                db.collection("care_relationships").whereEqualTo("consumer_uid", consumerUid).get()
-                        .addOnSuccessListener(query -> {
-                            for (com.google.firebase.firestore.DocumentSnapshot rel : query.getDocuments()) {
-                                String caregiverUid = rel.getString("caregiver_uid");
-                                if (caregiverUid == null) continue;
-                                Map<String, Object> notifCaregiver = new HashMap<>();
-                                notifCaregiver.put("receiver_uid", caregiverUid);
-                                notifCaregiver.put("type", isAppointment ? "Appointment" : "Medicine");
-                                notifCaregiver.put("title", "Consumer Menunda Pengingat");
-                                notifCaregiver.put("message", consumerName + " menunda pengingat " + namaObat + ".");
-                                notifCaregiver.put("consumer_uid", consumerUid);
-                                notifCaregiver.put("consumer_name", consumerName);
-                                notifCaregiver.put("is_read", false);
-                                notifCaregiver.put("created_at", com.google.firebase.Timestamp.now());
-                                db.collection("notifications").add(notifCaregiver);
-                            }
-                        });
-            });
-        });
-    }
-
-    private void updateSnoozeUntil(String scheduleId, long scheduledAtMillis, long snoozeUntilMillis) {
-        String logId = buildLogId(scheduleId, scheduledAtMillis);
-        Map<String, Object> update = new HashMap<>();
-        update.put("snoozed_until", new com.google.firebase.Timestamp(new java.util.Date(snoozeUntilMillis)));
-        FirebaseFirestore.getInstance().collection("medication_logs").document(logId)
-                .set(update, com.google.firebase.firestore.SetOptions.merge());
-    }
-
-    /**
-     * Menambahkan snooze_count pada medication_logs.
-     * <p>
-     * Menggunakan set() + SetOptions.merge() agar dokumen tetap bisa
-     * dibuat apabila medication_logs untuk jadwal tersebut belum ada.
-     */
-    private void incrementSnoozeCount(
-            String scheduleId,
-            long scheduledAtMillis
-    ) {
-
-        String logId =
-                buildLogId(
-                        scheduleId,
-                        scheduledAtMillis
-                );
-
-        Map<String, Object> incrementUpdate =
-                new HashMap<>();
-
-        incrementUpdate.put(
-                "snooze_count",
-                FieldValue.increment(1)
-        );
-
-        FirebaseFirestore.getInstance()
-                .collection("medication_logs")
-                .document(logId)
-                .set(
-                        incrementUpdate,
-                        SetOptions.merge()
-                )
-                .addOnSuccessListener(unused ->
-                        Log.d(
-                                TAG,
-                                "snooze_count berhasil diincrement. logId="
-                                        + logId
-                        )
-                )
-                .addOnFailureListener(e ->
-                        Log.e(
-                                TAG,
-                                "Gagal increment snooze_count. logId="
-                                        + logId,
-                                e
-                        )
-                );
     }
 
     /**
