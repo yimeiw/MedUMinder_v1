@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.util.Log;
 
+import com.example.meduminderv1.Notification.NotificationText;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -73,13 +74,18 @@ public class MedicationAlarmReceiver extends BroadcastReceiver {
             notif.put("receiver_uid", consumerUid);
             notif.put("type", isAppointment ? "Appointment" : "Medicine");
             notif.put("reference_id", scheduleId);
-            notif.put("title", isAppointment ? "Waktunya Appointment" : "Waktunya Minum Obat");
-            notif.put("message", isAppointment
-                    ? "Sekarang jadwal appointment " + namaObat + "."
-                    : "Sekarang waktunya minum obat " + namaObat + ".");
+            String nama = namaObat != null ? namaObat : "";
+            if (isAppointment) {
+                NotificationText.apply(notif, "waktunya_appointment_title",
+                        "sekarang_jadwal_appointment_msg", nama);
+            } else {
+                NotificationText.apply(notif, "waktunya_minum_obat_title",
+                        "sekarang_waktunya_minum_obat_msg", nama);
+            }
             if (!isAppointment) {
                 notif.put("scheduled_at", new Timestamp(new java.util.Date(scheduledAtMillis)));
             }
+            notif.put("target_role", "Consumer");   // notif ini hanya untuk consumer
             notif.put("is_read", false);
             notif.put("created_at", Timestamp.now());
             db.collection("notifications").add(notif);

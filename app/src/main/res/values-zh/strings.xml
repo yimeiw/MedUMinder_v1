@@ -612,6 +612,20 @@
     <string name="ubah_lokasi_appointment">地点改为 %1$s</string>
     <string name="ubah_waktu_appointment">时间改为 %1$s</string>
 
-<!--    <string name="snoozeDuration">延迟提醒时长</string>-->
-<!--    <string name="remindMeBefore">提前提醒时间</string>-->
+    <string name="consumer_menambahkan_jadwal_obat_msg">%1$s 添加了服药日程：%2$s。</string>
+    <string name="caregiver_lain_menambahkan_jadwal_obat_msg">%1$s 为您的 Consumer 添加了服药日程 %2$s。</string>
+
+    <string name="anda_menambahkan_jadwal_minum_obat_msg">您添加了服药日程：%1$s。</string>
+    <string name="pengingat_x_ditunda_full_msg">%1$s 的提醒已延迟。新时间：%2$s。</string>
+    <string name="consumer_menunda_pengingat_full_msg">%1$s 延迟了 %2$s 的提醒。新时间：%3$s。</string>
+    <string name="jadwal_terlewat_title">错过日程</string>
+    <string name="jadwal_obat_anda_terlewat_msg">您错过了服药日程：%1$s。</string>
+    <string name="consumer_melewatkan_jadwal_title">Consumer 错过了日程</string>
+    <string name="consumer_melewatkan_jadwal_obat_msg">%1$s 错过了服药日程：%2$s。</string>
+
+    <string name="anda_menghapus_jadwal_msg">您删除了日程 %1$s。</string>
+
+    <string name="x_menghapus_jadwal_anda_msg">%1$s 删除了您的日程 %2$s。</string>
+    <string name="x_menghapus_jadwal_msg">%1$s 删除了日程 %2$s。</string>
+    <string name="x_menghapus_jadwal_consumer_anda_msg">%1$s 删除了您的 Consumer 的日程 %2$s。</string>
 </resources>

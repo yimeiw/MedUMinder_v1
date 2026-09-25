@@ -7,6 +7,7 @@ import android.util.Log;
 
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.NotificationType;
+import com.example.meduminderv1.Notification.NotificationText;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.Timestamp;
@@ -74,13 +75,14 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
         db.collection("users").document(consumerUid).get().addOnSuccessListener(userDoc -> {
             String name = userDoc.exists() ? userDoc.getString("name") : null;
             final String consumerName = name != null ? name : "Consumer";
+            final String obat = namaObat != null ? namaObat : "";
             final List<Task<?>> writes = new ArrayList<>();
 
             Map<String, Object> notifConsumer = new HashMap<>();
             notifConsumer.put("receiver_uid", consumerUid);
             notifConsumer.put("type", NotificationType.Medicine);
-            notifConsumer.put("title", "Jadwal Terlewat");
-            notifConsumer.put("message", "Jadwal minum obat " + namaObat + " Anda terlewat.");
+            NotificationText.apply(notifConsumer, "jadwal_terlewat_title",
+                    "jadwal_obat_anda_terlewat_msg", obat);
             notifConsumer.put("target_role", UserRole.Consumer);
             notifConsumer.put("reference_id", logId);
             notifConsumer.put("is_read", false);
@@ -95,8 +97,8 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
                             Map<String, Object> n = new HashMap<>();
                             n.put("receiver_uid", caregiverUid);
                             n.put("type", NotificationType.Medicine);
-                            n.put("title", "Consumer Melewatkan Jadwal");
-                            n.put("message", consumerName + " melewatkan jadwal minum obat " + namaObat + ".");
+                            NotificationText.apply(n, "consumer_melewatkan_jadwal_title",
+                                    "consumer_melewatkan_jadwal_obat_msg", consumerName, obat);
                             n.put("target_role", UserRole.Caregiver);
                             n.put("reference_id", logId);
                             n.put("consumer_uid", consumerUid);

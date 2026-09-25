@@ -114,38 +114,43 @@
                         android:focusable="false"/>
 
                     <!-- Durasi Tunda -->
+                    <!-- Durasi Tunda -->
                     <LinearLayout
+                        android:id="@+id/boxSnoozeDuration"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
                         android:background="@drawable/border_wp"
-                        android:paddingHorizontal="20dp">
+                        android:paddingHorizontal="20dp"
+                        android:clickable="true"
+                        android:focusable="true">
 
                         <TextView
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:text="@string/snoozeDuration"
                             android:textColor="?attr/colorOnSurface"
                             android:textSize="15sp"/>
 
                         <AutoCompleteTextView
                             android:id="@+id/dropdownSnoozeDuration"
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:background="@null"
+                            android:background="@android:color/transparent"
                             android:drawableEnd="@drawable/ic_arrow_down"
-                            android:drawablePadding="20dp"
-                            android:gravity="end"
+                            android:drawablePadding="12dp"
                             android:paddingVertical="16dp"
+                            android:paddingStart="10dp"
                             android:inputType="none"
-                            android:textColor="?attr/colorOnSurface"
                             android:text="@string/fiveMin"
+                            android:textColor="?attr/colorOnSurface"
                             android:textSize="15sp"
                             android:clickable="true"
-                            android:focusable="false"/>
+                            android:focusable="false"
+                            android:dropDownAnchor="@id/boxSnoozeDuration"/>
                     </LinearLayout>
                 </LinearLayout>
 
@@ -167,37 +172,42 @@
                         android:textSize="14sp"/>
 
                     <!-- Ingatkan Saya Sebelum -->
+                    <!-- Ingatkan Saya Sebelum -->
                     <LinearLayout
+                        android:id="@+id/boxAppointmentReminder"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
                         android:background="@drawable/border_wp"
-                        android:paddingHorizontal="20dp">
+                        android:paddingHorizontal="20dp"
+                        android:clickable="true"
+                        android:focusable="true">
 
                         <TextView
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:text="@string/remindMeBefore"
                             android:textColor="?attr/colorOnSurface"
                             android:textSize="15sp"/>
 
                         <AutoCompleteTextView
                             android:id="@+id/dropdownAppointmentReminder"
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:background="@null"
+                            android:background="@android:color/transparent"
                             android:drawableEnd="@drawable/ic_arrow_down"
-                            android:drawablePadding="20dp"
-                            android:gravity="end"
+                            android:drawablePadding="12dp"
                             android:paddingVertical="16dp"
-                            android:textColor="?attr/colorOnSurface"
+                            android:paddingStart="10dp"
                             android:inputType="none"
                             android:text="@string/thirtyMin"
+                            android:textColor="?attr/colorOnSurface"
                             android:textSize="15sp"
                             android:clickable="true"
-                            android:focusable="false"/>
+                            android:focusable="false"
+                            android:dropDownAnchor="@id/boxAppointmentReminder"/>
                     </LinearLayout>
                 </LinearLayout>
 

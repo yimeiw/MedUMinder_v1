@@ -611,6 +611,24 @@
     <string name="ubah_lokasi_appointment">location to %1$s</string>
     <string name="ubah_waktu_appointment">time to %1$s</string>
 
-<!--    <string name="snoozeDuration">Snooze Duration</string>-->
-<!--    <string name="remindMeBefore">Remind Me Before</string>-->
+    <string name="consumer_menambahkan_jadwal_obat_msg">%1$s added a medication schedule: %2$s.</string>
+    <string name="caregiver_lain_menambahkan_jadwal_obat_msg">%1$s added a medication schedule %2$s for your consumer.</string>
+
+    <string name="anda_menambahkan_jadwal_minum_obat_msg">You added a medication schedule: %1$s.</string>
+    <string name="pengingat_x_ditunda_full_msg">Reminder for %1$s was snoozed. New time: %2$s.</string>
+    <string name="consumer_menunda_pengingat_full_msg">%1$s snoozed the reminder for %2$s. New time: %3$s.</string>
+    <string name="jadwal_terlewat_title">Missed Schedule</string>
+    <string name="jadwal_obat_anda_terlewat_msg">You missed your medication schedule: %1$s.</string>
+    <string name="consumer_melewatkan_jadwal_title">Consumer Missed a Schedule</string>
+    <string name="consumer_melewatkan_jadwal_obat_msg">%1$s missed the medication schedule: %2$s.</string>
+
+    <string name="anda_menghapus_jadwal_msg">You deleted the schedule %1$s.</string>
+
+    <string name="x_menghapus_jadwal_anda_msg">%1$s deleted your schedule %2$s.</string>
+    <string name="x_menghapus_jadwal_msg">%1$s deleted the schedule %2$s.</string>
+    <string name="x_menghapus_jadwal_consumer_anda_msg">%1$s deleted the schedule %2$s for your consumer.</string>
+
+    <string name="x_menambahkan_jadwal_appointment_anda_msg">%1$s added an appointment %2$s for you.</string>
+    <string name="x_menambahkan_jadwal_appointment_msg">%1$s added an appointment: %2$s.</string>
+    <string name="x_menambahkan_jadwal_appointment_consumer_anda_msg">%1$s added an appointment %2$s for your consumer.</string>
 </resources>

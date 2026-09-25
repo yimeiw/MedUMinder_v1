@@ -15,14 +15,19 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Caregiver.ConsumerPickerHelper;
+import com.example.meduminderv1.Model.CareRelationship;
+import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
+import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.example.meduminderv1.Reminder.AppointmentAlertScheduler;
+import com.example.meduminderv1.Repo.CareRelationshipRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.timepicker.MaterialTimePicker;
@@ -34,6 +39,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -200,15 +206,19 @@ public class AppointmentReminderFragment extends Fragment {
 
         db.collection("appointments").add(appointment).addOnSuccessListener(documentReference -> {
             boolean isForSelf = targetUid.equals(uid);
+            // nama orang yang menambahkan (consumer atau caregiver)
+            User actor = SessionManager.getInstance().getUser();
+            final String actorName = (actor != null && actor.getName() != null && !actor.getName().isEmpty())
+                    ? actor.getName() : (isForSelf ? "Consumer" : "Caregiver");
             Notification notif = new Notification();
             notif.setReceiver_uid(targetUid);
             notif.setSender_uid(uid);
             notif.setReference_id(documentReference.getId());
             notif.setType(NotificationType.Appointment);
-            notif.setTitle(getString(R.string.jadwal_appointment_baru_title));
-            notif.setMessage(isForSelf
-                    ? getString(R.string.anda_menambahkan_jadwal_appointment_msg, nameAppoint)
-                    : getString(R.string.caregiver_menambahkan_jadwal_appointment_anda_msg, nameAppoint));
+            NotificationText.apply(notif, "jadwal_appointment_baru_title",
+                    isForSelf ? "anda_menambahkan_jadwal_appointment_msg"
+                            : "x_menambahkan_jadwal_appointment_anda_msg",
+                    isForSelf ? new String[]{nameAppoint} : new String[]{actorName, nameAppoint});
             notif.setTarget_role(UserRole.Consumer.name());
             notif.setIs_read(false);
             notificationRepo.createNotification(notif, new RepoCallback<Void>() {
@@ -221,15 +231,20 @@ public class AppointmentReminderFragment extends Fragment {
                 selfNotif.setSender_uid(uid);
                 selfNotif.setReference_id(documentReference.getId());
                 selfNotif.setType(NotificationType.Appointment);
-                selfNotif.setTitle(getString(R.string.appointment_ditambahkan_title));
-                selfNotif.setMessage(getString(R.string.anda_menambahkan_jadwal_appointment_consumer_msg, nameAppoint));
+                NotificationText.apply(selfNotif, "appointment_ditambahkan_title",
+                        "anda_menambahkan_jadwal_appointment_consumer_msg", nameAppoint);
                 selfNotif.setTarget_role(UserRole.Caregiver.name());
+                selfNotif.setConsumer_uid(targetUid);   // notif ini tentang consumer mana
                 selfNotif.setIs_read(false);
                 notificationRepo.createNotification(selfNotif, new RepoCallback<Void>() {
                     @Override public void onSuccess(Void result) { }
                     @Override public void onFailure(Exception e) { }
                 });
             }
+            // notif ke SEMUA caregiver consumer ini (kecuali yang menambahkan)
+            notifyCaregiversAppointmentAdded(targetUid, uid, isForSelf, actorName,
+                    nameAppoint, documentReference.getId());
+
             AppointmentAlertScheduler.scheduleAlerts(requireContext(), documentReference.getId(), nameAppoint, selectedCalendar.getTimeInMillis());
             Toast.makeText(requireContext(), getString(R.string.appointment_berhasil_disimpan), Toast.LENGTH_SHORT).show();
             AlarmSchedulerHelper.scheduleAppointment(
@@ -245,5 +260,41 @@ public class AppointmentReminderFragment extends Fragment {
             btnSaveAppoint.setEnabled(true);
         });
 
+    }
+
+    private void notifyCaregiversAppointmentAdded(String consumerUid, String actorUid, boolean isForSelf,
+                                                  String actorName, String nameAppoint, String appointmentId) {
+        // semua data sudah disiapkan di sini; callback di bawah TIDAK memakai getString()/isAdded(),
+        // jadi tetap jalan walaupun halaman sudah ditutup (navigateUp).
+        final NotificationRepo repo = notificationRepo;
+        final String msgKey = isForSelf
+                ? "x_menambahkan_jadwal_appointment_msg"                 // consumer menambah untuk dirinya
+                : "x_menambahkan_jadwal_appointment_consumer_anda_msg";  // caregiver lain yang menambah
+
+        new CareRelationshipRepo().getCaregiverForConsumer(consumerUid, new RepoCallback<List<CareRelationship>>() {
+            @Override
+            public void onSuccess(List<CareRelationship> relations) {
+                for (CareRelationship relation : relations) {
+                    String caregiverUid = relation.getCaregiver_uid();
+                    if (caregiverUid == null || caregiverUid.equals(actorUid)) continue;
+
+                    Notification cgNotif = new Notification();
+                    cgNotif.setReceiver_uid(caregiverUid);
+                    cgNotif.setSender_uid(actorUid);
+                    cgNotif.setReference_id(appointmentId);
+                    cgNotif.setType(NotificationType.Appointment);
+                    cgNotif.setTarget_role(UserRole.Caregiver.name());
+                    cgNotif.setConsumer_uid(consumerUid);   // notif ini tentang consumer mana
+                    cgNotif.setIs_read(false);
+                    NotificationText.apply(cgNotif, "jadwal_appointment_baru_title", msgKey, actorName, nameAppoint);
+                    repo.createNotification(cgNotif, new RepoCallback<Void>() {
+                        @Override public void onSuccess(Void result) { }
+                        @Override public void onFailure(Exception e) { }
+                    });
+                }
+            }
+            @Override
+            public void onFailure(Exception e) { }
+        });
     }
 }

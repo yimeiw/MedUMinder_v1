@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.example.meduminderv1.Model.UserRole;
-import com.example.meduminderv1.R;
+import com.example.meduminderv1.Notification.NotificationText;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -17,20 +17,27 @@ public class AppointmentPreReminderNotifReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String appointmentId = intent.getStringExtra("appointment_id");
-        String title = intent.getStringExtra("title");
+        String extraTitle = intent.getStringExtra("title");
         int offsetMinutes = intent.getIntExtra("offset_minutes", 30);
+        if (appointmentId == null) return;
+
+        final String title = extraTitle != null ? extraTitle : "";
+        // simpan ANGKA menitnya dengan tanda "@min:".
+        // NotificationText yang mengubahnya jadi "30 Menit" / "30 Minutes" / "1 Jam" / "1 Hour"
+        // sesuai bahasa si pembaca.
+        final String durasiArg = NotificationText.minutesArg(offsetMinutes);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        String durasiText = formatDuration(context, offsetMinutes);
 
         db.collection("appointments").document(appointmentId).get().addOnSuccessListener(doc -> {
             String consumerUid = doc.getString("users_id");
             if (consumerUid == null) return;
 
+            // notif ke consumer
             Map<String, Object> notif = new HashMap<>();
             notif.put("receiver_uid", consumerUid);
             notif.put("type", "Appointment");
-            notif.put("title", context.getString(R.string.reminder_appointment_menit_caregiver_title));
-            notif.put("message", context.getString(R.string.reminder_appointment_menit_msg, durasiText, title));
+            NotificationText.apply(notif, "reminder_appointment_menit_title",
+                    "reminder_appointment_full_msg", durasiArg, title);
             notif.put("target_role", UserRole.Consumer);
             notif.put("reference_id", appointmentId);
             notif.put("is_read", false);
@@ -41,14 +48,16 @@ public class AppointmentPreReminderNotifReceiver extends BroadcastReceiver {
                 String consumerName = userDoc.exists() && userDoc.getString("name") != null
                         ? userDoc.getString("name") : "Consumer";
                 db.collection("care_relationships").whereEqualTo("consumer_uid", consumerUid).get().addOnSuccessListener(query -> {
-                    for (DocumentSnapshot rel : query.getDocuments()){
+                    for (DocumentSnapshot rel : query.getDocuments()) {
                         String caregiverUid = rel.getString("caregiver_uid");
                         if (caregiverUid == null) continue;
+
+                        // notif ke caregiver
                         Map<String, Object> notifCaregiver = new HashMap<>();
                         notifCaregiver.put("receiver_uid", caregiverUid);
                         notifCaregiver.put("type", "Appointment");
-                        notifCaregiver.put("title", context.getString(R.string.reminder_appointment_menit_caregiver_title));
-                        notifCaregiver.put("message", context.getString(R.string.reminder_appointment_menit_caregiver_msg, durasiText, consumerName, title));
+                        NotificationText.apply(notifCaregiver, "reminder_appointment_menit_caregiver_title",
+                                "reminder_appointment_caregiver_full_msg", durasiArg, consumerName, title);
                         notifCaregiver.put("target_role", UserRole.Caregiver);
                         notifCaregiver.put("reference_id", appointmentId);
                         notifCaregiver.put("consumer_uid", consumerUid);
@@ -60,11 +69,5 @@ public class AppointmentPreReminderNotifReceiver extends BroadcastReceiver {
                 });
             });
         });
-    }
-    private String formatDuration(Context context, int minutes) {
-        if (minutes % 60 == 0 && minutes >= 60) {
-            return context.getString(R.string.durasi_jam, minutes / 60);
-        }
-        return context.getString(R.string.durasi_menit, minutes);
     }
 }

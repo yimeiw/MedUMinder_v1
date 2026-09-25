@@ -139,7 +139,7 @@ public class NotificationDetailFragment extends Fragment {
 
         String customTitle = NotificationText.title(requireContext(), notification);
         titleNotif.setText((customTitle != null && !customTitle.trim().isEmpty())
-                        ? customTitle : authManager.getNotificationTitle(notification.getType()));
+                ? customTitle : authManager.getNotificationTitle(notification.getType()));
         configureAction();
     }
 
@@ -594,8 +594,9 @@ public class NotificationDetailFragment extends Fragment {
         reminder.setReceiver_uid(consumerUid);
         reminder.setSender_uid(caregiver.getAuth_uid());
         reminder.setType(NotificationType.Medicine);
-        reminder.setTitle(getString(R.string.pengingat_dari_caregiver_title));
-        reminder.setMessage(getString(R.string.caregiver_mengingatkan_periksa_jadwal_msg, caregiver.getName()));
+        NotificationText.apply(reminder, "pengingat_dari_caregiver_title",
+                "caregiver_mengingatkan_periksa_jadwal_msg",
+                caregiver.getName() != null ? caregiver.getName() : "");
         reminder.setTarget_role(UserRole.Consumer.name());
         reminder.setIs_read(false);
         notificationRepo.createNotification(reminder, new RepoCallback<Void>() {
@@ -609,9 +610,10 @@ public class NotificationDetailFragment extends Fragment {
                 confirmation.setReceiver_uid(caregiver.getAuth_uid());
                 confirmation.setSender_uid(caregiver.getAuth_uid());
                 confirmation.setType(NotificationType.Medicine);
-                confirmation.setTitle(getString(R.string.pengingat_terkirim));
-                confirmation.setMessage(getString(R.string.pesan_pengingat_terkirim_consumer));
+                NotificationText.apply(confirmation, "pengingat_terkirim_title",
+                        "pesan_pengingat_terkirim_consumer");
                 confirmation.setTarget_role(UserRole.Caregiver.name());
+                confirmation.setConsumer_uid(consumerUid);   // notif ini tentang consumer mana
                 confirmation.setIs_read(false);
                 notificationRepo.createNotification(confirmation, new RepoCallback<Void>() {
                     @Override public void onSuccess(Void result) { }

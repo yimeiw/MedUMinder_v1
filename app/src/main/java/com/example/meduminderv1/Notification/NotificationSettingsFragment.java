@@ -89,6 +89,11 @@ public class NotificationSettingsFragment extends Fragment {
         layoutReminderMessage = view.findViewById(R.id.layoutReminderMessage);
         layoutAppointmentReminder = view.findViewById(R.id.layoutAppointmentReminder);
         layoutRepeatReminder = view.findViewById(R.id.layoutRepeatReminder);
+
+        view.findViewById(R.id.boxSnoozeDuration)
+                .setOnClickListener(v -> dropdownSnoozeDuration.performClick());
+        view.findViewById(R.id.boxAppointmentReminder)
+                .setOnClickListener(v -> dropdownAppointmentReminder.performClick());
     }
 
         private void setupBackButton() {
@@ -302,14 +307,18 @@ public class NotificationSettingsFragment extends Fragment {
             dropdownSnoozeDuration.setOnItemClickListener(
                     (parent, view, position, id) -> {
                         String selected = snoozeOptions[position];
+                        int[] snoozeMinutes = {5, 10, 30};
 
                         dropdownSnoozeDuration.setText(
                                 selected, false
                         );
 
-                        pref.edit().putString(
-                                KEY_SNOOZE_DURATION, selected
-                        ).apply();
+                        pref.edit()
+                                .putString(KEY_SNOOZE_DURATION, selected)
+                                .putInt("snooze_minutes", snoozeMinutes[position])
+                                .apply();
+
+//                        pref.edit().putString(KEY_SNOOZE_DURATION, selected).apply();
                         dropdownSnoozeDuration.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
                     }
             );
@@ -348,14 +357,17 @@ public class NotificationSettingsFragment extends Fragment {
             dropdownAppointmentReminder.setOnItemClickListener(
                     (parent, view, position, id) -> {
                         String selected = appointmentOptions[position];
-
+                        int[] apptMinutes = {30, 60, 120};
                         dropdownAppointmentReminder.setText(
                                 selected, false
                         );
 
-                        pref.edit().putString(
-                                KEY_APPOINTMENT_REMINDER, selected
-                        ).apply();
+                        pref.edit()
+                                .putString(KEY_APPOINTMENT_REMINDER, selected)
+                                .putInt("appointment_minutes", apptMinutes[position])
+                                .apply();
+
+//                        pref.edit().putString(KEY_APPOINTMENT_REMINDER, selected).apply();
                         dropdownAppointmentReminder.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
                     }
             );

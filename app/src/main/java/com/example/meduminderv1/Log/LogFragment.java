@@ -40,8 +40,10 @@ import com.example.meduminderv1.Model.LogItem;
 import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.Model.MedicationLog;
 import com.example.meduminderv1.Model.MedicineCatalog;
+import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
+import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
@@ -430,10 +432,14 @@ public class LogFragment extends Fragment {
                         notif.setReceiver_uid(relation.getCaregiver_uid());
                         notif.setSender_uid(consumerUid);
                         notif.setType(NotificationType.Appointment);
-                        notif.setTitle(getString(R.string.consumer_sudah_menghadiri_appointment));
-                        notif.setMessage(consumerName + getString(R.string.consumer_telah_menghadiri_appointment) + appointment.getTitle() + ".");
+                        NotificationText.apply(notif, "consumer_sudah_menghadiri_appointment",
+                                "consumer_telah_menghadiri_appointment",
+                                consumerName != null ? consumerName : "Consumer",
+                                appointment.getTitle() != null ? appointment.getTitle() : "");
                         notif.setReference_id(appointment.getDocId());
                         notif.setConsumer_name(consumerName);
+                        notif.setConsumer_uid(consumerUid);
+                        notif.setTarget_role(UserRole.Caregiver.name());
                         notif.setIs_read(false);
                         notificationRepo.createNotification(notif, new RepoCallback<Void>() {
                             @Override public void onSuccess(Void result) { }

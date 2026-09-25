@@ -2,48 +2,80 @@ package com.example.meduminderv1.Notification;
 
 import android.content.Context;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.example.meduminderv1.R;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
 public final class NotificationText {
-    private static final Map<String, Integer> KEYS = new HashMap<>();
-    static {
-        KEYS.put("jadwal_obat_diperbarui_title", R.string.jadwal_obat_diperbarui_title);
-        KEYS.put("anda_memperbarui_jadwal_obat_detail", R.string.anda_memperbarui_jadwal_obat_detail);
-        KEYS.put("caregiver_mengubah_jadwal_obat_anda_detail", R.string.caregiver_mengubah_jadwal_obat_anda_detail);
-        KEYS.put("consumer_mengubah_jadwal_obat_msg", R.string.consumer_mengubah_jadwal_obat_msg);
-        KEYS.put("jadwal_obat_consumer_diperbarui_msg", R.string.jadwal_obat_consumer_diperbarui_msg);
-        KEYS.put("jadwal_appointment_diperbarui_title", R.string.jadwal_appointment_diperbarui_title);
-        KEYS.put("caregiver_mengubah_jadwal_appointment_anda_full", R.string.caregiver_mengubah_jadwal_appointment_anda_full);
-        KEYS.put("consumer_mengubah_jadwal_appointment_msg", R.string.consumer_mengubah_jadwal_appointment_msg);
-        KEYS.put("jadwal_appointment_consumer_diperbarui_msg", R.string.jadwal_appointment_consumer_diperbarui_msg);
-    }
+
+    private static final String TAG = "NotificationText";
+    private static final String MINUTES_PREFIX = "@min:";
 
     private NotificationText() {}
 
+    public static void apply(Notification n, String titleKey, String messageKey, String... args) {
+        n.setTitle_key(titleKey);
+        n.setMessage_key(messageKey);
+        n.setMessage_args(new ArrayList<>(Arrays.asList(args)));
+    }
+
+    public static void apply(Map<String, Object> m, String titleKey, String messageKey, String... args) {
+        m.put("title_key", titleKey);
+        m.put("message_key", messageKey);
+        m.put("message_args", new ArrayList<>(Arrays.asList(args)));
+    }
+
+    public static String minutesArg(int minutes) {
+        return MINUTES_PREFIX + minutes;
+    }
+
+    private static int resId(Context c, String key) {
+        if (key == null || key.isEmpty()) return 0;
+        return c.getResources().getIdentifier(key, "string", c.getPackageName());
+    }
+
     public static String title(Context c, Notification n) {
-        Integer id = n.getTitle_key() != null ? KEYS.get(n.getTitle_key()) : null;
-        return id != null ? c.getString(id) : n.getTitle();   // fallback: notifikasi lama
+        int id = resId(c, n.getTitle_key());
+        return id != 0 ? c.getString(id) : n.getTitle();
     }
 
     public static String message(Context c, Notification n) {
-        Integer id = n.getMessage_key() != null ? KEYS.get(n.getMessage_key()) : null;
-        if (id == null) return n.getMessage();                 // fallback: notifikasi lama
-
+        int id = resId(c, n.getMessage_key());
+        if (id == 0) return n.getMessage();
         List<Object> args = new ArrayList<>();
-        if (n.getMessage_args() != null) args.addAll(n.getMessage_args());
+        if (n.getMessage_args() != null) {
+            for (String a : n.getMessage_args()) args.add(resolveArg(c, a));
+        }
         if (n.getChange_items() != null && !n.getChange_items().isEmpty()) {
             args.add(buildChanges(c, n.getChange_items()));
         }
-        return c.getString(id, args.toArray());
+        try {
+            return c.getString(id, args.toArray());
+        } catch (Exception e) {
+            Log.e(TAG, "Format salah untuk " + n.getMessage_key(), e);
+            return n.getMessage() != null ? n.getMessage() : "";
+        }
+    }
+
+    private static String resolveArg(Context c, String arg) {
+        if (arg == null) return "";
+        if (arg.startsWith(MINUTES_PREFIX)) {
+            try {
+                int minutes = Integer.parseInt(arg.substring(MINUTES_PREFIX.length()));
+                if (minutes >= 60 && minutes % 60 == 0) {
+                    return c.getString(R.string.durasi_jam, minutes / 60);
+                }
+                return c.getString(R.string.durasi_menit, minutes);
+            } catch (NumberFormatException ignored) { }
+        }
+        return arg;
     }
 
     public static String buildChanges(Context c, List<String> items) {
@@ -62,7 +94,6 @@ public final class NotificationText {
         return TextUtils.join("; ", parts);
     }
 
-    /** null = tidak ada snapshot sama sekali. */
     public static String snapshotDetail(Context c, Notification n, boolean isAppointment) {
         Locale locale = c.getResources().getConfiguration().getLocales().get(0);
         if (isAppointment && n.getSnapshot_at() != null) {
@@ -74,6 +105,6 @@ public final class NotificationText {
             return c.getString(R.string.frekuensi_x_sehari_format, n.getSnapshot_frequency())
                     + " • " + TextUtils.join(", ", n.getSnapshot_times());
         }
-        return n.getSnapshot_detail();   // fallback: snapshot versi lama
+        return n.getSnapshot_detail();
     }
 }

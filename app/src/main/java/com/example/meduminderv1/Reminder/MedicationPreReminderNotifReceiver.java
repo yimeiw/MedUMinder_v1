@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.example.meduminderv1.Model.UserRole;
+import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -17,6 +18,9 @@ public class MedicationPreReminderNotifReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String scheduleId = intent.getStringExtra("schedule_id");
         String namaObat = intent.getStringExtra("nama_obat");
+        if (scheduleId == null) return;
+        final String obat = namaObat != null ? namaObat : "";
+
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("medication_schedules").document(scheduleId)
                 .get().addOnSuccessListener(doc -> {
@@ -26,8 +30,9 @@ public class MedicationPreReminderNotifReceiver extends BroadcastReceiver {
                     notif.put("receiver_uid", consumerUid);
                     notif.put("reference_id", scheduleId);
                     notif.put("type", NotificationType.Medicine);
-                    notif.put("title", "Segera Minum Obat");
-                    notif.put("message", "5 menit lagi jadwal minum obat " + namaObat + ".");
+                    // "5 menit lagi jadwal minum obat X." -> disimpan sebagai kode + isian
+                    NotificationText.apply(notif, "segera_minum_obat_title",
+                            "menit_lagi_minum_obat_msg", "5", obat);
                     notif.put("target_role", UserRole.Consumer);
                     notif.put("is_read", false);
                     notif.put("is_new_schedule", true);

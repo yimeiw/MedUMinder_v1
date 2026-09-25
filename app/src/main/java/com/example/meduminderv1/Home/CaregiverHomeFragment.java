@@ -37,6 +37,7 @@ import com.example.meduminderv1.Model.MedicineCatalog;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
+import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
@@ -350,8 +351,10 @@ public class CaregiverHomeFragment extends Fragment {
         notification.setType(NotificationType.Medicine);
         notification.setReference_id(nextScheduleId);
         notification.setIs_new_schedule(true);
-        notification.setTitle(getString(R.string.pengingat_dari_caregiver_title));
-        notification.setMessage(getString(R.string.mengingatkan_minum_obat, caregiver.getName(), medName));
+        notification.setTarget_role(UserRole.Consumer.name());
+        NotificationText.apply(notification, "pengingat_dari_caregiver_title",
+                "mengingatkan_minum_obat",
+                caregiver.getName() != null ? caregiver.getName() : "", medName);
         notification.setIs_read(false);
         notification.setScheduled_at(nextScheduleScheduledAt);
         notificationRepo.createNotification(notification, new RepoCallback<Void>() {
@@ -367,8 +370,9 @@ public class CaregiverHomeFragment extends Fragment {
                 confirmation.setReference_id(nextScheduleId);
                 confirmation.setIs_new_schedule(true);
                 confirmation.setTarget_role(UserRole.Caregiver.name());
-                confirmation.setTitle(getString(R.string.pengingat_terkirim_title));
-                confirmation.setMessage(getString(R.string.pesan_pengingat_terkirim_consumer) + " (" + medName + ")");
+                confirmation.setConsumer_uid(consumerUid);   // notif ini tentang consumer mana
+                NotificationText.apply(confirmation, "pengingat_terkirim_title",
+                        "pesan_pengingat_terkirim_consumer_obat_msg", medName);
                 confirmation.setIs_read(false);
                 notificationRepo.createNotification(confirmation, new RepoCallback<Void>() {
                     @Override

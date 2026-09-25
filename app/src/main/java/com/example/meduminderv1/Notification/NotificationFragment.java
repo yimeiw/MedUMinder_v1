@@ -26,9 +26,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.meduminderv1.Auth.AuthManager;
+import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.AuthCallback;
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Model.User;
+import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.NotificationRepo;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -277,11 +279,16 @@ public class NotificationFragment extends Fragment {
         User user = authManager.getCurrentUser();
         if (user == null) return;
         if (notifListener != null) notifListener.remove();
-        notifListener = notificationRepo.listenNotification(user.getAuth_uid(), user.getCurrentRole(), result -> {
-            if (!isAdded()) return;
-            adapter.updateData(result);
-            toggleEmptyState(result);
-        });
+        // caregiver: hanya notif consumer yang sedang dipilih. consumer: tidak disaring.
+        String consumerFilter = user.getCurrentRole() == UserRole.Caregiver
+                ? SessionManager.getInstance().getActiveConsumerUid()
+                : null;
+        notifListener = notificationRepo.listenNotification(
+                user.getAuth_uid(), user.getCurrentRole(), consumerFilter, result -> {
+                    if (!isAdded()) return;
+                    adapter.updateData(result);
+                    toggleEmptyState(result);
+                });
     }
 
     @Override

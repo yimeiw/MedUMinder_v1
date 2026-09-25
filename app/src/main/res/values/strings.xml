@@ -622,7 +622,25 @@
     <string name="ubah_lokasi_appointment">lokasi menjadi %1$s</string>
     <string name="ubah_waktu_appointment">waktu menjadi %1$s</string>
 
-<!--    <string name="snoozeDuration">Durasi Tunda</string>-->
-<!--    <string name="remindMeBefore">Ingatkan Saya Sebelum</string>-->
+    <string name="consumer_menambahkan_jadwal_obat_msg">%1$s menambahkan jadwal minum obat %2$s.</string>
+    <string name="caregiver_lain_menambahkan_jadwal_obat_msg">%1$s menambahkan jadwal minum obat %2$s untuk consumer Anda.</string>
+
+    <string name="anda_menambahkan_jadwal_minum_obat_msg">Anda menambahkan jadwal minum obat %1$s.</string>
+    <string name="pengingat_x_ditunda_full_msg">Pengingat %1$s ditunda. Waktu baru: %2$s.</string>
+    <string name="consumer_menunda_pengingat_full_msg">%1$s menunda pengingat %2$s. Waktu baru: %3$s.</string>
+    <string name="jadwal_terlewat_title">Jadwal Terlewat</string>
+    <string name="jadwal_obat_anda_terlewat_msg">Jadwal minum obat %1$s Anda terlewat.</string>
+    <string name="consumer_melewatkan_jadwal_title">Consumer Melewatkan Jadwal</string>
+    <string name="consumer_melewatkan_jadwal_obat_msg">%1$s melewatkan jadwal minum obat %2$s.</string>
+
+    <string name="anda_menghapus_jadwal_msg">Anda menghapus jadwal %1$s.</string>
+
+    <string name="x_menghapus_jadwal_anda_msg">%1$s menghapus jadwal %2$s Anda.</string>
+    <string name="x_menghapus_jadwal_msg">%1$s menghapus jadwal %2$s.</string>
+    <string name="x_menghapus_jadwal_consumer_anda_msg">%1$s menghapus jadwal %2$s untuk consumer Anda.</string>
+
+    <string name="x_menambahkan_jadwal_appointment_anda_msg">%1$s menambahkan jadwal appointment %2$s untuk Anda.</string>
+    <string name="x_menambahkan_jadwal_appointment_msg">%1$s menambahkan jadwal appointment %2$s.</string>
+    <string name="x_menambahkan_jadwal_appointment_consumer_anda_msg">%1$s menambahkan jadwal appointment %2$s untuk consumer Anda.</string>
 </resources>
 

@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.util.Log;
 
 import com.example.meduminderv1.Model.UserRole;
+import com.example.meduminderv1.Notification.NotificationText;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.Timestamp;
@@ -63,12 +64,13 @@ public class AppointmentMissedNotifReceiver extends BroadcastReceiver {
     private void sendNotifications(FirebaseFirestore db, String consumerUid, String appointmentId,
                                    String title, PendingResult pendingResult) {
         final List<Task<?>> writes = new ArrayList<>();
+        final String judul = title != null ? title : "";
 
         Map<String, Object> notifConsumer = new HashMap<>();
         notifConsumer.put("receiver_uid", consumerUid);
         notifConsumer.put("type", "Appointment");
-        notifConsumer.put("title", "Jadwal Terlewat");
-        notifConsumer.put("message", "Jadwal appointment " + title + " Anda terlewat.");
+        NotificationText.apply(notifConsumer, "jadwal_terlewat_title",
+                "jadwal_appointment_anda_terlewat_msg", judul);
         notifConsumer.put("target_role", UserRole.Consumer);
         notifConsumer.put("reference_id", appointmentId);
         notifConsumer.put("is_read", false);
@@ -83,8 +85,8 @@ public class AppointmentMissedNotifReceiver extends BroadcastReceiver {
                         Map<String, Object> n = new HashMap<>();
                         n.put("receiver_uid", caregiverUid);
                         n.put("type", "Appointment");
-                        n.put("title", "Consumer Melewatkan Jadwal");
-                        n.put("message", "Consumer Anda melewatkan appointment " + title + ".");
+                        NotificationText.apply(n, "consumer_melewatkan_jadwal_title",
+                                "consumer_melewatkan_appointment_msg", judul);
                         n.put("target_role", UserRole.Caregiver);
                         n.put("reference_id", appointmentId);
                         n.put("consumer_uid", consumerUid);

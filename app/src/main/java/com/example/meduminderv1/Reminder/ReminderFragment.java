@@ -37,6 +37,7 @@ import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
+import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
@@ -122,11 +123,11 @@ public class ReminderFragment extends Fragment {
         User currentUser = SessionManager.getInstance().getUser();
         isCaregiverViewing = currentUser != null && currentUser.getCurrentRole() == UserRole.Caregiver;
         targetConsumerUid = SessionManager.getInstance().getTargetUid();
-        
+
         btnBack.setOnClickListener(v -> {
             NavHostFragment.findNavController(ReminderFragment.this).navigateUp();
         });
-        
+
         Bundle bundle = getArguments();
         if (bundle != null) {
             scheduleId = bundle.getString("medication_schedules_id");
@@ -219,7 +220,7 @@ public class ReminderFragment extends Fragment {
     private void showDeleteChoiceDialog() {
         if (!isAdded()) return;
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
-                builder.setTitle(getString(R.string.hapus_jadwal_obat_title))
+        builder.setTitle(getString(R.string.hapus_jadwal_obat_title))
                 .setMessage(getString(R.string.pilih_jenis_hapus_msg)) // "Hapus entri ini saja, atau seluruh jadwal?"
                 .setNeutralButton(getString(R.string.cancel), null)
                 .setNegativeButton(getString(R.string.hapus_entri_ini_saja), (d, w) -> confirmDeleteSingleLog())
@@ -237,7 +238,7 @@ public class ReminderFragment extends Fragment {
         if (!isAdded()) return;
         String label = namaObat != null ? namaObat : getString(R.string.default_jadwal_label);
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
-                builder.setTitle(getString(R.string.hapus_jadwal_obat_title))
+        builder.setTitle(getString(R.string.hapus_jadwal_obat_title))
                 .setMessage(getString(R.string.konfirmasi_hapus_item_msg, label))
                 .setNegativeButton(getString(R.string.cancel), null)
                 .setPositiveButton(getString(R.string.delete), (d, w) -> deleteSingleLogEntry());
@@ -292,11 +293,10 @@ public class ReminderFragment extends Fragment {
         reminder.setSender_uid(caregiver.getAuth_uid());
         reminder.setType(isAppointment ? NotificationType.Appointment : NotificationType.Medicine);
         reminder.setReference_id(scheduleId);
-        reminder.setTitle(getString(R.string.pengingat_dari_caregiver_title));
-        reminder.setMessage(getString(
-                R.string.caregiver_mengingatkan_periksa_jadwal_msg,
-                caregiver.getName()
-        ));
+        reminder.setTarget_role(UserRole.Consumer.name());
+        NotificationText.apply(reminder, "pengingat_dari_caregiver_title",
+                "caregiver_mengingatkan_periksa_jadwal_msg",
+                caregiver.getName() != null ? caregiver.getName() : "");
         reminder.setIs_read(false);
 
         if (!isAppointment) {
@@ -330,15 +330,14 @@ public class ReminderFragment extends Fragment {
                         confirmation.setReference_id(scheduleId);
                         if (!isAppointment) confirmation.setIs_new_schedule(true);
                         confirmation.setTarget_role(UserRole.Caregiver.name());
-                        confirmation.setTitle(
-                                getString(R.string.pengingat_terkirim_title)
-                        );
-                        confirmation.setMessage(
-                                getString(R.string.pesan_pengingat_terkirim_consumer)
-                                        + (namaObat != null
-                                        ? " (" + namaObat + ")"
-                                        : "")
-                        );
+                        confirmation.setConsumer_uid(targetConsumerUid);   // notif ini tentang consumer mana
+                        if (namaObat != null) {
+                            NotificationText.apply(confirmation, "pengingat_terkirim_title",
+                                    "pesan_pengingat_terkirim_consumer_obat_msg", namaObat);
+                        } else {
+                            NotificationText.apply(confirmation, "pengingat_terkirim_title",
+                                    "pesan_pengingat_terkirim_consumer");
+                        }
                         confirmation.setIs_read(false);
 
                         notificationRepo.createNotification(
@@ -367,7 +366,7 @@ public class ReminderFragment extends Fragment {
         Log.d("REMINDER_FRAGMENT", "confirmDeleteSchedule() dipanggil, tampilkan dialog konfirmasi");
         String label = namaObat != null ? namaObat : (isAppointment ? getString(R.string.default_appointment_label) : getString(R.string.default_jadwal_label));
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
-                builder.setTitle(isAppointment ? getString(R.string.hapus_appointment_title) : getString(R.string.hapus_jadwal_obat_title))
+        builder.setTitle(isAppointment ? getString(R.string.hapus_appointment_title) : getString(R.string.hapus_jadwal_obat_title))
                 .setMessage(getString(R.string.konfirmasi_hapus_item_msg, label))
                 .setNegativeButton(getString(R.string.cancel), null)
                 .setPositiveButton(getString(R.string.delete), (dialog, which) -> {
@@ -472,59 +471,84 @@ public class ReminderFragment extends Fragment {
                 });
     }
     private void notifyScheduleDeleted(String consumerUid, String name, boolean appointment) {
-        if (!isAdded()) return;
         if (consumerUid == null) return;
         if (FirebaseAuth.getInstance().getCurrentUser() == null) return;
-        String actorUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        boolean isForSelf = consumerUid.equals(actorUid);
-        String displayName = name != null ? name : (appointment ? getString(R.string.appointment) : getString(R.string.medicine));
 
+        // Simpan semua yang dibutuhkan SEKARANG, selagi halaman masih terbuka.
+        // Setelah ini jangan pakai isAdded() / getString() / requireContext() lagi,
+        // karena halaman langsung ditutup (navigateUp) setelah method ini dipanggil.
+        final NotificationRepo repo = notificationRepo;
+        final CareRelationshipRepo relRepo = careRelationshipRepo;
+        final String actorUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        final boolean isForSelf = consumerUid.equals(actorUid);   // true = consumer yang menghapus
+        final String displayName = name != null ? name : "";
+        final NotificationType type = appointment ? NotificationType.Appointment : NotificationType.Medicine;
+        final String titleKey = appointment ? "jadwal_appointment_dihapus_title" : "jadwal_obat_dihapus_title";
+        // nama orang yang menghapus (consumer atau caregiver)
+        User actor = SessionManager.getInstance().getUser();
+        final String actorName = (actor != null && actor.getName() != null && !actor.getName().isEmpty())
+                ? actor.getName() : (isForSelf ? "Consumer" : "Caregiver");
+
+        // 1) notif untuk ORANG YANG MENGHAPUS (consumer atau caregiver)
+        Notification selfNotif = baseDeleteNotif(actorUid, actorUid, type, displayName);
+        selfNotif.setTarget_role(isForSelf ? UserRole.Consumer.name() : UserRole.Caregiver.name());
+        selfNotif.setConsumer_uid(consumerUid);   // notif ini tentang consumer mana
+        NotificationText.apply(selfNotif, titleKey, "anda_menghapus_jadwal_msg", displayName);
+        repo.createNotification(selfNotif, emptyCallback());
+
+        // 2) kalau caregiver yang menghapus -> kabari consumer
         if (!isForSelf) {
-            if (!isAdded()) return;
-            Notification notifToConsumer = new Notification();
-            notifToConsumer.setReceiver_uid(consumerUid);
-            notifToConsumer.setSender_uid(actorUid);
-            notifToConsumer.setType(appointment ? NotificationType.Appointment : NotificationType.Medicine);
-            notifToConsumer.setTitle(appointment ? getString(R.string.jadwal_appointment_dihapus_title) : getString(R.string.jadwal_obat_dihapus_title));
-            notifToConsumer.setMessage(getString(R.string.caregiver_menghapus_jadwal_anda_full) + " " + displayName);
-            notifToConsumer.setIs_deleted(true);
-            notifToConsumer.setDeleted_item_name(displayName);
-            notifToConsumer.setIs_read(false);
-            notificationRepo.createNotification(notifToConsumer, new RepoCallback<Void>() {
-                @Override public void onSuccess(Void result) { }
-                @Override public void onFailure(Exception e) { }
-            });
+            Notification toConsumer = baseDeleteNotif(consumerUid, actorUid, type, displayName);
+            toConsumer.setTarget_role(UserRole.Consumer.name());
+            NotificationText.apply(toConsumer, titleKey, "x_menghapus_jadwal_anda_msg", actorName, displayName);
+            repo.createNotification(toConsumer, emptyCallback());
         }
 
-        careRelationshipRepo.getCaregiverForConsumer(consumerUid, new RepoCallback<List<CareRelationship>>() {
+        // 3) kabari semua caregiver lain
+        relRepo.getCaregiverForConsumer(consumerUid, new RepoCallback<List<CareRelationship>>() {
             @Override
             public void onSuccess(List<CareRelationship> relations) {
-                if (!isAdded()) return;
+                // SENGAJA tidak ada isAdded() di sini
                 for (CareRelationship relation : relations) {
                     String caregiverUid = relation.getCaregiver_uid();
                     if (caregiverUid == null || caregiverUid.equals(actorUid)) continue;
 
-                    Notification notifToCaregiver = new Notification();
-                    notifToCaregiver.setReceiver_uid(caregiverUid);
-                    notifToCaregiver.setSender_uid(actorUid);
-                    notifToCaregiver.setType(appointment ? NotificationType.Appointment : NotificationType.Medicine);
-                    notifToCaregiver.setTitle(appointment ? getString(R.string.jadwal_appointment_dihapus_title) : getString(R.string.jadwal_obat_dihapus_title));
-                    notifToCaregiver.setMessage(isForSelf
-                            ? getString(R.string.consumer_menghapus_jadwal_msg, displayName)
-                            : getString(R.string.jadwal_consumer_telah_dihapus_msg, displayName));
-                    notifToCaregiver.setIs_deleted(true);
-                    notifToCaregiver.setDeleted_item_name(displayName);
-                    notifToCaregiver.setIs_read(false);
-                    notificationRepo.createNotification(notifToCaregiver, new RepoCallback<Void>() {
-                        @Override public void onSuccess(Void result) { }
-                        @Override public void onFailure(Exception e) { }
-                    });
+                    Notification toCg = baseDeleteNotif(caregiverUid, actorUid, type, displayName);
+                    toCg.setTarget_role(UserRole.Caregiver.name());
+                    toCg.setConsumer_uid(consumerUid);   // notif ini tentang consumer mana
+                    NotificationText.apply(toCg, titleKey,
+                            isForSelf ? "x_menghapus_jadwal_msg"                  // consumer yang menghapus
+                                    : "x_menghapus_jadwal_consumer_anda_msg",   // caregiver lain yang menghapus
+                            actorName, displayName);
+                    repo.createNotification(toCg, emptyCallback());
                 }
             }
-
             @Override
-            public void onFailure(Exception e) { }
+            public void onFailure(Exception e) {
+                Log.e("REMINDER_FRAGMENT", "Gagal ambil caregiver untuk notif hapus", e);
+            }
         });
+    }
+
+    private static Notification baseDeleteNotif(String receiverUid, String senderUid,
+                                                NotificationType type, String displayName) {
+        Notification n = new Notification();
+        n.setReceiver_uid(receiverUid);
+        n.setSender_uid(senderUid);
+        n.setType(type);
+        n.setIs_deleted(true);
+        n.setDeleted_item_name(displayName);
+        n.setIs_read(false);
+        return n;
+    }
+
+    private static RepoCallback<Void> emptyCallback() {
+        return new RepoCallback<Void>() {
+            @Override public void onSuccess(Void result) { }
+            @Override public void onFailure(Exception e) {
+                Log.e("REMINDER_FRAGMENT", "Gagal kirim notif", e);
+            }
+        };
     }
 
     private void notifyCaregiverMedicineTaken(String logId) {
@@ -546,10 +570,14 @@ public class ReminderFragment extends Fragment {
                             notif.setReceiver_uid(relation.getCaregiver_uid());
                             notif.setSender_uid(consumerUid);
                             notif.setType(NotificationType.Medicine);
-                            notif.setTitle(getString(R.string.consumer_sudah_minum_obat));
-                            notif.setMessage(getString(R.string.consumer_telah_minum_obat_msg, consumerName, namaObat));
+                            NotificationText.apply(notif, "consumer_sudah_minum_obat",
+                                    "consumer_telah_minum_obat_msg",
+                                    consumerName != null ? consumerName : "Consumer",
+                                    namaObat != null ? namaObat : "");
                             notif.setReference_id(logId);
                             notif.setConsumer_name(consumerName);
+                            notif.setConsumer_uid(consumerUid);
+                            notif.setTarget_role(UserRole.Caregiver.name());
                             notif.setIs_read(false);
                             notificationRepo.createNotification(notif, new RepoCallback<Void>() {
                                 @Override public void onSuccess(Void result) { }
@@ -695,10 +723,14 @@ public class ReminderFragment extends Fragment {
                             notif.setReceiver_uid(relation.getCaregiver_uid());
                             notif.setSender_uid(consumerUid);
                             notif.setType(NotificationType.Appointment);
-                            notif.setTitle(getString(R.string.consumer_sudah_menghadiri_appointment));
-                            notif.setMessage(getString(R.string.consumer_telah_menghadiri_appointment, consumerName, (title != null ? title : namaObat)));
+                            NotificationText.apply(notif, "consumer_sudah_menghadiri_appointment",
+                                    "consumer_telah_menghadiri_appointment",
+                                    consumerName != null ? consumerName : "Consumer",
+                                    title != null ? title : (namaObat != null ? namaObat : ""));
                             notif.setReference_id(appointmentId);
                             notif.setConsumer_name(consumerName);
+                            notif.setConsumer_uid(consumerUid);
+                            notif.setTarget_role(UserRole.Caregiver.name());
                             notif.setIs_read(false);
                             notificationRepo.createNotification(notif, new RepoCallback<Void>() {
                                 @Override public void onSuccess(Void result) { }
@@ -748,7 +780,7 @@ public class ReminderFragment extends Fragment {
                 .whereEqualTo("medication_schedules_id", scheduleId)
                 .get()
                 .addOnSuccessListener(snapshot -> {
-                    if (!isAdded()) return;
+                    // tidak pakai isAdded(): halaman boleh sudah ditutup, hapus log tetap jalan
                     Log.d("REMINDER_FRAGMENT", "deleteFutureMedicationLogs: query nemu " + snapshot.size() + " dokumen untuk scheduleId=" + scheduleId);
 
                     if (snapshot.isEmpty()) {
@@ -791,7 +823,6 @@ public class ReminderFragment extends Fragment {
                 })
                 .addOnFailureListener(e -> {
                     Log.e("REMINDER_FRAGMENT", "Gagal ambil future medication_logs. scheduleId=" + scheduleId, e);
-                    if (!isAdded()) return;
                 });
     }
 

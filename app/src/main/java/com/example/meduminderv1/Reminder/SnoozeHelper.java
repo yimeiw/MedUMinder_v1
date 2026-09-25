@@ -8,7 +8,7 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 
 import com.example.meduminderv1.Model.UserRole;
-import com.example.meduminderv1.R;
+import com.example.meduminderv1.Notification.NotificationText;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
@@ -24,32 +24,23 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-
-/**
- * FIX: SATU tempat untuk semua proses "tunda / snooze".
- *
- * Sebelumnya snooze ditulis ulang di banyak tempat (ReminderFragment, NotificationDetailFragment,
- * AlarmActionReceiver) dan hasilnya beda-beda:
- *  - ada yang tidak menyimpan waktu snooze (snoozed_until) -> jam di Home tidak berubah
- *  - ada yang tidak mengirim notifikasi ke consumer & caregiver
- *  - ada yang memanggil getString() setelah halaman ditutup -> APP KELUAR (crash)
- *
- * Helper ini hanya memakai Application Context, jadi aman dipanggil
- * walaupun halaman (fragment) sudah ditutup.
- */
 public final class SnoozeHelper {
 
     private static final String TAG = "SnoozeHelper";
 
     private SnoozeHelper() {}
 
-    /** Ambil durasi snooze dari Pengaturan Notifikasi (default 5 menit). */
     public static int getSnoozeMinutes(Context context) {
         SharedPreferences pref = context.getApplicationContext()
                 .getSharedPreferences("notification_settings", Context.MODE_PRIVATE);
+
+        if (pref.contains("snooze_minutes")) {
+            return pref.getInt("snooze_minutes", 5);
+        }
+
         String saved = pref.getString("snooze_duration", "5 menit");
-        if ("10 menit".equals(saved)) return 10;
-        if ("30 menit".equals(saved)) return 30;
+        if ("10 menit".equalsIgnoreCase(saved)) return 10;
+        if ("30 menit".equalsIgnoreCase(saved)) return 30;
         return 5;
     }
 
@@ -67,15 +58,12 @@ public final class SnoozeHelper {
                              long scheduledAt, boolean isAppointment, @Nullable Runnable onDone) {
         final Context app = context.getApplicationContext();
         final int minutes = getSnoozeMinutes(app);
-        // FIX: kalau ditunda SEBELUM jam jadwal, hitung dari jam jadwal (02:31 + 5 = 02:36)
         final long snoozeUntil = AlarmSchedulerHelper.computeSnoozeUntil(scheduledAt, minutes);
         final String name = itemName != null ? itemName : "";
 
-        // 1) matikan alarm yang sedang bunyi + jadwalkan alarm snooze
         app.stopService(new Intent(app, AlarmRingingService.class));
         AlarmSchedulerHelper.scheduleSnoozeAt(app, scheduleId, name, scheduledAt, snoozeUntil,
                 isAppointment ? "appointment" : "medicine");
-        // FIX: batalkan alarm di jam lama (kalau belum lewat) + geser cek "terlewat"
         if (isAppointment) {
             AlarmSchedulerHelper.applyAppointmentSnooze(app, scheduleId, name, scheduledAt, snoozeUntil);
         } else {
@@ -85,7 +73,6 @@ public final class SnoozeHelper {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         Timestamp untilTs = new Timestamp(new Date(snoozeUntil));
 
-        // 2) simpan waktu baru supaya Home consumer & caregiver ikut berubah (realtime)
         Map<String, Object> update = new HashMap<>();
         update.put("snoozed_until", untilTs);
         update.put("snooze_count", FieldValue.increment(1));
@@ -100,7 +87,6 @@ public final class SnoozeHelper {
                     .addOnCompleteListener(t -> { if (onDone != null) onDone.run(); });
         }
 
-        // 3) kirim notifikasi ke consumer sendiri + semua caregiver-nya
         String newTime = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date(snoozeUntil));
         sendSnoozeNotifications(app, scheduleId, name, isAppointment, minutes, newTime);
 
@@ -109,12 +95,7 @@ public final class SnoozeHelper {
 
     private static void sendSnoozeNotifications(Context app, String scheduleId, String itemName,
                                                 boolean isAppointment, int minutes, String newTime) {
-        // Semua teks disiapkan SEKARANG (bukan di dalam callback), supaya tidak crash
         final String type = isAppointment ? "Appointment" : "Medicine";
-        final String selfTitle = app.getString(R.string.pengingat_ditunda_title);
-        final String selfMsg = app.getString(R.string.pengingat_x_ditunda_msg, itemName)
-                + " " + app.getString(R.string.snooze_waktu_baru, newTime);
-        final String cgTitle = app.getString(R.string.consumer_menunda_pengingat_title);
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         String collection = isAppointment ? "appointments" : "medication_schedules";
@@ -124,16 +105,14 @@ public final class SnoozeHelper {
 
             // notif ke consumer sendiri
             Map<String, Object> selfNotif = baseNotif(consumerUid, consumerUid, type, scheduleId, isAppointment);
-            selfNotif.put("title", selfTitle);
-            selfNotif.put("message", selfMsg);
+            NotificationText.apply(selfNotif, "pengingat_ditunda_title",
+                    "pengingat_x_ditunda_full_msg", itemName, newTime);
             selfNotif.put("target_role", UserRole.Consumer.name());
             addNotif(db, selfNotif);
 
             db.collection("users").document(consumerUid).get().addOnSuccessListener(userDoc -> {
                 String consumerName = userDoc.exists() && userDoc.getString("name") != null
                         ? userDoc.getString("name") : "Consumer";
-                String cgMsg = app.getString(R.string.consumer_menunda_pengingat_msg, consumerName, itemName)
-                        + " " + app.getString(R.string.snooze_waktu_baru, newTime);
 
                 // notif ke semua caregiver
                 db.collection("care_relationships").whereEqualTo("consumer_uid", consumerUid).get()
@@ -142,8 +121,8 @@ public final class SnoozeHelper {
                                 String caregiverUid = rel.getString("caregiver_uid");
                                 if (caregiverUid == null) continue;
                                 Map<String, Object> n = baseNotif(caregiverUid, consumerUid, type, scheduleId, isAppointment);
-                                n.put("title", cgTitle);
-                                n.put("message", cgMsg);
+                                NotificationText.apply(n, "consumer_menunda_pengingat_title",
+                                        "consumer_menunda_pengingat_full_msg", consumerName, itemName, newTime);
                                 n.put("consumer_uid", consumerUid);
                                 n.put("consumer_name", consumerName);
                                 n.put("target_role", UserRole.Caregiver.name());
@@ -162,8 +141,6 @@ public final class SnoozeHelper {
         n.put("sender_uid", senderUid);
         n.put("type", type);
         n.put("reference_id", scheduleId);
-        // reference_id = id JADWAL, jadi tandai sebagai notif jadwal
-        // (supaya halaman detail tidak mencari "riwayat obat" yang tidak ada)
         if (!isAppointment) n.put("is_new_schedule", true);
         n.put("is_read", false);
         n.put("created_at", Timestamp.now());

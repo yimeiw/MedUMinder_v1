@@ -10,6 +10,7 @@ import com.example.meduminderv1.Invitation.Invitation;
 import com.example.meduminderv1.Invitation.InvitationStatus;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
+import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
 import com.google.firebase.Timestamp;
@@ -83,8 +84,8 @@ public class NotificationRepo {
         notification.setSender_uid(null);
         notification.setReference_id(medicationId);
         notification.setInvitation_id(null);
-        notification.setTitle(context.getString(R.string.isi_ulang_obat_notif_title) + medicineName + ")");
-        notification.setMessage(context.getString(R.string.stok_hampir_habis));
+        NotificationText.apply(notification, "isi_ulang_obat_x_title", "stok_hampir_habis",
+                medicineName != null ? medicineName : "");
         notification.setType(NotificationType.Stock);
         notification.setTarget_role(UserRole.Consumer.name());
         notification.setIs_read(false);
@@ -118,6 +119,11 @@ public class NotificationRepo {
                 .addOnFailureListener(callback::onFailure);
     }
     public void countUnread(String userUid, UserRole role, RepoCallback<Integer> callback) {
+        countUnread(userUid, role, null, callback);
+    }
+
+    /** Sama seperti di atas, tapi untuk caregiver hanya menghitung notif consumer yang dipilih. */
+    public void countUnread(String userUid, UserRole role, @Nullable String consumerFilter, RepoCallback<Integer> callback) {
         db.collection("notifications")
                 .whereEqualTo("receiver_uid", userUid)
                 .get()
@@ -128,9 +134,10 @@ public class NotificationRepo {
                         if (notification == null || notification.isIs_read()) {
                             continue;
                         } UserRole effectiveRole = notification.getTargetRoleEnum();
-                        if (effectiveRole == null || effectiveRole == role) {
-                            count++;
-                        }
+                        if (effectiveRole != null && effectiveRole != role) continue;
+                        if (role == UserRole.Caregiver && consumerFilter != null
+                                && !belongsToConsumer(notification, consumerFilter)) continue;
+                        count++;
                     }
                     callback.onSuccess(count);
                 })
@@ -142,7 +149,7 @@ public class NotificationRepo {
                 .addOnFailureListener(callback::onFailure);
     }
     public void createReportNotif(String receiverUid, String title, String fileName, String mediaStoreUri,
-                                   String legacyFilePath, RepoCallback<Void> callback){
+                                  String legacyFilePath, RepoCallback<Void> callback){
         Notification notification = new Notification();
         notification.setReceiver_uid(receiverUid);
         notification.setSender_uid(null);
@@ -170,10 +177,12 @@ public class NotificationRepo {
                             notif.setReceiver_uid(caregiverUid);
                             notif.setSender_uid(consumerUid);
                             notif.setType(NotificationType.Medicine);
-                            notif.setTitle(context.getString(R.string.consumer_sudah_minum_obat));
-                            notif.setMessage(context.getString(R.string.consumer_telah_minum_obat_msg, consumerName, medName));
+                            NotificationText.apply(notif, "consumer_sudah_minum_obat",
+                                    "consumer_telah_minum_obat_msg", consumerName, medName);
                             notif.setReference_id(logId);
                             notif.setConsumer_name(consumerName);
+                            notif.setConsumer_uid(consumerUid);              // notif ini tentang consumer mana
+                            notif.setTarget_role(UserRole.Caregiver.name()); // hanya tampil di mode caregiver
                             notif.setIs_read(false);
                             createNotification(notif, new RepoCallback<Void>() {
                                 @Override public void onSuccess(Void result) { }
@@ -199,10 +208,12 @@ public class NotificationRepo {
                             notif.setReceiver_uid(caregiverUid);
                             notif.setSender_uid(consumerUid);
                             notif.setType(NotificationType.Appointment);
-                            notif.setTitle(context.getString(R.string.consumer_sudah_menghadiri_appointment));
-                            notif.setMessage(context.getString(R.string.consumer_telah_menghadiri_appointment, consumerName, apptTitle));
+                            NotificationText.apply(notif, "consumer_sudah_menghadiri_appointment",
+                                    "consumer_telah_menghadiri_appointment", consumerName, apptTitle);
                             notif.setReference_id(appointmentId);
                             notif.setConsumer_name(consumerName);
+                            notif.setConsumer_uid(consumerUid);              // notif ini tentang consumer mana
+                            notif.setTarget_role(UserRole.Caregiver.name()); // hanya tampil di mode caregiver
                             notif.setIs_read(false);
                             createNotification(notif, new RepoCallback<Void>() {
                                 @Override public void onSuccess(Void result) { }
@@ -213,7 +224,17 @@ public class NotificationRepo {
                     }).addOnFailureListener(e -> { if (callback != null) callback.onFailure(e); });
         }).addOnFailureListener(e -> { if (callback != null) callback.onFailure(e); });
     }
+    /** Versi lama (tanpa saringan consumer) tetap ada supaya pemanggil lain tidak error. */
     public ListenerRegistration listenNotification(String uid, UserRole role, NotificationListListener callback) {
+        return listenNotification(uid, role, null, callback);
+    }
+
+    /**
+     * @param consumerFilter khusus caregiver: uid consumer yang sedang dipilih.
+     *                       null = tampilkan semua (dipakai untuk mode consumer).
+     */
+    public ListenerRegistration listenNotification(String uid, UserRole role, @Nullable String consumerFilter,
+                                                   NotificationListListener callback) {
         List<Notification> fromNotif = new ArrayList<>();
         List<Notification> fromInvite = new ArrayList<>();
 
@@ -239,9 +260,19 @@ public class NotificationRepo {
                         Notification n = doc.toObject(Notification.class);
                         if (n == null) continue;
                         n.setNotification_id(doc.getId());
+
+                        // 1) saring per role
                         UserRole effectiveRole = n.getTargetRoleEnum();
-                        if (effectiveRole == null || effectiveRole == role) fromNotif.add(n);
+                        if (effectiveRole != null && effectiveRole != role) continue;
+
+                        // 2) saring per consumer (khusus caregiver yang sudah memilih consumer)
+                        if (role == UserRole.Caregiver && consumerFilter != null
+                                && !belongsToConsumer(n, consumerFilter)) continue;
+
+                        fromNotif.add(n);
                     }
+                    Log.d("NOTIF_FILTER", "role=" + role + " consumer=" + consumerFilter
+                            + " tampil=" + fromNotif.size() + " dari " + snap.size());
                     merge.run();
                 });
 
@@ -272,6 +303,22 @@ public class NotificationRepo {
         // bungkus dua listener supaya bisa di-remove bareng
         return () -> { regNotif.remove(); regInvite.remove(); };
     }
+    /** Apakah notif ini tentang consumer yang sedang dipilih? */
+    private static boolean belongsToConsumer(Notification n, String consumerUid) {
+        // undangan & laporan bukan milik consumer tertentu -> selalu tampil
+        if (n.getType() == NotificationType.Invitation || n.getType() == NotificationType.Report) return true;
+
+        // cara utama: notif menyimpan consumer_uid
+        if (n.getConsumer_uid() != null) return consumerUid.equals(n.getConsumer_uid());
+
+        // cadangan untuk notif lama: pengirimnya adalah consumer itu
+        String sender = n.getSender_uid();
+        if (sender != null && !sender.equals(n.getReceiver_uid())) return consumerUid.equals(sender);
+
+        // tidak tahu ini tentang consumer siapa -> sembunyikan
+        return false;
+    }
+
     public interface NotificationListListener {
         void onChanged(List<Notification> list);
     }

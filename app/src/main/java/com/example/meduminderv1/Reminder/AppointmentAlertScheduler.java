@@ -35,12 +35,15 @@ public class AppointmentAlertScheduler {
 
     private static int getPreReminderOffsetMinutes(Context context) {
         SharedPreferences pref = context.getSharedPreferences("notification_settings", Context.MODE_PRIVATE);
-        String saved = pref.getString("appointment_reminder", "30 menit");
-        switch (saved){
-            case "1 jam": return 60;
-            case "2 jam": return 120;
-            default: return 30;
+
+        if (pref.contains("appointment_minutes")) {
+            return pref.getInt("appointment_minutes", 30);
         }
+
+        String saved = pref.getString("appointment_reminder", "30 menit");
+        if ("1 jam".equalsIgnoreCase(saved)) return 60;
+        if ("2 jam".equalsIgnoreCase(saved)) return 120;
+        return 30;
     }
 
     /**

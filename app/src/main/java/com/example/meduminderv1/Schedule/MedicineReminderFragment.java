@@ -37,6 +37,7 @@ import com.example.meduminderv1.Model.LogGenerator;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
+import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
@@ -665,10 +666,15 @@ public class MedicineReminderFragment extends Fragment {
         notif.setReference_id(scheduleId);
         notif.setIs_new_schedule(true);
         notif.setType(NotificationType.Medicine);
-        notif.setTitle(getString(R.string.jadwal_obat_baru_title));
-        notif.setMessage(isForSelf
-                ? getString(R.string.anda_menambahkan_jadwal_minum_obat) + medName
-                : getString(R.string.caregiver_menambahkan_jadwal_untuk_anda, user.getName(), medName));
+        final String actorName = user.getName() != null ? user.getName() : "";
+        // simpan KODE kalimat, bukan kalimat jadi -> ikut bahasa si pembaca
+        if (isForSelf) {
+            NotificationText.apply(notif, "jadwal_obat_baru_title",
+                    "anda_menambahkan_jadwal_minum_obat_msg", medName);
+        } else {
+            NotificationText.apply(notif, "jadwal_obat_baru_title",
+                    "caregiver_menambahkan_jadwal_untuk_anda", actorName, medName);
+        }
         notif.setTarget_role(UserRole.Consumer.name());
         notif.setIs_read(false);
         notificationRepo.createNotification(notif, new RepoCallback<Void>() {
@@ -683,9 +689,10 @@ public class MedicineReminderFragment extends Fragment {
             selfNotif.setReference_id(scheduleId);
             selfNotif.setIs_new_schedule(true);
             selfNotif.setType(NotificationType.Medicine);
-            selfNotif.setTitle(getString(R.string.jadwal_obat_ditambahkan_title));
-            selfNotif.setMessage(getString(R.string.anda_menambahkan_jadwal_minum_obat) + medName);
+            NotificationText.apply(selfNotif, "jadwal_obat_ditambahkan_title",
+                    "anda_menambahkan_jadwal_obat_consumer_msg", medName);
             selfNotif.setTarget_role(UserRole.Caregiver.name());
+            selfNotif.setConsumer_uid(targetUid);   // notif ini tentang consumer mana
             selfNotif.setIs_read(false);
             notificationRepo.createNotification(selfNotif, new RepoCallback<Void>() {
                 @Override
@@ -698,8 +705,9 @@ public class MedicineReminderFragment extends Fragment {
         //untuk caregiver
         String actourUid = user.getAuth_uid(),
                 targetUidFinal = targetUid;
-        final String cgTitle = getString(R.string.jadwal_obat_ditambahkan_title),
-                cgMsg = getString(R.string.consumer_mengubah_jadwal_obat_msg) + medName;
+        final String cgMsgKey = isForSelf
+                ? "consumer_menambahkan_jadwal_obat_msg"          // consumer menambah untuk dirinya
+                : "caregiver_lain_menambahkan_jadwal_obat_msg";   // caregiver lain yang menambah
         new CareRelationshipRepo().getCaregiverForConsumer(targetUidFinal, new RepoCallback<List<CareRelationship>>() {
             @Override
             public void onSuccess(List<CareRelationship> result) {
@@ -714,8 +722,8 @@ public class MedicineReminderFragment extends Fragment {
                     cgNotif.setIs_new_schedule(true);
                     cgNotif.setType(NotificationType.Medicine);
                     cgNotif.setTarget_role(UserRole.Caregiver.name());
-                    cgNotif.setTitle(cgTitle);
-                    cgNotif.setMessage(cgMsg);
+                    cgNotif.setConsumer_uid(targetUidFinal);   // notif ini tentang consumer mana
+                    NotificationText.apply(cgNotif, "jadwal_obat_baru_title", cgMsgKey, actorName, medName);
                     cgNotif.setIs_read(false);
                     notificationRepo.createNotification(cgNotif, new RepoCallback<Void>() {
                         @Override
