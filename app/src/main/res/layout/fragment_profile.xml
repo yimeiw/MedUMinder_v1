@@ -79,7 +79,6 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:layout_gravity="center_vertical"
-                    android:layout_marginHorizontal="10dp"
                     android:layout_weight="1">
 
                     <TextView
@@ -96,7 +95,7 @@
                         android:layout_height="wrap_content"
                         android:text=" "
                         android:textColor="?attr/colorOnSurface"
-                        android:textSize="14sp"/>
+                        android:textSize="10sp"/>
 
                 </LinearLayout>
 
@@ -108,11 +107,10 @@
                     android:background="@drawable/border_wp"
                     android:backgroundTint="?attr/colorTertiary"
                     android:paddingVertical="6dp"
-                    android:paddingHorizontal="12dp"
                     android:textSize="12sp"
                     android:textColor="?attr/colorOnSurface"
                     android:layout_marginVertical="10dp"
-                    android:layout_marginHorizontal="5dp"/>
+                    />
 
             </LinearLayout>
 

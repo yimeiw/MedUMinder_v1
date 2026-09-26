@@ -24,7 +24,7 @@
             android:id="@+id/namaSchedule"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textStyle="bold"
+            android:textFontWeight="600"
             android:textSize="15sp"/>
 
         <TextView

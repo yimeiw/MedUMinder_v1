@@ -27,7 +27,6 @@
         <item name="materialTimePickerTheme">@style/CustomMaterialTimePicker</item>
 
         <item name="android:fontFamily">@font/app_font</item>
-        <item name="fontFamily">@font/app_font</item>
         <item name="textAppearanceButton">@style/AppButtonText</item>
     </style>
 
