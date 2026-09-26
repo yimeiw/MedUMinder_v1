@@ -52,6 +52,7 @@
                     android:textColor="?attr/colorOnPrimary"
                     android:textStyle="bold"
                     android:textSize="20sp"
+                    android:fontFamily="@font/inter_18pt_bold"
                     />
 
                 <LinearLayout

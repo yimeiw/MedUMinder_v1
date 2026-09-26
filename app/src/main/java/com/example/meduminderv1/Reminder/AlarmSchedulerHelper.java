@@ -30,7 +30,7 @@ public class AlarmSchedulerHelper {
     // dulu private, tapi StatistikRepo.java butuh baca konstanta ini
     // dari luar kelas (buat tahu "berapa lama setelah jadwal baru dianggap
     // benar-benar terlewat"), jadi sekarang dibuka jadi public.
-    public static final long MISSED_CHECK_DELAY_MS = 15 * 60 * 1000L;
+    public static final long MISSED_CHECK_DELAY_MS = 3 * 60 * 1000L;
 
     // Sentinel value dari resolveEndMillis() yang artinya "jadwal ini sudah
     // expired (end_date sudah lewat) -> jangan dijadwalkan sama sekali".
@@ -139,18 +139,32 @@ public class AlarmSchedulerHelper {
         return (scheduleId + "_missed_" + occurrenceKey + "_" + day).hashCode();
     }
 
-    private static void scheduleMedicineMissedCheck(Context context, String scheduleId, String namaObat, long mainTrigger, String occurrenceKey) {
+    private static void scheduleMedicineMissedCheck(Context context, String scheduleId, String namaObat, long mainTrigger, String occurrenceKey){
+        scheduleMedicineMissedCheck(
+                context,
+                scheduleId,
+                namaObat,
+                mainTrigger,
+                mainTrigger,
+                occurrenceKey
+        );
+    }
+
+
+    private static void scheduleMedicineMissedCheck(Context context, String scheduleId, String namaObat, long mainTrigger, long logScheduledAtMillis, String occurrenceKey){
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (am == null || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms())) return;
+        if (am == null || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms())) {
+            return;
+        }
+
         Intent intent = new Intent(context, MedicationMissedNotifReceiver.class);
         intent.putExtra("schedule_id", scheduleId);
         intent.putExtra("nama_obat", namaObat);
-        intent.putExtra("scheduled_at", mainTrigger);
-        PendingIntent pi = PendingIntent.getBroadcast(context, missedRequestCode(scheduleId, occurrenceKey, mainTrigger), intent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        intent.putExtra("scheduled_at", logScheduledAtMillis);
+
+        PendingIntent pi = PendingIntent.getBroadcast(context, missedRequestCode(scheduleId, occurrenceKey, mainTrigger), intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, mainTrigger + MISSED_CHECK_DELAY_MS, pi);
     }
-
     private static long nextTriggerMillisForTime(String timeStr, SimpleDateFormat timeFormat) {
         try {
             Date parsedTime = timeFormat.parse(timeStr);
@@ -236,10 +250,37 @@ public class AlarmSchedulerHelper {
                 triggerMillis, originalScheduledAt, "0", type);
     }
 
+    public static void scheduleRepeatAlarm(Context context, String scheduleId, String namaObat, long originalScheduledAt, long triggerMillis) {
+        // Alarm berikutnya pakai mekanisme snooze supaya ga dianggap jadwal baru buat besok
+        scheduleSnoozeAt(
+                context,
+                scheduleId,
+                namaObat,
+                originalScheduledAt,
+                triggerMillis,
+                "medicine"
+        );
+
+        // Alarm repeat ini jadi punya batas 3 menit. Kalau user tidak confirm, MedicationMissedNotifReceiver akan cek lagi
+        SimpleDateFormat timeFormat = new SimpleDateFormat(TIME_FORMAT, Locale.getDefault());
+        String occurrenceKey = "repeat_" + timeFormat.format(new Date(triggerMillis));
+        scheduleMedicineMissedCheck(
+                context,
+                scheduleId,
+                namaObat,
+                triggerMillis,
+                originalScheduledAt,
+                occurrenceKey
+        );
+
+        Log.d("ALARM", "Repeat alarm scheduled. scheduleId=" + scheduleId
+                + " trigger=" + new Date(triggerMillis));
+    }
+
     /**
      * 1) Kalau jam asli BELUM lewat -> alarm jam asli dibatalkan (supaya tidak bunyi di jam lama),
      *    lalu alarm untuk BESOK di jam yang sama dipasang lagi (supaya jadwal harian tetap jalan).
-     * 2) Cek "terlewat" dipindah ke (waktu snooze + 15 menit), supaya tidak mematikan alarm snooze
+     * 2) Cek "terlewat" dipindah ke (waktu snooze + 3 menit), supaya tidak mematikan alarm snooze
      *    dan tidak mengirim notif "terlewat" padahal user sedang menunda.
      */
     public static void applyMedicineSnooze(Context context, String scheduleId, String namaObat,

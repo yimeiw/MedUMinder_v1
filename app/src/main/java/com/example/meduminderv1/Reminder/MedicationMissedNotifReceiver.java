@@ -3,6 +3,7 @@ package com.example.meduminderv1.Reminder;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.example.meduminderv1.Model.UserRole;
@@ -37,37 +38,126 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
         final String logId = buildLogId(scheduleId, scheduledAtMillis);
         final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        db.collection("medication_logs").document(logId).get().addOnSuccessListener(doc -> {
-            String status = doc.getString("status");
-            // sudah diminum / sudah ditandai terlewat -> tidak ada yang perlu dilakukan
-            if (!doc.exists() || "dikonsumsi".equals(status) || "terlewatkan".equals(status)) {
-                pendingResult.finish();
-                return;
-            }
-            // sedang di-snooze dan belum lewat batasnya -> belum dianggap terlewat
-            Timestamp snoozedUntil = doc.getTimestamp("snoozed_until");
-            if (snoozedUntil != null && System.currentTimeMillis()
-                    < snoozedUntil.toDate().getTime() + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS - 60_000L) {
-                pendingResult.finish();
-                return;
-            }
-            String consumerUid = doc.getString("users_id");
-            if (consumerUid == null) {
-                pendingResult.finish();
-                return;
-            }
+        db.collection("medication_logs").document(logId).get()
+                .addOnSuccessListener(doc -> {
 
-            // 1) tandai terlewatkan, 2) baru kirim notifikasi
-            doc.getReference().update("status", "terlewatkan", "updated_at", Timestamp.now())
-                    .addOnSuccessListener(unused -> {
+                    String status = doc.getString("status");
+
+                    // Sudah diminum / sudah ditandai terlewat
+                    if (!doc.exists()
+                            || "dikonsumsi".equals(status)
+                            || "terlewatkan".equals(status)) {
+
+                        pendingResult.finish();
+                        return;
+                    }
+
+                    // Sedang di-snooze dan belum lewat batasnya
+                    Timestamp snoozedUntil = doc.getTimestamp("snoozed_until");
+
+                    if (snoozedUntil != null
+                            && System.currentTimeMillis()
+                            < snoozedUntil.toDate().getTime()
+                            + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS
+                            - 60_000L) {
+
+                        pendingResult.finish();
+                        return;
+                    }
+
+                    String consumerUid = doc.getString("users_id");
+
+                    if (consumerUid == null) {
+                        pendingResult.finish();
+                        return;
+                    }
+
+                    // Cek Repeat Until Confirmed
+                    SharedPreferences pref = context.getSharedPreferences("notification_settings", Context.MODE_PRIVATE);
+                    boolean repeatReminder = pref.getBoolean("repeat_reminder", false);
+
+                    if (repeatReminder) {
+                        // Stop alarm yang sedang berbunyi
                         context.stopService(new Intent(context, AlarmRingingService.class));
-                        sendNotifications(db, consumerUid, logId, namaObat, pendingResult);
-                    })
-                    .addOnFailureListener(e -> {
-                        Log.e(TAG, "Gagal update status terlewatkan. logId=" + logId, e);
+                        // Ambil Snooze Duration dari Notification Settings
+                        int snoozeMinutes = pref.getInt("snooze_minutes", 5);
+                        long nextTriggerMillis = System.currentTimeMillis() + snoozeMinutes * 60L * 1000L;
+                        // Repeat Until Confirmed diperlakukan seperti snooze
+                        doc.getReference().update(
+                                "status",
+                                "upcoming",
+                                "snoozed_until",
+                                new Timestamp(new java.util.Date(nextTriggerMillis)),
+                                "updated_at",
+                                Timestamp.now()
+                        ).addOnSuccessListener(unused -> {
+                            // Jadwalkan alarm berikutnya
+                            AlarmSchedulerHelper.scheduleRepeatAlarm(
+                                    context,
+                                    scheduleId,
+                                    namaObat,
+                                    scheduledAtMillis,
+                                    nextTriggerMillis
+                            );
+
+                            Log.d(TAG,
+                                    "Repeat Until Confirmed aktif. "
+                                            + "Status tetap upcoming. "
+                                            + "Alarm berikutnya dalam "
+                                            + snoozeMinutes
+                                            + " menit. logId="
+                                            + logId
+                            );
+                            pendingResult.finish();
+                        }).addOnFailureListener(e -> {
+                            Log.e(TAG, "Gagal update status repeat/snooze. logId=" + logId, e);
+                            pendingResult.finish();
+                        });
+
+                        return;
+                    }
+
+                    // Repeat Until Confirmed OFF. Setelah 3 menit langsung dianggap terlewat
+                    doc.getReference().update(
+                            "status",
+                            "terlewatkan",
+                            "updated_at",
+                            Timestamp.now()
+                    ).addOnSuccessListener(unused -> {
+
+                        context.stopService(
+                                new Intent(context, AlarmRingingService.class)
+                        );
+
+                        sendNotifications(
+                                db,
+                                consumerUid,
+                                logId,
+                                namaObat,
+                                pendingResult
+                        );
+
+                    }).addOnFailureListener(e -> {
+
+                        Log.e(
+                                TAG,
+                                "Gagal update status terlewatkan. logId=" + logId,
+                                e
+                        );
+
                         pendingResult.finish();
                     });
-        }).addOnFailureListener(e -> pendingResult.finish());
+
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(
+                            TAG,
+                            "Gagal mengambil medication log. logId=" + logId,
+                            e
+                    );
+
+                    pendingResult.finish();
+                });
     }
 
     private void sendNotifications(FirebaseFirestore db, String consumerUid, String logId,

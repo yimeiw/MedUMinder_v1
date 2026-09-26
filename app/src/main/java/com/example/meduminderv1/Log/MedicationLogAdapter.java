@@ -145,8 +145,8 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
                     teksColorAttr = com.google.android.material.R.attr.colorTertiaryFixed;
                     break;
                 case TERLEWATKAN:
-                    colorAttr = com.google.android.material.R.attr.colorSecondary; //pink
-                    teksColorAttr = com.google.android.material.R.attr.colorSecondary;
+                    colorAttr = com.google.android.material.R.attr.colorTertiaryFixedDim; //pink
+                    teksColorAttr = com.google.android.material.R.attr.colorTertiaryFixedDim;
                     break;
                 case AKAN_DATANG:
                     colorAttr = com.google.android.material.R.attr.colorSecondaryFixed; //abu
