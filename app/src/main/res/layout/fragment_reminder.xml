@@ -63,7 +63,7 @@
             android:layout_gravity="center"
             android:gravity="center"
             android:background="@drawable/circle_confirm_reminder"
-            android:outlineSpotShadowColor="?attr/colorTertiary"
+            android:outlineSpotShadowColor="?attr/colorTertiaryFixed"
             android:elevation="20dp"
             android:layout_marginBottom="20dp"
             >

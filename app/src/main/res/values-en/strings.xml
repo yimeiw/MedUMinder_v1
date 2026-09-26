@@ -644,5 +644,5 @@
     <string name="menit_lagi_minum_obat_msg">%1$s minutes until your medication: %2$s.</string>
     <string name="reminder_appointment_full_msg">%1$s you have an appointment: %2$s.</string>
     <string name="reminder_appointment_caregiver_full_msg">%1$s, %2$s has an appointment: %3$s.</string>
-    <string name="isi_ulang_obat_x_title">REFILL MEDICINE (%1$s)</string>
+    <string name="isi_ulang_obat_x_title">Refill Medicine (%1$s)</string>
 </resources>

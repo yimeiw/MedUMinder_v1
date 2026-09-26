@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
-    android:background="?attr/colorOnSurface"
+    android:background="?attr/colorOnPrimary"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".SignUp.SignUpActivity">
@@ -72,7 +72,7 @@
             android:maxLines="1"
             android:paddingStart="20dp"
             android:textColorHint="?attr/colorPrimaryInverse"
-            android:textColor="?attr/colorPrimary"
+            android:textColor="?attr/colorPrimaryFixed"
             android:textSize="12sp"
             />
 
@@ -109,7 +109,7 @@
             android:maxLines="1"
             android:paddingStart="20dp"
             android:textColorHint="?attr/colorPrimaryInverse"
-            android:textColor="?attr/colorPrimary"
+            android:textColor="?attr/colorPrimaryFixed"
             android:textSize="12sp"
             android:inputType="textEmailAddress"
             />
@@ -147,7 +147,7 @@
             android:maxLines="1"
             android:paddingStart="20dp"
             android:textColorHint="?attr/colorPrimaryInverse"
-            android:textColor="?attr/colorPrimary"
+            android:textColor="?attr/colorPrimaryFixed"
             android:inputType="textPassword"
             android:textSize="12sp"
             />
@@ -165,7 +165,7 @@
         android:layout_marginTop="30dp"
         android:background="@drawable/button_selector"
         android:fontFamily="@font/inter_18pt_medium"
-        app:backgroundTint="?attr/colorOnSurface"
+        app:backgroundTint="?attr/colorSecondaryFixedDim"
         android:textAllCaps="false"
         />
 

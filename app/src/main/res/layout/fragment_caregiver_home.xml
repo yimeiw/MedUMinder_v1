@@ -141,7 +141,7 @@
                             android:paddingHorizontal="12dp"
                             android:paddingTop="10dp"
                             android:text="@string/jadwal_berikutnya"
-                            android:textColor="?attr/colorPrimary"
+                            android:textColor="?attr/colorPrimaryFixed"
                             android:textSize="16sp" />
 
                         <LinearLayout
@@ -159,7 +159,7 @@
                                 android:paddingHorizontal="12dp"
                                 android:paddingVertical="5dp"
                                 android:text=""
-                                android:textColor="?attr/colorPrimary"
+                                android:textColor="?attr/colorPrimaryFixed"
                                 android:textSize="24sp" />
 
                             <LinearLayout
@@ -176,14 +176,15 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:gravity="center"
-                                    android:textColor="?attr/colorPrimary" />
+                                    android:textColor="?attr/colorPrimaryFixed"/>
 
                                 <View
                                     android:layout_width="5dp"
                                     android:layout_height="5dp"
                                     android:layout_gravity="center"
                                     android:layout_margin="5dp"
-                                    android:background="@drawable/circle" />
+                                    android:background="@drawable/circle"
+                                    android:backgroundTint="?attr/colorPrimaryFixed"/>
 
                                 <View
                                     android:layout_width="20dp"
@@ -191,7 +192,7 @@
                                     android:layout_gravity="center"
                                     android:layout_marginRight="5dp"
                                     android:background="@drawable/ic_time"
-                                    android:backgroundTint="?attr/colorPrimary" />
+                                    android:backgroundTint="?attr/colorPrimaryFixed" />
 
                                 <TextView
                                     android:id="@+id/tvTime"
@@ -199,7 +200,7 @@
                                     android:layout_height="wrap_content"
                                     android:layout_gravity="center"
                                     android:text="00:00"
-                                    android:textColor="?attr/colorPrimary" />
+                                    android:textColor="?attr/colorPrimaryFixed" />
                             </LinearLayout>
 
                             <LinearLayout
@@ -215,7 +216,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="@string/stok_obat"
-                                    android:textColor="?attr/colorPrimary"
+                                    android:textColor="?attr/colorPrimaryFixed"
                                     android:textSize="12sp" />
 
                                 <TextView
@@ -223,7 +224,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text=""
-                                    android:textColor="?attr/colorPrimary"
+                                    android:textColor="?attr/colorPrimaryFixed"
                                     android:textSize="12sp" />
                             </LinearLayout>
 
@@ -232,7 +233,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_margin="10dp"
-                                android:background="@drawable/border"
+                                android:background="@drawable/border_wp"
                                 android:paddingHorizontal="12dp"
                                 android:text="@string/remind_consumer"
                                 android:textAllCaps="false"
@@ -254,7 +255,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/consumer_belum_ada_jadwal"
-                                android:textColor="?attr/colorPrimary"
+                                android:textColor="?attr/colorPrimaryFixed"
                                 android:textSize="14sp" />
                         </LinearLayout>
                     </LinearLayout>
@@ -332,7 +333,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:background="@drawable/border"
+                        android:background="@drawable/bg_nostoke"
                         android:gravity="center"
                         android:orientation="vertical"
                         android:padding="20dp">
@@ -347,7 +348,7 @@
                             android:id="@+id/adherenceRing"
                             android:layout_width="140dp"
                             android:layout_height="140dp"
-                            android:layout_marginVertical="10dp" />
+                            android:layout_marginVertical="10dp"/>
 
                         <TextView
                             android:id="@+id/tvAdherenceDesc"
@@ -398,7 +399,7 @@
                             android:layout_marginStart="5dp"
                             android:layout_weight="1"
                             android:background="@drawable/border"
-                            android:backgroundTint="?attr/colorSecondary"
+                            android:backgroundTint="?attr/colorTertiaryFixedDim"
                             android:orientation="vertical"
                             android:padding="14dp">
 

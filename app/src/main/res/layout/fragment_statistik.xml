@@ -62,7 +62,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginTop="5dp"
                 android:layout_marginBottom="20dp"
                 android:weightSum="3">
 
@@ -75,9 +74,7 @@
                     android:text="@string/mingguan"
                     android:textAllCaps="false"
                     android:textSize="12sp"
-                    android:textColor="?attr/colorOnPrimary"
-                    android:background="@drawable/border"
-                    app:backgroundTint="@null" />
+                    style="@style/MaterialButtonLog"/>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnMonthly"
@@ -88,9 +85,7 @@
                     android:text="@string/bulanan"
                     android:textAllCaps="false"
                     android:textSize="12sp"
-                    android:textColor="?attr/colorOnPrimary"
-                    android:background="@drawable/border"
-                    app:backgroundTint="@null" />
+                    style="@style/MaterialButtonLog"/>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnYearly"
@@ -101,9 +96,7 @@
                     android:text="@string/tahunan"
                     android:textAllCaps="false"
                     android:textSize="12sp"
-                    android:textColor="?attr/colorOnPrimary"
-                    android:background="@drawable/border"
-                    app:backgroundTint="@null" />
+                    style="@style/MaterialButtonLog"/>
             </LinearLayout>
 
 
@@ -125,7 +118,7 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:background="@drawable/border"
-                android:backgroundTint="?attr/colorOnSurface"
+                android:backgroundTint="?attr/colorOnPrimary"
                 android:padding="15dp"
                 android:layout_marginBottom="15dp">
 
@@ -143,7 +136,7 @@
                         android:text="0%"
                         android:textSize="28sp"
                         android:textStyle="bold"
-                        android:textColor="?attr/colorTertiary" />
+                        android:textColor="?attr/colorTertiaryFixed"/>
 
                     <TextView
                         android:id="@+id/tvAdherenceLabel"
@@ -152,7 +145,7 @@
                         android:text="@string/kepatuhan"
                         android:textSize="14sp"
                         android:textStyle="bold"
-                        android:textColor="?attr/colorPrimary"
+                        android:textColor="?attr/colorPrimaryFixed"
                         android:layout_marginTop="2dp" />
 
                     <TextView
@@ -161,7 +154,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/noConsumptionData"
                         android:textSize="13sp"
-                        android:textColor="?attr/colorPrimary"
+                        android:textColor="?attr/colorPrimaryFixed"
                         android:layout_marginTop="8dp" />
                 </LinearLayout>
 
@@ -227,7 +220,7 @@
                     android:orientation="vertical"
                     android:gravity="center"
                     android:background="@drawable/border"
-                    android:backgroundTint="@color/pink"
+                    android:backgroundTint="@color/merah"
                     android:padding="15dp">
 
                     <TextView
@@ -414,7 +407,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/legend_ignored"
                     android:textSize="12sp"
-                    android:textColor="@color/pink" />
+                    android:textColor="@color/merah" />
             </LinearLayout>
 
 

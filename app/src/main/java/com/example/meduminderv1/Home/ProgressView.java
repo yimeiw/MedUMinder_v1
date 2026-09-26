@@ -26,7 +26,7 @@ public class ProgressView extends View {
     public ProgressView(Context context, @Nullable AttributeSet attrs) { super(context, attrs); init(); }
 
     int itam = MaterialColors.getColor(getRootView(), com.google.android.material.R.attr.colorOnSurface);
-    int ijo = MaterialColors.getColor(getRootView(), com.google.android.material.R.attr.colorPrimaryVariant);
+    int ijo = MaterialColors.getColor(getRootView(), com.google.android.material.R.attr.colorTertiaryFixed);
     private void init() {
         bgPaint.setStyle(Paint.Style.STROKE);
         bgPaint.setStrokeWidth(strokeWidth);

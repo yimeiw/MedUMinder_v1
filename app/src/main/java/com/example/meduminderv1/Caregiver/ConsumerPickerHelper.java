@@ -171,7 +171,7 @@ public class ConsumerPickerHelper {
             popupContent.addView(row);
         }
 
-        imgArrow.setColorFilter(ContextCompat.getColor(context, R.color.pink));
+        imgArrow.setColorFilter(ContextCompat.getColor(context, R.color.biru));
         imgArrow.animate().rotation(180f).setDuration(150).start();
         popupWindow.setOnDismissListener(() -> {
             imgArrow.clearColorFilter();

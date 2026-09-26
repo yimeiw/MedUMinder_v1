@@ -48,7 +48,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:background="@drawable/border_wp"
+            android:background="@drawable/border"
             android:layout_marginVertical="5dp">
 
             <TextView
@@ -83,7 +83,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:background="@drawable/border_wp"
+            android:background="@drawable/border"
             android:layout_marginVertical="5dp">
 
             <TextView
@@ -112,7 +112,7 @@
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:orientation="horizontal"
-            android:background="@drawable/border_wp"
+            android:background="@drawable/border"
             android:layout_marginVertical="5dp">
 
             <TextView
@@ -145,7 +145,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:background="@drawable/border_wp"
+            android:background="@drawable/border"
             android:layout_marginVertical="5dp">
 
             <ImageView

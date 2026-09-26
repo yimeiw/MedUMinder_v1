@@ -45,8 +45,10 @@
             android:orientation="vertical"
             android:gravity="center"
             android:background="@drawable/border_gradient"
+            android:outlineSpotShadowColor="?attr/colorTertiaryFixed"
+            android:elevation="20dp"
             android:layout_marginVertical="20dp"
-            android:layout_marginHorizontal="20dp">
+            android:layout_marginHorizontal="10dp">
 
             <ImageView
                 android:id="@+id/imgInvite"

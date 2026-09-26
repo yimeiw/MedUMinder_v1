@@ -2,18 +2,23 @@
     <!-- Base application theme. -->
     <style name="Theme.MedUMinderV1" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorSurface">@color/dark_bckg</item>
-        <item name="colorOnSurface">@color/pink</item> <!--pink jadi hitam-->
-        <item name="colorPrimary">@color/black</item> <!--hitam jadi putih-->
-        <item name="colorSecondary">@color/dark_pink</item> <!--darkpink jadi pink-->
-        <item name="colorTertiary">@color/white</item> <!--putih jadi ijo-->
-        <item name="colorAccent">@color/white</item> <!--putih jadi pink-->
-        <item name="colorOnPrimary">@color/white</item> <!--putih jadi itam-->
-        <item name="colorPrimaryVariant">@color/black</item><!-- ijo itam -->
+        <item name="colorOnSurface">@color/white</item> <!-- teks -->
+        <item name="colorPrimary">@color/abu_tua</item> <!--abu tua jadi putih-->
+        <item name="colorSecondary">@color/biru</item> <!--biru jadi putih-->
+        <item name="colorTertiary">@color/abu_muda</item> <!--abu muda jadi biru-->
+        <item name="colorAccent">@color/white</item> <!--putih jadi biru-->
+        <item name="colorOnPrimary">@color/abu_tua</item> <!--abu tua jadi itam-->
+        <item name="colorPrimaryVariant">@color/biru</item><!-- biru itam -->
+        <item name="colorScheme">@color/abu_tengah</item>
+        <item name="colorBackgroundFloating">@color/abu_tengah</item> <!-- abu tengah putih -->
         <item name="colorPrimaryFixed">@color/white</item>
         <item name="colorPrimaryFixedDim">@color/black</item>
         <item name="colorTertiaryFixed">@color/green</item>
+        <item name="colorTertiaryFixedDim">@color/merah</item>
+        <item name="colorSecondaryFixedDim">@color/biru</item>
         <item name="colorSecondaryFixed">@color/placeholder</item>
         <item name="colorPrimaryInverse">@color/white</item> <!--putih jadi abu-->
+        <item name="colorSurfaceContainer">@color/abu_tua</item>
         <item name="android:windowBackground">?attr/colorSurface</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorOnSurface</item>
@@ -36,17 +41,6 @@
         <item name="backgroundTint">@color/hover_pressed</item>
         <item name="rippleColor">@color/hover_pressed</item>
         <item name="android:textColor">@color/white</item>
-    </style>
-
-    <style name="OtpItem">
-        <item name="android:layout_width">40dp</item>
-        <item name="android:layout_height">48dp</item>
-        <item name="android:layout_margin">6dp</item>
-        <item name="android:gravity">center</item>
-        <item name="android:textSize">18sp</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:hint"> </item>
-        <item name="android:background">@drawable/bg_otp</item>
     </style>
 
     <style name="CustomMaterialTimePicker" parent="ThemeOverlay.MaterialComponents.TimePicker">

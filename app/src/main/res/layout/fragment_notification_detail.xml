@@ -109,7 +109,7 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/button_selector"
                 app:backgroundTint="@null"
-                android:textColor="?attr/colorPrimary"
+                android:textColor="?attr/colorPrimaryFixed"
                 android:textAllCaps="false"
                 android:visibility="visible"
                 android:layout_marginTop="10dp"/>
@@ -128,9 +128,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/button_selector"
-                    app:backgroundTint="?attr/colorTertiaryFixed"
+                    app:backgroundTint="?attr/colorSecondaryFixedDim"
                     android:text="@string/terima"
-                    android:textColor="?attr/colorPrimary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textAllCaps="false"/>
 
                 <Space
@@ -143,9 +143,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/button_selector"
-                    app:backgroundTint="?attr/colorSecondary"
+                    app:backgroundTint="?attr/colorTertiaryFixedDim"
                     android:text="@string/tolak"
-                    android:textColor="?attr/colorPrimary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textAllCaps="false"/>
 
             </LinearLayout>

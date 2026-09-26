@@ -118,9 +118,9 @@ public class RelationAdapter extends RecyclerView.Adapter<RelationAdapter.ViewHo
             AlertDialog dialog = builder.create();
             dialog.show();
             if (dialog.getWindow() != null){
-                dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+                dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(context, R.color.green));
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(context, R.color.pink));
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(context, R.color.merah));
             }
         });
     }

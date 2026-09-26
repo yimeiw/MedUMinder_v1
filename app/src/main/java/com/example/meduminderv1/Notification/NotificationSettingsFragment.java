@@ -201,7 +201,7 @@ public class NotificationSettingsFragment extends Fragment {
             dropdownRingtone.setOnClickListener(v -> {
                 if (!isDropdownOpen) {
                     dropdownRingtone.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_up, 0);
-                    dropdownRingtone.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
+                    dropdownRingtone.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border));
                     dropdownRingtone.setDropDownVerticalOffset(20);
                     dropdownRingtone.showDropDown();
                     isDropdownOpen = true;
@@ -227,7 +227,7 @@ public class NotificationSettingsFragment extends Fragment {
 
             dropdownRingtone.setOnDismissListener(() -> {
                 dropdownRingtone.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
-                dropdownRingtone.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
+                dropdownRingtone.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border));
                 dropdownRingtone.setDropDownVerticalOffset(20);
                 isDropdownOpen = false;
             });
@@ -251,7 +251,7 @@ public class NotificationSettingsFragment extends Fragment {
             dropdownReminderMessage.setOnClickListener(v -> {
                 if (!isDropdownOpen) {
                     dropdownReminderMessage.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_up, 0);
-                    dropdownReminderMessage.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
+                    dropdownReminderMessage.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border));
                     dropdownReminderMessage.setDropDownVerticalOffset(20);
                     dropdownReminderMessage.showDropDown();
                     isDropdownOpen = true;
@@ -274,7 +274,7 @@ public class NotificationSettingsFragment extends Fragment {
             );
             dropdownReminderMessage.setOnDismissListener(() -> {
                 dropdownReminderMessage.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
-                dropdownReminderMessage.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
+                dropdownReminderMessage.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border));
                 dropdownReminderMessage.setDropDownVerticalOffset(20);
                 isDropdownOpen = false;
             });
@@ -297,7 +297,7 @@ public class NotificationSettingsFragment extends Fragment {
             dropdownSnoozeDuration.setOnClickListener(v -> {
                 if (!isDropdownOpen) {
                     dropdownSnoozeDuration.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_up, 0);
-                    dropdownSnoozeDuration.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
+                    dropdownSnoozeDuration.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border));
                     dropdownSnoozeDuration.setDropDownVerticalOffset(20);
                     dropdownSnoozeDuration.showDropDown();
                     isDropdownOpen = true;
@@ -324,7 +324,7 @@ public class NotificationSettingsFragment extends Fragment {
             );
             dropdownSnoozeDuration.setOnDismissListener(() -> {
                 dropdownSnoozeDuration.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
-                dropdownSnoozeDuration.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
+                dropdownSnoozeDuration.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border));
                 dropdownSnoozeDuration.setDropDownVerticalOffset(20);
                 isDropdownOpen = false;
             });
@@ -347,7 +347,7 @@ public class NotificationSettingsFragment extends Fragment {
             dropdownAppointmentReminder.setOnClickListener(v -> {
                 if (!isDropdownOpen) {
                     dropdownAppointmentReminder.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_up, 0);
-                    dropdownAppointmentReminder.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
+                    dropdownAppointmentReminder.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border));
                     dropdownAppointmentReminder.setDropDownVerticalOffset(20);
                     dropdownAppointmentReminder.showDropDown();
                     isDropdownOpen = true;
@@ -373,7 +373,7 @@ public class NotificationSettingsFragment extends Fragment {
             );
             dropdownAppointmentReminder.setOnDismissListener(() -> {
                 dropdownAppointmentReminder.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
-                dropdownAppointmentReminder.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
+                dropdownAppointmentReminder.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border));
                 dropdownAppointmentReminder.setDropDownVerticalOffset(20);
                 isDropdownOpen = false;
             });

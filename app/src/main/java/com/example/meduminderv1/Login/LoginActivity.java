@@ -149,9 +149,9 @@ public class LoginActivity extends AppCompatActivity {
                     AlertDialog dialog = builder.create();
                     dialog.show();
                     if (dialog.getWindow() != null){
-                        dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+                        dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
                         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(LoginActivity.this, R.color.green));
-                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(LoginActivity.this, R.color.pink));
+                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(LoginActivity.this, R.color.merah));
                     }
                 }else {
                     Toast.makeText(LoginActivity.this, message, Toast.LENGTH_SHORT).show();

@@ -43,7 +43,19 @@ public final class NotificationText {
 
     public static String title(Context c, Notification n) {
         int id = resId(c, n.getTitle_key());
-        return id != 0 ? c.getString(id) : n.getTitle();
+        if (id == 0) return n.getTitle();
+
+        // judul juga boleh punya isian, contoh "ISI ULANG OBAT (%1$s)"
+        List<Object> args = new ArrayList<>();
+        if (n.getMessage_args() != null) {
+            for (String a : n.getMessage_args()) args.add(resolveArg(c, a));
+        }
+        try {
+            return c.getString(id, args.toArray());
+        } catch (Exception e) {
+            Log.e(TAG, "Format judul salah untuk " + n.getTitle_key(), e);
+            return c.getString(id);
+        }
     }
 
     public static String message(Context c, Notification n) {

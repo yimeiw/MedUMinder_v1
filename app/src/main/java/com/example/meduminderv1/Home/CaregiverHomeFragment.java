@@ -411,7 +411,7 @@ public class CaregiverHomeFragment extends Fragment {
                                     stock = ((Number) med.getStock().get("stok_obat")).intValue();
                                 }
                                 int finalStock = stock;
-                                String medType = med.getMed_type(); // <-- BARU
+                                String medType = med.getMed_type(); //
                                 if (med.getCustom_medicine_name() != null){
                                     callback.onResolved(med.getCustom_medicine_name(), finalStock, medType);
                                 } else if (med.getCatalog_id() != null) {
@@ -499,9 +499,9 @@ public class CaregiverHomeFragment extends Fragment {
                                 sdf.format(appt.getDisplayTime().toDate()),
                                 appt.getAddress(), appt.getStatus(),
                                 doc.getId(), appt.getAppointment_at().toDate().getTime(),
-                                appt.getCreated_at() != null ? appt.getCreated_at().toDate().getTime() : 0)); // <-- BARU
+                                appt.getCreated_at() != null ? appt.getCreated_at().toDate().getTime() : 0));
                     }
-                    Collections.sort(combined, (a, b) -> Long.compare(b.getCreatedAtMillis(), a.getCreatedAtMillis())); // <-- diganti
+                    Collections.sort(combined, (a, b) -> Long.compare(b.getCreatedAtMillis(), a.getCreatedAtMillis()));
                     List<LogItem> displayList = combined.size() > 3 ? combined.subList(0,3) : combined;
                     TodayScheduleAdapter adapter = new TodayScheduleAdapter(displayList, requireContext());
                     adapter.setOnItemClickListener(this::navigateToReminder);
@@ -535,7 +535,7 @@ public class CaregiverHomeFragment extends Fragment {
             public void onResult(int totalSeharusnya, int totalDikonsumsi, int percent) {
                 if (!isAdded()) return;
                 adherenceRing.setProgress(percent);
-                adherenceRing.setProgressColor(MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface));
+                adherenceRing.setProgressColor(MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorPrimaryVariant));
                 tvAdherenceDesc.setText(adherenceDesc(percent));
             }
 

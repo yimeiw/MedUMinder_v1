@@ -169,9 +169,9 @@ public class LogFragment extends Fragment {
             TextView itemAppointment = popupView.findViewById(R.id.itemAppointment);
 
             int itam = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface);
-            int pink = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorSecondary);
+            int biru = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorSecondary);
 
-            imgArrow.setColorFilter(pink);
+            imgArrow.setColorFilter(biru);
             imgArrow.animate().rotation(180f).setDuration(150).start();
 
             itemConsumption.setOnClickListener(itemView -> {
@@ -206,7 +206,7 @@ public class LogFragment extends Fragment {
         for (MaterialButton button : buttons) {
             button.setBackgroundTintList(ContextCompat.getColorStateList(
                     requireContext(),
-                    button == selected ? R.color.pink : R.color.black
+                    button == selected ? R.color.biru : R.color.black
             ));
         }
     }
@@ -357,7 +357,7 @@ public class LogFragment extends Fragment {
                 dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
                         .setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
                 dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
-                        .setTextColor(ContextCompat.getColor(requireContext(), R.color.pink));
+                        .setTextColor(ContextCompat.getColor(requireContext(), R.color.merah));
             });
 
             dialog.show();
@@ -381,8 +381,8 @@ public class LogFragment extends Fragment {
             dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
                     .setTextColor(ContextCompat.getColor(requireContext(), R.color.green));
             dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
-                    .setTextColor(ContextCompat.getColor(requireContext(), R.color.pink));
-            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+                    .setTextColor(ContextCompat.getColor(requireContext(), R.color.merah));
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
         });
 
         dialog.show();

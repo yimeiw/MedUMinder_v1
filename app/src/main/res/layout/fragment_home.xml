@@ -31,7 +31,7 @@
                 <ImageView
                     android:id="@+id/logo"
                     android:src="@drawable/logo_tulisan"
-                    android:layout_width="160dp"
+                    android:layout_width="180dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="start|center_vertical"/>
 
@@ -222,7 +222,7 @@
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:layout_gravity="center"
-                    android:textColor="?attr/colorPrimary"
+                    android:textColor="?attr/colorPrimaryFixed"
                     android:paddingHorizontal="12dp"
                     android:paddingTop="10dp"/>
 
@@ -241,7 +241,7 @@
                         android:fontFamily="@font/inter_24pt_bold"
                         android:textSize="24sp"
                         android:text=""
-                        android:textColor="?attr/colorPrimary"
+                        android:textColor="?attr/colorPrimaryFixed"
                         android:paddingHorizontal="12dp"
                         android:paddingVertical="5dp"/>
 
@@ -260,14 +260,14 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text=""
-                            android:textColor="?attr/colorPrimary"
+                            android:textColor="?attr/colorPrimaryFixed"
                             android:gravity="center"/>
 
                         <View
                             android:layout_width="5dp"
                             android:layout_height="5dp"
                             android:background="@drawable/circle"
-                            android:backgroundTint="?attr/colorPrimary"
+                            android:backgroundTint="?attr/colorPrimaryFixed"
                             android:layout_margin="5dp"
                             android:layout_gravity="center"
                             />
@@ -277,7 +277,7 @@
                             android:layout_height="20dp"
                             android:background="@drawable/ic_time"
                             android:layout_gravity="center"
-                            android:backgroundTint="?attr/colorPrimary"
+                            android:backgroundTint="?attr/colorPrimaryFixed"
                             android:layout_marginRight="5dp"
                             />
 
@@ -286,7 +286,7 @@
                             android:layout_height="wrap_content"
                             android:id="@+id/tvTime"
                             android:text="00:00"
-                            android:textColor="?attr/colorPrimary"
+                            android:textColor="?attr/colorPrimaryFixed"
                             android:layout_gravity="center"/>
 
                     </LinearLayout>
@@ -304,7 +304,7 @@
                             android:id="@+id/tvStokObat"
                             android:text="@string/stok_obat"
                             android:textSize="12sp"
-                            android:textColor="?attr/colorPrimary"/>
+                            android:textColor="?attr/colorPrimaryFixed"/>
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -312,7 +312,7 @@
                             android:id="@+id/tvTotalStok"
                             android:text=""
                             android:textSize="12sp"
-                            android:textColor="?attr/colorPrimary"/>
+                            android:textColor="?attr/colorPrimaryFixed"/>
 
                     </LinearLayout>
 
@@ -321,7 +321,7 @@
                         android:layout_height="wrap_content"
                         android:id="@+id/btnKonfirmasi"
                         android:text="@string/sudah_dikonsumsi"
-                        android:background="@drawable/border"
+                        android:background="@drawable/border_wp"
                         app:backgroundTint="@null"
                         android:textAllCaps="false"
                         android:textSize="14sp"
@@ -345,7 +345,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/belum_ada_jadwal"
                         android:textSize="14sp"
-                        android:textColor="?attr/colorPrimary"
+                        android:textColor="?attr/colorPrimaryFixed"
                         android:layout_marginBottom="20dp"/>
 
                     <com.google.android.material.button.MaterialButton
@@ -355,7 +355,7 @@
                         android:text="@string/tambahkan_jadwal"
                         android:textAllCaps="false"
                         android:textColor="?attr/colorOnSurface"
-                        android:background="@drawable/border"
+                        android:background="@drawable/border_wp"
                         android:layout_marginHorizontal="12dp"
                         app:icon="@drawable/ic_add"
                         app:iconGravity="textStart"
@@ -458,7 +458,7 @@
                     android:id="@+id/lineChart"
                     android:layout_width="match_parent"
                     android:layout_height="260dp"
-                    android:background="@drawable/border"
+                    android:background="@drawable/bg_nostoke"
                     android:layout_marginTop="8dp"/>
 
             </LinearLayout>

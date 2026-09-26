@@ -2,12 +2,10 @@ package com.example.meduminderv1.Schedule;
 
 import android.app.AlarmManager;
 import android.app.DatePickerDialog;
-import android.app.TimePickerDialog;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.TypedValue;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
@@ -44,7 +42,6 @@ import com.example.meduminderv1.Repo.CareRelationshipRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
-import com.google.firebase.auth.FirebaseAuth;
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Model.Medication;
@@ -212,7 +209,7 @@ public class MedicineReminderFragment extends Fragment {
                     namaObat.post(() -> {
                         if (adapter.getCount() > 0) {
                             namaObat.showDropDown();
-                            namaObat.setDropDownBackgroundDrawable(requireContext().getDrawable(R.drawable.border_wp));
+                            namaObat.setDropDownBackgroundDrawable(requireContext().getDrawable(R.drawable.border));
                             namaObat.setDropDownVerticalOffset(20);
                         } else {
                             namaObat.dismissDropDown();
@@ -246,7 +243,7 @@ public class MedicineReminderFragment extends Fragment {
             }
             Log.d("MEDICINE", "Jumlah = " + medList.size());
             adapter.notifyDataSetChanged();
-            namaObat.setDropDownBackgroundDrawable(requireContext().getDrawable(R.drawable.border_wp));
+            namaObat.setDropDownBackgroundDrawable(requireContext().getDrawable(R.drawable.border));
             namaObat.setDropDownVerticalOffset(20);
         });
 
@@ -284,7 +281,7 @@ public class MedicineReminderFragment extends Fragment {
         freqMinumObat.setOnClickListener(v -> {
             if (!isDropdownOpen) {
                 freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_up, 0);
-                freqMinumObat.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
+                freqMinumObat.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border));
                 freqMinumObat.setDropDownVerticalOffset(20);
                 freqMinumObat.showDropDown();
                 isDropdownOpen = true;
@@ -300,7 +297,7 @@ public class MedicineReminderFragment extends Fragment {
 
         freqMinumObat.setOnDismissListener(() -> {
             freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
-            freqMinumObat.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border_wp));
+            freqMinumObat.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border));
             freqMinumObat.setDropDownVerticalOffset(20);
             isDropdownOpen = false;
         });

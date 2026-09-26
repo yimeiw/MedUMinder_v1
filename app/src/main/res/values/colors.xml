@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="white">#FFFFFF</color>
-    <color name="pink">#F6B6A9</color>
-    <color name="black">#333F48</color>
-    <color name="bckg">#EFF8F4</color>
-    <color name="green">#A8D5BA</color>
+    <color name="white">#F9FBFC</color>
+    <color name="merah">#FF6B6B</color>
+    <color name="black">#0B1E33</color>
+    <color name="bckg">#F1F5F8</color>
+    <color name="green">#22C1C4</color>
+    <color name="biru">#2C68E6</color>
     <color name="placeholder">#B5B5B5</color>
-    <color name="pink_pudar">#FFEDEF</color>
     <color name="gray">#C4C6D2</color>
 
-    <color name="dark_bckg">#47535D</color>
-    <color name="dark_pink">#E7A79B</color>
+    <color name="dark_bckg">#111111</color>
+    <color name="abu_tua">#1B1F20</color>
+    <color name="abu_tengah">#2E3642</color>
+    <color name="abu_muda">#718096</color>
 </resources>

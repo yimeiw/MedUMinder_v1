@@ -264,9 +264,10 @@ public class StatistikFragment extends Fragment {
 
         BarDataSet dataSet = new BarDataSet(entries, getString(R.string.persentaseKepatuhan));
 
-        int pink = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorSecondary);
+        int itam = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface);
+        int ijo = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorTertiaryFixed);
 
-        dataSet.setColor(pink);
+        dataSet.setColor(ijo);
         dataSet.setValueTextSize(10f);
         dataSet.setValueTypeface(fontRegular());
         dataSet.setDrawValues(true);
@@ -278,10 +279,10 @@ public class StatistikFragment extends Fragment {
         xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
         xAxis.setGranularity(1f);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setTextColor(pink);
+        xAxis.setTextColor(itam);
         xAxis.setTypeface(fontRegular());
 
-        chart.getAxisLeft().setTextColor(pink);
+        chart.getAxisLeft().setTextColor(itam);
         chart.getAxisLeft().setTypeface(fontRegular());
         chart.getAxisLeft().setAxisMinimum(0f);
         chart.getAxisLeft().setAxisMaximum(100f);
@@ -324,7 +325,7 @@ public class StatistikFragment extends Fragment {
 
         if (totalDiabaikan > 0) {
             entries.add(new PieEntry(totalDiabaikan, getString(R.string.response_diabaikan_label)));
-            colors.add(requireContext().getColor(R.color.pink));
+            colors.add(requireContext().getColor(R.color.merah));
         }
 
         if (entries.isEmpty()) {
@@ -661,7 +662,7 @@ public class StatistikFragment extends Fragment {
         int[] legendColors = {
                 requireContext().getColor(R.color.green),
                 requireContext().getColor(R.color.gray),
-                requireContext().getColor(R.color.pink)
+                requireContext().getColor(R.color.merah)
         };
 
         float dotRadius = 5f, dotTextGap = 6f, itemGap = 20f;

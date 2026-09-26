@@ -2,7 +2,6 @@ package com.example.meduminderv1.Home;
 
 import static android.content.Context.MODE_PRIVATE;
 
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
@@ -15,7 +14,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,13 +24,9 @@ import android.widget.Toast;
 
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Auth.SessionManager;
-import com.example.meduminderv1.Callback.AuthCallback;
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Caregiver.TodayScheduleAdapter;
-import com.example.meduminderv1.Invitation.Invitation;
 import com.example.meduminderv1.Invitation.InvitationPopupHelper;
-import com.example.meduminderv1.Login.LoginActivity;
-import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.Model.Appointment;
 import com.example.meduminderv1.Model.LogItem;
 import com.example.meduminderv1.Model.LogStatus;
@@ -41,12 +35,8 @@ import com.example.meduminderv1.Model.MedicationLog;
 import com.example.meduminderv1.Model.MedicationSchedules;
 import com.example.meduminderv1.Model.MedicineCatalog;
 import com.example.meduminderv1.Model.User;
-import com.example.meduminderv1.Model.UserRole;
-import com.example.meduminderv1.Notification.Notification;
-import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
-import com.example.meduminderv1.Repo.InvitationRepo;
 import com.example.meduminderv1.Repo.MedicationRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
 import com.example.meduminderv1.Repo.StatistikRepo;
@@ -62,7 +52,6 @@ import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -77,7 +66,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.UUID;
 
 public class HomeFragment extends Fragment {
     TextView tvGreeting, tvtitleCard, tvTime, tvDay, tvStokObat, tvTotalStok, btnLihatSemua, emptyTodaySchedule;
@@ -567,8 +555,8 @@ public class HomeFragment extends Fragment {
         }
 
         LineDataSet dsSeharusnya = new LineDataSet(seharusnya, getString(R.string.dosis_seharusnya));
-        dsSeharusnya.setColor(requireContext().getColor(R.color.dark_bckg));
-        dsSeharusnya.setCircleColor(requireContext().getColor(R.color.dark_bckg));
+        dsSeharusnya.setColor(requireContext().getColor(R.color.abu_muda));
+        dsSeharusnya.setCircleColor(requireContext().getColor(R.color.abu_muda));
         dsSeharusnya.setLineWidth(2f);
         dsSeharusnya.setCircleRadius(4f);
         dsSeharusnya.setAxisDependency(YAxis.AxisDependency.LEFT);
@@ -591,13 +579,13 @@ public class HomeFragment extends Fragment {
 
         // persentase kepatuhan
         LineDataSet dsPersentase = new LineDataSet(persentase, getString(R.string.persentaseKepatuhan));
-        dsPersentase.setColor(requireContext().getColor(R.color.pink));
-        dsPersentase.setCircleColor(requireContext().getColor(R.color.pink));
+        dsPersentase.setColor(requireContext().getColor(R.color.merah));
+        dsPersentase.setCircleColor(requireContext().getColor(R.color.merah));
         dsPersentase.setLineWidth(3f);
         dsPersentase.setCircleRadius(4.5f);
         dsPersentase.setAxisDependency(YAxis.AxisDependency.RIGHT);
         dsPersentase.setDrawFilled(true);
-        dsPersentase.setFillColor(requireContext().getColor(R.color.pink));
+        dsPersentase.setFillColor(requireContext().getColor(R.color.merah));
         dsPersentase.setFillAlpha(60);
         dsPersentase.setDrawValues(false);
         dsPersentase.setMode(LineDataSet.Mode.CUBIC_BEZIER);
@@ -633,6 +621,7 @@ public class HomeFragment extends Fragment {
         });
         leftAxis.setAxisMinimum(0f);
         leftAxis.setDrawGridLines(false);
+        leftAxis.setTextColor(itam);
 
         YAxis rightAxis = lineChart.getAxisRight();
         rightAxis.setEnabled(true);

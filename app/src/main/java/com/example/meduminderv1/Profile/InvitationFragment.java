@@ -134,9 +134,9 @@ public class InvitationFragment extends Fragment {
         AlertDialog dialog = builder.create();
         dialog.show();
         if (dialog.getWindow() != null){
-            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.green));
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.pink));
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.merah));
         }
     }
     /** Setelah undangan terkirim -> kembali ke Home sesuai role, dan bersihkan back stack. */

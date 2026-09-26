@@ -69,7 +69,7 @@ public enum LogStatus {
             case DIKONSUMSI:
                 return R.color.green;
             case TERLEWATKAN:
-                return R.color.pink;
+                return R.color.merah;
             case AKAN_DATANG:
                 return R.color.gray;
             default:

@@ -30,12 +30,6 @@
         android:label="Isi Ulang Stok Obat"
         tools:layout="@layout/fragment_reminder_stock" />
 
-    <fragment
-        android:id="@+id/editMedicineReminderFragment"
-        android:name="com.example.meduminderv1.Schedule.EditMedicineReminderFragment"
-        android:label="Ubah Pengingat"
-        tools:layout="@layout/fragment_edit_medicine_reminder" />
-
     <!--    general-->
     <fragment
         android:id="@+id/forgotPassFragment"

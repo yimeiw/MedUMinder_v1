@@ -32,6 +32,7 @@
         app:itemIconSize="28dp"
         app:itemIconTint="@color/nav_item"
         app:itemTextColor="@android:color/transparent"
+        android:backgroundTint="?attr/colorSurfaceContainer"
         app:labelVisibilityMode="unlabeled"
         app:menu="@menu/bottom_nav_consumer" />
 

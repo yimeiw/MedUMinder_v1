@@ -132,9 +132,9 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
                 AlertDialog dialog = builder.create();
                 dialog.show();
                 if (dialog.getWindow() != null){
-                    dialog.getWindow().setBackgroundDrawableResource(R.drawable.border_wp);
+                    dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
                     dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.green));
-                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(this, R.color.pink));
+                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(this, R.color.merah));
                 } prefs.edit().putBoolean("asked_exact_alarm", true).apply();
             }
         }
@@ -198,7 +198,7 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         bundle.putLong("scheduled_at", scheduledAt);
         bundle.putLong("taken_at", 0L);
         bundle.putString("status", "akan datang");
-        bundle.putString("source", "schedule");   // <-- baris baru
+        bundle.putString("source", "schedule");
 
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.nav_host_fragment);
