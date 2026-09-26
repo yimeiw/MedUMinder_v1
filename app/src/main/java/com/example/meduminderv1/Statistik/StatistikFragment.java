@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Typeface;
 import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,6 +14,7 @@ import android.os.Bundle;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.FileProvider;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 
 import android.os.Environment;
@@ -80,6 +82,26 @@ public class StatistikFragment extends Fragment {
 
     public StatistikFragment() {
         // Required empty public constructor
+    }
+
+    // ===== font aplikasi (app_font) untuk grafik & PDF =====
+    // Tanpa ini, grafik dan PDF memakai font bawaan HP (Typeface.DEFAULT).
+    private Typeface cachedRegular, cachedBold;
+
+    private Typeface fontRegular() {
+        if (cachedRegular == null) {
+            Typeface f = ResourcesCompat.getFont(requireContext(), R.font.app_font);
+            cachedRegular = f != null ? f : Typeface.DEFAULT;
+        }
+        return cachedRegular;
+    }
+
+    private Typeface fontBold() {
+        if (cachedBold == null) {
+            // app_font punya versi 700 (bold), jadi ini memakai file bold yang asli
+            cachedBold = Typeface.create(fontRegular(), Typeface.BOLD);
+        }
+        return cachedBold;
     }
 
     @Override
@@ -246,6 +268,7 @@ public class StatistikFragment extends Fragment {
 
         dataSet.setColor(pink);
         dataSet.setValueTextSize(10f);
+        dataSet.setValueTypeface(fontRegular());
         dataSet.setDrawValues(true);
 
         BarData data = new BarData(dataSet);
@@ -256,8 +279,10 @@ public class StatistikFragment extends Fragment {
         xAxis.setGranularity(1f);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setTextColor(pink);
+        xAxis.setTypeface(fontRegular());
 
         chart.getAxisLeft().setTextColor(pink);
+        chart.getAxisLeft().setTypeface(fontRegular());
         chart.getAxisLeft().setAxisMinimum(0f);
         chart.getAxisLeft().setAxisMaximum(100f);
         chart.getAxisRight().setEnabled(false);
@@ -311,6 +336,7 @@ public class StatistikFragment extends Fragment {
         dataSet.setColors(colors);
         dataSet.setValueTextSize(12f);
         dataSet.setValueTextColor(Color.WHITE);
+        dataSet.setValueTypeface(fontBold());
 
         PieData data = new PieData(dataSet);
 
@@ -320,6 +346,7 @@ public class StatistikFragment extends Fragment {
         chart.setUsePercentValues(true);
         chart.setCenterText(getString(R.string.response_center_label));
         chart.setCenterTextSize(14f);
+        chart.setCenterTextTypeface(fontBold());
         chart.getLegend().setEnabled(false);
         chart.setHoleRadius(55f);
         chart.setTransparentCircleRadius(60f);
@@ -418,7 +445,7 @@ public class StatistikFragment extends Fragment {
 
         // Judul
         paint.setTextAlign(android.graphics.Paint.Align.CENTER);
-        paint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        paint.setTypeface(fontBold());
         paint.setTextSize(22);
 
         canvas1.drawText(
@@ -431,7 +458,7 @@ public class StatistikFragment extends Fragment {
         y += 30;
 
         // Nama Consumer
-        paint.setTypeface(android.graphics.Typeface.DEFAULT);
+        paint.setTypeface(fontRegular());
         paint.setTextSize(15);
 
         canvas1.drawText(
@@ -490,7 +517,7 @@ public class StatistikFragment extends Fragment {
 
         // Persentase
         paint.setTextAlign(android.graphics.Paint.Align.CENTER);
-        paint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        paint.setTypeface(fontBold());
         paint.setTextSize(18);
 
         canvas1.drawText(
@@ -504,7 +531,7 @@ public class StatistikFragment extends Fragment {
 
         // Total
         paint.setTextAlign(android.graphics.Paint.Align.LEFT);
-        paint.setTypeface(android.graphics.Typeface.DEFAULT);
+        paint.setTypeface(fontRegular());
         paint.setTextSize(12);
 
         canvas1.drawText(
@@ -622,7 +649,7 @@ public class StatistikFragment extends Fragment {
 
         // Legend / angka
         paint.setTextAlign(android.graphics.Paint.Align.LEFT);
-        paint.setTypeface(android.graphics.Typeface.DEFAULT);
+        paint.setTypeface(fontRegular());
         paint.setTextSize(12);
 
         String[] legendLabels = {
@@ -702,7 +729,7 @@ public class StatistikFragment extends Fragment {
             float y
     ) {
         paint.setTextAlign(android.graphics.Paint.Align.LEFT);
-        paint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        paint.setTypeface(fontBold());
         paint.setTextSize(16);
 
         canvas.drawText(title, x, y, paint);
@@ -969,6 +996,6 @@ public class StatistikFragment extends Fragment {
 
                     @Override
                     public void onFailure(Exception e) {}
-        });
+                });
     }
 }

@@ -82,6 +82,8 @@ import java.util.UUID;
 public class HomeFragment extends Fragment {
     TextView tvGreeting, tvtitleCard, tvTime, tvDay, tvStokObat, tvTotalStok, btnLihatSemua, emptyTodaySchedule;
     ImageButton btnNotif;
+    TextView tvNotifBadge;                          // angka jumlah notif belum dibaca
+    private ListenerRegistration unreadListener;    // realtime jumlah notif
     ImageButton btnProfile;
     MaterialButton addNoSchedule, btnKonfirmasi;
     RecyclerView rvTodaySchedule;
@@ -115,6 +117,7 @@ public class HomeFragment extends Fragment {
         tvStokObat = view.findViewById(R.id.tvStokObat);
         tvTotalStok = view.findViewById(R.id.tvTotalStok);
         btnNotif = view.findViewById(R.id.btnNotif);
+        tvNotifBadge = view.findViewById(R.id.tvNotifBadge);
         addMed = view.findViewById(R.id.layoutAddMed);
         addAppoint = view.findViewById(R.id.layoutAddAppoint);
         viewLog = view.findViewById(R.id.layoutLog);
@@ -205,27 +208,27 @@ public class HomeFragment extends Fragment {
         refreshHandler.postDelayed(refreshRunnable, 30_000L);
     }
 
+    /** Tampilkan jumlah notif belum dibaca di ikon lonceng (realtime). */
     private void checkUnreadNotif() {
-        authManager.unreadNotif(new AuthCallback<Integer>() {
-            @Override
-            public void onSuccess(Integer result) {
-                //cegah crash kalau fragment sdh tdk aktif
-                if (!isAdded() || getContext() == null) return;
-                //pastikan result tidak null dan bernilai > 0
-                boolean hasUnread = (result != null && result > 0);
-                if (hasUnread){
-                    btnNotif.setImageResource(R.drawable.ic_notif_hover);
-                } else {
-                    btnNotif.setImageResource(R.drawable.ic_notif);
-                }
-            }
+        User user = authManager.getCurrentUser();
+        if (user == null) return;
+        if (unreadListener != null) unreadListener.remove();
+        unreadListener = new NotificationRepo(requireContext()).listenUnreadCount(
+                user.getAuth_uid(), user.getCurrentRole(), null, count -> {
+                    if (!isAdded() || getContext() == null) return;
+                    showBadge(count);
+                });
+    }
 
-            @Override
-            public void onFailure(String message) {
-                if (!isAdded() || getContext() == null) return;
-                btnNotif.setImageResource(R.drawable.ic_notif);
-            }
-        });
+    private void showBadge(int count) {
+        if (count <= 0) {
+            btnNotif.setImageResource(R.drawable.ic_notif);
+            tvNotifBadge.setVisibility(View.GONE);
+        } else {
+            btnNotif.setImageResource(R.drawable.ic_notif_hover);
+            tvNotifBadge.setVisibility(View.VISIBLE);
+            tvNotifBadge.setText(count > 99 ? "99+" : String.valueOf(count));
+        }
     }
 
     private void loadNextSchedule() {
@@ -234,8 +237,6 @@ public class HomeFragment extends Fragment {
         String uid = firebaseUser.getUid();
         Timestamp now = Timestamp.now();
         if (nextScheduleListener != null) nextScheduleListener.remove();
-        // ambil juga jadwal yang sudah lewat sedikit (maks 6 jam), karena bisa saja
-        // jadwal nya lagi di-snooze -> waktu barunya (snoozed_until) masih akan datang
         Timestamp windowStart = new Timestamp(new java.util.Date(now.toDate().getTime() - 6 * 60 * 60 * 1000L));
         nextScheduleListener = db.collection("medication_logs").whereEqualTo("users_id", uid)
                 .whereEqualTo("status", "akan datang").whereGreaterThanOrEqualTo("scheduled_at", windowStart)
@@ -249,9 +250,6 @@ public class HomeFragment extends Fragment {
                         if (log == null || log.getStatusBasedOnDate() != LogStatus.AKAN_DATANG) continue;
                         Timestamp eff = log.getEffectiveTime();
                         if (eff == null) continue;
-                        // jadwal yang jamnya BARU lewat (alarm sedang bunyi) tetap ditampilkan
-                        // selama belum dianggap terlewat (15 menit), supaya tombol "Dikonsumsi"
-                        // di Home mengonfirmasi obat YANG SEDANG BUNYI, bukan jadwal berikutnya.
                         if (eff.toDate().getTime() + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS < nowMs) continue;
                         if (targetLog == null || eff.compareTo(targetLog.getEffectiveTime()) < 0){
                             target = doc;
@@ -266,11 +264,9 @@ public class HomeFragment extends Fragment {
                     nextScheduledAtMillis = targetLog.getScheduled_at().toDate().getTime();
                     btnKonfirmasi.setEnabled(true);
                     haveSchedule.setVisibility(View.VISIBLE);
-                    // kartu diganti ke jadwal berikutnya setelah jadwal ini dianggap terlewat
                     displayedScheduleAtMillis = targetLog.getEffectiveTime().toDate().getTime()
                             + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS;
                     noSchedule.setVisibility(View.GONE);
-                    // tampilkan waktu setelah snooze (kalau ada)
                     tvDay.setText(formatDayLabel(targetLog.getEffectiveTime().toDate()));
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                     tvTime.setText(sdf.format(targetLog.getEffectiveTime().toDate()));
@@ -665,6 +661,7 @@ public class HomeFragment extends Fragment {
         super.onPause();
         refreshHandler.removeCallbacks(refreshRunnable);
         if (invitationListener != null) { invitationListener.remove(); invitationListener = null; }
+        if (unreadListener != null) { unreadListener.remove(); unreadListener = null; }
     }
 
     @Override

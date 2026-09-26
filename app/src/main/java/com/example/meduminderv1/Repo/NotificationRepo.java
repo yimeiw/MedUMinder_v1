@@ -303,6 +303,56 @@ public class NotificationRepo {
         // bungkus dua listener supaya bisa di-remove bareng
         return () -> { regNotif.remove(); regInvite.remove(); };
     }
+    public interface UnreadCountListener {
+        void onChanged(int count);
+    }
+
+    /**
+     * Hitung notif BELUM DIBACA secara realtime (angka di ikon lonceng).
+     * - consumer: consumerFilter = null -> semua notif miliknya
+     * - caregiver: consumerFilter = uid consumer yang dipilih -> hanya notif consumer itu
+     * Undangan yang masih pending ikut dihitung, sama seperti di halaman notifikasi.
+     */
+    public ListenerRegistration listenUnreadCount(String uid, UserRole role, @Nullable String consumerFilter,
+                                                  UnreadCountListener callback) {
+        final int[] fromNotif = {0};
+        final int[] fromInvite = {0};
+
+        ListenerRegistration regNotif = db.collection("notifications")
+                .whereEqualTo("receiver_uid", uid)
+                .whereEqualTo("is_read", false)
+                .addSnapshotListener((snap, error) -> {
+                    if (error != null || snap == null) return;
+                    int count = 0;
+                    for (DocumentSnapshot doc : snap.getDocuments()) {
+                        Notification n = doc.toObject(Notification.class);
+                        if (n == null) continue;
+                        UserRole effectiveRole = n.getTargetRoleEnum();
+                        if (effectiveRole != null && effectiveRole != role) continue;
+                        if (role == UserRole.Caregiver && consumerFilter != null
+                                && !belongsToConsumer(n, consumerFilter)) continue;
+                        count++;
+                    }
+                    fromNotif[0] = count;
+                    callback.onChanged(fromNotif[0] + fromInvite[0]);
+                });
+
+        ListenerRegistration regInvite = db.collection("invitations")
+                .whereEqualTo("receiver_uid", uid)
+                .addSnapshotListener((snap, error) -> {
+                    if (error != null || snap == null) return;
+                    int count = 0;
+                    for (DocumentSnapshot doc : snap.getDocuments()) {
+                        Invitation inv = doc.toObject(Invitation.class);
+                        if (inv != null && inv.getStatus() == InvitationStatus.Pending) count++;
+                    }
+                    fromInvite[0] = count;
+                    callback.onChanged(fromNotif[0] + fromInvite[0]);
+                });
+
+        return () -> { regNotif.remove(); regInvite.remove(); };
+    }
+
     /** Apakah notif ini tentang consumer yang sedang dipilih? */
     private static boolean belongsToConsumer(Notification n, String consumerUid) {
         // undangan & laporan bukan milik consumer tertentu -> selalu tampil

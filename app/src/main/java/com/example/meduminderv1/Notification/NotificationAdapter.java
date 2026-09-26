@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.meduminderv1.Auth.AuthManager;
@@ -57,9 +58,23 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
                 authManager.formatNotificationTime(notification.getCreated_at())
         );
 
-        holder.titleNotif.setTypeface(null, notification.isIs_read() ? Typeface.NORMAL : Typeface.BOLD);
-        holder.messageNotif.setTypeface(null, notification.isIs_read() ? Typeface.NORMAL : Typeface.BOLD);
-        holder.timeNotif.setTypeface(null, notification.isIs_read() ? Typeface.NORMAL : Typeface.BOLD);
+        // pakai app_font, lalu pilih tebal/normal (bukan font bawaan HP)
+        android.graphics.Typeface baseFont = ResourcesCompat.getFont(holder.itemView.getContext(), R.font.app_font);
+        int style = notification.isIs_read() ? Typeface.NORMAL : Typeface.BOLD;
+        holder.titleNotif.setTypeface(baseFont, style);
+        holder.messageNotif.setTypeface(baseFont, style);
+        holder.timeNotif.setTypeface(baseFont, style);
+
+//        holder.titleNotif.b(null, notification.isIs_read() ? Typeface.NORMAL : Typeface.BOLD);
+//        holder.messageNotif.setTypeface(null, notification.isIs_read() ? Typeface.NORMAL : Typeface.BOLD);
+//        holder.timeNotif.setTypeface(null, notification.isIs_read() ? Typeface.NORMAL : Typeface.BOLD);
+
+        int padH = holder.cardNotif.getPaddingLeft();
+        int padV = holder.cardNotif.getPaddingTop();
+        holder.cardNotif.setBackgroundResource(notification.isIs_read()
+                ? R.drawable.border_hugcontent_nopadding
+                : R.drawable.bg_offset);
+        holder.cardNotif.setPadding(padH, padV, padH, padV);
 
         holder.itemView.setOnClickListener(v ->
                 listener.onNotificationClick(notification)
@@ -87,6 +102,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         TextView titleNotif;
         TextView messageNotif;
         TextView timeNotif;
+        View cardNotif;
 
         public NotificationViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -95,6 +111,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             titleNotif = itemView.findViewById(R.id.titleNotif);
             messageNotif = itemView.findViewById(R.id.messageNotif);
             timeNotif = itemView.findViewById(R.id.timeNotif);
+            cardNotif = itemView.findViewById(R.id.cardNotif);
         }
     }
 

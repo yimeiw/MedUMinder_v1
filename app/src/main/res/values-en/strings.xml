@@ -591,7 +591,7 @@
 
     <string name="reminder_appointment_menit_title">Appointment Coming Soon</string>
     <string name="durasi_menit">In %1$d minutes</string>
-    <string name="durasi_jam">In %1$d hour</string>
+    <string name="durasi_jam">In %1$d hour(s)</string>
     <string name="reminder_appointment_menit_msg"> you have a schedule %2$s.</string>
     <string name="reminder_appointment_menit_caregiver_title">Consumers Will Have an Appointment Soon</string>
     <string name="reminder_appointment_menit_caregiver_msg"> %2$s has a schedule %3$s.</string>
@@ -631,4 +631,18 @@
     <string name="x_menambahkan_jadwal_appointment_anda_msg">%1$s added an appointment %2$s for you.</string>
     <string name="x_menambahkan_jadwal_appointment_msg">%1$s added an appointment: %2$s.</string>
     <string name="x_menambahkan_jadwal_appointment_consumer_anda_msg">%1$s added an appointment %2$s for your consumer.</string>
+
+    <string name="anda_menambahkan_jadwal_obat_consumer_msg">You added a medication schedule %1$s for your consumer.</string>
+    <string name="pesan_pengingat_terkirim_consumer_obat_msg">You sent a reminder to your consumer to check their schedule (%1$s).</string>
+    <string name="jadwal_appointment_anda_terlewat_msg">You missed your appointment: %1$s.</string>
+    <string name="consumer_melewatkan_appointment_msg">Your consumer missed the appointment: %1$s.</string>
+    <string name="waktunya_minum_obat_title">Time to Take Your Medicine</string>
+    <string name="sekarang_waktunya_minum_obat_msg">It\'s time to take %1$s.</string>
+    <string name="waktunya_appointment_title">Appointment Time</string>
+    <string name="sekarang_jadwal_appointment_msg">Your appointment %1$s is now.</string>
+    <string name="segera_minum_obat_title">Medicine Time Soon</string>
+    <string name="menit_lagi_minum_obat_msg">%1$s minutes until your medication: %2$s.</string>
+    <string name="reminder_appointment_full_msg">%1$s you have an appointment: %2$s.</string>
+    <string name="reminder_appointment_caregiver_full_msg">%1$s, %2$s has an appointment: %3$s.</string>
+    <string name="isi_ulang_obat_x_title">REFILL MEDICINE (%1$s)</string>
 </resources>

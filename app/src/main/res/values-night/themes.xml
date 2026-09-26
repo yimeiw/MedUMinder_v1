@@ -18,8 +18,6 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorOnSurface</item>
         <!-- Customize your theme here. -->
-        <item name="android:fontFamily">@font/inter_18pt_regular</item>
-        <item name="fontFamily">@font/inter_18pt_regular</item>
         <item name="windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
         <item name="android:textColor">?attr/colorOnSurface</item>
@@ -27,6 +25,10 @@
         <item name="android:windowMinWidthMajor">0dp</item>
         <item name="android:windowMinWidthMinor">0dp</item>
         <item name="materialTimePickerTheme">@style/CustomMaterialTimePicker</item>
+
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+        <item name="textAppearanceButton">@style/AppButtonText</item>
     </style>
 
     <style name="MaterialButtonLog" parent="Widget.MaterialComponents.Button">
@@ -54,4 +56,8 @@
         <item name="android:textColor">?attr/colorOnSurface</item>
     </style>
 
+    <style name="AppButtonText" parent="TextAppearance.MaterialComponents.Button">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
 </resources>

@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
@@ -80,6 +81,7 @@ public class ReminderFragment extends Fragment {
     MaterialButton btnTundaReminder;
     LinearLayout circleNamaObat;
     ImageButton btnBack, btnOption;
+    ImageView iconReminderType;   // ikon di dalam lingkaran (obat / appointment)
     private String scheduleId;
     private String namaObat;
     private long scheduledAt;
@@ -119,6 +121,7 @@ public class ReminderFragment extends Fragment {
         btnIsTaken = view.findViewById(R.id.btnIsTaken);
         btnTundaReminder = view.findViewById(R.id.btnTundaReminder);
         circleNamaObat = view.findViewById(R.id.circleNamaObat);
+        iconReminderType = view.findViewById(R.id.iconReminderType);
 
         User currentUser = SessionManager.getInstance().getUser();
         isCaregiverViewing = currentUser != null && currentUser.getCurrentRole() == UserRole.Caregiver;
@@ -143,6 +146,8 @@ public class ReminderFragment extends Fragment {
 
             itemType = bundle.getString("type", "medicine");
             isAppointment = "appointment".equals(itemType);
+
+            iconReminderType.setImageResource(isAppointment ? R.drawable.ic_appoint : R.drawable.ic_tablet);
 
             btnOption.setVisibility(View.VISIBLE);
 

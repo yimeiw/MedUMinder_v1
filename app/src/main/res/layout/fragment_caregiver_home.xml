@@ -49,13 +49,35 @@
                         android:src="@drawable/logo_tulisan" />
                 </LinearLayout>
 
-                <ImageButton
-                    android:id="@+id/btnNotif"
+                <!-- lonceng + angka notif (consumer yang dipilih) -->
+                <FrameLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:background="@null"
-                    android:src="@drawable/ic_notif" />
+                    android:layout_gravity="center">
+
+                    <ImageButton
+                        android:id="@+id/btnNotif"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@null"
+                        android:src="@drawable/ic_notif"
+                        android:padding="6dp" />
+
+                    <!-- angka notif belum dibaca -->
+                    <TextView
+                        android:id="@+id/tvNotifBadge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="20dp"
+                        android:minWidth="20dp"
+                        android:layout_gravity="top|end"
+                        android:gravity="center"
+                        android:paddingHorizontal="5dp"
+                        android:background="@drawable/bg_badge"
+                        android:textColor="@color/white"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+                </FrameLayout>
             </LinearLayout>
 
             <!-- Greetings -->

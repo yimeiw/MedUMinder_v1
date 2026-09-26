@@ -592,7 +592,7 @@
 
     <string name="reminder_appointment_menit_title">预约即将到来</string>
     <string name="durasi_menit">%1$d 分钟</string>
-    <string name="durasi_jam">%1$d 时间</string>
+    <string name="durasi_jam">%1$d 小时</string>
     <string name="reminder_appointment_menit_msg"> 后您将收到 %2$s 日程表。</string>
     <string name="reminder_appointment_menit_caregiver_title">消费者很快就能预约到服务了。</string>
     <string name="reminder_appointment_menit_caregiver_msg"> 后，%2$s 有 %3$s 课程表</string>
@@ -628,4 +628,21 @@
     <string name="x_menghapus_jadwal_anda_msg">%1$s 删除了您的日程 %2$s。</string>
     <string name="x_menghapus_jadwal_msg">%1$s 删除了日程 %2$s。</string>
     <string name="x_menghapus_jadwal_consumer_anda_msg">%1$s 删除了您的 Consumer 的日程 %2$s。</string>
+
+    <string name="anda_menambahkan_jadwal_obat_consumer_msg">您为您的 Consumer 添加了服药日程 %1$s。</string>
+    <string name="pesan_pengingat_terkirim_consumer_obat_msg">您已提醒 Consumer 查看其日程（%1$s）。</string>
+    <string name="jadwal_appointment_anda_terlewat_msg">您错过了预约：%1$s。</string>
+    <string name="consumer_melewatkan_appointment_msg">您的 Consumer 错过了预约：%1$s。</string>
+    <string name="waktunya_minum_obat_title">服药时间到了</string>
+    <string name="sekarang_waktunya_minum_obat_msg">现在该服用 %1$s 了。</string>
+    <string name="waktunya_appointment_title">预约时间到了</string>
+    <string name="sekarang_jadwal_appointment_msg">现在是预约 %1$s 的时间。</string>
+    <string name="segera_minum_obat_title">即将服药</string>
+    <string name="menit_lagi_minum_obat_msg">%1$s 分钟后服用 %2$s。</string>
+    <string name="reminder_appointment_full_msg">%1$s后您有预约：%2$s。</string>
+    <string name="reminder_appointment_caregiver_full_msg">%1$s后 %2$s 有预约：%3$s。</string>
+    <string name="isi_ulang_obat_x_title">补充药品（%1$s）</string>
+    <string name="x_menambahkan_jadwal_appointment_anda_msg">%1$s 为您添加了预约 %2$s。</string>
+    <string name="x_menambahkan_jadwal_appointment_msg">%1$s 添加了预约：%2$s。</string>
+    <string name="x_menambahkan_jadwal_appointment_consumer_anda_msg">%1$s 为您的 Consumer 添加了预约 %2$s。</string>
 </resources>

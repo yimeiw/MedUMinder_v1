@@ -67,6 +67,8 @@ public class CaregiverHomeFragment extends Fragment {
     TextView tvGreeting, tvtitleCard, tvTime, tvDay, tvStokNext, tvAdherenceDesc,
             tvTotalDikonsumsi, tvTotalTerlewat, tvTotalAkanDatang, emptyTodaySchedule, btnLihatSemua,
             labelListConsumer;
+    TextView tvNotifBadge;                       // angka notif belum dibaca (per consumer)
+    private ListenerRegistration unreadListener; // realtime jumlah notif
     DrawerLayout drawerLayout;
     ImageButton btnSideNav, btnNotif;
     LinearLayout haveSchedule, noSchedule,  groupGeneralMenu, navRiwayat, navStatistik;
@@ -106,6 +108,7 @@ public class CaregiverHomeFragment extends Fragment {
         navRiwayat = view.findViewById(R.id.navRiwayat);
         navStatistik = view.findViewById(R.id.navStatistik);
         btnNotif = view.findViewById(R.id.btnNotif);
+        tvNotifBadge = view.findViewById(R.id.tvNotifBadge);
         rvTodaySchedule = view.findViewById(R.id.rvTodaySchedule);
         btnLihatSemua = view.findViewById(R.id.btnLihatSemua);
         adherenceRing = view.findViewById(R.id.adherenceRing);
@@ -185,6 +188,7 @@ public class CaregiverHomeFragment extends Fragment {
         } loadNextSchedule(uid);
         loadTodaySchedule(uid);
         loadAdherenceAndStats(uid);
+        checkUnreadNotif();   // ganti consumer -> angka notif ikut ganti
     }
 
     private void loadDrawerConsumerList() {
@@ -584,20 +588,29 @@ public class CaregiverHomeFragment extends Fragment {
     public void onPause() {
         super.onPause();
         if (invitationListener != null) { invitationListener.remove(); invitationListener = null; }
+        if (unreadListener != null) { unreadListener.remove(); unreadListener = null; }
     }
 
     private void checkUnreadNotif() {
-        authManager.unreadNotif(new AuthCallback<Integer>() {
-            @Override
-            public void onSuccess(Integer result) {
-                if (!isAdded() || getContext() == null) return;
-                btnNotif.setImageDrawable(requireContext().getDrawable(result > 0 ? R.drawable.ic_notif_hover : R.drawable.ic_notif));
-            }
+        // realtime & per consumer: hanya menghitung notif consumer yang sedang dipilih
+        if (unreadListener != null) unreadListener.remove();
+        User caregiver = sessionManager.getUser();
+        if (caregiver == null) { showNotifBadge(0); return; }
+        String consumerUid = sessionManager.getActiveConsumerUid();
+        unreadListener = notificationRepo.listenUnreadCount(
+                caregiver.getAuth_uid(), UserRole.Caregiver, consumerUid, this::showNotifBadge);
+    }
 
-            @Override
-            public void onFailure(String message) {
-            }
-        });
+    private void showNotifBadge(int count) {
+        if (!isAdded() || tvNotifBadge == null) return;
+        if (count <= 0) {
+            tvNotifBadge.setVisibility(View.GONE);
+            btnNotif.setImageResource(R.drawable.ic_notif);
+        } else {
+            tvNotifBadge.setVisibility(View.VISIBLE);
+            tvNotifBadge.setText(count > 99 ? "99+" : String.valueOf(count));
+            btnNotif.setImageResource(R.drawable.ic_notif_hover);
+        }
     }
 
     @Override

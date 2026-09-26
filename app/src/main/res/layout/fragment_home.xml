@@ -33,24 +33,42 @@
                     android:src="@drawable/logo_tulisan"
                     android:layout_width="160dp"
                     android:layout_height="wrap_content"
-                    android:layout_alignTop="@+id/capsule"
-                    android:layout_gravity="start"
-                    />
-
+                    android:layout_gravity="start|center_vertical"/>
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:gravity="end">
+                    android:gravity="end|center_vertical">
 
-                    <ImageButton
-                        android:id="@+id/btnNotif"
+                    <!-- lonceng + angka notif -->
+                    <FrameLayout
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@drawable/ic_notif"
-                        android:background="@null"
-                        android:layout_gravity="center"/>
+                        android:layout_height="wrap_content">
+
+                        <ImageButton
+                            android:id="@+id/btnNotif"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/ic_notif_hover"
+                            android:background="@null"
+                            android:padding="6dp"/>
+
+                        <!-- angka notif belum dibaca -->
+                        <TextView
+                            android:id="@+id/tvNotifBadge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="20dp"
+                            android:minWidth="20dp"
+                            android:layout_gravity="top|end"
+                            android:gravity="center"
+                            android:paddingHorizontal="5dp"
+                            android:background="@drawable/bg_badge"
+                            android:textColor="@color/white"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:visibility="gone"/>
+                    </FrameLayout>
 
                 </LinearLayout>
 
@@ -96,7 +114,7 @@
                     android:layout_width="0dp"
                     android:layout_height="120dp"
                     android:layout_columnWeight="1"
-                    android:layout_margin="8dp"
+                    android:layout_margin="5dp"
                     android:gravity="center"
                     android:orientation="vertical"
                     android:background="@drawable/border">
@@ -126,7 +144,7 @@
                     android:layout_width="0dp"
                     android:layout_height="120dp"
                     android:layout_columnWeight="1"
-                    android:layout_margin="8dp"
+                    android:layout_margin="5dp"
                     android:gravity="center"
                     android:orientation="vertical"
                     android:background="@drawable/border">
@@ -154,7 +172,7 @@
                     android:layout_width="0dp"
                     android:layout_height="120dp"
                     android:layout_columnWeight="1"
-                    android:layout_margin="8dp"
+                    android:layout_margin="5dp"
                     android:gravity="center"
                     android:orientation="vertical"
                     android:background="@drawable/border"
@@ -208,7 +226,7 @@
                     android:paddingHorizontal="12dp"
                     android:paddingTop="10dp"/>
 
-<!--                ada jadwal-->
+                <!--                ada jadwal-->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -312,7 +330,7 @@
                         android:layout_margin="10dp"/>
                 </LinearLayout>
 
-<!--                belum ada jadwal-->
+                <!--                belum ada jadwal-->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -347,7 +365,7 @@
 
             </LinearLayout>
 
-<!--            jadwal hari ini-->
+            <!--            jadwal hari ini-->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

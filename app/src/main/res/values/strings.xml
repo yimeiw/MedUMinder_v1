@@ -642,5 +642,18 @@
     <string name="x_menambahkan_jadwal_appointment_anda_msg">%1$s menambahkan jadwal appointment %2$s untuk Anda.</string>
     <string name="x_menambahkan_jadwal_appointment_msg">%1$s menambahkan jadwal appointment %2$s.</string>
     <string name="x_menambahkan_jadwal_appointment_consumer_anda_msg">%1$s menambahkan jadwal appointment %2$s untuk consumer Anda.</string>
-</resources>
 
+    <string name="anda_menambahkan_jadwal_obat_consumer_msg">Anda menambahkan jadwal minum obat %1$s untuk consumer Anda.</string>
+    <string name="pesan_pengingat_terkirim_consumer_obat_msg">Anda mengirim pengingat kepada consumer untuk memeriksa jadwalnya (%1$s).</string>
+    <string name="jadwal_appointment_anda_terlewat_msg">Jadwal appointment %1$s Anda terlewat.</string>
+    <string name="consumer_melewatkan_appointment_msg">Consumer Anda melewatkan appointment %1$s.</string>
+    <string name="waktunya_minum_obat_title">Waktunya Minum Obat</string>
+    <string name="sekarang_waktunya_minum_obat_msg">Sekarang waktunya minum obat %1$s.</string>
+    <string name="waktunya_appointment_title">Waktunya Appointment</string>
+    <string name="sekarang_jadwal_appointment_msg">Sekarang jadwal appointment %1$s.</string>
+    <string name="segera_minum_obat_title">Segera Minum Obat</string>
+    <string name="menit_lagi_minum_obat_msg">%1$s menit lagi jadwal minum obat %2$s.</string>
+    <string name="reminder_appointment_full_msg">%1$s lagi Anda memiliki jadwal %2$s.</string>
+    <string name="reminder_appointment_caregiver_full_msg">%1$s lagi %2$s memiliki jadwal %3$s.</string>
+    <string name="isi_ulang_obat_x_title">ISI ULANG OBAT (%1$s)</string>
+</resources>
