@@ -79,6 +79,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:layout_gravity="center_vertical"
+                    android:paddingHorizontal="5dp"
                     android:layout_weight="1">
 
                     <TextView
@@ -122,7 +123,7 @@
                 android:orientation="vertical"
                 android:layout_marginBottom="20dp"
                 android:background="@drawable/border"
-                android:backgroundTint="?attr/colorOnSurface">
+                android:backgroundTint="?attr/colorPrimaryFixedDim">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -142,7 +143,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/kepatuhan"
                             android:textSize="24dp"
-                            android:textColor="?attr/colorPrimary"
+                            android:textColor="?attr/colorPrimaryFixed"
                             android:textStyle="bold"/>
 
                         <TextView
@@ -152,7 +153,7 @@
                             android:text="0%"
                             android:textStyle="bold"
                             android:textSize="24dp"
-                            android:textColor="?attr/colorTertiary"
+                            android:textColor="?attr/colorSecondaryFixedDim"
                             android:fontFamily="@font/inter_24pt_semibold"/>
 
                         <TextView
@@ -161,7 +162,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/desc_kepatuhan_tinggi"
                             android:textSize="14dp"
-                            android:textColor="?attr/colorPrimary"/>
+                            android:textColor="?attr/colorPrimaryFixed"/>
 
                     </LinearLayout>
 

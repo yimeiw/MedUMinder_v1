@@ -372,6 +372,7 @@
     <string name="hubungkan_google_title">Connect Google</string>
     <string name="hubungkan_akun_google_msg">Connect your Google account to this account?</string>
     <string name="isi_ulang_obat_notif_title">REFILL MEDICINE (</string>
+    <string name="invitation_role_title" formatted="true">Invitation %2$s</string>
     <string name="invitation_title">Invitation </string>
     <string name="invitation_berhasil_dikirim">Invitation sent successfully.</string>
     <string name="invite_caregiver_btn">Invite Caregiver</string>

@@ -8,7 +8,8 @@ import android.content.SharedPreferences;
 import android.os.Build;
 
 public class AppointmentAlertScheduler {
-    private static final long MISSED_DELAY_MS = 5 * 60 * 1000L;
+    // sama dengan obat: 3 menit tidak direspon -> terlewat / diulang (Repeat Until Confirmed)
+    private static final long MISSED_DELAY_MS = AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS;
     public static void scheduleAlerts(Context context, String appointmentId, String title, long appointmentAtMillis){
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (am == null) return;

@@ -6,7 +6,7 @@
         <shape android:shape="rectangle">
             <corners android:radius="200dp"/>
             <solid android:color="?attr/colorSecondary"/>
-            <stroke android:color="?attr/colorOnSurface"
+            <stroke android:color="?attr/appOutline"
                 android:width="1dp"
                 />
         </shape>
@@ -16,7 +16,7 @@
         <shape android:shape="rectangle">
             <corners android:radius="200dp"/>
             <solid android:color="?attr/colorPrimary"/>
-            <stroke android:color="?attr/colorOnSurface"
+            <stroke android:color="?attr/appOutline"
                 android:width="1dp"
                 />
         </shape>

@@ -102,6 +102,7 @@ public class EditAppointmentFragment extends Fragment {
             }, selectedCalendar.get(Calendar.YEAR), selectedCalendar.get(Calendar.MONTH), selectedCalendar.get(Calendar.DAY_OF_MONTH));
             dialog.getDatePicker().setMinDate(System.currentTimeMillis());
             dialog.show();
+            styleDateDialogButtons(dialog);
         });
 
         tvTime.setOnClickListener(v -> {
@@ -273,5 +274,14 @@ public class EditAppointmentFragment extends Fragment {
             @Override
             public void onFailure(Exception e) { }
         });
+    }
+
+    /** Hanya warna tombol OK/Batal di dialog tanggal (desain kalender tetap bawaan). */
+    private void styleDateDialogButtons(DatePickerDialog dialog) {
+        // biru di light mode, biru muda di dark mode
+        int color = com.google.android.material.color.MaterialColors.getColor(
+                requireContext(), com.google.android.material.R.attr.colorSecondaryFixedDim, android.graphics.Color.BLUE);
+        dialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(color);
+        dialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setTextColor(color);
     }
 }

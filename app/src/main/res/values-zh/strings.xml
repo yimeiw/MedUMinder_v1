@@ -372,6 +372,7 @@
     <string name="hubungkan_google_title">连接 Google</string>
     <string name="hubungkan_akun_google_msg">将 Google 账户连接到此账户？</string>
     <string name="isi_ulang_obat_notif_title">补充药品（</string>
+    <string name="invitation_role_title" formatted="true">邀请 %2$s</string>
     <string name="invitation_title">邀请 </string>
     <string name="invitation_berhasil_dikirim">邀请发送成功。</string>
     <string name="invite_caregiver_btn">邀请 Caregiver</string>

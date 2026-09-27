@@ -95,7 +95,7 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="?attr/colorOnSurface"
+                android:background="?attr/appOutline"
                 android:layout_gravity="center"
                 android:layout_marginVertical="20dp"
                 />
@@ -132,7 +132,7 @@
                         android:layout_marginTop="8dp"
                         android:text="@string/tambah_pengingat"
                         android:textAlignment="center"
-                        android:fontFamily="@font/inter_18pt_semibold"
+                        android:textFontWeight="500"
                         android:textColor="?attr/colorOnSurface"
                         android:background="@android:color/transparent"/>
 
@@ -159,7 +159,7 @@
                         android:layout_width="100dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:fontFamily="@font/inter_18pt_semibold"
+                        android:textFontWeight="500"
                         android:text="@string/tambah_appointment"
                         android:textAlignment="center"
                         android:textColor="?attr/colorOnSurface"
@@ -190,7 +190,7 @@
                         android:layout_marginTop="8dp"
                         android:text="@string/log_jadwal"
                         android:textAlignment="center"
-                        android:fontFamily="@font/inter_18pt_semibold"
+                        android:textFontWeight="500"
                         android:textColor="?attr/colorOnSurface"
                         android:background="@android:color/transparent"/>
 
@@ -200,7 +200,7 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="?attr/colorOnSurface"
+                android:background="?attr/appOutline"
                 android:layout_gravity="center"
                 android:layout_marginVertical="20dp"
                 />
@@ -325,7 +325,7 @@
                         app:backgroundTint="@null"
                         android:textAllCaps="false"
                         android:textSize="14sp"
-                        android:textColor="?attr/colorOnSurface"
+                        android:textColor="?attr/colorOnPrimary"
                         android:paddingHorizontal="12dp"
                         android:layout_margin="10dp"/>
                 </LinearLayout>
@@ -354,8 +354,9 @@
                         android:id="@+id/addNoSchedule"
                         android:text="@string/tambahkan_jadwal"
                         android:textAllCaps="false"
-                        android:textColor="?attr/colorOnSurface"
+                        android:textColor="?attr/colorOnPrimary"
                         android:background="@drawable/border_wp"
+                        app:backgroundTint="@null"
                         android:layout_marginHorizontal="12dp"
                         app:icon="@drawable/ic_add"
                         app:iconGravity="textStart"
@@ -436,7 +437,7 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="?attr/colorOnSurface"
+                android:background="?attr/appOutline"
                 android:layout_gravity="center"
                 android:layout_marginVertical="20dp"
                 />

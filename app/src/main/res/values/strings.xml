@@ -381,6 +381,7 @@
     <string name="hubungkan_google_title">Hubungkan Google</string>
     <string name="hubungkan_akun_google_msg">Hubungkan akun Google ke akun ini?</string>
     <string name="isi_ulang_obat_notif_title">ISI ULANG OBAT (</string>
+    <string name="invitation_role_title" formatted="true">Undangan %2$s</string>
     <string name="invitation_title">Invitation </string>
     <string name="invitation_berhasil_dikirim">Invitation berhasil dikirim.</string>
     <string name="invite_caregiver_btn">Invite Caregiver</string>

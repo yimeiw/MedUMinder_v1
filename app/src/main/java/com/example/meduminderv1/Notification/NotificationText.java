@@ -17,6 +17,7 @@ public final class NotificationText {
 
     private static final String TAG = "NotificationText";
     private static final String MINUTES_PREFIX = "@min:";
+    private static final String STRING_PREFIX = "@str:";
 
     private NotificationText() {}
 
@@ -36,6 +37,15 @@ public final class NotificationText {
         return MINUTES_PREFIX + minutes;
     }
 
+    // argumen yang ikut diterjemahkan saat ditampilkan, contoh nama role
+    public static String stringArg(String key) {
+        return STRING_PREFIX + key;
+    }
+
+    public static String roleArg(Enum<?> role) {
+        return role == null ? "" : stringArg(role.name().toLowerCase(Locale.ROOT));
+    }
+
     private static int resId(Context c, String key) {
         if (key == null || key.isEmpty()) return 0;
         return c.getResources().getIdentifier(key, "string", c.getPackageName());
@@ -45,7 +55,6 @@ public final class NotificationText {
         int id = resId(c, n.getTitle_key());
         if (id == 0) return n.getTitle();
 
-        // judul juga boleh punya isian, contoh "ISI ULANG OBAT (%1$s)"
         List<Object> args = new ArrayList<>();
         if (n.getMessage_args() != null) {
             for (String a : n.getMessage_args()) args.add(resolveArg(c, a));
@@ -78,6 +87,10 @@ public final class NotificationText {
 
     private static String resolveArg(Context c, String arg) {
         if (arg == null) return "";
+        if (arg.startsWith(STRING_PREFIX)) {
+            int id = resId(c, arg.substring(STRING_PREFIX.length()));
+            return id != 0 ? c.getString(id) : arg.substring(STRING_PREFIX.length());
+        }
         if (arg.startsWith(MINUTES_PREFIX)) {
             try {
                 int minutes = Integer.parseInt(arg.substring(MINUTES_PREFIX.length()));

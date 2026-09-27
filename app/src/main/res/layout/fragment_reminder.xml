@@ -82,10 +82,13 @@
                 android:layout_height="15dp"
                 />
 
+            <!-- ukuran tetap supaya ikon obat & appointment sama besar -->
             <ImageView
                 android:id="@+id/iconReminderType"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="116dp"
+                android:layout_height="116dp"
+                android:scaleType="fitCenter"
+                android:adjustViewBounds="false"
                 android:src="@drawable/ic_tablet"
                 />
         </LinearLayout>
@@ -249,7 +252,7 @@
                 android:textColor="?attr/colorPrimary"
                 android:textAllCaps="false"
                 android:layout_marginVertical="10dp"
-                android:textStyle="bold"
+                android:textFontWeight="600"
                 />
 
             <Space
@@ -267,7 +270,7 @@
                 android:textColor="?attr/colorOnSurface"
                 android:textAllCaps="false"
                 android:layout_marginVertical="10dp"
-                android:textStyle="bold"
+                android:textFontWeight="600"
                 />
         </LinearLayout>
 

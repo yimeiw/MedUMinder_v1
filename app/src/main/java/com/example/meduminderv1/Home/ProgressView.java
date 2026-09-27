@@ -30,7 +30,7 @@ public class ProgressView extends View {
     private void init() {
         bgPaint.setStyle(Paint.Style.STROKE);
         bgPaint.setStrokeWidth(strokeWidth);
-        bgPaint.setColor(Color.parseColor("#E0E0E0"));
+        bgPaint.setColor(MaterialColors.getColor(this, R.attr.progressTrack, Color.parseColor("#E0E0E0")));
 
         progressPaint.setStyle(Paint.Style.STROKE);
         progressPaint.setStrokeWidth(strokeWidth);
