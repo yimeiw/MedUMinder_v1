@@ -1,7 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base applicatio›n theme. -->
     <style name="Theme.MedUMinderV1" parent="Theme.MaterialComponents.Light.NoActionBar">
-<!--        Background Windows Color-->
         <item name="colorSurface">@color/bckg</item>
         <item name="colorOnSurface">@color/black</item> <!-- teks, hitam jadi putih -->
         <item name="colorPrimary">@color/white</item> <!--putih jadi abu tua-->
@@ -11,6 +10,8 @@
         <item name="colorOnPrimary">@color/black</item> <!--itam jadi abu tua-->
         <item name="colorPrimaryVariant">@color/black</item><!-- itam biru -->
         <item name="colorScheme">@color/abu_tua</item>
+        <item name="colorOnBackground">@color/dark_text</item>
+        <item name="colorOutline">@color/black</item>
         <item name="colorBackgroundFloating">@color/white</item> <!-- putih abu tengah -->
         <item name="colorPrimaryFixed">@color/white</item>
         <item name="colorPrimaryFixedDim">@color/black</item>

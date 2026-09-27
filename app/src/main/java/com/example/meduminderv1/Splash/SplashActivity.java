@@ -73,6 +73,8 @@ public class SplashActivity extends AppCompatActivity {
         View overlay = findViewById(R.id.overlay);
 
         letterU.post(() -> {
+            View rootLayout = (View) letterU.getParent();
+            float screenCenterX = rootLayout.getWidth() / 2f;
 
             float medWidth = med.getWidth();
             float minderWidth = minder.getWidth();
@@ -84,7 +86,6 @@ public class SplashActivity extends AppCompatActivity {
 
             float targetX = letterU.getX() + (letterU.getWidth() / 2f) - (pill.getWidth() / 2f);
             float targetY = letterU.getY() + (letterU.getHeight() / 2f) - (pill.getHeight() / 2f) - 10f;
-
 
             pill.setX(-pill.getWidth());
             pill.setY(200);

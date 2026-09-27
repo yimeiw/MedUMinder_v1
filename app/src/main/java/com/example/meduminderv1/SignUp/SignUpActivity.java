@@ -91,8 +91,8 @@ public class SignUpActivity extends AppCompatActivity {
                     dialog.show();
                     if (dialog.getWindow() != null){
                         dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, R.color.green));
-                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, R.color.merah));
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, com.google.android.material.R.attr.colorTertiaryFixed));
+                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, com.google.android.material.R.attr.colorTertiaryFixedDim));
                     }
 
                 } else {
@@ -156,8 +156,8 @@ public class SignUpActivity extends AppCompatActivity {
                 dialog.show();
                 if (dialog.getWindow() != null){
                     dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, R.color.green));
-                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, R.color.merah));
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, com.google.android.material.R.attr.colorTertiaryFixed));
+                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, com.google.android.material.R.attr.colorTertiaryFixedDim));
                 }
             }
 
@@ -177,8 +177,8 @@ public class SignUpActivity extends AppCompatActivity {
                     dialog.show();
                     if (dialog.getWindow() != null){
                         dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, R.color.green));
-                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, R.color.merah));
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, com.google.android.material.R.attr.colorTertiaryFixed));
+                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, com.google.android.material.R.attr.colorTertiaryFixedDim));
                     }
                 } else {
                     Toast.makeText(SignUpActivity.this, message, Toast.LENGTH_SHORT).show();

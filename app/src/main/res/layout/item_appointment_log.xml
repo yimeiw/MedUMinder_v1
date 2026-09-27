@@ -94,12 +94,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/dihadiri"
-                android:background="@drawable/border_hugcontent_nopadding"
+                android:background="@drawable/bg_status"
                 android:backgroundTint="@color/green"
                 android:paddingVertical="3dp"
                 android:paddingHorizontal="24dp"
                 android:textSize="10sp"
-                android:textColor="?attr/colorOnPrimary"
+                android:textColor="?attr/colorPrimary"
                 android:gravity="center_horizontal"
                 />
         </LinearLayout>

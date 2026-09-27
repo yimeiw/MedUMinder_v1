@@ -67,9 +67,9 @@ public enum LogStatus {
     public int getColorRes() {
         switch (this) {
             case DIKONSUMSI:
-                return R.color.green;
+                return com.google.android.material.R.attr.colorTertiaryFixed;
             case TERLEWATKAN:
-                return R.color.merah;
+                return com.google.android.material.R.attr.colorTertiaryFixedDim;
             case AKAN_DATANG:
                 return R.color.gray;
             default:

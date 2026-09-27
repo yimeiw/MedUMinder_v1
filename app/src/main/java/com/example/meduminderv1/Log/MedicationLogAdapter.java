@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.LayerDrawable;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -123,7 +124,6 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
             namaObatLog = itemView.findViewById(R.id.nama_obat_log);
             sisaStokLog = itemView.findViewById(R.id.sisa_stok_log);
             currStatus = itemView.findViewById(R.id.curr_status);
-            shadowLog = itemView.findViewById(R.id.shadow_medicine_log);
             capsuleMedicineLog = itemView.findViewById(R.id.capsule_medicine_log);
             scheduledAt = itemView.findViewById(R.id.scheduled_at);
             tvWaktu = itemView.findViewById(R.id.tvWaktu);
@@ -132,21 +132,17 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
     }
     private void applyStatusColor(ViewHolder holder, LogStatus status) {
         int colorAttr;
-        int teksColorAttr;
 
         //tentukan attr theme(warna) berdasarkan status
         if (status == null) {
             colorAttr = com.google.android.material.R.attr.colorPrimaryFixed; //putih
-            teksColorAttr = com.google.android.material.R.attr.colorOnSurface;
         } else {
             switch (status) {
                 case DIKONSUMSI:
                     colorAttr = com.google.android.material.R.attr.colorTertiaryFixed; //hijau
-                    teksColorAttr = com.google.android.material.R.attr.colorTertiaryFixed;
                     break;
                 case TERLEWATKAN:
-                    colorAttr = com.google.android.material.R.attr.colorTertiaryFixedDim; //pink
-                    teksColorAttr = com.google.android.material.R.attr.colorTertiaryFixedDim;
+                    colorAttr = com.google.android.material.R.attr.colorTertiaryFixedDim; //merah
                     break;
                 case AKAN_DATANG:
                     colorAttr = com.google.android.material.R.attr.colorSecondaryFixed; //abu
@@ -155,26 +151,33 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
                     break;
                 default:
                     colorAttr = com.google.android.material.R.attr.colorPrimaryFixed; //putih
-                    teksColorAttr = com.google.android.material.R.attr.colorPrimaryFixed;
                     break;
             }
         }
+
+        holder.namaObatLog.setTextColor(getColorFromAttr(context, com.google.android.material.R.attr.colorOnSurface));
+        holder.tvStok.setTextColor(getColorFromAttr(context, com.google.android.material.R.attr.colorOnSurface));
+        holder.sisaStokLog.setTextColor(getColorFromAttr(context, com.google.android.material.R.attr.colorOnSurface));
+        holder.tvWaktu.setTextColor(getColorFromAttr(context, com.google.android.material.R.attr.colorOnSurface));
+        holder.scheduledAt.setTextColor(getColorFromAttr(context, com.google.android.material.R.attr.colorOnSurface));
+
         //ambil warna asli dari attr theme
         int color = getColorFromAttr(context, colorAttr);
-        int teksColor = getColorFromAttr(context, teksColorAttr);
 
         holder.currStatus.setBackgroundTintList(ColorStateList.valueOf(color));
-        holder.shadowLog.setBackgroundTintList(ColorStateList.valueOf(color));
-        Drawable bg = holder.capsuleMedicineLog.getBackground().mutate();
-        if (bg instanceof GradientDrawable) {
-            ((GradientDrawable) bg).setStroke(dpToPx(1.5f), color);
+
+        Drawable bg = holder.capsuleMedicineLog.getBackground();
+        if (bg != null){
+            Drawable mutatedBg = bg.mutate();
+            if (mutatedBg instanceof LayerDrawable) {
+                LayerDrawable layerDrawable = (LayerDrawable) mutatedBg;
+                Drawable stroke = layerDrawable.findDrawableByLayerId(R.id.layer_offset);
+                if (stroke instanceof GradientDrawable){
+                    ((GradientDrawable) stroke).setColor(color);
+                }
+            }
         }
 
-        holder.namaObatLog.setTextColor(teksColor);
-        holder.sisaStokLog.setTextColor(teksColor);
-        holder.scheduledAt.setTextColor(teksColor);
-        holder.tvWaktu.setTextColor(teksColor);
-        holder.tvStok.setTextColor(teksColor);
     }
     private int getColorFromAttr(Context context, int colorAttr) {
         TypedValue typedValue = new TypedValue();

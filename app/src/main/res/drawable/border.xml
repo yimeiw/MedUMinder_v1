@@ -15,4 +15,4 @@
     <stroke android:color="?attr/appOutline"
         android:width="1dp"/>
 
-    </shape>
+</shape>
