@@ -27,6 +27,7 @@ import com.example.meduminderv1.Model.CareRelationship;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
+import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
@@ -967,6 +968,11 @@ public class AuthManager {
         });
     }
 
+    // pengundang punya role kebalikan dari role yang diundang
+    private static UserRole otherRole(UserRole role) {
+        return role == UserRole.Caregiver ? UserRole.Consumer : UserRole.Caregiver;
+    }
+
     private void notifySenderInvitationSent(User sender, String invitatiodId, String receiverEmail, UserRole relationshipRole) {
         Notification selfNotif = new Notification();
         selfNotif.setNotification_id(UUID.randomUUID().toString());
@@ -976,7 +982,9 @@ public class AuthManager {
         selfNotif.setType(NotificationType.Invitation);
         selfNotif.setTitle(context.getString(R.string.undangan_terkirim_title));
         selfNotif.setMessage(context.getString(R.string.undangan_terkirim_full_msg, receiverEmail, relationshipRole.name()));
-        selfNotif.setTarget_role(null);
+        NotificationText.apply(selfNotif, "undangan_terkirim_title", "undangan_terkirim_full_msg",
+                receiverEmail, NotificationText.roleArg(relationshipRole));
+        selfNotif.setTarget_role(otherRole(relationshipRole).name());
         selfNotif.setIs_read(false);
         selfNotif.setCreated_at(Timestamp.now());
         notificationRepo.createNotification(selfNotif, new RepoCallback<Void>() {
@@ -993,17 +1001,20 @@ public class AuthManager {
         if (user == null){
             callback.onFailure(context.getString(R.string.user_belum_login));
             return;
-        } invitationRepo.getPendingInvitationForUser(user.getAuth_uid(), user.getEmail(), new RepoCallback<Invitation>() {
-            @Override
-            public void onSuccess(Invitation result) {
-                callback.onSuccess(result);
-            }
+        }
+        // hubungkan dulu undangan yang dikirim sebelum akun ini dibuat (receiver_uid masih null)
+        invitationRepo.claimInvitationsByEmail(user.getAuth_uid(), user.getEmail(), () ->
+            invitationRepo.getPendingInvitationForUser(user.getAuth_uid(), user.getEmail(), new RepoCallback<Invitation>() {
+                @Override
+                public void onSuccess(Invitation result) {
+                    callback.onSuccess(result);
+                }
 
-            @Override
-            public void onFailure(Exception e) {
-                callback.onFailure(e.getMessage());
-            }
-        });
+                @Override
+                public void onFailure(Exception e) {
+                    callback.onFailure(e.getMessage());
+                }
+            }));
     }
     public void respondToInvitation(String invitationId, boolean accept, AuthCallback<User> callback){
         invitationRepo.getInvitationById(invitationId, new RepoCallback<Invitation>() {
@@ -1156,7 +1167,8 @@ public class AuthManager {
         notif.setInvitation_id(invitation.getInvitation_id());
         notif.setType(NotificationType.Invitation);
         notif.setMessage(accepted ? context.getString(R.string.undangan_diterima) : context.getString(R.string.undangan_ditolak));
-        notif.setTarget_role(null);
+        NotificationText.apply(notif, null, accepted ? "undangan_diterima" : "undangan_ditolak");
+        notif.setTarget_role(otherRole(invitation.getInvite_role()).name());
         notif.setIs_read(false);
         notificationRepo.createNotification(notif, new RepoCallback<Void>() {
             @Override
@@ -1178,7 +1190,9 @@ public class AuthManager {
         notification.setTitle(context.getString(R.string.invitation_title) + invitation.getInvite_role().name());
         notification.setMessage(context.getString(R.string.sender_mengundang_anda_msg,
                 invitation.getSender_name(), invitation.getInvite_role().name()));
-        notification.setTarget_role(null);
+        NotificationText.apply(notification, "invitation_role_title", "sender_mengundang_anda_msg",
+                invitation.getSender_name(), NotificationText.roleArg(invitation.getInvite_role()));
+        notification.setTarget_role(invitation.getInvite_role().name());
         notification.setIs_read(false);
         notification.setCreated_at(Timestamp.now());
         notification.setUpdated_at(Timestamp.now());

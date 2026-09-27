@@ -1,5 +1,9 @@
 package com.example.meduminderv1.Home;
 
+import com.example.meduminderv1.Util.BadgeText;
+
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import android.os.Bundle;
 
 import androidx.core.view.GravityCompat;
@@ -197,6 +201,7 @@ public class CaregiverHomeFragment extends Fragment {
         careRelationshipRepo.getConsumerForCaregiver(caregiver.getAuth_uid(), new RepoCallback<List<CareRelationship>>() {
             @Override
             public void onSuccess(List<CareRelationship> result) {
+                if (!isAdded() || getView() == null) return;
                 consumerRelations.clear();
                 LinkedHashSet<String> seen = new LinkedHashSet<>();
                 for (CareRelationship relationship : result){
@@ -361,9 +366,11 @@ public class CaregiverHomeFragment extends Fragment {
                 caregiver.getName() != null ? caregiver.getName() : "", medName);
         notification.setIs_read(false);
         notification.setScheduled_at(nextScheduleScheduledAt);
+        LoadingOverlay.show(CaregiverHomeFragment.this);
         notificationRepo.createNotification(notification, new RepoCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
+                LoadingOverlay.hide(CaregiverHomeFragment.this);
                 if (!isAdded()) return;
                 Toast.makeText(requireContext(), getString(R.string.pengingat_terkirim), Toast.LENGTH_SHORT).show();
 
@@ -389,6 +396,7 @@ public class CaregiverHomeFragment extends Fragment {
 
             @Override
             public void onFailure(Exception e) {
+                LoadingOverlay.hide(CaregiverHomeFragment.this);
                 if (!isAdded()) return;
                 Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
             }
@@ -533,9 +541,9 @@ public class CaregiverHomeFragment extends Fragment {
         statistikRepo.getOverallAdherence(consumerUid, new StatistikRepo.OverallStatsCallback() {
             @Override
             public void onResult(int totalSeharusnya, int totalDikonsumsi, int percent) {
-                if (!isAdded()) return;
+                if (!isAdded() || getView() == null) return; // halaman sudah ditutup
                 adherenceRing.setProgress(percent);
-                adherenceRing.setProgressColor(MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorPrimaryVariant));
+                adherenceRing.setProgressColor(MaterialColors.getColor(adherenceRing, com.google.android.material.R.attr.colorPrimaryVariant));
                 tvAdherenceDesc.setText(adherenceDesc(percent));
             }
 
@@ -608,7 +616,7 @@ public class CaregiverHomeFragment extends Fragment {
             btnNotif.setImageResource(R.drawable.ic_notif);
         } else {
             tvNotifBadge.setVisibility(View.VISIBLE);
-            tvNotifBadge.setText(count > 99 ? "99+" : String.valueOf(count));
+            tvNotifBadge.setText(BadgeText.of(count));
             btnNotif.setImageResource(R.drawable.ic_notif_hover);
         }
     }

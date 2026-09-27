@@ -27,7 +27,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/tvEditProfile"
             android:text="@string/editProfile"
-            android:textStyle="bold"
+            android:textFontWeight="600"
             android:textSize="24sp"
             android:layout_weight="1"
             android:gravity="center"
@@ -54,14 +54,15 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="44dp"
-                android:gravity="center_vertical"
-                android:text="@string/nama"
+                android:layout_gravity="center"
                 android:layout_marginStart="10dp"
                 android:layout_weight="1"
-                android:layout_gravity="center"
+                android:fontFamily="@font/inter_18pt_semibold"
+                android:gravity="center_vertical"
+                android:text="@string/nama"
                 android:textSize="16sp"
-                android:textStyle="bold"
-                android:fontFamily="@font/inter_18pt_semibold"/>
+                android:textFontWeight="600"
+                />
 
             <EditText
                 android:layout_width="wrap_content"
@@ -94,7 +95,7 @@
                 android:layout_weight="1"
                 android:layout_gravity="center"
                 android:textSize="16sp"
-                android:textStyle="bold"
+                android:textFontWeight="600"
                 android:fontFamily="@font/inter_18pt_semibold"/>
 
             <TextView
@@ -123,7 +124,7 @@
                 android:layout_weight="1"
                 android:layout_gravity="center"
                 android:textSize="16sp"
-                android:textStyle="bold"
+                android:textFontWeight="600"
                 android:fontFamily="@font/inter_18pt_semibold"/>
 
             <TextView
@@ -136,7 +137,7 @@
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:layout_marginStart="10dp"
-                android:textColor="?attr/colorOnPrimary"/>
+                android:textColor="?attr/colorOnSurface"/>
 
         </LinearLayout>
 
@@ -162,7 +163,7 @@
                 android:layout_marginStart="10dp"
                 android:layout_weight="1"
                 android:layout_gravity="center"
-                android:textStyle="bold"
+                android:textFontWeight="600"
                 android:textSize="16sp"
                 android:fontFamily="@font/inter_24pt_bold"/>
         </LinearLayout>

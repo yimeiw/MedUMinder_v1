@@ -372,6 +372,7 @@
     <string name="hubungkan_google_title">Connect Google</string>
     <string name="hubungkan_akun_google_msg">Connect your Google account to this account?</string>
     <string name="isi_ulang_obat_notif_title">REFILL MEDICINE (</string>
+    <string name="invitation_role_title" formatted="true">Invitation %2$s</string>
     <string name="invitation_title">Invitation </string>
     <string name="invitation_berhasil_dikirim">Invitation sent successfully.</string>
     <string name="invite_caregiver_btn">Invite Caregiver</string>
@@ -645,4 +646,7 @@
     <string name="reminder_appointment_full_msg">%1$s you have an appointment: %2$s.</string>
     <string name="reminder_appointment_caregiver_full_msg">%1$s, %2$s has an appointment: %3$s.</string>
     <string name="isi_ulang_obat_x_title">Refill Medicine (%1$s)</string>
+    <string name="hubungan_dihapus_title">Connection Removed</string>
+    <string name="anda_menghapus_hubungan_msg" formatted="true">You removed your connection with %1$s (%2$s).</string>
+    <string name="x_menghapus_hubungan_msg" formatted="true">%1$s (%2$s) removed their connection with you.</string>
 </resources>

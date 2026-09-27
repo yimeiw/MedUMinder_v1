@@ -15,6 +15,10 @@
         <item name="colorBackgroundFloating">@color/white</item> <!-- putih abu tengah -->
         <item name="colorPrimaryFixed">@color/white</item>
         <item name="colorPrimaryFixedDim">@color/black</item>
+        <item name="appOutline">@color/black</item>
+        <item name="progressTrack">@color/progress_track</item>
+        <item name="unreadAccent">@color/black</item>
+        <item name="unreadSurface">@color/white</item>
         <item name="colorTertiaryFixed">@color/green</item>
         <item name="colorTertiaryFixedDim">@color/merah</item>
         <item name="colorSecondaryFixedDim">@color/biru</item>
@@ -47,6 +51,25 @@
         <item name="android:textColor">@color/white</item>
     </style>
 
+
+    <!-- Filter periode di Statistik: dipilih = biru, lainnya = kartu biasa -->
+    <style name="MaterialButtonPeriod" parent="Widget.MaterialComponents.Button">
+        <item name="android:checkable">true</item>
+        <item name="cornerRadius">20dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:minHeight">40dp</item>
+        <item name="android:paddingHorizontal">4dp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="backgroundTint">@color/period_button_bg</item>
+        <item name="android:textColor">@color/period_button_text</item>
+        <item name="strokeColor">?attr/appOutline</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="elevation">0dp</item>
+    </style>
 
     <style name="CustomMaterialTimePicker" parent="ThemeOverlay.MaterialComponents.TimePicker">
         <item name="colorPrimary">?attr/colorOnSurface</item>

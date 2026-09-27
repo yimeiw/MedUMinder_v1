@@ -372,6 +372,7 @@
     <string name="hubungkan_google_title">连接 Google</string>
     <string name="hubungkan_akun_google_msg">将 Google 账户连接到此账户？</string>
     <string name="isi_ulang_obat_notif_title">补充药品（</string>
+    <string name="invitation_role_title" formatted="true">邀请 %2$s</string>
     <string name="invitation_title">邀请 </string>
     <string name="invitation_berhasil_dikirim">邀请发送成功。</string>
     <string name="invite_caregiver_btn">邀请 Caregiver</string>
@@ -645,4 +646,7 @@
     <string name="x_menambahkan_jadwal_appointment_anda_msg">%1$s 为您添加了预约 %2$s。</string>
     <string name="x_menambahkan_jadwal_appointment_msg">%1$s 添加了预约：%2$s。</string>
     <string name="x_menambahkan_jadwal_appointment_consumer_anda_msg">%1$s 为您的 Consumer 添加了预约 %2$s。</string>
+    <string name="hubungan_dihapus_title">关系已解除</string>
+    <string name="anda_menghapus_hubungan_msg" formatted="true">您已解除与 %1$s（%2$s）的关系。</string>
+    <string name="x_menghapus_hubungan_msg" formatted="true">%1$s（%2$s）已解除与您的关系。</string>
 </resources>

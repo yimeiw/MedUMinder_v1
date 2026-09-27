@@ -70,6 +70,15 @@ public class SplashActivity extends AppCompatActivity {
         TextView minder = findViewById(R.id.minder);
 
         View circle = findViewById(R.id.circle);
+        // lingkaran = 90% lebar layar, jadi di semua HP tetap BULAT dan utuh.
+        // (Kalau lebih lebar dari layar, RelativeLayout memotong lebarnya saja -> jadi oval.)
+        if (circle != null) {
+            int size = Math.round(getResources().getDisplayMetrics().widthPixels * 0.9f);
+            android.view.ViewGroup.LayoutParams lp = circle.getLayoutParams();
+            lp.width = size;
+            lp.height = size;
+            circle.setLayoutParams(lp);
+        }
         View overlay = findViewById(R.id.overlay);
 
         letterU.post(() -> {
@@ -84,22 +93,29 @@ public class SplashActivity extends AppCompatActivity {
 
             float minderTranslation = (uWidth + minderWidth) / 2f;
 
+            // "Minder" lebih lebar dari "Med", jadi kalau U di tengah layar, seluruh kata
+            // "MedUMinder" bergeser ke kanan. Geser semuanya supaya KATA-nya yang di tengah.
+            float groupShift = (medWidth - minderWidth) / 2f;
+            letterU.setTranslationX(groupShift);
+
             float targetX = letterU.getX() + (letterU.getWidth() / 2f) - (pill.getWidth() / 2f);
             float targetY = letterU.getY() + (letterU.getHeight() / 2f) - (pill.getHeight() / 2f) - 10f;
 
             pill.setX(-pill.getWidth());
-            pill.setY(200);
+            pill.setY(targetY * 0.17f);
 
-            med.setTranslationX(0);
-            minder.setTranslationX(0);
+            med.setTranslationX(groupShift);
+            minder.setTranslationX(groupShift);
 
             Path path = new Path();
 
-            path.moveTo(-pill.getWidth(), 150);
+            // lintasan pil dihitung relatif ke posisi U (bukan angka pixel tetap),
+            // jadi bentuk lengkungnya sama di semua ukuran & kepadatan layar
+            path.moveTo(-pill.getWidth(), targetY * 0.13f);
 
-            path.quadTo(120, 250, 220, 420);
+            path.quadTo(targetX * 0.22f, targetY * 0.22f, targetX * 0.41f, targetY * 0.37f);
 
-            path.quadTo(340, 580, targetX, targetY);
+            path.quadTo(targetX * 0.63f, targetY * 0.50f, targetX, targetY);
 
             ObjectAnimator movePill = ObjectAnimator.ofFloat(pill, View.X, View.Y, path);
 
@@ -188,7 +204,7 @@ public class SplashActivity extends AppCompatActivity {
                             1f
                     );
 
-            ObjectAnimator medSlide = ObjectAnimator.ofFloat(med, "translationX", 0f, medTranslation);
+            ObjectAnimator medSlide = ObjectAnimator.ofFloat(med, "translationX", groupShift, groupShift + medTranslation);
 
             AnimatorSet medAnim = new AnimatorSet();
 
@@ -206,7 +222,7 @@ public class SplashActivity extends AppCompatActivity {
                             1f
                     );
 
-            ObjectAnimator minderSlide = ObjectAnimator.ofFloat(minder, "translationX", 0f, minderTranslation);
+            ObjectAnimator minderSlide = ObjectAnimator.ofFloat(minder, "translationX", groupShift, groupShift + minderTranslation);
 
             AnimatorSet minderAnim = new AnimatorSet();
 

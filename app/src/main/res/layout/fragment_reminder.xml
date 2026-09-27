@@ -9,9 +9,17 @@
     android:layout_margin="20dp"
     >
 
-    <LinearLayout
+    <!-- bisa di-scroll di layar pendek supaya tombol di bawah tidak terpotong -->
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:overScrollMode="never"
+        android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         >
 
@@ -21,7 +29,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:id="@+id/headerSection"
-            android:layout_marginBottom="50dp"
+            android:layout_marginBottom="@dimen/reminder_header_gap"
             >
 
             <ImageButton
@@ -57,8 +65,8 @@
 <!--         bulat isi nama obat-->
         <LinearLayout
             android:id="@+id/circleNamaObat"
-            android:layout_width="300dp"
-            android:layout_height="300dp"
+            android:layout_width="@dimen/reminder_circle_size"
+            android:layout_height="@dimen/reminder_circle_size"
             android:orientation="vertical"
             android:layout_gravity="center"
             android:gravity="center"
@@ -82,10 +90,13 @@
                 android:layout_height="15dp"
                 />
 
+            <!-- ukuran tetap supaya ikon obat & appointment sama besar -->
             <ImageView
                 android:id="@+id/iconReminderType"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="@dimen/reminder_icon_size"
+                android:layout_height="@dimen/reminder_icon_size"
+                android:scaleType="fitCenter"
+                android:adjustViewBounds="false"
                 android:src="@drawable/ic_tablet"
                 />
         </LinearLayout>
@@ -241,7 +252,8 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnIsTaken"
-                android:layout_width="170dp"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:background="@drawable/button_selector"
                 app:backgroundTint="@null"
@@ -249,17 +261,20 @@
                 android:textColor="?attr/colorPrimaryFixed"
                 android:textAllCaps="false"
                 android:layout_marginVertical="10dp"
-                android:textStyle="bold"
+                android:textFontWeight="600"
                 />
 
             <Space
+                android:id="@+id/buttonSpacer"
                 android:layout_width="10dp"
                 android:layout_height="match_parent"
                 />
 
+            <!-- lebar dibagi rata; kalau tombol tunda disembunyikan, tombol konfirmasi jadi selebar layar -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnTundaReminder"
-                android:layout_width="170dp"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:background="@drawable/button_border"
                 app:backgroundTint="@null"
@@ -267,12 +282,13 @@
                 android:textColor="?attr/colorOnSurface"
                 android:textAllCaps="false"
                 android:layout_marginVertical="10dp"
-                android:textStyle="bold"
+                android:textFontWeight="600"
                 />
         </LinearLayout>
 
 
     </LinearLayout>
+    </ScrollView>
 
 
 </RelativeLayout>

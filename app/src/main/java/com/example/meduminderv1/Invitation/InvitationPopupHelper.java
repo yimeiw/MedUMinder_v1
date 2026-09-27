@@ -79,8 +79,8 @@ public class InvitationPopupHelper {
         dialog.show();
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(activity, com.google.android.material.R.attr.colorTertiaryFixed));
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(activity, com.google.android.material.R.attr.colorTertiaryFixedDim));
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(activity, com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(activity, com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
         }
     }
 

@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Profile;
 
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -49,9 +51,12 @@ public class DeleteAccountFragment extends Fragment {
 
         btnDeleteAcc.setOnClickListener(v -> {
             String password = etPassword.getText().toString().trim();
+            LoadingOverlay.show(DeleteAccountFragment.this);
             authManager.deleteAccount(requireActivity(), password, new AuthCallback<Void>() {
                 @Override
                 public void onSuccess(Void result) {
+                    LoadingOverlay.hide(DeleteAccountFragment.this);
+                    if (getActivity() == null) return; // akun sudah terhapus; halaman sudah ditutup
                     Toast.makeText(requireContext(), getString(R.string.akun_berhasil_dihapus), Toast.LENGTH_SHORT).show();
                    startActivity(new Intent(requireContext(), SignUpActivity.class));
                    requireActivity().finish();
@@ -59,6 +64,8 @@ public class DeleteAccountFragment extends Fragment {
 
                 @Override
                 public void onFailure(String message) {
+                    LoadingOverlay.hide(DeleteAccountFragment.this);
+                    if (!isAdded()) return;
                     Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
                 }
             });

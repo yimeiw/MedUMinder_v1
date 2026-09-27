@@ -3,6 +3,7 @@ package com.example.meduminderv1.Reminder;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.example.meduminderv1.Model.UserRole;
@@ -20,11 +21,14 @@ import java.util.Map;
 
 public class AppointmentMissedNotifReceiver extends BroadcastReceiver {
     private static final String TAG = "ApptMissedReceiver";
+    /** true = appointment dibuat/diedit ke jam yang sudah lewat -> langsung terlewat, tanpa snooze otomatis */
+    public static final String EXTRA_ALREADY_PASSED = "already_passed";
 
     @Override
     public void onReceive(Context context, Intent intent) {
         String appointmentId = intent.getStringExtra("appointment_id");
         String extraTitle = intent.getStringExtra("title");
+        final boolean alreadyPassed = intent.getBooleanExtra(EXTRA_ALREADY_PASSED, false);
         if (appointmentId == null || appointmentId.isEmpty()) return;
 
         final PendingResult pendingResult = goAsync();
@@ -38,7 +42,7 @@ public class AppointmentMissedNotifReceiver extends BroadcastReceiver {
             }
             Timestamp snoozedUntil = doc.getTimestamp("snoozed_until");
             if (snoozedUntil != null && System.currentTimeMillis()
-                    < snoozedUntil.toDate().getTime() + 4 * 60_000L) {
+                    < snoozedUntil.toDate().getTime() + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS - 60_000L) {
                 pendingResult.finish();
                 return;
             }
@@ -48,6 +52,32 @@ public class AppointmentMissedNotifReceiver extends BroadcastReceiver {
                 return;
             }
             final String title = extraTitle != null ? extraTitle : doc.getString("title");
+
+            SharedPreferences pref = context.getSharedPreferences("notification_settings", Context.MODE_PRIVATE);
+            if (!alreadyPassed && pref.getBoolean("repeat_reminder", false)) {
+                context.stopService(new Intent(context, AlarmRingingService.class));
+                int snoozeMinutes = SnoozeHelper.getSnoozeMinutes(context);
+                long nextTriggerMillis = System.currentTimeMillis() + snoozeMinutes * 60L * 1000L;
+                Timestamp appointmentAt = doc.getTimestamp("appointment_at");
+                long originalAt = appointmentAt != null ? appointmentAt.toDate().getTime() : nextTriggerMillis;
+                String name = title != null ? title : "";
+
+                doc.getReference().update(
+                        "snoozed_until", new Timestamp(new java.util.Date(nextTriggerMillis)),
+                        "updated_at", Timestamp.now()
+                ).addOnSuccessListener(unused -> {
+                    AlarmSchedulerHelper.scheduleSnoozeAt(context, appointmentId, name,
+                            originalAt, nextTriggerMillis, "appointment");
+                    AppointmentAlertScheduler.rescheduleMissed(context, appointmentId, name, nextTriggerMillis);
+                    Log.d(TAG, "Repeat Until Confirmed aktif. Alarm appointment berikutnya dalam "
+                            + snoozeMinutes + " menit. id=" + appointmentId);
+                    pendingResult.finish();
+                }).addOnFailureListener(e -> {
+                    Log.e(TAG, "Gagal update repeat/snooze appointment. id=" + appointmentId, e);
+                    pendingResult.finish();
+                });
+                return;
+            }
 
             doc.getReference().update("status", "terlewatkan", "updated_at", Timestamp.now())
                     .addOnSuccessListener(unused -> {

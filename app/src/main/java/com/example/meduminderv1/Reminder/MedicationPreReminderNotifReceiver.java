@@ -30,7 +30,6 @@ public class MedicationPreReminderNotifReceiver extends BroadcastReceiver {
                     notif.put("receiver_uid", consumerUid);
                     notif.put("reference_id", scheduleId);
                     notif.put("type", NotificationType.Medicine);
-                    // "5 menit lagi jadwal minum obat X." -> disimpan sebagai kode + isian
                     NotificationText.apply(notif, "segera_minum_obat_title",
                             "menit_lagi_minum_obat_msg", "5", obat);
                     notif.put("target_role", UserRole.Consumer);

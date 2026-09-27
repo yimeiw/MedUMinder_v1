@@ -63,7 +63,8 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layout_marginBottom="20dp"
-                android:weightSum="3">
+                android:weightSum="3"
+                android:baselineAligned="false">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnWeekly"
@@ -72,9 +73,7 @@
                     android:layout_weight="1"
                     android:layout_marginEnd="4dp"
                     android:text="@string/mingguan"
-                    android:textAllCaps="false"
-                    android:textSize="12sp"
-                    style="@style/MaterialButtonLog"/>
+                    style="@style/MaterialButtonPeriod"/>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnMonthly"
@@ -83,9 +82,7 @@
                     android:layout_weight="1"
                     android:layout_marginHorizontal="4dp"
                     android:text="@string/bulanan"
-                    android:textAllCaps="false"
-                    android:textSize="12sp"
-                    style="@style/MaterialButtonLog"/>
+                    style="@style/MaterialButtonPeriod"/>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnYearly"
@@ -94,9 +91,7 @@
                     android:layout_weight="1"
                     android:layout_marginStart="4dp"
                     android:text="@string/tahunan"
-                    android:textAllCaps="false"
-                    android:textSize="12sp"
-                    style="@style/MaterialButtonLog"/>
+                    style="@style/MaterialButtonPeriod"/>
             </LinearLayout>
 
 
@@ -106,7 +101,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/tingkatKepatuhan"
-                android:textStyle="bold"
+                android:textFontWeight="600"
                 android:textSize="18sp"
                 android:textColor="?attr/colorOnSurface"
                 android:layout_marginBottom="10dp" />
@@ -193,7 +188,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/totalObatDikonsumsi"
                         android:textSize="11sp"
-                        android:textStyle="bold"
+                        android:textFontWeight="400"
                         android:gravity="center"
                         android:textColor="?attr/colorOnPrimary" />
 
@@ -203,7 +198,7 @@
                         android:layout_height="wrap_content"
                         android:text="0 Obat"
                         android:textSize="20sp"
-                        android:textStyle="bold"
+                        android:textFontWeight="600"
                         android:gravity="center"
                         android:textColor="?attr/colorOnPrimary"
                         android:layout_marginTop="7dp" />
@@ -228,7 +223,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/totalObatDiabaikan"
                         android:textSize="11sp"
-                        android:textStyle="bold"
+                        android:textFontWeight="400"
                         android:gravity="center"
                         android:textColor="?attr/colorOnPrimary" />
 
@@ -238,7 +233,7 @@
                         android:layout_height="wrap_content"
                         android:text="0 Obat"
                         android:textSize="20sp"
-                        android:textStyle="bold"
+                        android:textFontWeight="600"
                         android:gravity="center"
                         android:textColor="?attr/colorOnPrimary"
                         android:layout_marginTop="7dp" />
@@ -264,7 +259,7 @@
                     android:layout_weight="1"
                     android:text="@string/totalObatSnooze"
                     android:textSize="13sp"
-                    android:textStyle="bold"
+                    android:textFontWeight="400"
                     android:textColor="?attr/colorOnPrimary" />
 
                 <TextView
@@ -273,7 +268,7 @@
                     android:layout_height="wrap_content"
                     android:text="0 Obat"
                     android:textSize="20sp"
-                    android:textStyle="bold"
+                    android:textFontWeight="600"
                     android:textColor="?attr/colorOnPrimary" />
             </LinearLayout>
 
@@ -285,7 +280,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/grafikKepatuhan"
-                android:textStyle="bold"
+                android:textFontWeight="600"
                 android:textSize="18sp"
                 android:textColor="?attr/colorOnSurface"
                 android:layout_marginBottom="10dp" />
@@ -350,7 +345,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/analisisRespon"
-                android:textStyle="bold"
+                android:textFontWeight="600"
                 android:textSize="18sp"
                 android:textColor="?attr/colorOnSurface"
                 android:layout_marginBottom="10dp" />
@@ -419,7 +414,7 @@
                 android:layout_gravity="center"
                 android:text="@string/download"
                 android:textAllCaps="false"
-                android:textStyle="bold"
+                android:textFontWeight="600"
                 android:textColor="?attr/colorPrimaryFixed"
                 android:background="@drawable/border"
                 app:backgroundTint="?attr/colorSecondaryFixedDim"

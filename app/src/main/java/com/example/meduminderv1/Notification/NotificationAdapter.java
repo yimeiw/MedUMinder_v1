@@ -73,7 +73,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         int padV = holder.cardNotif.getPaddingTop();
         holder.cardNotif.setBackgroundResource(notification.isIs_read()
                 ? R.drawable.border_hugcontent_nopadding
-                : R.drawable.bg_offset);
+                : R.drawable.bg_notif_unread);
         holder.cardNotif.setPadding(padH, padV, padH, padV);
 
         holder.itemView.setOnClickListener(v ->

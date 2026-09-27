@@ -1,5 +1,9 @@
 package com.example.meduminderv1.Home;
 
+import com.example.meduminderv1.Util.BadgeText;
+
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import static android.content.Context.MODE_PRIVATE;
 
 import android.content.SharedPreferences;
@@ -215,7 +219,7 @@ public class HomeFragment extends Fragment {
         } else {
             btnNotif.setImageResource(R.drawable.ic_notif_hover);
             tvNotifBadge.setVisibility(View.VISIBLE);
-            tvNotifBadge.setText(count > 99 ? "99+" : String.valueOf(count));
+            tvNotifBadge.setText(BadgeText.of(count));
         }
     }
 
@@ -305,6 +309,7 @@ public class HomeFragment extends Fragment {
         if (!btnKonfirmasi.isEnabled()) return;
         btnKonfirmasi.setEnabled(false);
 
+        LoadingOverlay.show(HomeFragment.this);
         db.collection("medication_logs").document(nextLogId).get()
                 .addOnSuccessListener(snapshot -> {
                     if (!isAdded()) return;
@@ -314,6 +319,7 @@ public class HomeFragment extends Fragment {
                     final String medName = tvtitleCard.getText().toString();
                     if ("dikonsumsi".equals(currentStatus)) {
                         if (schedId != null) AlarmSchedulerHelper.onDoseTaken(requireContext(), schedId, medName, schedAt);
+                        LoadingOverlay.hide(HomeFragment.this);
                         btnKonfirmasi.setEnabled(true);
                         loadNextSchedule();
                         return;
@@ -322,6 +328,7 @@ public class HomeFragment extends Fragment {
                     medicationRepo.markLogAsTaken(nextLogId, new RepoCallback<Void>() {
                         @Override
                         public void onSuccess(Void result) {
+                            LoadingOverlay.hide(HomeFragment.this);
                             //matikan alarm yang sedang bunyi + batalkan snooze/alarm jam itu
                             if (isAdded() && schedId != null) {
                                 AlarmSchedulerHelper.onDoseTaken(requireContext(), schedId, medName, schedAt);
@@ -357,6 +364,7 @@ public class HomeFragment extends Fragment {
                         @Override
                         public void onFailure(Exception e) {
                             if (!isAdded() || getContext() == null) return;
+                            LoadingOverlay.hide(HomeFragment.this);
                             btnKonfirmasi.setEnabled(true);
                             Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                         }
@@ -364,6 +372,7 @@ public class HomeFragment extends Fragment {
                 })
                 .addOnFailureListener(e -> {
                     if (!isAdded()) return;
+                    LoadingOverlay.hide(HomeFragment.this);
                     btnKonfirmasi.setEnabled(true);
                 });
     }
@@ -390,6 +399,7 @@ public class HomeFragment extends Fragment {
                                 } else if (med.getCatalog_id() != null) {
                                     db.collection("medicine_catalog").document(med.getCatalog_id()).get()
                                             .addOnSuccessListener(catSnap -> {
+                                                if (!isAdded()) return;
                                                 MedicineCatalog catalog = catSnap.toObject(MedicineCatalog.class);
                                                 callback.onResolved(catalog != null ? catalog.getNama_obat() : getString(R.string.obat_default), finalStock, medId, medType);
                                             });

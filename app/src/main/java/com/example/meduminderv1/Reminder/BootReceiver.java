@@ -11,15 +11,6 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.List;
 
-/**
- * Semua alarm yang didaftarkan lewat AlarmManager HILANG setelah device restart —
- * ini perilaku normal Android, bukan bug. Receiver ini dengar BOOT_COMPLETED lalu
- * baca ulang semua schedule aktif dari Firestore dan daftarkan lagi.
- *
- * Pakai goAsync() karena query Firestore itu async, sedangkan BroadcastReceiver.onReceive()
- * normalnya dianggap "selesai" begitu method return — tanpa goAsync(), proses bisa
- * di-kill sistem sebelum listener Firestore sempat jalan.
- */
 public class BootReceiver extends BroadcastReceiver {
 
     @Override
@@ -29,8 +20,6 @@ public class BootReceiver extends BroadcastReceiver {
         final PendingResult pendingResult = goAsync();
         final Context appContext = context.getApplicationContext();
 
-        // collectionGroup dipakai karena data ada di subcollection users/{uid}/medication_schedules,
-        // bukan collection top-level — collectionGroup nyari across semua user sekaligus.
         FirebaseFirestore.getInstance()
                 .collectionGroup("medication_schedules")
                 .whereEqualTo("is_active", true)

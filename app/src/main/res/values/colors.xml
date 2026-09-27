@@ -7,8 +7,12 @@
     <color name="green">#22C1C4</color>
     <color name="biru">#2C68E6</color>
     <color name="placeholder">#B5B5B5</color>
+    <color name="progress_track">#E0E0E0</color>
     <color name="gray">#C4C6D2</color>
 
+    <!-- <color name="dark_bckg">#121418</color>
+    <color name="abu_tua">#1C2027</color>
+    <color name="abu_tengah">#262B34</color> -->
     <color name="dark_bckg">#15181C</color>
     <color name="dark_text">#E7E9EC</color>
     <color name="dark_blue">#1F4289</color>
@@ -18,4 +22,11 @@
     <color name="abu_tua">#1B1F20</color>
     <color name="abu_tengah">#2E3642</color>
     <color name="abu_muda">#718096</color>
+
+    <!-- Dark mode: softer text and desaturated accents to reduce glare on dark backgrounds -->
+    <color name="dark_teks">#E3E6EB</color>
+    <color name="dark_hint">#8B95A5</color>
+    <color name="dark_biru">#7AA2F7</color>
+    <color name="dark_merah">#F28B8B</color>
+    <color name="dark_outline">#343B47</color>
 </resources>

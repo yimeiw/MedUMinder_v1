@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dialog "hapus entri ini saja / seluruh jadwal".
+     Pakai layout sendiri karena 3 tombol bawaan AlertDialog ditumpuk otomatis
+     dengan jarak bawah yang besar dan tidak bisa diatur. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="24dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="22dp"
+    android:paddingBottom="10dp">
+
+    <TextView
+        android:id="@+id/dialogTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingEnd="8dp"
+        android:text="@string/hapus_jadwal_obat_title"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/dialogMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:paddingEnd="8dp"
+        android:text="@string/pilih_jenis_hapus_msg"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="14sp" />
+
+    <!-- tombol ditumpuk rapat di kanan, seperti tombol dialog biasa -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginTop="12dp"
+        android:gravity="end"
+        android:orientation="vertical">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDeleteAll"
+            style="@style/Widget.MaterialComponents.Button.TextButton.Dialog"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:minHeight="40dp"
+            android:text="@string/hapus_seluruh_jadwal"
+            android:textAllCaps="false"
+            android:textColor="?attr/colorTertiaryFixed" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDeleteOne"
+            style="@style/Widget.MaterialComponents.Button.TextButton.Dialog"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:minHeight="40dp"
+            android:text="@string/hapus_entri_ini_saja"
+            android:textAllCaps="false"
+            android:textColor="?attr/colorTertiaryFixedDim" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancelDelete"
+            style="@style/Widget.MaterialComponents.Button.TextButton.Dialog"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:minHeight="40dp"
+            android:text="@string/cancel"
+            android:textAllCaps="false"
+            android:textColor="?attr/colorOnSurface" />
+    </LinearLayout>
+</LinearLayout>

@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Notification;
 
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -28,6 +30,7 @@ import com.example.meduminderv1.Model.MedicationSchedules;
 import com.example.meduminderv1.Model.MedicineCatalog;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
+import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.example.meduminderv1.Repo.InvitationRepo;
@@ -363,9 +366,11 @@ public class NotificationDetailFragment extends Fragment {
 
     private void rejectInvitation() {
         String senderName = invitation != null ? invitation.getSender_name() : "";
+        LoadingOverlay.show(NotificationDetailFragment.this);
         authManager.respondToInvitation(notification.getInvitation_id(), false, new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
+                LoadingOverlay.hide(NotificationDetailFragment.this);
                 if (!isAdded()) return;
                 Toast.makeText(requireContext(), getString(R.string.anda_menolak_undangan_dari_msg, senderName), Toast.LENGTH_SHORT).show();
                 NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
@@ -373,6 +378,7 @@ public class NotificationDetailFragment extends Fragment {
 
             @Override
             public void onFailure(String message) {
+                LoadingOverlay.hide(NotificationDetailFragment.this);
                 if (!isAdded()) return;
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
@@ -381,9 +387,11 @@ public class NotificationDetailFragment extends Fragment {
 
     private void acceptInvitation() {
         String senderName = invitation != null ? invitation.getSender_name() : "";
+        LoadingOverlay.show(NotificationDetailFragment.this);
         authManager.respondToInvitation(notification.getInvitation_id(), true, new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
+                LoadingOverlay.hide(NotificationDetailFragment.this);
                 if (!isAdded()) return;
                 Toast.makeText(requireContext(), getString(R.string.anda_menerima_undangan_dari_msg, senderName), Toast.LENGTH_SHORT).show();
                 if (result != null && result.getCurrentRole() == UserRole.Caregiver){
@@ -395,6 +403,7 @@ public class NotificationDetailFragment extends Fragment {
 
             @Override
             public void onFailure(String message) {
+                LoadingOverlay.hide(NotificationDetailFragment.this);
                 if (!isAdded()) return;
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
@@ -577,13 +586,62 @@ public class NotificationDetailFragment extends Fragment {
                 && currentUser != null
                 && currentUser.getCurrentRole() == UserRole.Caregiver;
         layoutButton.setVisibility(View.GONE);
-        if (isCaregiverMissedAlert){
+        btnAction.setVisibility(View.GONE);
+        if (!isCaregiverMissedAlert) return;
+        // cek status terbaru dulu: tidak perlu mengingatkan kalau obat sudah diminum,
+        // appointment sudah dihadiri, atau appointment sudah terlewat/dibatalkan
+        checkCanRemind(canRemind -> {
+            if (!isAdded() || !canRemind) return;
             btnAction.setVisibility(View.VISIBLE);
             btnAction.setText(getString(R.string.remind_consumer));
             btnAction.setOnClickListener(v -> remindConsumer(notification.getConsumer_uid()));
-        } else {
-            btnAction.setVisibility(View.GONE);
+        });
+    }
+
+    private void checkCanRemind(java.util.function.Consumer<Boolean> result) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        String ref = notification.getReference_id();
+        if (ref == null) { result.accept(true); return; }   // tidak ada data jadwal -> perilaku lama
+
+        if (notification.getType() == NotificationType.Appointment) {
+            db.collection("appointments").document(ref).get()
+                    .addOnSuccessListener(doc -> {
+                        Appointment appt = doc.exists() ? doc.toObject(Appointment.class) : null;
+                        if (appt == null || appt.getDeleted_at() != null
+                                || "dibatalkan".equals(appt.getStatus())) { result.accept(false); return; }
+                        // dihadiri / terlewat -> tidak perlu diingatkan lagi
+                        result.accept(appt.getStatusBasedOnDate() == LogStatus.AKAN_DATANG);
+                    })
+                    .addOnFailureListener(e -> result.accept(true));
+            return;
         }
+
+        // obat: reference_id bisa id log, atau id jadwal + scheduled_at
+        String logId = notification.getScheduled_at() != null
+                ? buildLogId(ref, notification.getScheduled_at().toDate().getTime())
+                : ref;
+        db.collection("medication_logs").document(logId).get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) { result.accept(true); return; }   // mis. id jadwal tanpa waktu
+                    MedicationLog log = doc.toObject(MedicationLog.class);
+                    // sudah diminum -> sembunyikan; akan datang / terlewat -> masih boleh diingatkan
+                    result.accept(log == null || log.getStatusEnum() != LogStatus.DIKONSUMSI);
+                })
+                .addOnFailureListener(e -> result.accept(true));
+    }
+
+    /**
+     * Pengingat dari caregiver ikut membawa data jadwal dari notifikasi yang sedang dibuka
+     * (jenis, reference_id = log/jadwal/appointment, waktu), supaya halaman detail-nya
+     * bisa menampilkan obat/appointment yang dimaksud. Dulu kosong -> detail tidak muncul.
+     */
+    private void copyScheduleContext(Notification target) {
+        NotificationType type = notification.getType() == NotificationType.Appointment
+                ? NotificationType.Appointment : NotificationType.Medicine;
+        target.setType(type);
+        target.setReference_id(notification.getReference_id());
+        target.setScheduled_at(notification.getScheduled_at());
+        target.setIs_new_schedule(notification.isIs_new_schedule());
     }
 
     private void remindConsumer(String consumerUid) {
@@ -593,23 +651,24 @@ public class NotificationDetailFragment extends Fragment {
         Notification reminder = new Notification();
         reminder.setReceiver_uid(consumerUid);
         reminder.setSender_uid(caregiver.getAuth_uid());
-        reminder.setType(NotificationType.Medicine);
+        copyScheduleContext(reminder);
         NotificationText.apply(reminder, "pengingat_dari_caregiver_title",
                 "caregiver_mengingatkan_periksa_jadwal_msg",
                 caregiver.getName() != null ? caregiver.getName() : "");
         reminder.setTarget_role(UserRole.Consumer.name());
         reminder.setIs_read(false);
+        LoadingOverlay.show(NotificationDetailFragment.this);
         notificationRepo.createNotification(reminder, new RepoCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                if (!isAdded()) return;
-                Toast.makeText(requireContext(), getString(R.string.pengingat_terkirim), Toast.LENGTH_SHORT).show();
+                LoadingOverlay.hide(NotificationDetailFragment.this);
 
                 // konfirmasi ke diri sendiri (caregiver) bahwa reminder sudah dikirim
+                // (tetap dibuat walau halaman sudah ditutup)
                 Notification confirmation = new Notification();
                 confirmation.setReceiver_uid(caregiver.getAuth_uid());
                 confirmation.setSender_uid(caregiver.getAuth_uid());
-                confirmation.setType(NotificationType.Medicine);
+                copyScheduleContext(confirmation);
                 NotificationText.apply(confirmation, "pengingat_terkirim_title",
                         "pesan_pengingat_terkirim_consumer");
                 confirmation.setTarget_role(UserRole.Caregiver.name());
@@ -619,10 +678,14 @@ public class NotificationDetailFragment extends Fragment {
                     @Override public void onSuccess(Void result) { }
                     @Override public void onFailure(Exception e) { }
                 });
+
+                if (!isAdded()) return;
+                Toast.makeText(requireContext(), getString(R.string.pengingat_terkirim), Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onFailure(Exception e) {
+                LoadingOverlay.hide(NotificationDetailFragment.this);
                 if (!isAdded()) return;
                 Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
             }
@@ -822,9 +885,11 @@ public class NotificationDetailFragment extends Fragment {
 
         layoutButton.setVisibility(View.GONE);
 
+        LoadingOverlay.show(NotificationDetailFragment.this);
         db.collection("medication_logs").document(logId).get().addOnSuccessListener(snapshot -> {
             if (!isAdded()) return;
             if ("dikonsumsi".equals(snapshot.getString("status"))) {
+                LoadingOverlay.hide(NotificationDetailFragment.this);
                 Toast.makeText(requireContext(), getString(R.string.obat_ditandai_dikonsumsi), Toast.LENGTH_SHORT).show();
                 NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
                 return;
@@ -832,6 +897,7 @@ public class NotificationDetailFragment extends Fragment {
             new com.example.meduminderv1.Repo.MedicationRepo(requireContext())
                     .markTakenAndDecrement(logId, pendingMedicationId, new RepoCallback<Void>() {
                         @Override public void onSuccess(Void result) {
+                            LoadingOverlay.hide(NotificationDetailFragment.this);
                             if (!isAdded()) return;
                             requireContext().stopService(new Intent(requireContext(), com.example.meduminderv1.Reminder.AlarmRingingService.class));
                             AlarmSchedulerHelper.cancelSnooze(requireContext(), scheduleId);
@@ -842,12 +908,14 @@ public class NotificationDetailFragment extends Fragment {
                             NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
                         }
                         @Override public void onFailure(Exception e) {
+                            LoadingOverlay.hide(NotificationDetailFragment.this);
                             if (!isAdded()) return;
                             layoutButton.setVisibility(View.VISIBLE);
                             Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     });
         }).addOnFailureListener(e -> {
+            LoadingOverlay.hide(NotificationDetailFragment.this);
             if (!isAdded()) return;
             layoutButton.setVisibility(View.VISIBLE);
             Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();

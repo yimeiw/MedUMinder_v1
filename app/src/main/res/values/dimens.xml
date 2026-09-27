@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ukuran untuk layar PENDEK (tinggi < 700dp, mis. Samsung A5/A7).
+     Layar tinggi (mis. Poco M4) memakai values-h700dp/dimens.xml = desain asli. -->
+<resources>
+    <!-- Login -->
+    <dimen name="login_capsule_min_height">0dp</dimen>
+    <dimen name="login_capsule_padding_top">56dp</dimen>
+    <!-- Sign up -->
+    <dimen name="signup_capsule_margin_top">40dp</dimen>
+    <dimen name="signup_capsule_padding_top">48dp</dimen>
+    <!-- Halaman reminder: jarak header, lingkaran nama obat, ikon di dalamnya -->
+    <dimen name="reminder_header_gap">24dp</dimen>
+    <dimen name="reminder_circle_size">240dp</dimen>
+    <dimen name="reminder_icon_size">92dp</dimen>
+</resources>

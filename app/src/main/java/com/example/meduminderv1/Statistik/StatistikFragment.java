@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Statistik;
 
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -23,6 +25,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+
+import com.google.android.material.button.MaterialButton;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -46,6 +50,8 @@ import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.data.PieData;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
@@ -61,7 +67,9 @@ import java.util.Locale;
 
 public class StatistikFragment extends Fragment {
     private StatistikRepo statistikRepo;
-    private MaterialButton btnWeekly, btnMonthly, btnYearly;
+    private MaterialButton btnWeekly;
+    private MaterialButton btnMonthly;
+    private MaterialButton btnYearly;
     private String selectedPeriod = "weekly";
     private TextView tvAdheranceRate;
     private TextView tvTotalTaken;
@@ -71,6 +79,8 @@ public class StatistikFragment extends Fragment {
     private FrameLayout dailyChartContainer;
     private FrameLayout responsePieContainer;
     private Button btnDownloadReport;
+    // cegah unduh dobel kalau tombol ditekan berulang kali
+    private boolean isDownloading = false;
     private TextView tvAdherenceDescription;
     private List<StatistikRepo.DayStat> currentStats = new ArrayList<>();
     private int currentTotalDikonsumsi = 0;
@@ -125,21 +135,21 @@ public class StatistikFragment extends Fragment {
         btnWeekly.setOnClickListener(v -> {
             selectedPeriod = "weekly";
             Toast.makeText(requireContext(), getString(R.string.filter_mingguan_terpilih), Toast.LENGTH_SHORT).show();
-            selectButton(btnWeekly);
+            updatePeriodButton(v);
             loadStats();
         });
 
         btnMonthly.setOnClickListener(v -> {
             selectedPeriod = "monthly";
             Toast.makeText(requireContext(), getString(R.string.filter_bulanan_terpilih), Toast.LENGTH_SHORT).show();
-            selectButton(btnMonthly);
+            updatePeriodButton(v);
             loadStats();
         });
 
         btnYearly.setOnClickListener(v -> {
             selectedPeriod = "yearly";
             Toast.makeText(requireContext(), getString(R.string.filter_tahunan_terpilih), Toast.LENGTH_SHORT).show();
-            selectButton(btnYearly);
+            updatePeriodButton(v);
             loadStats();
         });
 
@@ -168,6 +178,7 @@ public class StatistikFragment extends Fragment {
         });
 
         statistikRepo = new StatistikRepo(requireContext());
+        updatePeriodButton(view);   // tandai "mingguan" saat pertama dibuka
         loadStats();
 
         return view;
@@ -252,47 +263,110 @@ public class StatistikFragment extends Fragment {
         adherenceChart = chart;
         dailyChartContainer.addView(chart, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 
-        ArrayList<BarEntry> entries = new ArrayList<>();
-        ArrayList<String> labels = new ArrayList<>();
+        boolean isMonthly = "monthly".equals(selectedPeriod);
+        List<String> labels = shortChartLabels(stats);
 
+        // bulanan: x = tanggal (1..31) supaya label sumbu bisa 5, 10, 15, ...
+        ArrayList<BarEntry> entries = new ArrayList<>();
         for (int i = 0; i < stats.size(); i++) {
-            StatistikRepo.DayStat stat = stats.get(i);
-            entries.add(new BarEntry(i, stat.persentase));
-            labels.add(stat.label);
+            entries.add(new BarEntry(isMonthly ? i + 1 : i, stats.get(i).persentase));
         }
 
         BarDataSet dataSet = new BarDataSet(entries, getString(R.string.persentaseKepatuhan));
 
         int itam = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface);
         int ijo = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorTertiaryFixed);
+        int garis = MaterialColors.getColor(requireView(), R.attr.appOutline);
 
         dataSet.setColor(ijo);
-        dataSet.setValueTextSize(10f);
+        dataSet.setHighlightEnabled(false);
+        // angka di atas batang hanya untuk mingguan; bulanan/tahunan terlalu padat
+        dataSet.setDrawValues("weekly".equals(selectedPeriod));
+        dataSet.setValueTextSize(9f);
+        dataSet.setValueTextColor(itam);
         dataSet.setValueTypeface(fontRegular());
-        dataSet.setDrawValues(true);
+        dataSet.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getBarLabel(BarEntry entry) {
+                return entry.getY() > 0 ? Math.round(entry.getY()) + "%" : "";
+            }
+        });
 
         BarData data = new BarData(dataSet);
+        data.setBarWidth(isMonthly ? 0.7f : 0.6f);
         chart.setData(data);
 
         XAxis xAxis = chart.getXAxis();
-        xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
-        xAxis.setGranularity(1f);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setDrawGridLines(false);
+        xAxis.setAxisLineColor(garis);
         xAxis.setTextColor(itam);
+        xAxis.setTextSize(10f);
         xAxis.setTypeface(fontRegular());
+        xAxis.setGranularity(1f);
+        xAxis.setGranularityEnabled(true);
+        xAxis.setAvoidFirstLastClipping(false);
+        if (isMonthly) {
+            xAxis.setAxisMinimum(0.5f);
+            xAxis.setAxisMaximum(stats.size() + 0.5f);
+            xAxis.setLabelCount(7);
+            xAxis.setValueFormatter(new ValueFormatter() {
+                @Override
+                public String getFormattedValue(float value) {
+                    return String.valueOf(Math.round(value));
+                }
+            });
+        } else {
+            xAxis.setAxisMinimum(-0.5f);
+            xAxis.setAxisMaximum(stats.size() - 0.5f);
+            xAxis.setLabelCount(stats.size());
+            xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
+        }
 
-        chart.getAxisLeft().setTextColor(itam);
-        chart.getAxisLeft().setTypeface(fontRegular());
-        chart.getAxisLeft().setAxisMinimum(0f);
-        chart.getAxisLeft().setAxisMaximum(100f);
+        YAxis left = chart.getAxisLeft();
+        left.setTextColor(itam);
+        left.setTextSize(10f);
+        left.setTypeface(fontRegular());
+        left.setAxisMinimum(0f);
+        left.setAxisMaximum(100f);
+        left.setLabelCount(5, true);   // 0, 25, 50, 75, 100
+        left.setGridColor(garis);
+        left.setDrawAxisLine(false);
+        left.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                return Math.round(value) + "%";
+            }
+        });
+
         chart.getAxisRight().setEnabled(false);
         chart.getDescription().setEnabled(false);
         chart.getLegend().setEnabled(false);
+        chart.setExtraBottomOffset(6f);
         chart.setFitBars(true);
-        chart.setTouchEnabled(true);
-        chart.setDragEnabled(true);
+        chart.setTouchEnabled(false);
         chart.setScaleEnabled(false);
         chart.invalidate();
+    }
+
+    /** Label pendek untuk sumbu X (Sen/Mon/周一, Jan/1月); label panjang tetap dipakai di tempat lain. */
+    private List<String> shortChartLabels(List<StatistikRepo.DayStat> stats) {
+        Locale locale = getResources().getConfiguration().getLocales().get(0);
+        java.text.DateFormatSymbols symbols = java.text.DateFormatSymbols.getInstance(locale);
+        List<String> labels = new ArrayList<>();
+        if ("weekly".equals(selectedPeriod) && stats.size() == 7) {
+            String[] days = symbols.getShortWeekdays(); // index = Calendar.SUNDAY..SATURDAY
+            int[] order = {java.util.Calendar.MONDAY, java.util.Calendar.TUESDAY, java.util.Calendar.WEDNESDAY,
+                    java.util.Calendar.THURSDAY, java.util.Calendar.FRIDAY, java.util.Calendar.SATURDAY,
+                    java.util.Calendar.SUNDAY};
+            for (int d : order) labels.add(days[d]);
+        } else if ("yearly".equals(selectedPeriod) && stats.size() == 12) {
+            String[] months = symbols.getShortMonths();
+            for (int m = 0; m < 12; m++) labels.add(months[m]);
+        } else {
+            for (StatistikRepo.DayStat stat : stats) labels.add(stat.label);
+        }
+        return labels;
     }
 
     private void renderResponseAnalysis(int totalDikonsumsi, int totalDiabaikan, int totalSnooze) {
@@ -376,13 +450,17 @@ public class StatistikFragment extends Fragment {
             return;
         }
 
+        if (isDownloading) return;
+        isDownloading = true;
+        btnDownloadReport.setEnabled(false);
+        LoadingOverlay.show(StatistikFragment.this);
         com.google.firebase.firestore.FirebaseFirestore.getInstance()
                 .collection("users")
                 .whereEqualTo("auth_uid", uid)
                 .limit(1)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
-                    if (!isAdded()) return;
+                    if (!isAdded()) { finishDownload(); return; }
 
                     String consumerName;
 
@@ -404,9 +482,14 @@ public class StatistikFragment extends Fragment {
                         consumerName = getString(R.string.nama_tidak_diketahui);
                     }
 
+                    // overlay tetap tampil selama PDF dibuat, baru ditutup setelah selesai
                     generateStatisticPdf(consumerName);
+                    LoadingOverlay.hide(StatistikFragment.this);
+                    finishDownload();
                 })
                 .addOnFailureListener(e -> {
+                    LoadingOverlay.hide(StatistikFragment.this);
+                    finishDownload();
                     if (!isAdded()) return;
 
                     Toast.makeText(
@@ -415,6 +498,11 @@ public class StatistikFragment extends Fragment {
                             Toast.LENGTH_SHORT
                     ).show();
                 });
+    }
+
+    private void finishDownload() {
+        isDownloading = false;
+        if (btnDownloadReport != null) btnDownloadReport.setEnabled(true);
     }
 
     @SuppressLint("StringFormatInvalid")
@@ -493,25 +581,11 @@ public class StatistikFragment extends Fragment {
                 y
         );
 
-        // Ring adherence
-        Bitmap adherenceBitmap = getViewBitmap(adherenceRing);
-
-        if (adherenceBitmap != null) {
+        // Ring adherence (digambar vektor supaya tajam, tidak blur)
+        {
             int ringSize = 130;
             float ringLeft = (pageWidth - ringSize) / 2f;
-
-            canvas1.drawBitmap(
-                    adherenceBitmap,
-                    null,
-                    new android.graphics.RectF(
-                            ringLeft,
-                            y,
-                            ringLeft + ringSize,
-                            y + ringSize
-                    ),
-                    paint
-            );
-
+            drawPdfRing(canvas1, ringLeft, y, ringSize, currentPersentase);
             y += ringSize + 10;
         }
 
@@ -579,23 +653,11 @@ public class StatistikFragment extends Fragment {
                 y
         );
 
-        Bitmap barBitmap = getViewBitmap(adherenceChart);
-
-        if (barBitmap != null) {
+        {
             int chartWidth = pageWidth - 2 * (int) margin;
             int chartHeight = 300;
-
-            canvas1.drawBitmap(
-                    barBitmap,
-                    null,
-                    new android.graphics.RectF(
-                            margin,
-                            y,
-                            margin + chartWidth,
-                            y + chartHeight
-                    ),
-                    paint
-            );
+            // grafik digambar vektor langsung di PDF (tajam, label rapi)
+            drawPdfBarChart(canvas1, margin, y, chartWidth, chartHeight);
         }
 
         document.finishPage(page1);
@@ -626,24 +688,10 @@ public class StatistikFragment extends Fragment {
         );
 
         // Donut Chart
-        Bitmap pieBitmap = getViewBitmap(responseChart);
-
-        if (pieBitmap != null) {
+        {
             int pieSize = 250;
             float pieLeft = (pageWidth - pieSize) / 2f;
-
-            canvas2.drawBitmap(
-                    pieBitmap,
-                    null,
-                    new android.graphics.RectF(
-                            pieLeft,
-                            y,
-                            pieLeft + pieSize,
-                            y + pieSize
-                    ),
-                    paint
-            );
-
+            drawPdfDonut(canvas2, pieLeft, y, pieSize);
             y += pieSize + 30;
         }
 
@@ -788,28 +836,155 @@ public class StatistikFragment extends Fragment {
         return y;
     }
 
-    private Bitmap getViewBitmap(View view) {
-        if (view == null) {
-            return null;
+    // ================= GRAFIK VEKTOR UNTUK PDF =================
+    // Warna cetak tetap (tidak ikut dark mode) supaya selalu terbaca di kertas putih.
+    private static final int PDF_TEXT = Color.parseColor("#0B1E33");
+    private static final int PDF_MUTED = Color.parseColor("#5B6576");
+    private static final int PDF_GRID = Color.parseColor("#E3E7EE");
+    private static final int PDF_TRACK = Color.parseColor("#E0E0E0");
+
+    /** Ring kepatuhan: sama seperti di layar (lingkaran abu + progres hijau + persen di tengah). */
+    private void drawPdfRing(Canvas c, float left, float top, float size, int percent) {
+        android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        float stroke = size * 0.16f;
+        float pad = stroke / 2f + 2;
+        android.graphics.RectF oval = new android.graphics.RectF(left + pad, top + pad, left + size - pad, top + size - pad);
+
+        p.setStyle(android.graphics.Paint.Style.STROKE);
+        p.setStrokeWidth(stroke);
+        p.setColor(PDF_TRACK);
+        c.drawArc(oval, 0, 360, false, p);
+
+        p.setColor(requireContext().getColor(R.color.green));
+        p.setStrokeCap(android.graphics.Paint.Cap.ROUND);
+        float sweep = Math.min(360f * Math.max(0, percent) / 100f, 359.99f);
+        if (sweep > 0) c.drawArc(oval, -90, sweep, false, p);
+
+        p.setStyle(android.graphics.Paint.Style.FILL);
+        p.setColor(PDF_TEXT);
+        p.setTypeface(fontBold());
+        p.setTextAlign(android.graphics.Paint.Align.CENTER);
+        p.setTextSize(size * 0.2f);
+        float textY = top + size / 2f - (p.descent() + p.ascent()) / 2f;
+        c.drawText(percent + "%", left + size / 2f, textY, p);
+    }
+
+    /** Grafik batang kepatuhan 0-100%: sumbu 0/25/50/75/100, label X pendek, nilai di atas batang. */
+    private void drawPdfBarChart(Canvas c, float x, float y, float w, float h) {
+        android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        List<StatistikRepo.DayStat> stats = currentStats != null ? currentStats : new ArrayList<>();
+        List<String> labels = shortChartLabels(stats);
+        boolean isMonthly = "monthly".equals(selectedPeriod);
+        int n = stats.size();
+
+        float axisW = 36f;     // ruang label sumbu Y
+        float labelH = 22f;    // ruang label sumbu X
+        float plotL = x + axisW, plotR = x + w, plotT = y + 14, plotB = y + h - labelH;
+        float plotH = plotB - plotT;
+
+        // grid horizontal + label sumbu Y
+        p.setStrokeWidth(0.8f);
+        p.setTypeface(fontRegular());
+        p.setTextSize(9f);
+        p.setTextAlign(android.graphics.Paint.Align.RIGHT);
+        for (int pct = 0; pct <= 100; pct += 25) {
+            float gy = plotB - plotH * pct / 100f;
+            p.setColor(pct == 0 ? PDF_MUTED : PDF_GRID);
+            c.drawLine(plotL, gy, plotR, gy, p);
+            p.setColor(PDF_MUTED);
+            c.drawText(pct + "%", plotL - 6, gy + 3, p);
+        }
+        if (n == 0) return;
+
+        int barColor = requireContext().getColor(R.color.green);
+        float slot = (plotR - plotL) / n;
+        float barW = slot * (isMonthly ? 0.7f : 0.55f);
+        float radius = Math.min(3f, barW / 2f);
+        p.setTextAlign(android.graphics.Paint.Align.CENTER);
+
+        for (int i = 0; i < n; i++) {
+            float pct = Math.max(0f, Math.min(100f, stats.get(i).persentase));
+            float cx = plotL + slot * i + slot / 2f;
+
+            if (pct > 0) {
+                float top = plotB - plotH * pct / 100f;
+                p.setColor(barColor);
+                c.drawRoundRect(new android.graphics.RectF(cx - barW / 2f, top, cx + barW / 2f, plotB), radius, radius, p);
+                c.drawRect(cx - barW / 2f, Math.max(top, plotB - radius), cx + barW / 2f, plotB, p); // bawah rata
+
+                // nilai di atas batang (bulanan terlalu padat, jadi tidak ditampilkan)
+                if (!isMonthly) {
+                    p.setTypeface(fontBold());
+                    p.setTextSize(8.5f);
+                    p.setColor(PDF_TEXT);
+                    c.drawText(Math.round(pct) + "%", cx, top - 4, p);
+                }
+            }
+
+            // label sumbu X: mingguan/tahunan semua, bulanan hanya 1, 5, 10, 15, ...
+            int day = i + 1;
+            if (!isMonthly || day == 1 || day % 5 == 0) {
+                p.setTypeface(fontRegular());
+                p.setTextSize(9f);
+                p.setColor(PDF_MUTED);
+                c.drawText(isMonthly ? String.valueOf(day) : labels.get(i), cx, plotB + 14, p);
+            }
+        }
+    }
+
+    /** Donut analisis respon: warna sama seperti di layar, persen di tiap bagian, label di tengah. */
+    private void drawPdfDonut(Canvas c, float left, float top, float size) {
+        android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        int[] values = {currentTotalDikonsumsi, currentTotalSnooze, currentTotalDiabaikan};
+        int[] colors = {
+                requireContext().getColor(R.color.green),
+                requireContext().getColor(R.color.gray),
+                requireContext().getColor(R.color.merah)
+        };
+        int total = values[0] + values[1] + values[2];
+
+        float cx = left + size / 2f, cy = top + size / 2f;
+        float outerR = size / 2f;
+        float innerR = outerR * 0.55f;   // sama dengan hole 55% di layar
+        float ringR = (outerR + innerR) / 2f;
+        float stroke = outerR - innerR;
+        android.graphics.RectF oval = new android.graphics.RectF(cx - ringR, cy - ringR, cx + ringR, cy + ringR);
+
+        p.setStyle(android.graphics.Paint.Style.STROKE);
+        p.setStrokeWidth(stroke);
+        if (total == 0) {
+            p.setColor(PDF_TRACK);
+            c.drawArc(oval, 0, 360, false, p);
+        } else {
+            float start = -90f;
+            for (int i = 0; i < values.length; i++) {
+                if (values[i] <= 0) continue;
+                float sweep = 360f * values[i] / total;
+                p.setColor(colors[i]);
+                c.drawArc(oval, start, sweep, false, p);
+
+                // persen di tengah bagian (disembunyikan kalau bagiannya terlalu kecil)
+                if (sweep >= 18f) {
+                    double mid = Math.toRadians(start + sweep / 2f);
+                    float tx = cx + (float) (ringR * Math.cos(mid));
+                    float ty = cy + (float) (ringR * Math.sin(mid));
+                    android.graphics.Paint t = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+                    t.setColor(Color.WHITE);
+                    t.setTypeface(fontBold());
+                    t.setTextSize(12f);
+                    t.setTextAlign(android.graphics.Paint.Align.CENTER);
+                    c.drawText(Math.round(values[i] * 100f / total) + "%", tx, ty - (t.descent() + t.ascent()) / 2f, t);
+                }
+                start += sweep;
+            }
         }
 
-        int width = view.getWidth();
-        int height = view.getHeight();
-
-        if (width <= 0 || height <= 0) {
-            return null;
-        }
-
-        Bitmap bitmap = Bitmap.createBitmap(
-                width,
-                height,
-                Bitmap.Config.ARGB_8888
-        );
-
-        Canvas canvas = new Canvas(bitmap);
-        view.draw(canvas);
-
-        return bitmap;
+        p.setStyle(android.graphics.Paint.Style.FILL);
+        p.setColor(PDF_TEXT);
+        p.setTypeface(fontBold());
+        p.setTextSize(14f);
+        p.setTextAlign(android.graphics.Paint.Align.CENTER);
+        c.drawText(getString(R.string.response_center_label), cx, cy - (p.descent() + p.ascent()) / 2f, p);
     }
 
     private String getReportPeriod() {
@@ -889,6 +1064,7 @@ public class StatistikFragment extends Fragment {
         }
     }
 
+    @androidx.annotation.RequiresApi(android.os.Build.VERSION_CODES.Q)
     private void saveViaMediaStore(PdfDocument document, String fileName) {
         android.content.ContentValues values = new android.content.ContentValues();
         values.put(android.provider.MediaStore.Downloads.DISPLAY_NAME, fileName);
@@ -952,6 +1128,13 @@ public class StatistikFragment extends Fragment {
         }
     }
 
+    private void updatePeriodButton(View root) {
+        // warna diatur oleh selector di style MaterialButtonPeriod
+        btnWeekly.setChecked("weekly".equals(selectedPeriod));
+        btnMonthly.setChecked("monthly".equals(selectedPeriod));
+        btnYearly.setChecked("yearly".equals(selectedPeriod));
+    }
+
     private void openPdf(android.net.Uri uri) {
         if (!isAdded()) return;
         Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -968,7 +1151,7 @@ public class StatistikFragment extends Fragment {
         if (!isAdded()) return;
         User user = SessionManager.getInstance().getUser();
         if (user == null) return;
-        new NotificationRepo(requireContext()).createReportNotif(user.getAuth_uid(), getString(R.string.laporan_berhasil_diunduh),
+        new NotificationRepo(requireContext()).createReportNotif(user.getAuth_uid(), user.getCurrentRole(), "laporan_berhasil_diunduh",
                 fileName, mediaStoreUri, legacyFilePath, new RepoCallback<Void>() {
                     @Override
                     public void onSuccess(Void result) {}
@@ -978,13 +1161,4 @@ public class StatistikFragment extends Fragment {
                 });
     }
 
-    private void selectButton(MaterialButton selected) {
-        MaterialButton[] buttons = { btnWeekly, btnMonthly, btnYearly };
-        for (MaterialButton button : buttons) {
-            button.setBackgroundTintList(ContextCompat.getColorStateList(
-                    requireContext(),
-                    button == selected ? R.color.biru : R.color.black
-            ));
-        }
-    }
 }

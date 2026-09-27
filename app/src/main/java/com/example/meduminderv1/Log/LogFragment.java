@@ -1,5 +1,9 @@
 package com.example.meduminderv1.Log;
 
+import com.example.meduminderv1.Util.InactiveSchedules;
+
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Intent;
@@ -296,6 +300,8 @@ public class LogFragment extends Fragment {
         endCal.add(Calendar.DAY_OF_YEAR, 1);
         Timestamp startOfTomorrow = new Timestamp(endCal.getTime());
 
+        // lewati log dari jadwal yang sudah dihapus (is_active = false)
+        InactiveSchedules.load(db, users_id, inactiveIds ->
         db.collection("medication_logs")
                 .whereEqualTo("users_id", users_id)
                 .whereGreaterThanOrEqualTo("scheduled_at", startOfYesterday)
@@ -303,14 +309,15 @@ public class LogFragment extends Fragment {
                 .orderBy("scheduled_at")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
+                    if (!isAdded()) return;
                     allMedLog.clear();
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                         MedicationLog log = doc.toObject(MedicationLog.class);
-                        if (log != null) allMedLog.add(log);
+                        if (log != null && !inactiveIds.contains(log.getMedication_schedules_id())) allMedLog.add(log);
                     }
                     applyFilter();
                 })
-                .addOnFailureListener(e -> Log.e("Medication Log", "Gagal ambil data", e));
+                .addOnFailureListener(e -> Log.e("Medication Log", "Gagal ambil data", e)));
     }
     private void loadAppointmentLogs() {
         String users_id = SessionManager.getInstance().getTargetUid();
@@ -357,7 +364,7 @@ public class LogFragment extends Fragment {
                 dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
                         .setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
                 dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
-                        .setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim));
+                        .setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
             });
 
             dialog.show();
@@ -379,9 +386,9 @@ public class LogFragment extends Fragment {
 
         dialog.setOnShowListener(d -> {
             dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
-                    .setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed));
+                    .setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
             dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
-                    .setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim));
+                    .setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
             dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
         });
 
@@ -392,6 +399,7 @@ public class LogFragment extends Fragment {
 
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
+        LoadingOverlay.show(LogFragment.this);
         db.collection("appointments").document(appointment.getDocId())
                 .update(
                         "status", newStatus,
@@ -399,6 +407,8 @@ public class LogFragment extends Fragment {
                         "updated_by", uid
                 )
                 .addOnSuccessListener(unused -> {
+                    LoadingOverlay.hide(LogFragment.this);
+                    if (!isAdded()) return;
                     appointment.setStatus(newStatus);
                     applyFilter();
 
@@ -412,9 +422,10 @@ public class LogFragment extends Fragment {
 
                     Toast.makeText(requireContext(), getString(R.string.status_berhasil_diperbarui), Toast.LENGTH_SHORT).show();
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(requireContext(), getString(R.string.gagal_update_status_msg) + e.getMessage(), Toast.LENGTH_SHORT).show()
-                );
+                .addOnFailureListener(e -> {
+                    LoadingOverlay.hide(LogFragment.this);
+                    if (isAdded()) Toast.makeText(requireContext(), getString(R.string.gagal_update_status_msg) + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void notifyCaregiverAppointmentAttended(Appointment appointment) {

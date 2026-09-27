@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Schedule;
 
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import android.app.AlarmManager;
 import android.app.DatePickerDialog;
 import android.content.Context;
@@ -232,6 +234,8 @@ public class MedicineReminderFragment extends Fragment {
 
         Map<String, String> catalogMap = new HashMap<>();
         db.collection("medicine_catalog").orderBy("nama_obat").get().addOnSuccessListener(query -> {
+            // halaman sudah ditutup sebelum data selesai dimuat
+            if (!isAdded() || getView() == null) return;
             medList.clear();
             catalogMap.clear();
             for (DocumentSnapshot doc : query) {
@@ -318,6 +322,7 @@ public class MedicineReminderFragment extends Fragment {
             );
             dialog.getDatePicker().setMinDate(System.currentTimeMillis());
             dialog.show();
+            styleDateDialogButtons(dialog);
         });
 
         btnSaveReminder.setOnClickListener(v -> {
@@ -356,6 +361,8 @@ public class MedicineReminderFragment extends Fragment {
     }
 
     private void saveReminder() {
+        // dipakai di callback Firestore: alarm tetap terjadwal walau user sudah keluar halaman
+        final Context appContext = requireContext().getApplicationContext();
         if (targetUid == null){
             Toast.makeText(requireContext(), getString(R.string.pilih_consumer_dahulu), Toast.LENGTH_SHORT).show();
             btnSaveReminder.setEnabled(true);
@@ -396,6 +403,7 @@ public class MedicineReminderFragment extends Fragment {
             stockMap.put("minimum_stok", frequency);
         }
 
+        LoadingOverlay.show(MedicineReminderFragment.this);
         db.collection("medicine_catalog").get()
                 .addOnSuccessListener(query -> {
                     selectedCatalogId = null;
@@ -425,7 +433,7 @@ public class MedicineReminderFragment extends Fragment {
                                         // result = scheduleId dari Firestore
                                         long endMillis = (endDate != null) ? endDate.toDate().getTime() : 0;
                                         AlarmSchedulerHelper.scheduleAll(
-                                                requireContext(),
+                                                appContext,
                                                 result,
                                                 medName,
                                                 times,
@@ -433,24 +441,28 @@ public class MedicineReminderFragment extends Fragment {
                                         );
 
                                         notifyReminderCreated(medName, result);
-                                        Toast.makeText(requireContext(), getString(R.string.reminder_berhasil_dibuat), Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(appContext, appContext.getString(R.string.reminder_berhasil_dibuat), Toast.LENGTH_SHORT).show();
+                                        if (!isAdded()) return; // sudah keluar dari halaman
                                         clearFields();
+                                        LoadingOverlay.hide(MedicineReminderFragment.this);
                                         btnSaveReminder.setEnabled(true);
                                         NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
                                     }
 
                                     @Override
                                     public void onFailure(Exception e) {
-                                        Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-                                        btnSaveReminder.setEnabled(true);
+                                        Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        LoadingOverlay.hide(MedicineReminderFragment.this);
+                                        if (isAdded()) btnSaveReminder.setEnabled(true);
                                     }
                                 });
                             }
 
                             @Override
                             public void onFailure(Exception e) {
-                                Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-                                btnSaveReminder.setEnabled(true);
+                                Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
+                                LoadingOverlay.hide(MedicineReminderFragment.this);
+                                if (isAdded()) btnSaveReminder.setEnabled(true);
                             }
                         });
                     } else { //ini kalau obat nya belum ada di database
@@ -476,39 +488,45 @@ public class MedicineReminderFragment extends Fragment {
                                             );
 
                                             AlarmSchedulerHelper.scheduleAll(
-                                                    requireContext(), result, medName, times,
+                                                    appContext, result, medName, times,
                                                     endDate != null ? endDate.toDate().getTime() : 0
                                             );
 
                                             notifyReminderCreated(medName, result);
-                                            Toast.makeText(requireContext(), getString(R.string.reminder_berhasil_dibuat), Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(appContext, appContext.getString(R.string.reminder_berhasil_dibuat), Toast.LENGTH_SHORT).show();
+                                            if (!isAdded()) return; // sudah keluar dari halaman
                                             clearFields();
+                                            LoadingOverlay.hide(MedicineReminderFragment.this);
                                             btnSaveReminder.setEnabled(true);
                                             NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
                                         }
 
                                         @Override
                                         public void onFailure(Exception e) {
-                                            Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-                                            btnSaveReminder.setEnabled(true);
+                                            Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
+                                            LoadingOverlay.hide(MedicineReminderFragment.this);
+                                            if (isAdded()) btnSaveReminder.setEnabled(true);
                                         }
                                     });
                                 }
 
                                 @Override
                                 public void onFailure(Exception e) {
-                                    Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-                                    btnSaveReminder.setEnabled(true);
+                                    Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    LoadingOverlay.hide(MedicineReminderFragment.this);
+                                    if (isAdded()) btnSaveReminder.setEnabled(true);
                                 }
                             });
                         }).addOnFailureListener(e -> {
-                            Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-                            btnSaveReminder.setEnabled(true);
+                            Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
+                            LoadingOverlay.hide(MedicineReminderFragment.this);
+                            if (isAdded()) btnSaveReminder.setEnabled(true);
                         });
                     }
                 }).addOnFailureListener(e -> {
-                    Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-                    btnSaveReminder.setEnabled(true);
+                    Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
+                    LoadingOverlay.hide(MedicineReminderFragment.this);
+                    if (isAdded()) btnSaveReminder.setEnabled(true);
                 });
     }
 
@@ -735,5 +753,14 @@ public class MedicineReminderFragment extends Fragment {
             @Override
             public void onFailure(Exception e) {}
         });
+    }
+
+    /** Hanya warna tombol OK/Batal di dialog tanggal (desain kalender tetap bawaan). */
+    private void styleDateDialogButtons(DatePickerDialog dialog) {
+        // biru di light mode, biru muda di dark mode
+        int color = com.google.android.material.color.MaterialColors.getColor(
+                requireContext(), com.google.android.material.R.attr.colorSecondaryFixedDim, android.graphics.Color.BLUE);
+        dialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(color);
+        dialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setTextColor(color);
     }
 }

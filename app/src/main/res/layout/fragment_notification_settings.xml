@@ -114,7 +114,6 @@
                         android:focusable="false"/>
 
                     <!-- Durasi Tunda -->
-                    <!-- Durasi Tunda -->
                     <LinearLayout
                         android:id="@+id/boxSnoozeDuration"
                         android:layout_width="match_parent"
@@ -152,6 +151,35 @@
                             android:focusable="false"
                             android:dropDownAnchor="@id/boxSnoozeDuration"/>
                     </LinearLayout>
+
+                    <!-- Reminder Berulang -->
+                    <LinearLayout
+                        android:id="@+id/layoutRepeatReminder"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginVertical="10dp"
+                        android:background="@drawable/border"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="6dp"
+                        android:paddingHorizontal="20dp">
+
+                        <TextView
+                            android:id="@+id/tvRepeatReminder"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/remindUntilConfirm"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="15sp"/>
+
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/switchRepeatReminder"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text=""
+                            android:checked="false"/>
+                    </LinearLayout>
                 </LinearLayout>
 
                 <LinearLayout
@@ -171,7 +199,6 @@
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="14sp"/>
 
-                    <!-- Ingatkan Saya Sebelum -->
                     <!-- Ingatkan Saya Sebelum -->
                     <LinearLayout
                         android:id="@+id/boxAppointmentReminder"
@@ -210,35 +237,6 @@
                             android:dropDownAnchor="@id/boxAppointmentReminder"/>
                     </LinearLayout>
                 </LinearLayout>
-
-                <!-- Reminder Berulang -->
-                <LinearLayout
-                    android:id="@+id/layoutRepeatReminder"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginVertical="10dp"
-                    android:background="@drawable/border"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingVertical="6dp"
-                    android:paddingHorizontal="20dp">
-
-                    <TextView
-                        android:id="@+id/tvRepeatReminder"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/remindUntilConfirm"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textSize="15sp"/>
-
-                    <androidx.appcompat.widget.SwitchCompat
-                        android:id="@+id/switchRepeatReminder"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text=""
-                        android:checked="false"/>
-            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 </RelativeLayout>

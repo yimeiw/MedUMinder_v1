@@ -95,7 +95,7 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="?attr/colorOnSurface"
+                android:background="?attr/appOutline"
                 android:layout_gravity="center"
                 android:layout_marginVertical="20dp"
                 />
@@ -132,7 +132,7 @@
                         android:layout_marginTop="8dp"
                         android:text="@string/tambah_pengingat"
                         android:textAlignment="center"
-                        android:fontFamily="@font/inter_18pt_semibold"
+                        android:textFontWeight="500"
                         android:textColor="?attr/colorOnSurface"
                         android:background="@android:color/transparent"/>
 
@@ -159,7 +159,7 @@
                         android:layout_width="100dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:fontFamily="@font/inter_18pt_semibold"
+                        android:textFontWeight="500"
                         android:text="@string/tambah_appointment"
                         android:textAlignment="center"
                         android:textColor="?attr/colorOnSurface"
@@ -190,7 +190,7 @@
                         android:layout_marginTop="8dp"
                         android:text="@string/log_jadwal"
                         android:textAlignment="center"
-                        android:fontFamily="@font/inter_18pt_semibold"
+                        android:textFontWeight="500"
                         android:textColor="?attr/colorOnSurface"
                         android:background="@android:color/transparent"/>
 
@@ -200,7 +200,7 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="?attr/colorOnSurface"
+                android:background="?attr/appOutline"
                 android:layout_gravity="center"
                 android:layout_marginVertical="20dp"
                 />
@@ -386,9 +386,9 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/jadwal_hari_ini"
-                        android:textSize="20dp"
+                        android:textSize="20sp"
                         android:textColor="?attr/colorOnSurface"
-                        android:textStyle="bold"/>
+                        android:textFontWeight="700"/>
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -437,7 +437,7 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="?attr/colorOnSurface"
+                android:background="?attr/appOutline"
                 android:layout_gravity="center"
                 android:layout_marginVertical="20dp"
                 />
@@ -451,9 +451,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/ringkasan_statistik"
-                    android:textSize="20dp"
+                    android:textSize="20sp"
                     android:textColor="?attr/colorOnSurface"
-                    android:textStyle="bold"/>
+                    android:textFontWeight="700"/>
 
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/lineChart"

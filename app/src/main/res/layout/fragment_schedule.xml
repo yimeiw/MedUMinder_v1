@@ -25,7 +25,7 @@
                 android:background="@drawable/ic_add_med"
                 android:id="@+id/btnAddReminder"
                 android:layout_gravity="center"
-                android:backgroundTint="@color/hover_pressed"
+                android:backgroundTint="@color/add_button_tint"
                 />
 
             <TextView
@@ -45,7 +45,7 @@
                 android:background="@drawable/ic_add_appoint"
                 android:id="@+id/btnAddAppoint"
                 android:layout_gravity="center"
-                android:backgroundTint="@color/hover_pressed"
+                android:backgroundTint="@color/add_button_tint"
                 />
 
         </LinearLayout>
@@ -98,6 +98,34 @@
                 android:textAllCaps="false"/>
 
         </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <!-- loading di dalam area daftar (bukan overlay) saat jadwal sedang dimuat -->
+        <LinearLayout
+            android:id="@+id/loadingState"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingVertical="32dp"
+            android:visibility="gone">
+
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:indeterminate="true"
+                app:indicatorSize="36dp"
+                app:trackThickness="3dp"
+                app:indicatorColor="?attr/colorSecondaryFixedDim"
+                app:trackColor="@android:color/transparent" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/loading"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="14sp" />
+        </LinearLayout>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvSchedule"

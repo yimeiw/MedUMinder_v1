@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Profile;
 
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
@@ -67,9 +69,12 @@ public class EditProfileFragment extends Fragment {
                         if (providerType == AuthProviderType.EMAIL){
                             NavHostFragment.findNavController(this).navigate(R.id.deleteAccountFragment);
                         } else if (providerType == AuthProviderType.GOOGLE){
+                            LoadingOverlay.show(EditProfileFragment.this);
                             authManager.deleteAccount(requireActivity(), null, new AuthCallback<Void>() {
                                 @Override
                                 public void onSuccess(Void result) {
+                                    LoadingOverlay.hide(EditProfileFragment.this);
+                                    if (getActivity() == null) return; // akun sudah terhapus; halaman sudah ditutup
                                     Toast.makeText(requireContext(), getString(R.string.akun_berhasil_dihapus), Toast.LENGTH_SHORT).show();
                                     Intent intent = new Intent(requireContext(), LoginActivity.class);
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -79,6 +84,8 @@ public class EditProfileFragment extends Fragment {
 
                                 @Override
                                 public void onFailure(String message) {
+                                    LoadingOverlay.hide(EditProfileFragment.this);
+                                    if (!isAdded()) return;
                                     Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
                                 }
                             });
@@ -89,8 +96,8 @@ public class EditProfileFragment extends Fragment {
             dialog.show();
             if (dialog.getWindow() != null){
                 dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed));
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim));
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
             }
         });
 
@@ -112,9 +119,12 @@ public class EditProfileFragment extends Fragment {
             userName.requestFocus();
             return;
         } isUpdatingName = true;
+        LoadingOverlay.show(EditProfileFragment.this);
         authManager.updateDisplayName(newName, new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
+                LoadingOverlay.hide(EditProfileFragment.this);
+                if (!isAdded()) return;
                 isUpdatingName = false;
                 currentUser = result;
                 refreshProfile();
@@ -123,6 +133,8 @@ public class EditProfileFragment extends Fragment {
 
             @Override
             public void onFailure(String message) {
+                LoadingOverlay.hide(EditProfileFragment.this);
+                if (!isAdded()) return;
                 isUpdatingName = false;
                 userName.setText(currentUser.getName());
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
@@ -156,9 +168,12 @@ public class EditProfileFragment extends Fragment {
             MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
             builder.setTitle(getString(R.string.hubungkan_google_title)).setMessage(getString(R.string.hubungkan_akun_google_msg))
                     .setPositiveButton(getString(R.string.hubungkan), (dialog, which) -> {
+                        LoadingOverlay.show(EditProfileFragment.this);
                         authManager.linkGoogle(requireActivity(), new AuthCallback<Void>() {
                             @Override
                             public void onSuccess(Void result) {
+                                LoadingOverlay.hide(EditProfileFragment.this);
+                                if (!isAdded()) return;
                                 requireActivity().runOnUiThread(() -> {
                                     refreshProfile();
                                     Toast.makeText(requireContext(), getString(R.string.google_berhasil_dihubungkan), Toast.LENGTH_SHORT).show();
@@ -167,6 +182,8 @@ public class EditProfileFragment extends Fragment {
 
                             @Override
                             public void onFailure(String message) {
+                                LoadingOverlay.hide(EditProfileFragment.this);
+                                if (!isAdded()) return;
                                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
                             }
                         });
@@ -175,8 +192,8 @@ public class EditProfileFragment extends Fragment {
             dialog.show();
             if (dialog.getWindow() != null){
                 dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed));
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim));
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
             }
         });
     }
@@ -201,8 +218,9 @@ public class EditProfileFragment extends Fragment {
     }
 
     private void updateGoogle() {
-        int merah = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorTertiaryFixedDim);
-        int ijo = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorTertiaryFixed);
+        // pakai btnGoogle (bukan requireView()): method ini juga dipanggil dari onCreateView, saat view fragment belum ada
+        int merah = MaterialColors.getColor(btnGoogle, com.google.android.material.R.attr.colorTertiaryFixedDim);
+        int ijo = MaterialColors.getColor(btnGoogle, com.google.android.material.R.attr.colorTertiaryFixed);
         if (authManager.hasGoogleProvider()){
             btnGoogle.setText(getString(R.string.linked_status));
             btnGoogle.setBackgroundTintList(ColorStateList.valueOf(ijo));

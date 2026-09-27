@@ -79,6 +79,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:layout_gravity="center_vertical"
+                    android:paddingHorizontal="5dp"
                     android:layout_weight="1">
 
                     <TextView
@@ -122,7 +123,7 @@
                 android:orientation="vertical"
                 android:layout_marginBottom="20dp"
                 android:background="@drawable/border"
-                android:backgroundTint="?attr/colorOnPrimary">
+                android:backgroundTint="?attr/colorPrimaryFixedDim">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -141,7 +142,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/kepatuhan"
-                            android:textSize="24dp"
+                            android:textSize="24sp"
                             android:textColor="?attr/colorPrimaryFixed"
                             android:textStyle="bold"/>
 
@@ -151,16 +152,15 @@
                             android:layout_height="wrap_content"
                             android:text="0%"
                             android:textStyle="bold"
-                            android:textSize="24dp"
-                            android:textColor="?attr/colorTertiaryFixed"
-                            android:fontFamily="@font/inter_24pt_semibold"/>
+                            android:textSize="24sp"
+                            android:textColor="?attr/colorTertiaryFixed"/> <!-- sama dengan warna ring (ProgressView) -->
 
                         <TextView
                             android:id="@+id/adherenceDesc"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/desc_kepatuhan_tinggi"
-                            android:textSize="14dp"
+                            android:textSize="14sp"
                             android:textColor="?attr/colorPrimaryFixed"/>
 
                     </LinearLayout>
@@ -226,8 +226,7 @@
                         android:layout_marginStart="10dp"
                         android:layout_weight="1"
                         android:layout_gravity="center"
-
-                        android:fontFamily="@font/inter_24pt_bold"/>
+                        android:textFontWeight="600"/>
 
                     <ImageView
                         android:layout_width="20dp"
@@ -260,7 +259,7 @@
                         android:text="@string/activateCaregiver"
                         android:layout_weight="1"
                         android:layout_gravity="center"
-                        android:fontFamily="@font/inter_24pt_bold"/>
+                        android:textFontWeight="600"/>
 
                     <ImageView
                         android:layout_width="20dp"
@@ -292,7 +291,7 @@
                         android:text="@string/caregiverList"
                         android:layout_weight="1"
                         android:layout_gravity="center"
-                        android:fontFamily="@font/inter_24pt_bold"/>
+                        android:textFontWeight="600"/>
 
                     <ImageView
                         android:layout_width="20dp"
@@ -323,8 +322,7 @@
                         android:text="@string/editProfile"
                         android:layout_weight="1"
                         android:layout_gravity="center"
-
-                        android:fontFamily="@font/inter_24pt_bold"/>
+                        android:textFontWeight="600"/>
 
                     <ImageView
                         android:layout_width="20dp"
@@ -356,8 +354,7 @@
                         android:layout_weight="1"
                         android:layout_marginStart="3dp"
                         android:layout_gravity="center"
-
-                        android:fontFamily="@font/inter_24pt_bold"/>
+                        android:textFontWeight="600"/>
 
                     <ImageView
                         android:layout_width="20dp"
@@ -387,8 +384,7 @@
                         android:text="@string/theme"
                         android:layout_weight="1"
                         android:layout_gravity="center"
-
-                        android:fontFamily="@font/inter_24pt_bold"/>
+                        android:textFontWeight="600"/>
 
                     <RelativeLayout
                         android:id="@+id/themeSwitch"

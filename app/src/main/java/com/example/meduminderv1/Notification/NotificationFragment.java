@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Notification;
 
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
@@ -206,6 +208,7 @@ public class NotificationFragment extends Fragment {
         db.collection("notifications").document(target.getNotification_id())
                 .update("is_read", false, "updated_at", Timestamp.now())
                 .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
                     // rollback UI kalau gagal
                     target.setIs_read(true);
                     adapter.notifyItemChanged(position);
@@ -222,9 +225,11 @@ public class NotificationFragment extends Fragment {
         builder.setTitle(getString(R.string.title_hapus_notif)).setMessage(getString(R.string.confirm_hapus_notif))
                 .setNegativeButton(getString(R.string.cancel), null)
                 .setPositiveButton(getString(R.string.delete), (dialog, which) -> {
+                    LoadingOverlay.show(NotificationFragment.this);
                     notificationRepo.deleteNotif(target.getNotification_id(), new RepoCallback<Void>() {
                         @Override
                         public void onSuccess(Void result) {
+                            LoadingOverlay.hide(NotificationFragment.this);
                             if (!isAdded()) return;
                             int currentPos = adapter.getNotificationPositionById(target.getNotification_id());
                             if (currentPos != -1){
@@ -234,6 +239,7 @@ public class NotificationFragment extends Fragment {
 
                         @Override
                         public void onFailure(Exception e) {
+                            LoadingOverlay.hide(NotificationFragment.this);
                             if (!isAdded()) return;
                             Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                         }
@@ -243,8 +249,8 @@ public class NotificationFragment extends Fragment {
         dialog.show();
         if (dialog.getWindow() != null){
             dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed));
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim));
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
         }
     }
 
@@ -271,8 +277,8 @@ public class NotificationFragment extends Fragment {
         dialog.show();
         if (dialog.getWindow() != null){
             dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed));
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim));
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
         }
     }
     private void startListening() {

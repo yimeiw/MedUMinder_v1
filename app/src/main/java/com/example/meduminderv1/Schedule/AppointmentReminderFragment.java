@@ -1,5 +1,9 @@
 package com.example.meduminderv1.Schedule;
 
+import com.example.meduminderv1.Util.LoadingOverlay;
+
+import android.content.Context;
+
 import android.app.DatePickerDialog;
 import android.os.Bundle;
 
@@ -108,6 +112,7 @@ public class AppointmentReminderFragment extends Fragment {
             }, today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH));
             dialog.getDatePicker().setMinDate(System.currentTimeMillis());
             dialog.show();
+            styleDateDialogButtons(dialog);
         });
 
         tvTime.setOnClickListener(v -> {
@@ -157,6 +162,8 @@ public class AppointmentReminderFragment extends Fragment {
     }
 
     private void saveAppointment() {
+        // dipakai di callback Firestore: alarm tetap terjadwal walau user sudah keluar halaman
+        final Context appContext = requireContext().getApplicationContext();
         if (targetUid == null){
             Toast.makeText(requireContext(), getString(R.string.pilih_consumer_dahulu), Toast.LENGTH_SHORT).show();
             btnSaveAppoint.setEnabled(true);
@@ -204,6 +211,7 @@ public class AppointmentReminderFragment extends Fragment {
         appointment.put("created_by", uid);
         appointment.put("updated_by", uid);
 
+        LoadingOverlay.show(AppointmentReminderFragment.this);
         db.collection("appointments").add(appointment).addOnSuccessListener(documentReference -> {
             boolean isForSelf = targetUid.equals(uid);
             // nama orang yang menambahkan (consumer atau caregiver)
@@ -245,19 +253,22 @@ public class AppointmentReminderFragment extends Fragment {
             notifyCaregiversAppointmentAdded(targetUid, uid, isForSelf, actorName,
                     nameAppoint, documentReference.getId());
 
-            AppointmentAlertScheduler.scheduleAlerts(requireContext(), documentReference.getId(), nameAppoint, selectedCalendar.getTimeInMillis());
-            Toast.makeText(requireContext(), getString(R.string.appointment_berhasil_disimpan), Toast.LENGTH_SHORT).show();
+            AppointmentAlertScheduler.scheduleAlerts(appContext, documentReference.getId(), nameAppoint, selectedCalendar.getTimeInMillis());
+            Toast.makeText(appContext, appContext.getString(R.string.appointment_berhasil_disimpan), Toast.LENGTH_SHORT).show();
             AlarmSchedulerHelper.scheduleAppointment(
-                    requireContext(),
+                    appContext,
                     documentReference.getId(),
                     nameAppoint,
                     appointmentAt.toDate().getTime()
             );
 
+            if (!isAdded()) return; // sudah keluar dari halaman
+            LoadingOverlay.hide(AppointmentReminderFragment.this);
             NavHostFragment.findNavController(this).navigateUp();
         }).addOnFailureListener(e -> {
-            Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-            btnSaveAppoint.setEnabled(true);
+            Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
+            LoadingOverlay.hide(AppointmentReminderFragment.this);
+            if (isAdded()) btnSaveAppoint.setEnabled(true);
         });
 
     }
@@ -296,5 +307,14 @@ public class AppointmentReminderFragment extends Fragment {
             @Override
             public void onFailure(Exception e) { }
         });
+    }
+
+    /** Hanya warna tombol OK/Batal di dialog tanggal (desain kalender tetap bawaan). */
+    private void styleDateDialogButtons(DatePickerDialog dialog) {
+        // biru di light mode, biru muda di dark mode
+        int color = com.google.android.material.color.MaterialColors.getColor(
+                requireContext(), com.google.android.material.R.attr.colorSecondaryFixedDim, android.graphics.Color.BLUE);
+        dialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(color);
+        dialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setTextColor(color);
     }
 }

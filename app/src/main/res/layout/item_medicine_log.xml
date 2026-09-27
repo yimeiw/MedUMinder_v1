@@ -39,7 +39,7 @@
                     android:layout_height="wrap_content"
                     android:text="Antimo"
                     android:textColor="?attr/colorOnPrimary"
-                    android:textStyle="bold"
+                    android:textFontWeight="600"
                     android:textSize="20sp"
                     android:fontFamily="@font/inter_18pt_bold"
                     />

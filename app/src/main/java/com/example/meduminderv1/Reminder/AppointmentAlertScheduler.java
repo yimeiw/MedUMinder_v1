@@ -8,8 +8,20 @@ import android.content.SharedPreferences;
 import android.os.Build;
 
 public class AppointmentAlertScheduler {
-    private static final long MISSED_DELAY_MS = 5 * 60 * 1000L;
+    // sama dengan obat: 3 menit tidak direspon -> terlewat / diulang (Repeat Until Confirmed)
+    private static final long MISSED_DELAY_MS = AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS;
     public static void scheduleAlerts(Context context, String appointmentId, String title, long appointmentAtMillis){
+        // appointment yang waktunya SUDAH lewat saat disimpan -> langsung tandai terlewat + kirim notifikasi.
+        // Tidak lewat AlarmManager (tidak butuh izin exact alarm) dan tidak di-snooze otomatis,
+        // karena alarm untuk jam yang sudah lewat memang tidak pernah berbunyi.
+        if (appointmentAtMillis <= System.currentTimeMillis()) {
+            Intent missedNow = new Intent(context, AppointmentMissedNotifReceiver.class);
+            missedNow.putExtra("appointment_id", appointmentId);
+            missedNow.putExtra("title", title);
+            missedNow.putExtra(AppointmentMissedNotifReceiver.EXTRA_ALREADY_PASSED, true);
+            context.sendBroadcast(missedNow);
+            return;
+        }
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (am == null) return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms()) return;

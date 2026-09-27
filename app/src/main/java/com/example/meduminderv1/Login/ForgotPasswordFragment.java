@@ -1,5 +1,9 @@
 package com.example.meduminderv1.Login;
 
+import com.example.meduminderv1.Util.EmailApp;
+
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -69,34 +73,31 @@ public class ForgotPasswordFragment extends Fragment {
             return;
         } btnKirim.setEnabled(false);
 
+        LoadingOverlay.show(ForgotPasswordFragment.this);
         authManager.resetPassword(email, new AuthCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
+                LoadingOverlay.hide(ForgotPasswordFragment.this);
                 if (!isAdded()) return;
                 btnKirim.setEnabled(true);
                 MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
                 builder.setTitle(getString(R.string.email_berhasil_dikirim))
                         .setMessage(getString(R.string.silahkan_buka_email_reset_password))
                         .setPositiveButton(getString(R.string.buka_email), (dialog, which) -> {
-                            Intent intent = new Intent(Intent.ACTION_MAIN);
-                            intent.addCategory(Intent.CATEGORY_APP_EMAIL);
-                            try {
-                                startActivity(intent);
-                            } catch (Exception e){
-                                Toast.makeText(requireContext(), getString(R.string.aplikasi_email_tidak_ditemukan), Toast.LENGTH_SHORT).show();
-                            }
+                            EmailApp.open(requireContext());
                         }).setNegativeButton(getString(R.string.tutup_btn), null);
                 AlertDialog dialog = builder.create();
                 dialog.show();
                 if (dialog.getWindow() != null){
                     dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed));
-                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim));
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
+                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
                 }
             }
 
             @Override
             public void onFailure(String message) {
+                LoadingOverlay.hide(ForgotPasswordFragment.this);
                 if (!isAdded()) return;
                 btnKirim.setEnabled(true);
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();

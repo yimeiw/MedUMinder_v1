@@ -41,7 +41,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/riwayat_konsumsi"
                 android:textSize="20sp"
-                android:textStyle="bold"
+                android:textFontWeight="600"
                 android:textColor="?attr/colorOnSurface"
                 />
 

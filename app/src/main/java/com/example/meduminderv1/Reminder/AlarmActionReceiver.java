@@ -102,11 +102,6 @@ public class AlarmActionReceiver extends BroadcastReceiver {
         }
     }
 
-    /**
-     * Menandai medication log sebagai dikonsumsi,
-     * kemudian mengambil medication_id dari schedule
-     * dan mengurangi stock obat.
-     */
     private void markAsTaken(Context context, String scheduleId, long scheduledAtMillis, PendingResult pendingResult) {
         String logId = buildLogId(scheduleId, scheduledAtMillis);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
