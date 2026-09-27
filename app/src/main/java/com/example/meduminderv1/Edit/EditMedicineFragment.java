@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Edit;
 
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import android.app.TimePickerDialog;
 import android.os.Bundle;
 
@@ -139,6 +141,7 @@ public class EditMedicineFragment extends Fragment {
     }
 
     private void resolveScheduleIdThenLoad() {
+        LoadingOverlay.show(EditMedicineFragment.this);
         db.collection("medication_schedules")
                 .whereEqualTo("medication_id", medicationIdArg)
                 .whereEqualTo("is_active", true)
@@ -147,6 +150,7 @@ public class EditMedicineFragment extends Fragment {
                 .addOnSuccessListener(querySnapshot -> {
                     if (!isAdded()) return;
                     if (querySnapshot.isEmpty()) {
+                        LoadingOverlay.hide(EditMedicineFragment.this);
                         Toast.makeText(requireContext(), getString(R.string.jadwal_tidak_ditemukan), Toast.LENGTH_SHORT).show();
                         return;
                     }
@@ -154,14 +158,18 @@ public class EditMedicineFragment extends Fragment {
                     loadExistingData(); // lanjut pakai alur yang sudah ada
                 })
                 .addOnFailureListener(e -> {
+                    LoadingOverlay.hide(EditMedicineFragment.this);
                     if (isAdded()) Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
     private void loadExistingData() {
+        LoadingOverlay.show(EditMedicineFragment.this);
         medicationRepo.getScheduleById(scheduleId, new RepoCallback<MedicationSchedules>() {
             @Override
             public void onSuccess(MedicationSchedules schedule) {
+                if (!isAdded()) { LoadingOverlay.hide(EditMedicineFragment.this); return; }
                 if (schedule == null) {
+                    LoadingOverlay.hide(EditMedicineFragment.this);
                     Toast.makeText(requireContext(), getString(R.string.jadwal_tidak_ditemukan), Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -189,12 +197,14 @@ public class EditMedicineFragment extends Fragment {
 
             @Override
             public void onFailure(Exception e) {
-                Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                LoadingOverlay.hide(EditMedicineFragment.this);
+                if (isAdded()) Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void updateReminder() {
+        final android.content.Context appContext = requireContext().getApplicationContext();
         if (!validateReminder()) return;
 
         if (scheduleId == null || medicationId == null) {
@@ -229,6 +239,7 @@ public class EditMedicineFragment extends Fragment {
         scheduleUpdate.put("start_date", now);
         scheduleUpdate.put("updated_at", Timestamp.now());
 
+        LoadingOverlay.show(EditMedicineFragment.this);
         db.collection("medication_schedules").document(scheduleId)
                 .update(scheduleUpdate)
                 .addOnSuccessListener(unused -> {
@@ -239,13 +250,16 @@ public class EditMedicineFragment extends Fragment {
                                     "updated_at", Timestamp.now()
                             )
                             .addOnSuccessListener(unused2 -> {
-                                AlarmSchedulerHelper.cancelAll(requireContext(), scheduleId, originalTimesOfDay);
-                                AlarmSchedulerHelper.cancelSnooze(requireContext(), scheduleId);
+                                // alarm tetap dijadwal ulang walau user sudah keluar halaman
+                                AlarmSchedulerHelper.cancelAll(appContext, scheduleId, originalTimesOfDay);
+                                AlarmSchedulerHelper.cancelSnooze(appContext, scheduleId);
 
                                 long endMillis = (endDate != null) ? endDate.toDate().getTime() : 0;
-                                AlarmSchedulerHelper.scheduleAll(requireContext(), scheduleId, medName, times, endMillis);
+                                AlarmSchedulerHelper.scheduleAll(appContext, scheduleId, medName, times, endMillis);
                                 new LogGenerator().replaceFutureLogs(targetUid, scheduleId, times, now, endDate);
 
+                                LoadingOverlay.hide(EditMedicineFragment.this);
+                                if (!isAdded()) return;
                                 notifyReminderUpdated(medName, changeItems, frequency, snapshotTimes, snapshotStock);
                                 Toast.makeText(requireContext(), getString(R.string.reminder_berhasil_diperbarui), Toast.LENGTH_SHORT).show();
 
@@ -259,11 +273,15 @@ public class EditMedicineFragment extends Fragment {
                                     NavHostFragment.findNavController(EditMedicineFragment.this).navigateUp();
                                 }
                             })
-                            .addOnFailureListener(e ->
-                                    Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show());
+                            .addOnFailureListener(e -> {
+                                LoadingOverlay.hide(EditMedicineFragment.this);
+                                if (isAdded()) Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> {
+                    LoadingOverlay.hide(EditMedicineFragment.this);
+                    if (isAdded()) Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
     private void notifyReminderUpdated(String medName, List<String> changeItems, int frequency,
                                        List<String> times, Integer snapshotStock) {
@@ -415,11 +433,12 @@ public class EditMedicineFragment extends Fragment {
     }
 
     private void loadMedicationData() {
-        if (medicationId == null) return;
+        if (medicationId == null) { LoadingOverlay.hide(EditMedicineFragment.this); return; }
 
         medicationRepo.getMedicationById(medicationId, new RepoCallback<Medication>() {
             @Override
             public void onSuccess(Medication medication) {
+                LoadingOverlay.hide(EditMedicineFragment.this); // data utama sudah tampil
                 if (medication == null) return;
                 medType = medication.getMed_type() != null ? medication.getMed_type() : "";
 
@@ -434,6 +453,7 @@ public class EditMedicineFragment extends Fragment {
                     db.collection("medicine_catalog").document(medication.getCatalog_id())
                             .get()
                             .addOnSuccessListener(doc -> {
+                                if (getView() == null) return;
                                 String nama = doc.getString("nama_obat");
                                 if (nama != null) namaObat.setText(nama);
                             });
@@ -442,7 +462,8 @@ public class EditMedicineFragment extends Fragment {
 
             @Override
             public void onFailure(Exception e) {
-                Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                LoadingOverlay.hide(EditMedicineFragment.this);
+                if (isAdded()) Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }

@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Ikon bottom nav: tab aktif biru (light: #2C68E6, dark: #7AA2F7), lainnya warna teks biasa -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item android:color="?attr/colorAccent"
+    <item android:color="?attr/colorSecondaryFixedDim"
         android:state_hovered="true"/>
 
     <item
         android:state_checked="true"
-        android:color="?attr/colorAccent" />
+        android:color="?attr/colorSecondaryFixedDim" />
 
     <item
         android:color="?attr/colorOnSurface" />

@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Statistik;
 
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -65,13 +67,9 @@ import java.util.Locale;
 
 public class StatistikFragment extends Fragment {
     private StatistikRepo statistikRepo;
-<<<<<<< HEAD
     private MaterialButton btnWeekly;
     private MaterialButton btnMonthly;
     private MaterialButton btnYearly;
-=======
-    private MaterialButton btnWeekly, btnMonthly, btnYearly;
->>>>>>> main
     private String selectedPeriod = "weekly";
     private TextView tvAdheranceRate;
     private TextView tvTotalTaken;
@@ -81,6 +79,8 @@ public class StatistikFragment extends Fragment {
     private FrameLayout dailyChartContainer;
     private FrameLayout responsePieContainer;
     private Button btnDownloadReport;
+    // cegah unduh dobel kalau tombol ditekan berulang kali
+    private boolean isDownloading = false;
     private TextView tvAdherenceDescription;
     private List<StatistikRepo.DayStat> currentStats = new ArrayList<>();
     private int currentTotalDikonsumsi = 0;
@@ -135,21 +135,21 @@ public class StatistikFragment extends Fragment {
         btnWeekly.setOnClickListener(v -> {
             selectedPeriod = "weekly";
             Toast.makeText(requireContext(), getString(R.string.filter_mingguan_terpilih), Toast.LENGTH_SHORT).show();
-            selectButton(btnWeekly);
+            updatePeriodButton(v);
             loadStats();
         });
 
         btnMonthly.setOnClickListener(v -> {
             selectedPeriod = "monthly";
             Toast.makeText(requireContext(), getString(R.string.filter_bulanan_terpilih), Toast.LENGTH_SHORT).show();
-            selectButton(btnMonthly);
+            updatePeriodButton(v);
             loadStats();
         });
 
         btnYearly.setOnClickListener(v -> {
             selectedPeriod = "yearly";
             Toast.makeText(requireContext(), getString(R.string.filter_tahunan_terpilih), Toast.LENGTH_SHORT).show();
-            selectButton(btnYearly);
+            updatePeriodButton(v);
             loadStats();
         });
 
@@ -178,6 +178,7 @@ public class StatistikFragment extends Fragment {
         });
 
         statistikRepo = new StatistikRepo(requireContext());
+        updatePeriodButton(view);   // tandai "mingguan" saat pertama dibuka
         loadStats();
 
         return view;
@@ -449,13 +450,17 @@ public class StatistikFragment extends Fragment {
             return;
         }
 
+        if (isDownloading) return;
+        isDownloading = true;
+        btnDownloadReport.setEnabled(false);
+        LoadingOverlay.show(StatistikFragment.this);
         com.google.firebase.firestore.FirebaseFirestore.getInstance()
                 .collection("users")
                 .whereEqualTo("auth_uid", uid)
                 .limit(1)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
-                    if (!isAdded()) return;
+                    if (!isAdded()) { finishDownload(); return; }
 
                     String consumerName;
 
@@ -477,9 +482,14 @@ public class StatistikFragment extends Fragment {
                         consumerName = getString(R.string.nama_tidak_diketahui);
                     }
 
+                    // overlay tetap tampil selama PDF dibuat, baru ditutup setelah selesai
                     generateStatisticPdf(consumerName);
+                    LoadingOverlay.hide(StatistikFragment.this);
+                    finishDownload();
                 })
                 .addOnFailureListener(e -> {
+                    LoadingOverlay.hide(StatistikFragment.this);
+                    finishDownload();
                     if (!isAdded()) return;
 
                     Toast.makeText(
@@ -488,6 +498,11 @@ public class StatistikFragment extends Fragment {
                             Toast.LENGTH_SHORT
                     ).show();
                 });
+    }
+
+    private void finishDownload() {
+        isDownloading = false;
+        if (btnDownloadReport != null) btnDownloadReport.setEnabled(true);
     }
 
     @SuppressLint("StringFormatInvalid")
@@ -1049,6 +1064,7 @@ public class StatistikFragment extends Fragment {
         }
     }
 
+    @androidx.annotation.RequiresApi(android.os.Build.VERSION_CODES.Q)
     private void saveViaMediaStore(PdfDocument document, String fileName) {
         android.content.ContentValues values = new android.content.ContentValues();
         values.put(android.provider.MediaStore.Downloads.DISPLAY_NAME, fileName);
@@ -1112,7 +1128,6 @@ public class StatistikFragment extends Fragment {
         }
     }
 
-<<<<<<< HEAD
     private void updatePeriodButton(View root) {
         // warna diatur oleh selector di style MaterialButtonPeriod
         btnWeekly.setChecked("weekly".equals(selectedPeriod));
@@ -1120,8 +1135,6 @@ public class StatistikFragment extends Fragment {
         btnYearly.setChecked("yearly".equals(selectedPeriod));
     }
 
-=======
->>>>>>> main
     private void openPdf(android.net.Uri uri) {
         if (!isAdded()) return;
         Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -1148,13 +1161,4 @@ public class StatistikFragment extends Fragment {
                 });
     }
 
-    private void selectButton(MaterialButton selected) {
-        MaterialButton[] buttons = { btnWeekly, btnMonthly, btnYearly };
-        for (MaterialButton button : buttons) {
-            button.setBackgroundTintList(ContextCompat.getColorStateList(
-                    requireContext(),
-                    button == selected ? R.color.biru : R.color.black
-            ));
-        }
-    }
 }

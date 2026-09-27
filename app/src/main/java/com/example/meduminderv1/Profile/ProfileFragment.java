@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Profile;
 
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import static android.content.Context.MODE_PRIVATE;
 
 import android.content.Intent;
@@ -226,20 +228,24 @@ public class ProfileFragment extends Fragment {
         dialog.show();
         if (dialog.getWindow() != null){
             dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed));
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim));
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
         }
     }
 
     private void logoutUser() {
+        LoadingOverlay.show(ProfileFragment.this);
         authManager.logout(requireContext(), new AuthCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
+                LoadingOverlay.hide(ProfileFragment.this);
                 navigateToLogin();
             }
 
             @Override
             public void onFailure(String message) {
+                LoadingOverlay.hide(ProfileFragment.this);
+                if (!isAdded()) return;
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
@@ -281,8 +287,8 @@ public class ProfileFragment extends Fragment {
         dialog.show();
         if (dialog.getWindow() != null){
             dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed));
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim));
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
         }
     }
 
@@ -310,21 +316,24 @@ public class ProfileFragment extends Fragment {
         dialog.show();
         if (dialog.getWindow() != null){
             dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed));
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim));
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
         }
     }
 
     private void switchRole(UserRole targetRole) {
+        LoadingOverlay.show(ProfileFragment.this);
         authManager.switchRole(targetRole, new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
+                LoadingOverlay.hide(ProfileFragment.this);
                 if (!isAdded()) return;
                 bindUser(result);
             }
 
             @Override
             public void onFailure(String message) {
+                LoadingOverlay.hide(ProfileFragment.this);
                 if (!isAdded()) return;
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
@@ -343,15 +352,17 @@ public class ProfileFragment extends Fragment {
         dialog.show();
         if (dialog.getWindow() != null){
             dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed));
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim));
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
         }
     }
 
     private void enableCaregiver(boolean continueSwitchRole) {
+        LoadingOverlay.show(ProfileFragment.this);
         authManager.enableCaregiver(new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
+                LoadingOverlay.hide(ProfileFragment.this);
                 if (!isAdded()) return;
                 bindUser(result);
                 Toast.makeText(requireContext(), getString(R.string.role_caregiver_berhasil_diaktifkan), Toast.LENGTH_SHORT).show();
@@ -360,6 +371,7 @@ public class ProfileFragment extends Fragment {
 
             @Override
             public void onFailure(String message) {
+                LoadingOverlay.hide(ProfileFragment.this);
                 if (!isAdded()) return;
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }

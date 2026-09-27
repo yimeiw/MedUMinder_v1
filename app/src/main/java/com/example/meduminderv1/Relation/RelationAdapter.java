@@ -19,6 +19,11 @@ import com.example.meduminderv1.Model.CareRelationship;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
+import com.example.meduminderv1.Repo.NotificationRepo;
+import com.example.meduminderv1.Notification.NotificationType;
+import com.example.meduminderv1.Notification.NotificationText;
+import com.example.meduminderv1.Notification.Notification;
+import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Repo.UserRepository;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -105,6 +110,7 @@ public class RelationAdapter extends RecyclerView.Adapter<RelationAdapter.ViewHo
                                     notifyItemRemoved(pos);
                                 }
                                 Toast.makeText(context, context.getString(R.string.hubungan_berhasil_dihapus), Toast.LENGTH_SHORT).show();
+                                notifyRelationRemoved(partnerUid, namaPartner);
                                 if (listener != null) listener.onDeleted(rel);
                             }
 
@@ -123,6 +129,50 @@ public class RelationAdapter extends RecyclerView.Adapter<RelationAdapter.ViewHo
                 dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(context, R.color.merah));
             }
         });
+    }
+
+    /**
+     * Kabari KEDUA pihak bahwa hubungan dihapus.
+     * isViewingCaregiver = true -> yang menghapus adalah consumer (sedang melihat daftar caregiver-nya).
+     */
+    private void notifyRelationRemoved(String partnerUid, String partnerName) {
+        User me = SessionManager.getInstance().getUser();
+        if (me == null || partnerUid == null) return;
+        UserRole myRole = isViewingCaregiver ? UserRole.Consumer : UserRole.Caregiver;
+        UserRole partnerRole = isViewingCaregiver ? UserRole.Caregiver : UserRole.Consumer;
+        String myName = me.getName() != null ? me.getName() : "";
+        User partner = userCache.get(partnerUid);
+        if (partner != null && partner.getName() != null) partnerName = partner.getName();
+        String consumerUid = isViewingCaregiver ? me.getAuth_uid() : partnerUid;
+        NotificationRepo repo = new NotificationRepo(context.getApplicationContext());
+        RepoCallback<Void> ignore = new RepoCallback<Void>() {
+            @Override public void onSuccess(Void result) { }
+            @Override public void onFailure(Exception e) { }
+        };
+
+        // ke diri sendiri
+        Notification self = new Notification();
+        self.setReceiver_uid(me.getAuth_uid());
+        self.setSender_uid(me.getAuth_uid());
+        self.setType(NotificationType.System);
+        self.setTarget_role(myRole.name());
+        self.setConsumer_uid(consumerUid);
+        NotificationText.apply(self, "hubungan_dihapus_title", "anda_menghapus_hubungan_msg",
+                partnerName, NotificationText.roleArg(partnerRole));
+        self.setIs_read(false);
+        repo.createNotification(self, ignore);
+
+        // ke pihak lain
+        Notification other = new Notification();
+        other.setReceiver_uid(partnerUid);
+        other.setSender_uid(me.getAuth_uid());
+        other.setType(NotificationType.System);
+        other.setTarget_role(partnerRole.name());
+        other.setConsumer_uid(consumerUid);
+        NotificationText.apply(other, "hubungan_dihapus_title", "x_menghapus_hubungan_msg",
+                myName, NotificationText.roleArg(myRole));
+        other.setIs_read(false);
+        repo.createNotification(other, ignore);
     }
 
     private void bindUser(ViewHolder holder, User user) {

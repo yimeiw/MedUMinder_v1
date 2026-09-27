@@ -1,15 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Theme.MedUMinderV1" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- <item name="colorSurface">@color/dark_bckg</item>
-        <item name="colorOnSurface">@color/dark_teks</item>
-        <item name="colorPrimary">@color/abu_tua</item>
-        <item name="colorSecondary">@color/dark_biru</item>
-        <item name="colorTertiary">@color/dark_hint</item>
-        <item name="colorAccent">@color/dark_teks</item>
-        <item name="colorOnPrimary">@color/abu_tua</item>
-        <item name="colorPrimaryVariant">@color/dark_biru</item> -->
-        
+        <item name="colorSurface">@color/dark_bckg</item>
         <item name="colorOnSurface">@color/dark_text</item> <!-- teks -->
         <item name="colorPrimary">@color/abu_tua</item> <!--abu tua jadi putih-->
         <item name="colorSecondary">@color/dark_blue</item> <!--biru jadi putih-->

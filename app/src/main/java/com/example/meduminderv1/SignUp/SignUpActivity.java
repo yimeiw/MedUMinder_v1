@@ -1,5 +1,9 @@
 package com.example.meduminderv1.SignUp;
 
+import com.example.meduminderv1.Util.EmailApp;
+
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -67,15 +71,18 @@ public class SignUpActivity extends AppCompatActivity {
     }
 
     private void signUpWithGoogle() {
+        LoadingOverlay.show(SignUpActivity.this);
         authManager.loginWithGoogle(SignUpActivity.this, new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
+                LoadingOverlay.hide(SignUpActivity.this);
                 startActivity(new Intent(SignUpActivity.this, MainActivity.class));
                 finishAffinity();
             }
 
             @Override
             public void onFailure(String message) {
+                LoadingOverlay.hide(SignUpActivity.this);
                 if ("EMAIL_ALREADY_IN_USE_DIFFERENT_PROVIDER".equals(message)) {
 
                     MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(SignUpActivity.this);
@@ -91,8 +98,8 @@ public class SignUpActivity extends AppCompatActivity {
                     dialog.show();
                     if (dialog.getWindow() != null){
                         dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, com.google.android.material.R.attr.colorTertiaryFixed));
-                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, com.google.android.material.R.attr.colorTertiaryFixedDim));
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(SignUpActivity.this, com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
+                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(SignUpActivity.this, com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
                     }
 
                 } else {
@@ -137,32 +144,33 @@ public class SignUpActivity extends AppCompatActivity {
         } if (!validateInput(user.getName(), user.getEmail(), password)){
             return;
         }
+        LoadingOverlay.show(SignUpActivity.this);
         authManager.registerWithEmail(user, password, new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
+                LoadingOverlay.hide(SignUpActivity.this);
                 MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(SignUpActivity.this);
                 builder.setTitle(getString(R.string.verifikasi_email_title))
                         .setMessage(getString(R.string.akun_berhasil_dibuat_verifikasi_msg, result.getEmail()))
                         .setCancelable(false)
                         .setPositiveButton(getString(R.string.buka_email_btn), (dialog, which) -> {
-                            Intent intent = new Intent(Intent.ACTION_MAIN);
-                            intent.addCategory(Intent.CATEGORY_APP_EMAIL);
-                            try {
-                                startActivity(intent);
-                            } catch (Exception ignored){
-                            } goToLogin(result.getEmail());
+                            // pindah ke login DULU, baru buka email di atasnya.
+                            // (dulu email dibuka duluan lalu tertutup halaman login)
+                            goToLogin(result.getEmail());
+                            EmailApp.open(getApplicationContext());
                         }).setNegativeButton(getString(R.string.nanti), (dialog, which) -> goToLogin(result.getEmail()));
                 AlertDialog dialog = builder.create();
                 dialog.show();
                 if (dialog.getWindow() != null){
                     dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, com.google.android.material.R.attr.colorTertiaryFixed));
-                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, com.google.android.material.R.attr.colorTertiaryFixedDim));
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(SignUpActivity.this, com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
+                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(SignUpActivity.this, com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
                 }
             }
 
             @Override
             public void onFailure(String message) {
+                LoadingOverlay.hide(SignUpActivity.this);
                 if ("EMAIL_ALREADY_IN_USE".equals(message)) {
                     MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(SignUpActivity.this);
                             builder.setTitle(getString(R.string.email_sudah_terdaftar_title))
@@ -177,8 +185,8 @@ public class SignUpActivity extends AppCompatActivity {
                     dialog.show();
                     if (dialog.getWindow() != null){
                         dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, com.google.android.material.R.attr.colorTertiaryFixed));
-                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(SignUpActivity.this, com.google.android.material.R.attr.colorTertiaryFixedDim));
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(SignUpActivity.this, com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
+                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(SignUpActivity.this, com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
                     }
                 } else {
                     Toast.makeText(SignUpActivity.this, message, Toast.LENGTH_SHORT).show();

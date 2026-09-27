@@ -72,17 +72,13 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
                         return;
                     }
 
-                    // Cek Repeat Until Confirmed
                     SharedPreferences pref = context.getSharedPreferences("notification_settings", Context.MODE_PRIVATE);
                     boolean repeatReminder = pref.getBoolean("repeat_reminder", false);
 
                     if (repeatReminder) {
-                        // Stop alarm yang sedang berbunyi
                         context.stopService(new Intent(context, AlarmRingingService.class));
-                        // Ambil Snooze Duration dari Notification Settings
                         int snoozeMinutes = pref.getInt("snooze_minutes", 5);
                         long nextTriggerMillis = System.currentTimeMillis() + snoozeMinutes * 60L * 1000L;
-                        // Repeat Until Confirmed diperlakukan seperti snooze
                         doc.getReference().update(
                                 "status",
                                 "upcoming",
@@ -91,7 +87,6 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
                                 "updated_at",
                                 Timestamp.now()
                         ).addOnSuccessListener(unused -> {
-                            // Jadwalkan alarm berikutnya
                             AlarmSchedulerHelper.scheduleRepeatAlarm(
                                     context,
                                     scheduleId,
@@ -117,7 +112,6 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
                         return;
                     }
 
-                    // Repeat Until Confirmed OFF. Setelah 3 menit langsung dianggap terlewat
                     doc.getReference().update(
                             "status",
                             "terlewatkan",

@@ -657,4 +657,7 @@
     <string name="reminder_appointment_full_msg">%1$s lagi Anda memiliki jadwal %2$s.</string>
     <string name="reminder_appointment_caregiver_full_msg">%1$s lagi %2$s memiliki jadwal %3$s.</string>
     <string name="isi_ulang_obat_x_title">Isi Ulang Obat (%1$s)</string>
+    <string name="hubungan_dihapus_title">Hubungan Dihapus</string>
+    <string name="anda_menghapus_hubungan_msg" formatted="true">Anda telah menghapus hubungan dengan %1$s (%2$s).</string>
+    <string name="x_menghapus_hubungan_msg" formatted="true">%1$s (%2$s) telah menghapus hubungan dengan Anda.</string>
 </resources>

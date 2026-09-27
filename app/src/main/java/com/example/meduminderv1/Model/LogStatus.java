@@ -1,8 +1,12 @@
 package com.example.meduminderv1.Model;
 
 import android.content.Context;
+import android.graphics.Color;
+
+import androidx.core.content.ContextCompat;
 
 import com.example.meduminderv1.R;
+import com.google.android.material.color.MaterialColors;
 
 public enum LogStatus {
     AKAN_DATANG("akan datang"),
@@ -64,16 +68,23 @@ public enum LogStatus {
         }
     }
 
-    public int getColorRes() {
+    /**
+     * Warna status yang sudah jadi (bukan id resource). Dikonsumsi/terlewat mengikuti tema
+     * (light/dark), jadi harus di-resolve lewat attr; sebelumnya id attr ini dikirim ke
+     * ContextCompat.getColor() dan bikin crash (Resources$NotFoundException).
+     */
+    public int resolveColor(Context context) {
         switch (this) {
             case DIKONSUMSI:
-                return com.google.android.material.R.attr.colorTertiaryFixed;
+                return MaterialColors.getColor(context,
+                        com.google.android.material.R.attr.colorTertiaryFixed, Color.GREEN);
             case TERLEWATKAN:
-                return com.google.android.material.R.attr.colorTertiaryFixedDim;
+                return MaterialColors.getColor(context,
+                        com.google.android.material.R.attr.colorTertiaryFixedDim, Color.RED);
             case AKAN_DATANG:
-                return R.color.gray;
+                return ContextCompat.getColor(context, R.color.gray);
             default:
-                return R.color.white;
+                return ContextCompat.getColor(context, R.color.white);
         }
     }
 }

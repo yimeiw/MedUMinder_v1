@@ -8,7 +8,6 @@
     android:layout_height="match_parent"
     tools:context=".Home.CaregiverHomeFragment">
 
-    <!-- KONTEN UTAMA (Konten ScrollView + Bottom Nav)    -->
     <RelativeLayout
         android:id="@+id/caregiverContent"
         android:layout_width="match_parent"
@@ -237,7 +236,7 @@
                                 android:paddingHorizontal="12dp"
                                 android:text="@string/remind_consumer"
                                 android:textAllCaps="false"
-                                android:textColor="?attr/colorOnPrimary"
+                                android:textColor="?attr/colorOnSurface"
                                 android:textSize="14sp"
                                 app:backgroundTint="@null" />
                         </LinearLayout>
@@ -275,7 +274,7 @@
                             android:text="@string/jadwal_hari_ini"
                             android:textColor="?attr/colorOnSurface"
                             android:textSize="20sp"
-                            android:textStyle="bold" />
+                            android:textFontWeight="600" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -327,7 +326,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/tingkatKepatuhan"
                         android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:textFontWeight="600" />
 
                     <LinearLayout
                         android:layout_width="match_parent"

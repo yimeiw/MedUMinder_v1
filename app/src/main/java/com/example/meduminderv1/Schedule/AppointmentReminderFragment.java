@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Schedule;
 
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import android.content.Context;
 
 import android.app.DatePickerDialog;
@@ -209,6 +211,7 @@ public class AppointmentReminderFragment extends Fragment {
         appointment.put("created_by", uid);
         appointment.put("updated_by", uid);
 
+        LoadingOverlay.show(AppointmentReminderFragment.this);
         db.collection("appointments").add(appointment).addOnSuccessListener(documentReference -> {
             boolean isForSelf = targetUid.equals(uid);
             // nama orang yang menambahkan (consumer atau caregiver)
@@ -260,9 +263,11 @@ public class AppointmentReminderFragment extends Fragment {
             );
 
             if (!isAdded()) return; // sudah keluar dari halaman
+            LoadingOverlay.hide(AppointmentReminderFragment.this);
             NavHostFragment.findNavController(this).navigateUp();
         }).addOnFailureListener(e -> {
             Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
+            LoadingOverlay.hide(AppointmentReminderFragment.this);
             if (isAdded()) btnSaveAppoint.setEnabled(true);
         });
 

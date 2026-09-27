@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Edit;
 
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import android.app.DatePickerDialog;
 import android.os.Bundle;
 
@@ -130,8 +132,11 @@ public class EditAppointmentFragment extends Fragment {
     }
 
     private void loadExistingData() {
+        LoadingOverlay.show(EditAppointmentFragment.this);
         db.collection("appointments").document(appointmentId).get()
                 .addOnSuccessListener(doc -> {
+                    LoadingOverlay.hide(EditAppointmentFragment.this);
+                    if (!isAdded()) return;
                     if (!doc.exists()) {
                         Toast.makeText(requireContext(), getString(R.string.appointment_tidak_ditemukan), Toast.LENGTH_SHORT).show();
                         return;
@@ -156,11 +161,14 @@ public class EditAppointmentFragment extends Fragment {
                         isTimePicked = true;
                     }
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> {
+                    LoadingOverlay.hide(EditAppointmentFragment.this);
+                    if (isAdded()) Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void updateAppointment() {
+        final android.content.Context appContext = requireContext().getApplicationContext();
         String nameAppoint = namaAppointment.getText().toString().trim();
         String location = location_input.getText().toString().trim();
 
@@ -179,6 +187,7 @@ public class EditAppointmentFragment extends Fragment {
         selectedCalendar.set(Calendar.SECOND, 0);
         selectedCalendar.set(Calendar.MILLISECOND, 0);
         Timestamp appointmentAt = new Timestamp(selectedCalendar.getTime());
+        LoadingOverlay.show(EditAppointmentFragment.this);
         db.collection("appointments").document(appointmentId)
                 .update(
                         "title", nameAppoint,
@@ -188,20 +197,25 @@ public class EditAppointmentFragment extends Fragment {
                         "updated_by", uid
                 )
                 .addOnSuccessListener(unused -> {
-                    AlarmSchedulerHelper.cancelAppointment(requireContext(), appointmentId);
-                    AppointmentAlertScheduler.cancelAlerts(requireContext(), appointmentId);
+                    LoadingOverlay.hide(EditAppointmentFragment.this);
+                    // alarm tetap dijadwal ulang walau user sudah keluar halaman
+                    AlarmSchedulerHelper.cancelAppointment(appContext, appointmentId);
+                    AppointmentAlertScheduler.cancelAlerts(appContext, appointmentId);
 
                     AlarmSchedulerHelper.scheduleAppointment(
-                            requireContext(), appointmentId, nameAppoint, appointmentAt.toDate().getTime());
+                            appContext, appointmentId, nameAppoint, appointmentAt.toDate().getTime());
                     AppointmentAlertScheduler.scheduleAlerts(
-                            requireContext(), appointmentId, nameAppoint, appointmentAt.toDate().getTime());
+                            appContext, appointmentId, nameAppoint, appointmentAt.toDate().getTime());
 
+                    if (!isAdded()) return;
                     notifyAppointmentUpdated(nameAppoint, uid, appointmentAt);
                     Toast.makeText(requireContext(), getString(R.string.appointment_berhasil_diperbarui), Toast.LENGTH_SHORT).show();
                     NavHostFragment.findNavController(EditAppointmentFragment.this).navigateUp();
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> {
+                    LoadingOverlay.hide(EditAppointmentFragment.this);
+                    if (isAdded()) Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void notifyAppointmentUpdated(String title, String actorUid, Timestamp appointmentAt) {

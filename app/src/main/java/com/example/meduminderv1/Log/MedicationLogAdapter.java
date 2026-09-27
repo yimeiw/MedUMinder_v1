@@ -146,8 +146,6 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
                     break;
                 case AKAN_DATANG:
                     colorAttr = com.google.android.material.R.attr.colorSecondaryFixed; //abu
-                    // teks biasa (hitam di light, terang di dark); colorOnPrimary sama dengan warna kartu di dark mode
-                    teksColorAttr = com.google.android.material.R.attr.colorOnSurface;
                     break;
                 default:
                     colorAttr = com.google.android.material.R.attr.colorPrimaryFixed; //putih

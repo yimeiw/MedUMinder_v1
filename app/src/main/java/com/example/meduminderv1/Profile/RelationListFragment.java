@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Profile;
 
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -81,6 +83,7 @@ public class RelationListFragment extends Fragment {
         RepoCallback<List<CareRelationship>> callback = new RepoCallback<List<CareRelationship>>() {
             @Override
             public void onSuccess(List<CareRelationship> result) {
+                LoadingOverlay.hide(RelationListFragment.this);
                 if (!isAdded()) return;
                 List<CareRelationship> deduped = new ArrayList<>();
                 LinkedHashSet<String> seenUid = new LinkedHashSet<>();
@@ -110,11 +113,13 @@ public class RelationListFragment extends Fragment {
 
             @Override
             public void onFailure(Exception e) {
+                LoadingOverlay.hide(RelationListFragment.this);
                 if (!isAdded()) return;
                 Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         };
 
+        LoadingOverlay.show(RelationListFragment.this);
         if (showingCaregivers){
             relationshipRepo.getCaregiverForConsumer(user.getAuth_uid(), callback);
         } else {

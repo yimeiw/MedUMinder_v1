@@ -88,6 +88,40 @@ public class InvitationRepo {
                     callback.onSuccess(invitation);
                 }).addOnFailureListener(callback::onFailure);
     }
+    /**
+     * Undangan ke email yang BELUM punya akun disimpan dengan receiver_uid = null.
+     * Setelah orang itu daftar/login, isi receiver_uid-nya supaya undangan muncul di
+     * halaman notifikasi, detail, dan badge (semuanya mencari berdasarkan receiver_uid).
+     */
+    public void claimInvitationsByEmail(String uid, String email, Runnable onDone){
+        if (uid == null || email == null || email.trim().isEmpty()) {
+            if (onDone != null) onDone.run();
+            return;
+        }
+        db.collection("invitations")
+                .whereEqualTo("receiver_email", email.trim().toLowerCase())
+                .whereEqualTo("status", InvitationStatus.Pending.name())
+                .get()
+                .addOnSuccessListener(query -> {
+                    com.google.firebase.firestore.WriteBatch batch = db.batch();
+                    int count = 0;
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : query.getDocuments()) {
+                        if (doc.getString("receiver_uid") != null) continue; // sudah terhubung
+                        Map<String, Object> update = new HashMap<>();
+                        update.put("receiver_uid", uid);
+                        update.put("updated_at", Timestamp.now());
+                        batch.update(doc.getReference(), update);
+                        count++;
+                    }
+                    if (count == 0) {
+                        if (onDone != null) onDone.run();
+                        return;
+                    }
+                    batch.commit().addOnCompleteListener(t -> { if (onDone != null) onDone.run(); });
+                })
+                .addOnFailureListener(e -> { if (onDone != null) onDone.run(); });
+    }
+
     public void linkReceiver(String invitationId, String receiverUid, RepoCallback<Void> callback){
         Map<String, Object> update = new HashMap<>();
         update.put("receiver_uid", receiverUid);

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Layar tinggi (>= 700dp): ukuran asli desain -->
+<resources>
+    <dimen name="login_capsule_min_height">630dp</dimen>
+    <dimen name="login_capsule_padding_top">100dp</dimen>
+    <dimen name="signup_capsule_margin_top">90dp</dimen>
+    <dimen name="signup_capsule_padding_top">80dp</dimen>
+    <!-- Halaman reminder: jarak header, lingkaran nama obat, ikon di dalamnya -->
+    <dimen name="reminder_header_gap">50dp</dimen>
+    <dimen name="reminder_circle_size">300dp</dimen>
+    <dimen name="reminder_icon_size">116dp</dimen>
+</resources>

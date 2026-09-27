@@ -1001,17 +1001,20 @@ public class AuthManager {
         if (user == null){
             callback.onFailure(context.getString(R.string.user_belum_login));
             return;
-        } invitationRepo.getPendingInvitationForUser(user.getAuth_uid(), user.getEmail(), new RepoCallback<Invitation>() {
-            @Override
-            public void onSuccess(Invitation result) {
-                callback.onSuccess(result);
-            }
+        }
+        // hubungkan dulu undangan yang dikirim sebelum akun ini dibuat (receiver_uid masih null)
+        invitationRepo.claimInvitationsByEmail(user.getAuth_uid(), user.getEmail(), () ->
+            invitationRepo.getPendingInvitationForUser(user.getAuth_uid(), user.getEmail(), new RepoCallback<Invitation>() {
+                @Override
+                public void onSuccess(Invitation result) {
+                    callback.onSuccess(result);
+                }
 
-            @Override
-            public void onFailure(Exception e) {
-                callback.onFailure(e.getMessage());
-            }
-        });
+                @Override
+                public void onFailure(Exception e) {
+                    callback.onFailure(e.getMessage());
+                }
+            }));
     }
     public void respondToInvitation(String invitationId, boolean accept, AuthCallback<User> callback){
         invitationRepo.getInvitationById(invitationId, new RepoCallback<Invitation>() {

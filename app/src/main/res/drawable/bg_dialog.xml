@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Latar dialog: sama seperti border.xml tapi TANPA padding
+     (padding border.xml ikut ditambahkan ke dialog -> ruang kosong di bawah tombol jadi terlalu besar) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="?attr/colorPrimary"/>
+    <corners android:radius="20dp"/>
+    <stroke android:color="?attr/appOutline"
+        android:width="1dp"/>
+</shape>

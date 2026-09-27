@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Reminder;
 
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -79,6 +81,7 @@ public class ReminderFragment extends Fragment {
     LinearLayout buttonConfirm;
     MaterialButton btnIsTaken;
     MaterialButton btnTundaReminder;
+    View buttonSpacer;
     LinearLayout circleNamaObat;
     ImageButton btnBack, btnOption;
     ImageView iconReminderType;   // ikon di dalam lingkaran (obat / appointment)
@@ -120,6 +123,7 @@ public class ReminderFragment extends Fragment {
         statusReminder = view.findViewById(R.id.statusReminder);
         btnIsTaken = view.findViewById(R.id.btnIsTaken);
         btnTundaReminder = view.findViewById(R.id.btnTundaReminder);
+        buttonSpacer = view.findViewById(R.id.buttonSpacer);
         circleNamaObat = view.findViewById(R.id.circleNamaObat);
         iconReminderType = view.findViewById(R.id.iconReminderType);
 
@@ -173,6 +177,7 @@ public class ReminderFragment extends Fragment {
         } if (isCaregiverViewing){
             btnIsTaken.setText(getString(R.string.remind_consumer));
             btnTundaReminder.setVisibility(View.GONE);
+            buttonSpacer.setVisibility(View.GONE);
             btnIsTaken.setOnClickListener(v -> sendReminderToConsumer());
         } else {
             btnIsTaken.setOnClickListener(v -> {
@@ -224,25 +229,29 @@ public class ReminderFragment extends Fragment {
 
     private void showDeleteChoiceDialog() {
         if (!isAdded()) return;
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
-        builder.setTitle(getString(R.string.hapus_jadwal_obat_title))
-                .setMessage(getString(R.string.pilih_jenis_hapus_msg)) // "Hapus entri ini saja, atau seluruh jadwal?"
-                .setNeutralButton(getString(R.string.cancel), null)
-                .setNegativeButton(getString(R.string.hapus_entri_ini_saja), (d, w) -> confirmDeleteSingleLog())
-                .setPositiveButton(getString(R.string.hapus_seluruh_jadwal), (d, w) -> confirmDeleteSchedule());
-        AlertDialog dialog = builder.create();
+        // layout sendiri (dialog_delete_choice) supaya 3 tombol tersusun rapat tanpa jarak bawah berlebih
+        View content = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_delete_choice, null, false);
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.bg_dialog))
+                .setView(content)
+                .create();
+        content.findViewById(R.id.btnDeleteAll).setOnClickListener(v -> {
+            dialog.dismiss();
+            confirmDeleteSchedule();
+        });
+        content.findViewById(R.id.btnDeleteOne).setOnClickListener(v -> {
+            dialog.dismiss();
+            confirmDeleteSingleLog();
+        });
+        content.findViewById(R.id.btnCancelDelete).setOnClickListener(v -> dialog.dismiss());
         dialog.show();
-        if (dialog.getWindow() != null){
-            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed));
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim));
-        }
     }
 
     private void confirmDeleteSingleLog() {
         if (!isAdded()) return;
         String label = namaObat != null ? namaObat : getString(R.string.default_jadwal_label);
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
+        builder.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.bg_dialog));
         builder.setTitle(getString(R.string.hapus_jadwal_obat_title))
                 .setMessage(getString(R.string.konfirmasi_hapus_item_msg, label))
                 .setNegativeButton(getString(R.string.cancel), null)
@@ -250,9 +259,8 @@ public class ReminderFragment extends Fragment {
         AlertDialog dialog = builder.create();
         dialog.show();
         if (dialog.getWindow() != null){
-            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed));
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim));
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
         }
     }
 
@@ -265,15 +273,18 @@ public class ReminderFragment extends Fragment {
 
         AlarmSchedulerHelper.cancelOccurrenceForScheduledAt(requireContext(), scheduleId, scheduledAt);
         String logId = buildLogId(scheduleId, scheduledAt);
+        final android.content.Context appContext = requireContext().getApplicationContext();
 
+        LoadingOverlay.show(ReminderFragment.this);
         db.collection("medication_schedules").document(scheduleId).get()
                 .addOnSuccessListener(scheduleDoc -> {
                     String consumerUid = scheduleDoc.exists() ? scheduleDoc.getString("users_id") : null;
 
-                    new com.example.meduminderv1.Repo.MedicationRepo(requireContext())
+                    new com.example.meduminderv1.Repo.MedicationRepo(appContext)
                             .deleteSingleLog(logId, new RepoCallback<Void>() {
                                 @Override
                                 public void onSuccess(Void result) {
+                                    LoadingOverlay.hide(ReminderFragment.this);
                                     if (!isAdded()) return;
                                     Toast.makeText(requireContext(), getString(R.string.jadwal_berhasil_dihapus), Toast.LENGTH_SHORT).show();
                                     notifyScheduleDeleted(consumerUid, namaObat, false);
@@ -281,10 +292,15 @@ public class ReminderFragment extends Fragment {
                                 }
                                 @Override
                                 public void onFailure(Exception e) {
+                                    LoadingOverlay.hide(ReminderFragment.this);
                                     if (!isAdded()) return;
                                     Toast.makeText(requireContext(), getString(R.string.gagal_menghapus_jadwal), Toast.LENGTH_SHORT).show();
                                 }
                             });
+                })
+                .addOnFailureListener(e -> {
+                    LoadingOverlay.hide(ReminderFragment.this);
+                    if (isAdded()) Toast.makeText(requireContext(), getString(R.string.gagal_menghapus_jadwal), Toast.LENGTH_SHORT).show();
                 });
     }
 
@@ -309,11 +325,13 @@ public class ReminderFragment extends Fragment {
             reminder.setIs_new_schedule(true);
         }
 
+        LoadingOverlay.show(ReminderFragment.this);
         notificationRepo.createNotification(
                 reminder,
                 new RepoCallback<Void>() {
                     @Override
                     public void onSuccess(Void result) {
+                        LoadingOverlay.hide(ReminderFragment.this);
                         if (!isAdded()) return;
 
                         Toast.makeText(
@@ -359,6 +377,7 @@ public class ReminderFragment extends Fragment {
 
                     @Override
                     public void onFailure(Exception e) {
+                        LoadingOverlay.hide(ReminderFragment.this);
                         if (!isAdded()) return;
                         Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                     }
@@ -371,6 +390,7 @@ public class ReminderFragment extends Fragment {
         Log.d("REMINDER_FRAGMENT", "confirmDeleteSchedule() dipanggil, tampilkan dialog konfirmasi");
         String label = namaObat != null ? namaObat : (isAppointment ? getString(R.string.default_appointment_label) : getString(R.string.default_jadwal_label));
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
+        builder.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.bg_dialog));
         builder.setTitle(isAppointment ? getString(R.string.hapus_appointment_title) : getString(R.string.hapus_jadwal_obat_title))
                 .setMessage(getString(R.string.konfirmasi_hapus_item_msg, label))
                 .setNegativeButton(getString(R.string.cancel), null)
@@ -385,9 +405,8 @@ public class ReminderFragment extends Fragment {
         AlertDialog dialog = builder.create();
         dialog.show();
         if (dialog.getWindow() != null){
-            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed));
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim));
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
         }
     }
 
@@ -399,6 +418,7 @@ public class ReminderFragment extends Fragment {
         }
         stopRingingAlarm();
 
+        LoadingOverlay.show(ReminderFragment.this);
         db.collection("medication_schedules").document(scheduleId).get()
                 .addOnSuccessListener(scheduleDoc -> {
                     if (!isAdded()) return;
@@ -417,18 +437,21 @@ public class ReminderFragment extends Fragment {
 
                     db.collection("medication_schedules").document(scheduleId).update(update)
                             .addOnSuccessListener(unused -> {
+                                LoadingOverlay.hide(ReminderFragment.this);
                                 if (!isAdded()) return;
                                 Toast.makeText(requireContext(), getString(R.string.jadwal_berhasil_dihapus), Toast.LENGTH_SHORT).show();
                                 notifyScheduleDeleted(consumerUid, namaObat, false);
                                 NavHostFragment.findNavController(ReminderFragment.this).navigateUp();
                             })
                             .addOnFailureListener(e -> {
+                                LoadingOverlay.hide(ReminderFragment.this);
                                 Log.e("REMINDER_FRAGMENT", "Gagal hapus jadwal obat. id=" + scheduleId, e);
                                 if (!isAdded()) return;
                                 Toast.makeText(requireContext(), getString(R.string.gagal_menghapus_jadwal), Toast.LENGTH_SHORT).show();
                             });
                 })
                 .addOnFailureListener(e -> {
+                    LoadingOverlay.hide(ReminderFragment.this);
                     Log.e("REMINDER_FRAGMENT", "Gagal ambil data jadwal untuk dihapus. id=" + scheduleId, e);
                     if (!isAdded()) return;
                     Toast.makeText(requireContext(), getString(R.string.gagal_menghapus_jadwal), Toast.LENGTH_SHORT).show();
@@ -442,6 +465,7 @@ public class ReminderFragment extends Fragment {
         }
         stopRingingAlarm();
 
+        LoadingOverlay.show(ReminderFragment.this);
         db.collection("appointments").document(scheduleId).get()
                 .addOnSuccessListener(apDoc -> {
                     if (!isAdded()) return;
@@ -458,18 +482,21 @@ public class ReminderFragment extends Fragment {
 
                     db.collection("appointments").document(scheduleId).update(update)
                             .addOnSuccessListener(unused -> {
+                                LoadingOverlay.hide(ReminderFragment.this);
                                 if (!isAdded()) return;
                                 Toast.makeText(requireContext(), getString(R.string.appointment_berhasil_dihapus), Toast.LENGTH_SHORT).show();
                                 notifyScheduleDeleted(consumerUid, namaObat, true);
                                 NavHostFragment.findNavController(ReminderFragment.this).navigateUp();
                             })
                             .addOnFailureListener(e -> {
+                                LoadingOverlay.hide(ReminderFragment.this);
                                 Log.e("REMINDER_FRAGMENT", "Gagal hapus appointment. id=" + scheduleId, e);
                                 if (!isAdded()) return;
                                 Toast.makeText(requireContext(), getString(R.string.gagal_menghapus_appointment), Toast.LENGTH_SHORT).show();
                             });
                 })
                 .addOnFailureListener(e -> {
+                    LoadingOverlay.hide(ReminderFragment.this);
                     Log.e("REMINDER_FRAGMENT", "Gagal ambil data appointment untuk dihapus. id=" + scheduleId, e);
                     if (!isAdded()) return;
                     Toast.makeText(requireContext(), getString(R.string.gagal_menghapus_appointment), Toast.LENGTH_SHORT).show();
@@ -643,12 +670,15 @@ public class ReminderFragment extends Fragment {
         AlarmSchedulerHelper.onDoseTaken(requireContext(), scheduleId, namaObat, scheduledAt);
 
         String logId = buildLogId(scheduleId, scheduledAt);
+        final android.content.Context appContext = requireContext().getApplicationContext();
 
+        LoadingOverlay.show(ReminderFragment.this);
         db.collection("medication_logs").document(logId).get()
                 .addOnSuccessListener(snapshot -> {
                     if (!isAdded()) return;
                     String currentRaw = snapshot.getString("status");
                     if ("dikonsumsi".equals(currentRaw)) {
+                        LoadingOverlay.hide(ReminderFragment.this);
                         // sudah pernah dikonfirmasi sebelumnya, jangan proses lagi
                         updateStatusUIFromRaw("dikonsumsi");
                         return;
@@ -657,6 +687,7 @@ public class ReminderFragment extends Fragment {
                     db.collection("medication_logs").document(logId)
                             .update("status", "dikonsumsi", "taken_at", Timestamp.now())
                             .addOnSuccessListener(unused -> {
+                                LoadingOverlay.hide(ReminderFragment.this);
                                 if (!isAdded()) return;
                                 updateStatusUIFromRaw("dikonsumsi");
                                 Toast.makeText(requireContext(), getString(R.string.obat_ditandai_dikonsumsi), Toast.LENGTH_SHORT).show();
@@ -667,7 +698,7 @@ public class ReminderFragment extends Fragment {
                                         .addOnSuccessListener(scheduleDoc -> {
                                             String medicationId = scheduleDoc.getString("medication_id");
                                             if (medicationId != null) {
-                                                new com.example.meduminderv1.Repo.MedicationRepo(requireContext())
+                                                new com.example.meduminderv1.Repo.MedicationRepo(appContext)
                                                         .decrementStock(medicationId, new RepoCallback<Void>() {
                                                             @Override public void onSuccess(Void result) { }
                                                             @Override public void onFailure(Exception e) { }
@@ -676,11 +707,19 @@ public class ReminderFragment extends Fragment {
                                         });
                             })
                             .addOnFailureListener(e -> {
+                                LoadingOverlay.hide(ReminderFragment.this);
                                 if (!isAdded()) return;
                                 btnIsTaken.setEnabled(true);
                                 btnTundaReminder.setEnabled(true);
                                 Toast.makeText(requireContext(), getString(R.string.gagal_mengubah_status_obat), Toast.LENGTH_SHORT).show();
                             });
+                })
+                .addOnFailureListener(e -> {
+                    LoadingOverlay.hide(ReminderFragment.this);
+                    if (!isAdded()) return;
+                    btnIsTaken.setEnabled(true);
+                    btnTundaReminder.setEnabled(true);
+                    Toast.makeText(requireContext(), getString(R.string.gagal_mengubah_status_obat), Toast.LENGTH_SHORT).show();
                 });
     }
 
@@ -694,16 +733,21 @@ public class ReminderFragment extends Fragment {
         AlarmSchedulerHelper.cancelAppointment(requireContext(), scheduleId);
         AppointmentAlertScheduler.cancelAlerts(requireContext(), scheduleId);
 
+        LoadingOverlay.show(ReminderFragment.this);
         db.collection("appointments")
                 .document(scheduleId)
                 .update("status", "dihadiri", "updated_at", Timestamp.now())
                 .addOnSuccessListener(unused -> {
+                    LoadingOverlay.hide(ReminderFragment.this);
+                    notifyCaregiverAppointmentAttended(scheduleId); // tetap kirim walau halaman sudah ditutup
+                    if (!isAdded()) return;
                     updateStatusUIFromRaw("dihadiri");
                     Toast.makeText(requireContext(), getString(R.string.appointment_ditandai_dihadiri), Toast.LENGTH_SHORT).show();
-                    notifyCaregiverAppointmentAttended(scheduleId);
                 })
                 .addOnFailureListener(e -> {
+                    LoadingOverlay.hide(ReminderFragment.this);
                     Log.e("REMINDER_FRAGMENT", "Gagal update status appointment. id=" + scheduleId, e);
+                    if (!isAdded()) return;
                     Toast.makeText(requireContext(), getString(R.string.gagal_mengubah_status_appointment), Toast.LENGTH_SHORT).show();
                 });
     }
@@ -807,7 +851,11 @@ public class ReminderFragment extends Fragment {
                                 + " isFuture=" + isFuture);
 
                         if (scheduledAtTs == null) continue;
-                        if (isFuture) {
+                        // dosis yang belum dikonfirmasi (akan datang / upcoming) juga dihapus supaya
+                        // tidak tetap tampil / nanti jadi "terlewat". Riwayat dikonsumsi/terlewat disimpan.
+                        String st = doc.getString("status");
+                        boolean isPending = st == null || "akan datang".equals(st) || "upcoming".equals(st);
+                        if (isFuture || isPending) {
                             batch.delete(doc.getReference());
                             count++;
                         }
@@ -867,12 +915,18 @@ public class ReminderFragment extends Fragment {
 
         if (isCaregiverViewing) {
             btnIsTaken.setText(getString(R.string.remind_consumer));
-            btnIsTaken.setVisibility(alreadyDone ? View.GONE : View.VISIBLE);
+            // appointment yang terlewat tidak perlu diingatkan lagi
+            boolean missedAppointment = isAppointment && logStatus == LogStatus.TERLEWATKAN;
+            btnIsTaken.setVisibility(alreadyDone || missedAppointment ? View.GONE : View.VISIBLE);
             btnTundaReminder.setVisibility(View.GONE);
+            buttonSpacer.setVisibility(View.GONE);
         } else {
             btnIsTaken.setText(isAppointment ? getString(R.string.sudah_hadir_btn) : getString(R.string.sudah_diminum));
             btnIsTaken.setVisibility(alreadyDone ? View.GONE : View.VISIBLE);
-            btnTundaReminder.setVisibility(alreadyDone ? View.GONE : View.VISIBLE);
+            // tunda hanya untuk obat (termasuk yang terlewat); appointment cukup tombol konfirmasi
+            boolean canSnooze = !alreadyDone && !isAppointment;
+            btnTundaReminder.setVisibility(canSnooze ? View.VISIBLE : View.GONE);
+            buttonSpacer.setVisibility(canSnooze ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -888,7 +942,7 @@ public class ReminderFragment extends Fragment {
     }
 
     private void applyCircleStatusColor(View circleView, LogStatus status) {
-        int statusColor = ContextCompat.getColor(requireContext(), status.getColorRes());
+        int statusColor = status.resolveColor(requireContext());
         Drawable bg = circleView.getBackground().mutate();
 
         if (bg instanceof GradientDrawable) {

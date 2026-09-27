@@ -46,6 +46,24 @@ import java.util.concurrent.TimeUnit;
 public class MainActivity extends AppCompatActivity implements ReminderEventBus.Listener {
 
     BottomNavigationView bottomNav;
+
+    private static final java.util.Set<Integer> HIDE_BOTTOM_NAV = new java.util.HashSet<>(java.util.Arrays.asList(
+            R.id.notificationFragment,
+            R.id.profileFragment,
+            R.id.appointmentReminderFragment,
+            R.id.medicineReminderFragment,
+            R.id.forgotPassFragment,
+            R.id.invitationFragment,
+            R.id.statistikFragment,
+            R.id.logFragment,
+            R.id.reminderFragment,
+            R.id.notificationSettingsFragment,
+            R.id.relationListFragment,
+            R.id.editProfileFragment,
+            R.id.languageFragment,
+            R.id.notificationDetailFragment,
+            R.id.reminderStockFragment
+    ));
     NavController navController;
     SessionManager sessionManager;
     ListenerRegistration userListener;
@@ -85,14 +103,7 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         navController.addOnDestinationChangedListener(
                 (navController1, navDestination, bundle) -> {
                     int destId = navDestination.getId();
-                    if (destId == R.id.notificationFragment
-                            || navDestination.getId() == R.id.profileFragment
-                            || navDestination.getId() == R.id.appointmentReminderFragment
-                            || navDestination.getId() == R.id.medicineReminderFragment
-                            || navDestination.getId() == R.id.forgotPassFragment
-                            || navDestination.getId() == R.id.invitationFragment
-                            || navDestination.getId() == R.id.statistikFragment
-                            || navDestination.getId() == R.id.logFragment){
+                    if (HIDE_BOTTOM_NAV.contains(destId)){
                         bottomNav.setVisibility(View.GONE);
                     } else {
                         bottomNav.setVisibility(View.VISIBLE);

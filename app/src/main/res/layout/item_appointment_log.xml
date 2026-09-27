@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="100dp"
+    android:layout_height="120dp"
     android:layout_marginVertical="10dp"
     >
     <LinearLayout
@@ -23,13 +23,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginLeft="15dp"
-            android:layout_marginRight="8dp">
+            android:layout_marginEnd="10dp"
+            android:layout_marginStart="5dp">
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
+                android:layout_marginLeft="15dp"
                 android:layout_weight="1">
 
                 <TextView
@@ -38,9 +39,11 @@
                     android:layout_height="wrap_content"
                     android:text="@string/nama_appointment"
                     android:textColor="?attr/colorOnPrimary"
-                    android:textStyle="bold"
-                    android:textSize="15sp"
-                    android:layout_marginBottom="5dp"
+                    android:textFontWeight="700"
+                    android:textSize="20sp"
+                    android:fontFamily="@font/inter_18pt_bold"
+                    android:maxLines="1"
+                    android:ellipsize="end"
                     />
 
                 <LinearLayout
@@ -77,7 +80,7 @@
                         android:layout_width="15dp"
                         android:layout_height="15dp"
                         android:src="@drawable/ic_time"
-                        android:tint="?attr/colorOnPrimary"
+                        app:tint="?attr/colorOnPrimary"
                         android:layout_marginEnd="8dp"/>
 
                     <TextView
@@ -96,9 +99,9 @@
                 android:text="@string/dihadiri"
                 android:background="@drawable/bg_status"
                 android:backgroundTint="@color/green"
-                android:paddingVertical="3dp"
+                android:paddingVertical="6dp"
                 android:paddingHorizontal="24dp"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textColor="?attr/colorPrimary"
                 android:gravity="center_horizontal"
                 />

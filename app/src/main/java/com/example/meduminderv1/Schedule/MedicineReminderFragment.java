@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Schedule;
 
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import android.app.AlarmManager;
 import android.app.DatePickerDialog;
 import android.content.Context;
@@ -401,6 +403,7 @@ public class MedicineReminderFragment extends Fragment {
             stockMap.put("minimum_stok", frequency);
         }
 
+        LoadingOverlay.show(MedicineReminderFragment.this);
         db.collection("medicine_catalog").get()
                 .addOnSuccessListener(query -> {
                     selectedCatalogId = null;
@@ -441,6 +444,7 @@ public class MedicineReminderFragment extends Fragment {
                                         Toast.makeText(appContext, appContext.getString(R.string.reminder_berhasil_dibuat), Toast.LENGTH_SHORT).show();
                                         if (!isAdded()) return; // sudah keluar dari halaman
                                         clearFields();
+                                        LoadingOverlay.hide(MedicineReminderFragment.this);
                                         btnSaveReminder.setEnabled(true);
                                         NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
                                     }
@@ -448,6 +452,7 @@ public class MedicineReminderFragment extends Fragment {
                                     @Override
                                     public void onFailure(Exception e) {
                                         Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        LoadingOverlay.hide(MedicineReminderFragment.this);
                                         if (isAdded()) btnSaveReminder.setEnabled(true);
                                     }
                                 });
@@ -456,6 +461,7 @@ public class MedicineReminderFragment extends Fragment {
                             @Override
                             public void onFailure(Exception e) {
                                 Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
+                                LoadingOverlay.hide(MedicineReminderFragment.this);
                                 if (isAdded()) btnSaveReminder.setEnabled(true);
                             }
                         });
@@ -490,6 +496,7 @@ public class MedicineReminderFragment extends Fragment {
                                             Toast.makeText(appContext, appContext.getString(R.string.reminder_berhasil_dibuat), Toast.LENGTH_SHORT).show();
                                             if (!isAdded()) return; // sudah keluar dari halaman
                                             clearFields();
+                                            LoadingOverlay.hide(MedicineReminderFragment.this);
                                             btnSaveReminder.setEnabled(true);
                                             NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
                                         }
@@ -497,6 +504,7 @@ public class MedicineReminderFragment extends Fragment {
                                         @Override
                                         public void onFailure(Exception e) {
                                             Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
+                                            LoadingOverlay.hide(MedicineReminderFragment.this);
                                             if (isAdded()) btnSaveReminder.setEnabled(true);
                                         }
                                     });
@@ -505,16 +513,19 @@ public class MedicineReminderFragment extends Fragment {
                                 @Override
                                 public void onFailure(Exception e) {
                                     Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    LoadingOverlay.hide(MedicineReminderFragment.this);
                                     if (isAdded()) btnSaveReminder.setEnabled(true);
                                 }
                             });
                         }).addOnFailureListener(e -> {
                             Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
+                            LoadingOverlay.hide(MedicineReminderFragment.this);
                             if (isAdded()) btnSaveReminder.setEnabled(true);
                         });
                     }
                 }).addOnFailureListener(e -> {
                     Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
+                    LoadingOverlay.hide(MedicineReminderFragment.this);
                     if (isAdded()) btnSaveReminder.setEnabled(true);
                 });
     }

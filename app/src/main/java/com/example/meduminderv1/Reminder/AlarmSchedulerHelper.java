@@ -27,13 +27,8 @@ public class AlarmSchedulerHelper {
     private static final String TIME_FORMAT = "HH:mm";
     private static final long DEFAULT_WINDOW_MILLIS = 7L * 24 * 60 * 60 * 1000;
     private static final long PRE_REMINDER_OFFSET_MS = 5 * 60 * 1000L;
-    // dulu private, tapi StatistikRepo.java butuh baca konstanta ini
-    // dari luar kelas (buat tahu "berapa lama setelah jadwal baru dianggap
-    // benar-benar terlewat"), jadi sekarang dibuka jadi public.
     public static final long MISSED_CHECK_DELAY_MS = 3 * 60 * 1000L;
 
-    // Sentinel value dari resolveEndMillis() yang artinya "jadwal ini sudah
-    // expired (end_date sudah lewat) -> jangan dijadwalkan sama sekali".
     private static final long EXPIRED = -1L;
 
     public static void scheduleAll(Context context, String scheduleId, String namaObat, MedicationSchedules schedule) {
@@ -63,23 +58,14 @@ public class AlarmSchedulerHelper {
         scheduleAllInternal(context, scheduleId, namaObat, timesOfDay, endMillis);
     }
 
-    // kondisi dulu, endDateMillis == 0 (tidak ada end_date) dan endDateMillis di masa
-    // lalu (end_date sudah lewat) sama-sama masuk cabang "else" dan dikasih
-    // window baru 7 hari dari SEKARANG. Akibatnya, schedule yang end_date-nya
-    // sudah lewat (tapi is_active masih true di Firestore) ikut di-reschedule
-    // lagi seolah masih berlaku -> alarm "hidup lagi" padahal jadwalnya udah
-    // selesai. Sekarang dibedakan eksplisit: tidak ada end_date vs end_date
-    // sudah lewat.
     private static long resolveEndMillis(long endDateMillis) {
         long nowMillis = System.currentTimeMillis();
 
         if (endDateMillis == 0) {
-            // Memang tidak ada end_date sama sekali -> boleh dikasih window default.
             return nowMillis + DEFAULT_WINDOW_MILLIS;
         }
 
         if (endDateMillis > nowMillis) {
-            // end_date masih di masa depan -> pakai sampai akhir hari itu.
             Calendar cal = Calendar.getInstance();
             cal.setTimeInMillis(endDateMillis);
             cal.set(Calendar.HOUR_OF_DAY, 23);
@@ -89,17 +75,9 @@ public class AlarmSchedulerHelper {
             return cal.getTimeInMillis();
         }
 
-        // endDateMillis != 0 dan <= now -> end_date sudah lewat, jadwal ini
-        // sudah selesai. Jangan reschedule.
         return EXPIRED;
     }
 
-    // dulu ada 2 versi terpisah yang duplikat logic + occurrenceIndex.
-    // Sekarang satu jalur, dan yang dipakai sebagai "kunci" occurrence adalah
-    // string jam-nya sendiri ("08:00"), BUKAN posisi/index di list. Ini penting
-    // karena occurrenceKey ini harus PERSIS SAMA baik pas schedule maupun pas
-    // cancel — kalau pakai index angka yang cuma nambah waktu lolos filter,
-    // dia gampang geser begitu ada satu waktu yang di-skip (lihat cancelOccurrenceForScheduledAt).
     private static void scheduleAllInternal(Context context, String scheduleId, String namaObat,
                                             List<String> timesOfDay, long endMillis) {
         SimpleDateFormat timeFormat = new SimpleDateFormat(TIME_FORMAT, Locale.getDefault());
@@ -189,7 +167,6 @@ public class AlarmSchedulerHelper {
         }
     }
 
-    // occurrenceKey sekarang String (jam), bukan int index
     private static void scheduleSingleAlarm(
             Context context, String alarmId, String logScheduleId, String namaObat,
             long triggerMillis, long logScheduledAtMillis, String occurrenceKey, String type
@@ -251,7 +228,6 @@ public class AlarmSchedulerHelper {
     }
 
     public static void scheduleRepeatAlarm(Context context, String scheduleId, String namaObat, long originalScheduledAt, long triggerMillis) {
-        // Alarm berikutnya pakai mekanisme snooze supaya ga dianggap jadwal baru buat besok
         scheduleSnoozeAt(
                 context,
                 scheduleId,
@@ -261,7 +237,6 @@ public class AlarmSchedulerHelper {
                 "medicine"
         );
 
-        // Alarm repeat ini jadi punya batas 3 menit. Kalau user tidak confirm, MedicationMissedNotifReceiver akan cek lagi
         SimpleDateFormat timeFormat = new SimpleDateFormat(TIME_FORMAT, Locale.getDefault());
         String occurrenceKey = "repeat_" + timeFormat.format(new Date(triggerMillis));
         scheduleMedicineMissedCheck(
@@ -277,12 +252,6 @@ public class AlarmSchedulerHelper {
                 + " trigger=" + new Date(triggerMillis));
     }
 
-    /**
-     * 1) Kalau jam asli BELUM lewat -> alarm jam asli dibatalkan (supaya tidak bunyi di jam lama),
-     *    lalu alarm untuk BESOK di jam yang sama dipasang lagi (supaya jadwal harian tetap jalan).
-     * 2) Cek "terlewat" dipindah ke (waktu snooze + 3 menit), supaya tidak mematikan alarm snooze
-     *    dan tidak mengirim notif "terlewat" padahal user sedang menunda.
-     */
     public static void applyMedicineSnooze(Context context, String scheduleId, String namaObat,
                                            long originalScheduledAt, long snoozeUntilMillis) {
         SimpleDateFormat timeFormat = new SimpleDateFormat(TIME_FORMAT, Locale.getDefault());
@@ -302,7 +271,6 @@ public class AlarmSchedulerHelper {
         am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, snoozeUntilMillis + MISSED_CHECK_DELAY_MS, pi);
     }
 
-    //sama seperti di atas, tapi untuk appointment.
     public static void applyAppointmentSnooze(Context context, String appointmentId, String title,
                                               long originalAt, long snoozeUntilMillis) {
         if (originalAt > System.currentTimeMillis()) {

@@ -107,7 +107,6 @@ public class AppointmentLogAdapter extends RecyclerView.Adapter<AppointmentLogAd
                     break;
                 case AKAN_DATANG:
                     colorAttr = com.google.android.material.R.attr.colorSecondaryFixed; //abu
-                    teksColorAttr = com.google.android.material.R.attr.colorOnPrimary;
                     break;
                 default:
                     colorAttr = com.google.android.material.R.attr.colorPrimaryFixed; //putih

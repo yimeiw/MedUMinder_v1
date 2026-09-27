@@ -240,9 +240,16 @@ public class NotificationRepo {
         List<Notification> fromInvite = new ArrayList<>();
 
         Runnable merge = () -> {
-            List<Notification> combined = new ArrayList<>();
-            combined.addAll(fromNotif);
-            combined.addAll(fromInvite);
+            List<Notification> combined = new ArrayList<>(fromNotif);
+            // undangan yang SUDAH punya notifikasi asli ("Undangan Caregiver/Consumer") jangan
+            // ditampilkan lagi sebagai item buatan "Undangan Baru" -> tidak dobel
+            java.util.Set<String> invitedWithNotif = new java.util.HashSet<>();
+            for (Notification n : fromNotif) {
+                if (n.getInvitation_id() != null) invitedWithNotif.add(n.getInvitation_id());
+            }
+            for (Notification n : fromInvite) {
+                if (!invitedWithNotif.contains(n.getInvitation_id())) combined.add(n);
+            }
             Collections.sort(combined, (a, b) -> {
                 Timestamp ta = a.getCreated_at(), tb = b.getCreated_at();
                 if (ta == null || tb == null) return 0;
@@ -311,7 +318,14 @@ public class NotificationRepo {
     public ListenerRegistration listenUnreadCount(String uid, UserRole role, @Nullable String consumerFilter,
                                                   UnreadCountListener callback) {
         final int[] fromNotif = {0};
-        final int[] fromInvite = {0};
+        // undangan pending (yang cocok dengan role) & undangan yang sudah punya notifikasi asli
+        final java.util.Set<String> pendingInviteIds = new java.util.HashSet<>();
+        final java.util.Set<String> invitedWithNotif = new java.util.HashSet<>();
+        Runnable publish = () -> {
+            int invites = 0;
+            for (String id : pendingInviteIds) if (!invitedWithNotif.contains(id)) invites++;
+            callback.onChanged(fromNotif[0] + invites);
+        };
 
         ListenerRegistration regNotif = db.collection("notifications")
                 .whereEqualTo("receiver_uid", uid)
@@ -328,27 +342,40 @@ public class NotificationRepo {
                         count++;
                     }
                     fromNotif[0] = count;
-                    callback.onChanged(fromNotif[0] + fromInvite[0]);
+                    publish.run();
+                });
+
+        // semua notifikasi undangan milik user (dibaca/belum) -> dipakai supaya tidak dihitung dobel
+        ListenerRegistration regInviteNotif = db.collection("notifications")
+                .whereEqualTo("receiver_uid", uid)
+                .whereEqualTo("type", NotificationType.Invitation.name())
+                .addSnapshotListener((snap, error) -> {
+                    if (error != null || snap == null) return;
+                    invitedWithNotif.clear();
+                    for (DocumentSnapshot doc : snap.getDocuments()) {
+                        String invId = doc.getString("invitation_id");
+                        if (invId != null) invitedWithNotif.add(invId);
+                    }
+                    publish.run();
                 });
 
         ListenerRegistration regInvite = db.collection("invitations")
                 .whereEqualTo("receiver_uid", uid)
                 .addSnapshotListener((snap, error) -> {
                     if (error != null || snap == null) return;
-                    int count = 0;
+                    pendingInviteIds.clear();
                     for (DocumentSnapshot doc : snap.getDocuments()) {
                         Invitation inv = doc.toObject(Invitation.class);
                         if (inv == null || inv.getStatus() != InvitationStatus.Pending) continue;
                         Notification n = new Notification();
                         n.setType(NotificationType.Invitation);
                         n.setTarget_role(inv.getInvite_role() != null ? inv.getInvite_role().name() : null);
-                        if (matchesRole(n, role)) count++;
+                        if (matchesRole(n, role)) pendingInviteIds.add(doc.getId());
                     }
-                    fromInvite[0] = count;
-                    callback.onChanged(fromNotif[0] + fromInvite[0]);
+                    publish.run();
                 });
 
-        return () -> { regNotif.remove(); regInvite.remove(); };
+        return () -> { regNotif.remove(); regInviteNotif.remove(); regInvite.remove(); };
     }
 
     private static boolean matchesRole(Notification n, UserRole role) {
@@ -362,7 +389,8 @@ public class NotificationRepo {
     }
 
     private static boolean belongsToConsumer(Notification n, String consumerUid) {
-        if (n.getType() == NotificationType.Invitation || n.getType() == NotificationType.Report) return true;
+        if (n.getType() == NotificationType.Invitation || n.getType() == NotificationType.Report
+                || n.getType() == NotificationType.System) return true;
 
         if (n.getConsumer_uid() != null) return consumerUid.equals(n.getConsumer_uid());
 

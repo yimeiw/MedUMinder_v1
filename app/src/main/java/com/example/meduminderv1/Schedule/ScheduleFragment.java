@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Schedule;
 
+import com.example.meduminderv1.Util.InactiveSchedules;
+
 import android.content.res.ColorStateList;
 import android.os.Bundle;
 
@@ -69,6 +71,7 @@ public class ScheduleFragment extends Fragment {
         calendarView = view.findViewById(R.id.calendarView);
         rvSchedule = view.findViewById(R.id.rvSchedule);
         emptyState = view.findViewById(R.id.emptyState);
+        loadingState = view.findViewById(R.id.loadingState);
         toggleGroup = view.findViewById(R.id.toggleGroup);
         btnMed = view.findViewById(R.id.btnMedicine);
         btnAppoint = view.findViewById(R.id.btnAppointment);
@@ -117,9 +120,12 @@ public class ScheduleFragment extends Fragment {
     }
 
     private void loadScheduleForDate() {
+        // nomor muat: hasil dari muat lama (ganti tanggal/tab cepat) diabaikan
+        final int token = ++loadToken;
+        showLoading();
         String uid = SessionManager.getInstance().getTargetUid();
         if (uid == null){
-            showEmpty();
+            showEmpty(token);
             return;
         }
 
@@ -136,13 +142,19 @@ public class ScheduleFragment extends Fragment {
 
         List<LogItem> result = new ArrayList<>();
         if (currType == Type.Medication){
+            // lewati log dari jadwal yang sudah dihapus (is_active = false)
+            InactiveSchedules.load(db, targetUid, inactiveIds ->
             db.collection("medication_logs").whereEqualTo("users_id", targetUid)
                     .whereGreaterThanOrEqualTo("scheduled_at", startofDay)
                     .whereLessThan("scheduled_at", startOfNextDay).orderBy("scheduled_at")
                     .get().addOnSuccessListener(query ->{
-                        List<DocumentSnapshot> docs = query.getDocuments();
+                        if (!isAdded()) return;
+                        List<DocumentSnapshot> docs = new ArrayList<>();
+                        for (DocumentSnapshot d : query.getDocuments()) {
+                            if (!inactiveIds.contains(d.getString("medication_schedules_id"))) docs.add(d);
+                        }
                         if (docs.isEmpty()){
-                            showEmpty();
+                            showEmpty(token);
                             return;
                         } int[] remaining = {docs.size()};
                         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
@@ -160,11 +172,12 @@ public class ScheduleFragment extends Fragment {
                                 result.add(item);
                                 remaining[0]--;
                                 if (remaining[0] <= 0){
-                                    showResult(result);
+                                    showResult(result, token);
                                 }
                             });
                         }
-                    }).addOnFailureListener(e -> showEmpty());
+                        if (remaining[0] <= 0) showResult(result, token); // semua log null
+                    }).addOnFailureListener(e -> showEmpty(token)));
         } else {
             db.collection("appointments").whereEqualTo("users_id", targetUid)
                     .whereGreaterThanOrEqualTo("appointment_at", startofDay)
@@ -178,13 +191,34 @@ public class ScheduleFragment extends Fragment {
                                     appoint.getAddress(), appoint.getStatus(),
                                     doc.getId(), appoint.getAppointment_at().toDate().getTime());
                             result.add(item);
-                        } showResult(result);
-                    }).addOnFailureListener(e -> showEmpty());
+                        } showResult(result, token);
+                    }).addOnFailureListener(e -> showEmpty(token));
         }
+    }
+
+    private int loadToken = 0;
+    private View loadingState;
+
+    private void showLoading() {
+        if (!isAdded() || loadingState == null) return;
+        loadingState.setVisibility(View.VISIBLE);
+        rvSchedule.setVisibility(View.GONE);
+        emptyState.setVisibility(View.GONE);
+    }
+
+    private void showResult(List<LogItem> result, int token) {
+        if (token != loadToken) return;
+        showResult(result);
+    }
+
+    private void showEmpty(int token) {
+        if (token != loadToken) return;
+        showEmpty();
     }
 
     private void showResult(List<LogItem> result) {
         if (!isAdded()) return;
+        if (loadingState != null) loadingState.setVisibility(View.GONE);
         Collections.sort(result, (a, b) -> a.getTime().compareTo(b.getTime()));
         if (result.isEmpty()){
             showEmpty();
@@ -214,6 +248,7 @@ public class ScheduleFragment extends Fragment {
 
     private void showEmpty() {
         if (!isAdded()) return;
+        if (loadingState != null) loadingState.setVisibility(View.GONE);
         emptyState.setText(getString(R.string.belum_ada_jadwal));
         emptyState.setVisibility(View.VISIBLE);
         rvSchedule.setVisibility(View.GONE);
@@ -239,12 +274,16 @@ public class ScheduleFragment extends Fragment {
                                             .addOnSuccessListener(catSnap -> {
                                                 MedicineCatalog cat = catSnap.toObject(MedicineCatalog.class);
                                                 callback.onResolved(cat != null ? cat.getNama_obat() : "Obat", finalStock);
-                                            });
+                                            })
+                                            .addOnFailureListener(e -> callback.onResolved("Obat", finalStock));
                                 } else {
                                     callback.onResolved("Obat", finalStock);
                                 }
-                            });
-                });
+                            })
+                            // gagal ambil data -> tetap selesai (pakai nama default) supaya loading tidak macet
+                            .addOnFailureListener(e -> callback.onResolved("Obat", 0));
+                })
+                .addOnFailureListener(e -> callback.onResolved("Obat", 0));
     }
 
     private void updateToggleColors(View root) {

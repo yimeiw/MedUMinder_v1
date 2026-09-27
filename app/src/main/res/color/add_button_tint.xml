@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tombol tambah jadwal (obat / appointment): normal = warna teks supaya terlihat aktif di dark mode -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="?attr/colorSecondaryFixedDim" android:state_pressed="true"/>
+    <item android:color="?attr/colorOnSurface"/>
+</selector>

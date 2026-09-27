@@ -325,7 +325,7 @@
                         app:backgroundTint="@null"
                         android:textAllCaps="false"
                         android:textSize="14sp"
-                        android:textColor="?attr/colorOnPrimary"
+                        android:textColor="?attr/colorOnSurface"
                         android:paddingHorizontal="12dp"
                         android:layout_margin="10dp"/>
                 </LinearLayout>
@@ -354,7 +354,7 @@
                         android:id="@+id/addNoSchedule"
                         android:text="@string/tambahkan_jadwal"
                         android:textAllCaps="false"
-                        android:textColor="?attr/colorOnPrimary"
+                        android:textColor="?attr/colorOnSurface"
                         android:background="@drawable/border_wp"
                         app:backgroundTint="@null"
                         android:layout_marginHorizontal="12dp"
@@ -386,9 +386,9 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/jadwal_hari_ini"
-                        android:textSize="20dp"
+                        android:textSize="20sp"
                         android:textColor="?attr/colorOnSurface"
-                        android:textStyle="bold"/>
+                        android:textFontWeight="700"/>
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -451,9 +451,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/ringkasan_statistik"
-                    android:textSize="20dp"
+                    android:textSize="20sp"
                     android:textColor="?attr/colorOnSurface"
-                    android:textStyle="bold"/>
+                    android:textFontWeight="700"/>
 
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/lineChart"

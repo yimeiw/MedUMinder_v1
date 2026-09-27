@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Profile;
 
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import androidx.appcompat.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -65,6 +67,7 @@ public class InvitationFragment extends Fragment {
         authManager.loadCurrentUserProfile(new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
+                if (!isAdded() || result == null) return;
                 if (result.getCurrentRole() == UserRole.Consumer){
                     tvHeaderInvite.setText(getString(R.string.invCaregiver));
                     tvInvitation.setText(getString(R.string.sekarang_kamu_adalah_consumer));
@@ -81,6 +84,7 @@ public class InvitationFragment extends Fragment {
 
             @Override
             public void onFailure(String message) {
+                if (!isAdded()) return;
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
@@ -100,9 +104,11 @@ public class InvitationFragment extends Fragment {
             return;
         } UserRole currentRole = authManager.getCurrentUser().getCurrentRole();
         UserRole inviteRole = (currentRole == UserRole.Consumer) ? UserRole.Caregiver : UserRole.Consumer;
+        LoadingOverlay.show(InvitationFragment.this);
         authManager.sendInvitation(email, inviteRole, new InvitationCallback() {
             @Override
             public void onSuccess(boolean registered) {
+                LoadingOverlay.hide(InvitationFragment.this);
                 if (registered){ // jika user sudah terdaftar
                     if (!isAdded()) return;
                     Toast.makeText(requireContext(), getString(R.string.invitation_berhasil_dikirim), Toast.LENGTH_SHORT).show();
@@ -115,6 +121,7 @@ public class InvitationFragment extends Fragment {
 
             @Override
             public void onFailure(String message) {
+                LoadingOverlay.hide(InvitationFragment.this);
                 if (!isAdded()) return;
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
@@ -135,8 +142,8 @@ public class InvitationFragment extends Fragment {
         dialog.show();
         if (dialog.getWindow() != null){
             dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed));
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim));
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
         }
     }
     /** Setelah undangan terkirim -> kembali ke Home sesuai role, dan bersihkan back stack. */

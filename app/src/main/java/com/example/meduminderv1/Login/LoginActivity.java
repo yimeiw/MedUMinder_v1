@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Login;
 
+import com.example.meduminderv1.Util.LoadingOverlay;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
@@ -75,7 +77,9 @@ public class LoginActivity extends AppCompatActivity {
             }
             // kalau email sudah diisi, cek dulu. Kalau belum terdaftar -> toast, jangan buka halaman
             forgotPassword.setEnabled(false);
+            LoadingOverlay.show(LoginActivity.this);
             authManager.checkEmailStatus(currentEmail, status -> {
+                LoadingOverlay.hide(LoginActivity.this);
                 forgotPassword.setEnabled(true);
                 if (status == AuthManager.EmailStatus.NOT_REGISTERED){
                     Toast.makeText(LoginActivity.this, getString(R.string.email_belum_terdaftar), Toast.LENGTH_SHORT).show();
@@ -104,15 +108,18 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void signInWithGoogle() {
+        LoadingOverlay.show(LoginActivity.this);
         authManager.loginWithGoogle(this, new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
+                LoadingOverlay.hide(LoginActivity.this);
                 startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 finish();
             }
 
             @Override
             public void onFailure(String message) {
+                LoadingOverlay.hide(LoginActivity.this);
                 Toast.makeText(LoginActivity.this, message, Toast.LENGTH_SHORT).show();
             }
         });
@@ -132,15 +139,18 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
+        LoadingOverlay.show(LoginActivity.this);
         authManager.loginWithEmail(email, password, new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
+                LoadingOverlay.hide(LoginActivity.this);
                 startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 finish();
             }
 
             @Override
             public void onFailure(String message) {
+                LoadingOverlay.hide(LoginActivity.this);
                 if (message.equals("EMAIL_NOT_VERIFIED")){
                     MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(LoginActivity.this);
                     builder.setTitle(getString(R.string.email_belum_diverifikasi_title))
@@ -150,8 +160,8 @@ public class LoginActivity extends AppCompatActivity {
                     dialog.show();
                     if (dialog.getWindow() != null){
                         dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(LoginActivity.this, com.google.android.material.R.attr.colorTertiaryFixed));
-                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(LoginActivity.this, com.google.android.material.R.attr.colorTertiaryFixedDim));
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(LoginActivity.this, com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
+                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(LoginActivity.this, com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
                     }
                 }else {
                     Toast.makeText(LoginActivity.this, message, Toast.LENGTH_SHORT).show();

@@ -22,9 +22,6 @@ public class AppointmentPreReminderNotifReceiver extends BroadcastReceiver {
         if (appointmentId == null) return;
 
         final String title = extraTitle != null ? extraTitle : "";
-        // simpan ANGKA menitnya dengan tanda "@min:".
-        // NotificationText yang mengubahnya jadi "30 Menit" / "30 Minutes" / "1 Jam" / "1 Hour"
-        // sesuai bahasa si pembaca.
         final String durasiArg = NotificationText.minutesArg(offsetMinutes);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -32,7 +29,6 @@ public class AppointmentPreReminderNotifReceiver extends BroadcastReceiver {
             String consumerUid = doc.getString("users_id");
             if (consumerUid == null) return;
 
-            // notif ke consumer
             Map<String, Object> notif = new HashMap<>();
             notif.put("receiver_uid", consumerUid);
             notif.put("type", "Appointment");
@@ -52,7 +48,6 @@ public class AppointmentPreReminderNotifReceiver extends BroadcastReceiver {
                         String caregiverUid = rel.getString("caregiver_uid");
                         if (caregiverUid == null) continue;
 
-                        // notif ke caregiver
                         Map<String, Object> notifCaregiver = new HashMap<>();
                         notifCaregiver.put("receiver_uid", caregiverUid);
                         notifCaregiver.put("type", "Appointment");

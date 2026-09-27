@@ -101,7 +101,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/tingkatKepatuhan"
-                android:textStyle="bold"
+                android:textFontWeight="600"
                 android:textSize="18sp"
                 android:textColor="?attr/colorOnSurface"
                 android:layout_marginBottom="10dp" />
@@ -280,7 +280,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/grafikKepatuhan"
-                android:textStyle="bold"
+                android:textFontWeight="600"
                 android:textSize="18sp"
                 android:textColor="?attr/colorOnSurface"
                 android:layout_marginBottom="10dp" />
@@ -345,7 +345,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/analisisRespon"
-                android:textStyle="bold"
+                android:textFontWeight="600"
                 android:textSize="18sp"
                 android:textColor="?attr/colorOnSurface"
                 android:layout_marginBottom="10dp" />
@@ -414,7 +414,7 @@
                 android:layout_gravity="center"
                 android:text="@string/download"
                 android:textAllCaps="false"
-                android:textStyle="bold"
+                android:textFontWeight="600"
                 android:textColor="?attr/colorPrimaryFixed"
                 android:background="@drawable/border"
                 app:backgroundTint="?attr/colorSecondaryFixedDim"

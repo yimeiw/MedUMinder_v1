@@ -646,4 +646,7 @@
     <string name="x_menambahkan_jadwal_appointment_anda_msg">%1$s 为您添加了预约 %2$s。</string>
     <string name="x_menambahkan_jadwal_appointment_msg">%1$s 添加了预约：%2$s。</string>
     <string name="x_menambahkan_jadwal_appointment_consumer_anda_msg">%1$s 为您的 Consumer 添加了预约 %2$s。</string>
+    <string name="hubungan_dihapus_title">关系已解除</string>
+    <string name="anda_menghapus_hubungan_msg" formatted="true">您已解除与 %1$s（%2$s）的关系。</string>
+    <string name="x_menghapus_hubungan_msg" formatted="true">%1$s（%2$s）已解除与您的关系。</string>
 </resources>
