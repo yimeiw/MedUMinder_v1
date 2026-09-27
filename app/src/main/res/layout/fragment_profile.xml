@@ -122,7 +122,7 @@
                 android:orientation="vertical"
                 android:layout_marginBottom="20dp"
                 android:background="@drawable/border"
-                android:backgroundTint="?attr/colorOnSurface">
+                android:backgroundTint="?attr/colorOnPrimary">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -142,7 +142,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/kepatuhan"
                             android:textSize="24dp"
-                            android:textColor="?attr/colorPrimary"
+                            android:textColor="?attr/colorPrimaryFixed"
                             android:textStyle="bold"/>
 
                         <TextView
@@ -152,7 +152,7 @@
                             android:text="0%"
                             android:textStyle="bold"
                             android:textSize="24dp"
-                            android:textColor="?attr/colorTertiary"
+                            android:textColor="?attr/colorTertiaryFixed"
                             android:fontFamily="@font/inter_24pt_semibold"/>
 
                         <TextView
@@ -161,7 +161,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/desc_kepatuhan_tinggi"
                             android:textSize="14dp"
-                            android:textColor="?attr/colorPrimary"/>
+                            android:textColor="?attr/colorPrimaryFixed"/>
 
                     </LinearLayout>
 
@@ -180,7 +180,7 @@
                     android:id="@+id/btnSeeStatistic"
                     android:text="@string/selengkapnya"
                     android:textStyle="bold"
-                    android:background="@drawable/border"
+                    android:background="@drawable/border_wp"
                     android:textColor="?attr/colorOnSurface"
                     app:backgroundTint="@null"
                     android:textAllCaps="false"

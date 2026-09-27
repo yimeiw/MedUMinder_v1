@@ -93,35 +93,36 @@ public class AppointmentLogAdapter extends RecyclerView.Adapter<AppointmentLogAd
 
     private void applyStatusColor(AppointmentLogAdapter.ViewHolder holder, LogStatus status) {
         int colorAttr;
-        int teksColorAttr;
 
         //tentukan attr theme(warna) berdasarkan status
         if (status == null) {
             colorAttr = com.google.android.material.R.attr.colorPrimaryFixed; //putih
-            teksColorAttr = com.google.android.material.R.attr.colorOnSurface;
         } else {
             switch (status) {
                 case DIKONSUMSI:
                     colorAttr = com.google.android.material.R.attr.colorTertiaryFixed; //hijau
-                    teksColorAttr = com.google.android.material.R.attr.colorTertiaryFixed;
                     break;
                 case TERLEWATKAN:
                     colorAttr = com.google.android.material.R.attr.colorTertiaryFixedDim; //merah
-                    teksColorAttr = com.google.android.material.R.attr.colorTertiaryFixedDim;
                     break;
                 case AKAN_DATANG:
                     colorAttr = com.google.android.material.R.attr.colorSecondaryFixed; //abu
-                    teksColorAttr = com.google.android.material.R.attr.colorOnPrimary;
                     break;
                 default:
                     colorAttr = com.google.android.material.R.attr.colorPrimaryFixed; //putih
-                    teksColorAttr = com.google.android.material.R.attr.colorPrimaryFixed;
                     break;
             }
         }
         //ambil warna asli dari attr theme
         int color = getColorFromAttr(context, colorAttr);
-        int teksColor = getColorFromAttr(context, teksColorAttr);
+
+        holder.namaAppointment.setTextColor(getColorFromAttr(context, com.google.android.material.R.attr.colorOnSurface));
+        holder.namaLokasi.setTextColor(getColorFromAttr(context, com.google.android.material.R.attr.colorOnSurface));
+        holder.timeAppointment.setTextColor(getColorFromAttr(context, com.google.android.material.R.attr.colorOnSurface));
+        holder.timeIcon.setColorFilter(getColorFromAttr(context, com.google.android.material.R.attr.colorOnSurface));
+
+        //warnai chip
+        holder.currStatus.setBackgroundTintList(ColorStateList.valueOf(color));
 
         //apply warna ke layerdrawable (bg_lef_offset)
         Drawable bg = holder.capsuleAppointLog.getBackground();
@@ -129,28 +130,12 @@ public class AppointmentLogAdapter extends RecyclerView.Adapter<AppointmentLogAd
             Drawable mutatedBg = bg.mutate();
             if (mutatedBg instanceof LayerDrawable) {
                 LayerDrawable layerDrawable = (LayerDrawable) mutatedBg;
-                Drawable offset = layerDrawable.findDrawableByLayerId(R.id.layer_main_offset);
                 Drawable stroke = layerDrawable.findDrawableByLayerId(R.id.layer_offset);
                 if (stroke instanceof GradientDrawable){
-                    GradientDrawable shape = (GradientDrawable) stroke;
-                    shape.setColor(color);
-                }
-                if (offset instanceof GradientDrawable){
-                    GradientDrawable shape = (GradientDrawable) offset;
-                    //ubah warna strokenya
-                    shape.setStroke(dpToPx(1.0f), color);
+                    ((GradientDrawable) stroke).setColor(color);
                 }
             }
         }
-        //ubah warna status log
-        holder.currStatus.setBackgroundTintList(ColorStateList.valueOf(color));
-        //ubah wrna teks
-        holder.namaAppointment.setTextColor(teksColor);
-        holder.namaLokasi.setTextColor(teksColor);
-        holder.timeAppointment.setTextColor(teksColor);
-        //ubah wrna icon
-        holder.locationIcon.setColorFilter(teksColor);
-        holder.timeIcon.setColorFilter(teksColor);
     }
 
     private int getColorFromAttr(Context context, int colorAttr) {

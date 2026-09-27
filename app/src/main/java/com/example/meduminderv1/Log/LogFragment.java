@@ -357,7 +357,7 @@ public class LogFragment extends Fragment {
                 dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
                         .setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
                 dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
-                        .setTextColor(ContextCompat.getColor(requireContext(), R.color.merah));
+                        .setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim));
             });
 
             dialog.show();
@@ -379,9 +379,9 @@ public class LogFragment extends Fragment {
 
         dialog.setOnShowListener(d -> {
             dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
-                    .setTextColor(ContextCompat.getColor(requireContext(), R.color.green));
+                    .setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed));
             dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
-                    .setTextColor(ContextCompat.getColor(requireContext(), R.color.merah));
+                    .setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim));
             dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
         });
 

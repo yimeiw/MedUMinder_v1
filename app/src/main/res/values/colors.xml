@@ -9,7 +9,12 @@
     <color name="placeholder">#B5B5B5</color>
     <color name="gray">#C4C6D2</color>
 
-    <color name="dark_bckg">#111111</color>
+    <color name="dark_bckg">#15181C</color>
+    <color name="dark_text">#E7E9EC</color>
+    <color name="dark_blue">#1F4289</color>
+    <color name="dark_red">#B03E3E</color>
+    <color name="dark_green">#3CADA0</color>
+
     <color name="abu_tua">#1B1F20</color>
     <color name="abu_tengah">#2E3642</color>
     <color name="abu_muda">#718096</color>

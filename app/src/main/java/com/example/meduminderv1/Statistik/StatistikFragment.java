@@ -13,6 +13,7 @@ import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
@@ -46,6 +47,7 @@ import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.data.PieData;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 
 import java.io.File;
@@ -59,9 +61,7 @@ import java.util.Locale;
 
 public class StatistikFragment extends Fragment {
     private StatistikRepo statistikRepo;
-    private Button btnWeekly;
-    private Button btnMonthly;
-    private Button btnYearly;
+    private MaterialButton btnWeekly, btnMonthly, btnYearly;
     private String selectedPeriod = "weekly";
     private TextView tvAdheranceRate;
     private TextView tvTotalTaken;
@@ -125,21 +125,21 @@ public class StatistikFragment extends Fragment {
         btnWeekly.setOnClickListener(v -> {
             selectedPeriod = "weekly";
             Toast.makeText(requireContext(), getString(R.string.filter_mingguan_terpilih), Toast.LENGTH_SHORT).show();
-            updatePeriodButton(v);
+            selectButton(btnWeekly);
             loadStats();
         });
 
         btnMonthly.setOnClickListener(v -> {
             selectedPeriod = "monthly";
             Toast.makeText(requireContext(), getString(R.string.filter_bulanan_terpilih), Toast.LENGTH_SHORT).show();
-            updatePeriodButton(v);
+            selectButton(btnMonthly);
             loadStats();
         });
 
         btnYearly.setOnClickListener(v -> {
             selectedPeriod = "yearly";
             Toast.makeText(requireContext(), getString(R.string.filter_tahunan_terpilih), Toast.LENGTH_SHORT).show();
-            updatePeriodButton(v);
+            selectButton(btnYearly);
             loadStats();
         });
 
@@ -168,7 +168,6 @@ public class StatistikFragment extends Fragment {
         });
 
         statistikRepo = new StatistikRepo(requireContext());
-        updatePeriodButton(view);
         loadStats();
 
         return view;
@@ -953,27 +952,6 @@ public class StatistikFragment extends Fragment {
         }
     }
 
-    private void updatePeriodButton(View root) {
-        btnWeekly.setBackgroundResource(R.drawable.border);
-        btnMonthly.setBackgroundResource(R.drawable.border);
-        btnYearly.setBackgroundResource(R.drawable.border);
-
-        int activeColor = com.google.android.material.color.MaterialColors.getColor(
-                root, com.google.android.material.R.attr.colorSecondary);
-
-        btnWeekly.setBackgroundTintList(null);
-        btnMonthly.setBackgroundTintList(null);
-        btnYearly.setBackgroundTintList(null);
-
-        if ("weekly".equals(selectedPeriod)) {
-            btnWeekly.setBackgroundTintList(android.content.res.ColorStateList.valueOf(activeColor));
-        } else if ("monthly".equals(selectedPeriod)) {
-            btnMonthly.setBackgroundTintList(android.content.res.ColorStateList.valueOf(activeColor));
-        } else if ("yearly".equals(selectedPeriod)) {
-            btnYearly.setBackgroundTintList(android.content.res.ColorStateList.valueOf(activeColor));
-        }
-    }
-
     private void openPdf(android.net.Uri uri) {
         if (!isAdded()) return;
         Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -998,5 +976,15 @@ public class StatistikFragment extends Fragment {
                     @Override
                     public void onFailure(Exception e) {}
                 });
+    }
+
+    private void selectButton(MaterialButton selected) {
+        MaterialButton[] buttons = { btnWeekly, btnMonthly, btnYearly };
+        for (MaterialButton button : buttons) {
+            button.setBackgroundTintList(ContextCompat.getColorStateList(
+                    requireContext(),
+                    button == selected ? R.color.biru : R.color.black
+            ));
+        }
     }
 }

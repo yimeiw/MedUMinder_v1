@@ -185,7 +185,7 @@
                     android:orientation="vertical"
                     android:gravity="center"
                     android:background="@drawable/border"
-                    android:backgroundTint="@color/green"
+                    android:backgroundTint="?attr/colorTertiaryFixed"
                     android:padding="15dp">
 
                     <TextView
@@ -220,7 +220,7 @@
                     android:orientation="vertical"
                     android:gravity="center"
                     android:background="@drawable/border"
-                    android:backgroundTint="@color/merah"
+                    android:backgroundTint="?attr/colorTertiaryFixedDim"
                     android:padding="15dp">
 
                     <TextView
@@ -254,7 +254,7 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:background="@drawable/border"
-                android:backgroundTint="@color/gray"
+                android:backgroundTint="?attr/colorSecondaryFixed"
                 android:padding="15dp"
                 android:layout_marginBottom="25dp">
 
@@ -398,7 +398,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/legend_snooze"
                     android:textSize="12sp"
-                    android:textColor="@color/gray" />
+                    android:textColor="?attr/colorSecondaryFixed" />
 
                 <!-- Legend Ignored -->
                 <TextView
@@ -420,9 +420,9 @@
                 android:text="@string/download"
                 android:textAllCaps="false"
                 android:textStyle="bold"
-                android:textColor="?attr/colorOnSurface"
+                android:textColor="?attr/colorPrimaryFixed"
                 android:background="@drawable/border"
-                app:backgroundTint="@null"
+                app:backgroundTint="?attr/colorSecondaryFixedDim"
                 android:paddingHorizontal="35dp"
                 android:layout_marginBottom="30dp" />
 

@@ -248,9 +248,9 @@ public class ScheduleFragment extends Fragment {
     }
 
     private void updateToggleColors(View root) {
-        int activeColor = MaterialColors.getColor(root, com.google.android.material.R.attr.colorTertiary);
+        int activeColor = MaterialColors.getColor(root, com.google.android.material.R.attr.colorSecondaryFixedDim);
         int inactiveColor = MaterialColors.getColor(root, com.google.android.material.R.attr.colorPrimarySurface);
-        int activeTextColor = MaterialColors.getColor(root, androidx.appcompat.R.attr.colorPrimary);
+        int activeTextColor = MaterialColors.getColor(root, com.google.android.material.R.attr.colorPrimaryFixed);
         int inactiveTextColor = MaterialColors.getColor(root, com.google.android.material.R.attr.colorOnSurface);
 
         btnMed.setBackgroundTintList(ColorStateList.valueOf(currType == Type.Medication ? activeColor : inactiveColor));

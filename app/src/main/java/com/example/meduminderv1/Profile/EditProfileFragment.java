@@ -26,6 +26,7 @@ import com.example.meduminderv1.Login.LoginActivity;
 import com.example.meduminderv1.Model.AuthProviderType;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class EditProfileFragment extends Fragment {
@@ -88,8 +89,8 @@ public class EditProfileFragment extends Fragment {
             dialog.show();
             if (dialog.getWindow() != null){
                 dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.green));
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.merah));
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed));
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim));
             }
         });
 
@@ -174,8 +175,8 @@ public class EditProfileFragment extends Fragment {
             dialog.show();
             if (dialog.getWindow() != null){
                 dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.green));
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.merah));
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed));
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim));
             }
         });
     }
@@ -200,12 +201,14 @@ public class EditProfileFragment extends Fragment {
     }
 
     private void updateGoogle() {
+        int merah = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorTertiaryFixedDim);
+        int ijo = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorTertiaryFixed);
         if (authManager.hasGoogleProvider()){
             btnGoogle.setText(getString(R.string.linked_status));
-            btnGoogle.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.green)));
+            btnGoogle.setBackgroundTintList(ColorStateList.valueOf(ijo));
         } else {
             btnGoogle.setText(getString(R.string.not_linked_status));
-            btnGoogle.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.merah)));
+            btnGoogle.setBackgroundTintList(ColorStateList.valueOf(merah));
         }
     }
 

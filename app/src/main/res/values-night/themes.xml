@@ -2,20 +2,22 @@
     <!-- Base application theme. -->
     <style name="Theme.MedUMinderV1" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorSurface">@color/dark_bckg</item>
-        <item name="colorOnSurface">@color/white</item> <!-- teks -->
+        <item name="colorOnSurface">@color/dark_text</item> <!-- teks -->
         <item name="colorPrimary">@color/abu_tua</item> <!--abu tua jadi putih-->
-        <item name="colorSecondary">@color/biru</item> <!--biru jadi putih-->
+        <item name="colorSecondary">@color/dark_blue</item> <!--biru jadi putih-->
         <item name="colorTertiary">@color/abu_muda</item> <!--abu muda jadi biru-->
-        <item name="colorAccent">@color/white</item> <!--putih jadi biru-->
-        <item name="colorOnPrimary">@color/abu_tua</item> <!--abu tua jadi itam-->
-        <item name="colorPrimaryVariant">@color/biru</item><!-- biru itam -->
+        <item name="colorAccent">@color/dark_text</item> <!--putih jadi biru-->
+        <item name="colorOnPrimary">@color/abu_tengah</item> <!--abu tua jadi itam-->
+        <item name="colorPrimaryVariant">@color/dark_blue</item><!-- biru itam -->
         <item name="colorScheme">@color/abu_tengah</item>
+        <item name="colorOnBackground">@color/abu_muda</item>
+        <item name="colorOutline">@color/abu_tengah</item>
         <item name="colorBackgroundFloating">@color/abu_tengah</item> <!-- abu tengah putih -->
-        <item name="colorPrimaryFixed">@color/white</item>
+        <item name="colorPrimaryFixed">@color/dark_text</item>
         <item name="colorPrimaryFixedDim">@color/black</item>
-        <item name="colorTertiaryFixed">@color/green</item>
-        <item name="colorTertiaryFixedDim">@color/merah</item>
-        <item name="colorSecondaryFixedDim">@color/biru</item>
+        <item name="colorTertiaryFixed">@color/dark_green</item>
+        <item name="colorTertiaryFixedDim">@color/dark_red</item>
+        <item name="colorSecondaryFixedDim">@color/dark_blue</item>
         <item name="colorSecondaryFixed">@color/placeholder</item>
         <item name="colorPrimaryInverse">@color/white</item> <!--putih jadi abu-->
         <item name="colorSurfaceContainer">@color/abu_tua</item>
