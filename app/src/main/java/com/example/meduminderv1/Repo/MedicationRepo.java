@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Repo;
 
+import com.example.meduminderv1.Reminder.StockChecker;
+
 import android.content.Context;
 
 import com.example.meduminderv1.Callback.RepoCallback;
@@ -100,64 +102,23 @@ public class MedicationRepo {
                     }
 
                     int currentStock = 0;
-                    int minimumStock = 0;
-
                     Object stockObject = med.getStock().get("stok_obat");
-                    Object minimumObject = med.getStock().get("minimum_stok");
-
                     if (stockObject instanceof Number) {
                         currentStock = ((Number) stockObject).intValue();
                     }
-
-                    if (minimumObject instanceof Number) {
-                        minimumStock = ((Number) minimumObject).intValue();
-                    }
-
                     int updatedStock = Math.max(0, currentStock - 1);
-
-                    // Kalau stok setelah dikurangi <= minimum stok,
-                    // buat notifikasi
-                    boolean shouldNotify = updatedStock <= minimumStock;
 
                     db.collection("medications")
                             .document(medicationId)
                             .update("stock.stok_obat", updatedStock)
                             .addOnSuccessListener(unused -> {
-
-                                if (!shouldNotify) {
-                                    callback.onSuccess(null);
-                                    return;
-                                } String medicineName = med.getCustom_medicine_name();
-
-                                // Kalau obat custom
-                                if (medicineName != null && !medicineName.trim().isEmpty()) {
-                                    createStockNotification(med, medicationId, medicineName, callback);
-                                    return;
-                                }
-
-                                // Kalau obat dari catalog
-                                if (med.getCatalog_id() != null && !med.getCatalog_id().trim().isEmpty()) {
-                                    db.collection("medicine_catalog")
-                                            .document(med.getCatalog_id())
-                                            .get().addOnSuccessListener(catalogSnap -> {
-                                                MedicineCatalog catalog = catalogSnap.toObject(MedicineCatalog.class);
-                                                String name = "Obat";
-                                                if (catalog != null && catalog.getNama_obat() != null) {
-                                                    name = catalog.getNama_obat();
-                                                } createStockNotification(med, medicationId, name, callback);
-                                            }).addOnFailureListener(callback::onFailure);
-                                    return;
-                                }
-                                // Fallback
-                                createStockNotification(med, medicationId, "Obat", callback);
+                                // pengingat isi ulang (hampir habis / habis) dicek di StockChecker
+                                StockChecker.check(context, medicationId);
+                                callback.onSuccess(null);
                             }).addOnFailureListener(callback::onFailure);
                 }).addOnFailureListener(callback::onFailure);
     }
 
-    private void createStockNotification(Medication med, String medicationId, String medicineName, RepoCallback<Void> callback) {
-        NotificationRepo notificationRepo = new NotificationRepo(context);
-        notificationRepo.createStockNotification(med.getUsers_id(), medicationId, medicineName, callback);
-    }
     public void markTakenAndDecrement(String logId, String medId, RepoCallback<Void> callback){
         markLogAsTaken(logId, new RepoCallback<Void>() {
             @Override

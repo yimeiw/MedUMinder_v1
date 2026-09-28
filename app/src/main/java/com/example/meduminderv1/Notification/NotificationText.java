@@ -18,6 +18,7 @@ public final class NotificationText {
     private static final String TAG = "NotificationText";
     private static final String MINUTES_PREFIX = "@min:";
     private static final String STRING_PREFIX = "@str:";
+    private static final String DAYS_PREFIX = "@days:";
 
     private NotificationText() {}
 
@@ -35,6 +36,11 @@ public final class NotificationText {
 
     public static String minutesArg(int minutes) {
         return MINUTES_PREFIX + minutes;
+    }
+
+    // jumlah hari yang ikut diterjemahkan, contoh "3 hari" / "3 days"
+    public static String daysArg(int days) {
+        return DAYS_PREFIX + days;
     }
 
     // argumen yang ikut diterjemahkan saat ditampilkan, contoh nama role
@@ -90,6 +96,12 @@ public final class NotificationText {
         if (arg.startsWith(STRING_PREFIX)) {
             int id = resId(c, arg.substring(STRING_PREFIX.length()));
             return id != 0 ? c.getString(id) : arg.substring(STRING_PREFIX.length());
+        }
+        if (arg.startsWith(DAYS_PREFIX)) {
+            try {
+                int days = Integer.parseInt(arg.substring(DAYS_PREFIX.length()));
+                return c.getResources().getQuantityString(R.plurals.jumlah_hari, days, days);
+            } catch (NumberFormatException ignored) { }
         }
         if (arg.startsWith(MINUTES_PREFIX)) {
             try {

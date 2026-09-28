@@ -341,10 +341,21 @@ public class AuthManager {
 
                     @Override
                     public void onError(@NonNull GetCredentialException e) {
-                        callback.onFailure(e.getMessage());
+                        callback.onFailure(googleErrorMessage(e));
                     }
                 });
     }
+    /** Pesan error Google sign-in yang ramah & sudah diterjemahkan (bukan pesan mentah bahasa Inggris). */
+    private String googleErrorMessage(GetCredentialException e) {
+        if (e instanceof androidx.credentials.exceptions.GetCredentialCancellationException) {
+            return context.getString(R.string.login_google_dibatalkan);
+        }
+        if (e instanceof androidx.credentials.exceptions.NoCredentialException) {
+            return context.getString(R.string.tidak_ada_akun_google);
+        }
+        return context.getString(R.string.login_google_gagal);
+    }
+
     private void handleGoogleCredential(GetCredentialResponse response, AuthCallback<User> callback) {
         Credential credential = response.getCredential();
         if (!(credential instanceof CustomCredential)){
@@ -439,7 +450,7 @@ public class AuthManager {
 
             @Override
             public void onError(@NonNull GetCredentialException e) {
-                callback.onFailure(e.getMessage());
+                callback.onFailure(googleErrorMessage(e));
             }
         });
     }
@@ -751,7 +762,7 @@ public class AuthManager {
 
             @Override
             public void onError(@NonNull GetCredentialException e) {
-                callback.onFailure(e.getMessage());
+                callback.onFailure(googleErrorMessage(e));
             }
         });
     }
@@ -1245,6 +1256,7 @@ public class AuthManager {
     }
 
     public int getNotificationIcon(NotificationType type){
+        if (type == null) return R.drawable.ic_notif;
 
         switch (type){
             case Invitation:
@@ -1262,6 +1274,7 @@ public class AuthManager {
     }
 
     public String getNotificationTitle(NotificationType type){
+        if (type == null) return context.getString(R.string.notif_type_default);
         switch (type){
             case Invitation:
                 return context.getString(R.string.notif_type_invitation);

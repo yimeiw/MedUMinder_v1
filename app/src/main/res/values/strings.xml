@@ -654,4 +654,28 @@
     <string name="x_menghapus_hubungan_msg" formatted="true">%1$s (%2$s) removed their connection with you.</string>
     <string name="nama_obat_tidak_dapat_diubah">Medicine name can\'t be changed</string>
     <string name="hapus_entri_title">Delete This Entry</string>
+    <string name="status_undangan_menunggu">Status: Waiting for a response</string>
+    <string name="status_undangan_diterima">Status: Accepted</string>
+    <string name="status_undangan_ditolak">Status: Declined</string>
+    <string name="refillReminder">Refill Reminder</string>
+    <string name="remindWhenStockLasts">Remind me when stock lasts</string>
+    <string name="refillReminderHint">You get one reminder when your pills will run out within this many days, and one more when they run out.</string>
+    <string name="stok_menipis_msg">Only %2$s pills of %1$s left, enough for about %3$s. Refill soon!</string>
+    <string name="stok_menipis_hari_ini_msg">Only %2$s pills of %1$s left, not enough for a full day. Refill today!</string>
+    <string name="stok_habis_title">Out of Stock (%1$s)</string>
+    <string name="stok_habis_msg">%1$s is out of stock. Refill it so you don\'t miss a dose.</string>
+    <string name="stok_menipis_cg_msg">%4$s has only %2$s pills of %1$s left, enough for about %3$s.</string>
+    <string name="stok_menipis_hari_ini_cg_msg">%4$s has only %2$s pills of %1$s left, not enough for a full day.</string>
+    <string name="stok_habis_cg_msg">%4$s\'s %1$s is out of stock.</string>
+    <plurals name="jumlah_hari">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <string name="detail_notifikasi_header">Notification Detail</string>
+    <string name="detail_label">Details</string>
+    <string name="kembali">Back</string>
+    <string name="login_google_dibatalkan">Google sign-in was cancelled</string>
+    <string name="tidak_ada_akun_google">No Google account found on this device. Add one in Settings first.</string>
+    <string name="login_google_gagal">Google sign-in failed. Please try again.</string>
+    <string name="nav_home">Home</string>
 </resources>

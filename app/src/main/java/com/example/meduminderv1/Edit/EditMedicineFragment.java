@@ -39,6 +39,7 @@ import com.example.meduminderv1.Model.MedicationSchedules;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
+import com.example.meduminderv1.Reminder.StockChecker;
 import com.example.meduminderv1.Repo.MedicationRepo;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
@@ -227,10 +228,12 @@ public class EditMedicineFragment extends Fragment {
 
         Timestamp endDate = endDateSelected ? new Timestamp(selectedCalendar.getTime()) : null;
         Timestamp now = Timestamp.now();
-        final List<String> changeItems = buildChangeItems(times, String.valueOf(Integer.parseInt(stok)), endDate);
+        final boolean liquid = isLiquid();
+        final List<String> changeItems = buildChangeItems(times,
+                liquid ? originalStock : String.valueOf(Integer.parseInt(stok)), endDate);
         final ArrayList<String> snapshotTimes = new ArrayList<>(times);
         final Integer snapshotStock = "PIL".equalsIgnoreCase(medType)
-                ? Integer.valueOf(Integer.parseInt(stok)) : null;
+                && !liquid ? Integer.valueOf(Integer.parseInt(stok)) : null;
 
         Map<String, Object> scheduleUpdate = new HashMap<>();
         scheduleUpdate.put("frequency", frequency);
@@ -243,12 +246,14 @@ public class EditMedicineFragment extends Fragment {
         db.collection("medication_schedules").document(scheduleId)
                 .update(scheduleUpdate)
                 .addOnSuccessListener(unused -> {
+                    Map<String, Object> medUpdate = new HashMap<>();
+                    medUpdate.put("updated_at", Timestamp.now());
+                    if (!liquid) {
+                        medUpdate.put("stock.stok_obat", Integer.parseInt(stok));
+                        medUpdate.put("stock.minimum_stok", frequency);
+                    }
                     db.collection("medications").document(medicationId)
-                            .update(
-                                    "stock.stok_obat", Integer.parseInt(stok),
-                                    "stock.minimum_stok", frequency,
-                                    "updated_at", Timestamp.now()
-                            )
+                            .update(medUpdate)
                             .addOnSuccessListener(unused2 -> {
                                 // alarm tetap dijadwal ulang walau user sudah keluar halaman
                                 AlarmSchedulerHelper.cancelAll(appContext, scheduleId, originalTimesOfDay);
@@ -257,6 +262,8 @@ public class EditMedicineFragment extends Fragment {
                                 long endMillis = (endDate != null) ? endDate.toDate().getTime() : 0;
                                 AlarmSchedulerHelper.scheduleAll(appContext, scheduleId, medName, times, endMillis);
                                 new LogGenerator().replaceFutureLogs(targetUid, scheduleId, times, now, endDate);
+                                // stok/frekuensi bisa berubah (mis. habis isi ulang) -> cek ulang pengingat isi ulang
+                                StockChecker.check(appContext, medicationId);
 
                                 LoadingOverlay.hide(EditMedicineFragment.this);
                                 if (!isAdded()) return;
@@ -381,6 +388,10 @@ public class EditMedicineFragment extends Fragment {
         });
     }
 
+    private boolean isLiquid() {
+        return "CAIR".equalsIgnoreCase(medType);
+    }
+
     private boolean validateReminder() {
         boolean valid = true;
 
@@ -391,7 +402,9 @@ public class EditMedicineFragment extends Fragment {
         if (name.isEmpty()) { namaObat.setError(getString(R.string.nama_obat_wajib_diisi)); valid = false; }
         if (freq.isEmpty()) { freqMinumObat.setError(getString(R.string.frekuensi_minum_obat_wajib_diisi)); valid = false; }
 
-        if (stok.isEmpty()) {
+        if (isLiquid()) {
+            // obat cair: tidak ada stok yang perlu dicek
+        } else if (stok.isEmpty()) {
             stokObat.setError(getString(R.string.stok_obat_wajib_diisi));
             valid = false;
         } else {
@@ -441,6 +454,8 @@ public class EditMedicineFragment extends Fragment {
                 LoadingOverlay.hide(EditMedicineFragment.this); // data utama sudah tampil
                 if (medication == null) return;
                 medType = medication.getMed_type() != null ? medication.getMed_type() : "";
+                // obat cair tidak punya stok -> kolom stok disembunyikan
+                ((View) stokObat.getParent()).setVisibility(isLiquid() ? View.GONE : View.VISIBLE);
 
                 if (medication.getStock() != null && medication.getStock().get("stok_obat") != null) {
                     originalStock = String.valueOf(medication.getStock().get("stok_obat"));
@@ -449,7 +464,7 @@ public class EditMedicineFragment extends Fragment {
 
                 if (medication.getCustom_medicine_name() != null) {
                     namaObat.setText(medication.getCustom_medicine_name());
-                } else if (medication.getCatalog_id() != null) {
+                } else if (medication.getCatalog_id() != null && !medication.getCatalog_id().isEmpty()) {
                     db.collection("medicine_catalog").document(medication.getCatalog_id())
                             .get()
                             .addOnSuccessListener(doc -> {

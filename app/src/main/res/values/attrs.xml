@@ -2,7 +2,10 @@
 <resources>
     <attr name="appOutline" format="color"/>
     <attr name="progressTrack" format="color"/>
-    <!-- Unread notification card: offset/outline accent and fill -->
+    <!-- Unread notification card: outline accent and translucent primary fill -->
     <attr name="unreadAccent" format="color"/>
     <attr name="unreadSurface" format="color"/>
+    <!-- Read notification card: clear fill and soft outline -->
+    <attr name="readSurface" format="color"/>
+    <attr name="readOutline" format="color"/>
 </resources>

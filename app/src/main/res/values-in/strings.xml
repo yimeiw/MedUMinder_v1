@@ -661,4 +661,28 @@
     <string name="x_menghapus_hubungan_msg" formatted="true">%1$s (%2$s) telah menghapus hubungan dengan Anda.</string>
     <string name="nama_obat_tidak_dapat_diubah">Nama obat tidak dapat diubah</string>
     <string name="hapus_entri_title">Hapus Entri Ini</string>
+    <string name="status_undangan_menunggu">Status: Menunggu respons</string>
+    <string name="status_undangan_diterima">Status: Diterima</string>
+    <string name="status_undangan_ditolak">Status: Ditolak</string>
+    <string name="refillReminder">Pengingat Isi Ulang Obat</string>
+    <string name="remindWhenStockLasts">Ingatkan saat stok tersisa</string>
+    <string name="refillReminderHint">Anda akan diingatkan sekali saat obat akan habis dalam jumlah hari ini, dan sekali lagi saat obat habis.</string>
+    <string name="stok_menipis_msg">%1$s tinggal %2$s butir, cukup untuk sekitar %3$s. Segera isi ulang!</string>
+    <string name="stok_menipis_hari_ini_msg">%1$s tinggal %2$s butir, tidak cukup untuk sehari. Isi ulang hari ini!</string>
+    <string name="stok_habis_title">Stok Habis (%1$s)</string>
+    <string name="stok_habis_msg">%1$s sudah habis. Isi ulang agar tidak ada dosis yang terlewat.</string>
+    <string name="stok_menipis_cg_msg">%1$s milik %4$s tinggal %2$s butir, cukup untuk sekitar %3$s.</string>
+    <string name="stok_menipis_hari_ini_cg_msg">%1$s milik %4$s tinggal %2$s butir, tidak cukup untuk sehari.</string>
+    <string name="stok_habis_cg_msg">%1$s milik %4$s sudah habis.</string>
+    <plurals name="jumlah_hari">
+        <item quantity="one">%d hari</item>
+        <item quantity="other">%d hari</item>
+    </plurals>
+    <string name="detail_notifikasi_header">Detail Notifikasi</string>
+    <string name="detail_label">Detail</string>
+    <string name="kembali">Kembali</string>
+    <string name="login_google_dibatalkan">Masuk dengan Google dibatalkan</string>
+    <string name="tidak_ada_akun_google">Tidak ada akun Google di perangkat ini. Tambahkan dulu di Pengaturan.</string>
+    <string name="login_google_gagal">Gagal masuk dengan Google. Silakan coba lagi.</string>
+    <string name="nav_home">Beranda</string>
 </resources>

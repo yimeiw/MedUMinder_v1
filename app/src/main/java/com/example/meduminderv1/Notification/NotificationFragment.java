@@ -103,17 +103,11 @@ public class NotificationFragment extends Fragment {
             });
         }
 
-        // Khusus notifikasi stok obat
-        if (notification.getType() == NotificationType.Stock) {
-            Bundle bundle = new Bundle();
-            bundle.putString("medication_id", notification.getReference_id());
-            bundle.putString("notification_id", notification.getNotification_id());  // tambahan: biar konsisten dengan flow refill
-            NavHostFragment.findNavController(this).navigate(R.id.reminderStockFragment, bundle);
-        } else {
-            Bundle bundle = new Bundle();
-            bundle.putString("notification_id", notification.getNotification_id());
-            NavHostFragment.findNavController(this).navigate(R.id.notificationDetailFragment, bundle);
-        }
+        // semua jenis notifikasi (termasuk stok) membuka halaman detail yang sama
+        if (notification.getNotification_id() == null) return;
+        Bundle bundle = new Bundle();
+        bundle.putString("notification_id", notification.getNotification_id());
+        NavHostFragment.findNavController(this).navigate(R.id.notificationDetailFragment, bundle);
     }
     private void setupSwipeActions(){
         ItemTouchHelper.SimpleCallback callback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
@@ -135,6 +129,13 @@ public class NotificationFragment extends Fragment {
             }
             @Override
             public int getSwipeDirs(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder){
+                // undangan yang belum direspon (tanpa dokumen notifikasi) tidak bisa di-swipe:
+                // harus diterima/ditolak dari halaman detail
+                int pos = viewHolder.getAdapterPosition();
+                if (pos != RecyclerView.NO_POSITION) {
+                    String id = adapter.getNotificationAt(pos).getNotification_id();
+                    if (id == null || id.startsWith("invite_")) return 0;
+                }
                 return ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT;
             }
             @Override

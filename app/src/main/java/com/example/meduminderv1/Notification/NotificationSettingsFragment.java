@@ -26,6 +26,8 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Reminder.StockChecker;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,9 +36,9 @@ import java.util.List;
 public class NotificationSettingsFragment extends Fragment {
     private ImageButton btnBack;
     private AutoCompleteTextView dropdownRingtone, dropdownReminderMessage,
-            dropdownSnoozeDuration, dropdownAppointmentReminder;
+            dropdownSnoozeDuration, dropdownAppointmentReminder, dropdownRefillReminder;
     private SwitchCompat switchRepeatReminder;
-    private View layoutReminderMessage, layoutAppointmentReminder, layoutRepeatReminder;
+    private View layoutReminderMessage, layoutAppointmentReminder, layoutRepeatReminder, layoutRefillReminder;
     private SharedPreferences pref;
     private Ringtone previewRingtone;
     private static final String PREF_NAME = "notification_settings";
@@ -71,6 +73,7 @@ public class NotificationSettingsFragment extends Fragment {
         setupSnoozeDuration();
         setupAppointmentDropdown();
         setupRepeatReminder();
+        setupRefillReminder();
 
         setupRoleBasedSettings();
 
@@ -89,11 +92,15 @@ public class NotificationSettingsFragment extends Fragment {
         layoutReminderMessage = view.findViewById(R.id.layoutReminderMessage);
         layoutAppointmentReminder = view.findViewById(R.id.layoutAppointmentReminder);
         layoutRepeatReminder = view.findViewById(R.id.layoutRepeatReminder);
+        dropdownRefillReminder = view.findViewById(R.id.dropdownRefillReminder);
+        layoutRefillReminder = view.findViewById(R.id.layoutRefillReminder);
 
         view.findViewById(R.id.boxSnoozeDuration)
                 .setOnClickListener(v -> dropdownSnoozeDuration.performClick());
         view.findViewById(R.id.boxAppointmentReminder)
                 .setOnClickListener(v -> dropdownAppointmentReminder.performClick());
+        view.findViewById(R.id.boxRefillReminder)
+                .setOnClickListener(v -> dropdownRefillReminder.performClick());
     }
 
         private void setupBackButton() {
@@ -379,6 +386,56 @@ public class NotificationSettingsFragment extends Fragment {
             });
         }
 
+        // refill reminder: berapa hari sebelum obat habis
+        private String daysLabel(int days) {
+            return getResources().getQuantityString(R.plurals.jumlah_hari, days, days);
+        }
+
+        private void setupRefillReminder() {
+            int[] dayOptions = StockChecker.REFILL_DAY_OPTIONS;
+            List<String> labels = new ArrayList<>();
+            for (int d : dayOptions) labels.add(daysLabel(d));
+
+            dropdownRefillReminder.setAdapter(createDropdownAdapter(labels));
+
+            dropdownRefillReminder.setOnClickListener(v -> {
+                if (!isDropdownOpen) {
+                    dropdownRefillReminder.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_up, 0);
+                    dropdownRefillReminder.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border));
+                    dropdownRefillReminder.setDropDownVerticalOffset(20);
+                    dropdownRefillReminder.showDropDown();
+                    isDropdownOpen = true;
+                }
+            });
+
+            dropdownRefillReminder.setOnItemClickListener((parent, view, position, id) -> {
+                int days = dayOptions[position];
+                dropdownRefillReminder.setText(labels.get(position), false);
+                dropdownRefillReminder.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
+                saveRefillDays(days);
+            });
+            dropdownRefillReminder.setOnDismissListener(() -> {
+                dropdownRefillReminder.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
+                dropdownRefillReminder.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border));
+                dropdownRefillReminder.setDropDownVerticalOffset(20);
+                isDropdownOpen = false;
+            });
+        }
+
+        // disimpan di HP & di data user (Firestore), supaya pengecekan dari HP caregiver
+        // juga pakai pilihan consumer. Setelah diubah, semua obat langsung dicek ulang.
+        private void saveRefillDays(int days) {
+            pref.edit().putInt(StockChecker.KEY_REFILL_DAYS, days).apply();
+            User user = AuthManager.getInstance(requireContext()).getCurrentUser();
+            if (user == null || user.getAuth_uid() == null) return;
+            user.setRefill_reminder_days(days);
+            final Context appContext = requireContext().getApplicationContext();
+            final String uid = user.getAuth_uid();
+            FirebaseFirestore.getInstance().collection("users").document(uid)
+                    .update(StockChecker.USER_FIELD_REFILL_DAYS, days)
+                    .addOnSuccessListener(unused -> StockChecker.checkAllForUser(appContext, uid, null));
+        }
+
         // repeat reminder
         private void setupRepeatReminder() {
             switchRepeatReminder.setOnCheckedChangeListener(
@@ -455,6 +512,12 @@ public class NotificationSettingsFragment extends Fragment {
                     savedAppointment, false
             );
 
+            // refill reminder: pilihan di data user dulu, kalau belum ada pakai yang di HP
+            User me = AuthManager.getInstance(requireContext()).getCurrentUser();
+            int refillDays = me != null && me.getRefill_reminder_days() != null
+                    ? me.getRefill_reminder_days() : StockChecker.localRefillDays(requireContext());
+            dropdownRefillReminder.setText(daysLabel(refillDays), false);
+
             // repeat reminder
             boolean repeatReminder = pref.getBoolean(
                     KEY_REPEAT_REMINDER, false
@@ -479,10 +542,12 @@ public class NotificationSettingsFragment extends Fragment {
             layoutReminderMessage.setVisibility(View.GONE);
             layoutAppointmentReminder.setVisibility(View.GONE);
             layoutRepeatReminder.setVisibility(View.GONE);
+            layoutRefillReminder.setVisibility(View.GONE);
         } else {
             layoutReminderMessage.setVisibility(View.VISIBLE);
             layoutAppointmentReminder.setVisibility(View.VISIBLE);
             layoutRepeatReminder.setVisibility(View.VISIBLE);
+            layoutRefillReminder.setVisibility(View.VISIBLE);
         }
     }
 }

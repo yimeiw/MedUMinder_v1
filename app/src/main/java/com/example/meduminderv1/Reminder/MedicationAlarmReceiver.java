@@ -25,6 +25,7 @@ public class MedicationAlarmReceiver extends BroadcastReceiver {
         );
 
         String scheduleId = intent.getStringExtra("schedule_id");
+        if (scheduleId == null || scheduleId.isEmpty()) return;   // alarm rusak: jangan crash di background
         String namaObat = intent.getStringExtra("nama_obat");
         String soundUri = intent.getStringExtra("sound");
         long scheduledAt = intent.getLongExtra("scheduled_at", System.currentTimeMillis());

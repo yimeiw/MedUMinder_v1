@@ -18,7 +18,9 @@
         <item name="appOutline">@color/dark_outline</item>
         <item name="progressTrack">@color/dark_outline</item>
         <item name="unreadAccent">@color/dark_biru</item>
-        <item name="unreadSurface">@color/abu_tengah</item>
+        <item name="unreadSurface">@color/notif_unread_dark</item>
+        <item name="readSurface">@android:color/transparent</item>
+        <item name="readOutline">@color/dark_outline</item>
         <item name="colorTertiaryFixed">@color/green</item>
         <item name="colorTertiaryFixedDim">@color/dark_merah</item>
         <item name="colorSecondaryFixedDim">@color/dark_biru</item>

@@ -28,6 +28,8 @@ import com.example.meduminderv1.Model.LogGenerator;
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.example.meduminderv1.Reminder.AppLifecycleTracker;
 import com.example.meduminderv1.Reminder.DailyRescheduleWorker;
+import com.example.meduminderv1.Reminder.StockCheckWorker;
+import com.example.meduminderv1.Reminder.StockChecker;
 import com.example.meduminderv1.Reminder.ReminderEventBus;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
@@ -124,6 +126,7 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         }
         if (user != null) {
             new LogGenerator().generateForAllActiveSchedules(user.getUid());
+            StockChecker.checkAllForUser(getApplicationContext(), user.getUid(), null);
         }
 
         pendingDeepLinkIntent = getIntent();
@@ -153,6 +156,7 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         PeriodicWorkRequest dailyWork = new PeriodicWorkRequest.Builder(DailyRescheduleWorker.class, 24, TimeUnit.HOURS)
                 .setInitialDelay(computeInitialDelayToMidninght(), TimeUnit.MILLISECONDS).build();
         WorkManager.getInstance(this).enqueueUniquePeriodicWork("daily_alarm_reschedule", ExistingPeriodicWorkPolicy.KEEP, dailyWork);
+        StockCheckWorker.schedule(this);
     }
 
     private long computeInitialDelayToMidninght() {

@@ -102,7 +102,13 @@ public class InvitationFragment extends Fragment {
         } if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
             etEmail.setError(getString(R.string.format_email_tidak_valid));
             return;
-        } UserRole currentRole = authManager.getCurrentUser().getCurrentRole();
+        }
+        com.example.meduminderv1.Model.User me = authManager.getCurrentUser();
+        if (me == null) {
+            Toast.makeText(requireContext(), getString(R.string.sesi_user_tidak_ditemukan), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        UserRole currentRole = me.getCurrentRole();
         UserRole inviteRole = (currentRole == UserRole.Consumer) ? UserRole.Caregiver : UserRole.Consumer;
         LoadingOverlay.show(InvitationFragment.this);
         authManager.sendInvitation(email, inviteRole, new InvitationCallback() {

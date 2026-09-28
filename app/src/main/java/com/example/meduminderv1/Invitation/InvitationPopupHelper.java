@@ -64,7 +64,7 @@ public class InvitationPopupHelper {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(activity);
         builder.setTitle(activity.getString(R.string.undangan_baru_title))
                 .setMessage(activity.getString(R.string.sender_mengundang_anda_msg,
-                        invitation.getSender_name(), invitation.getInvite_role().name()))
+                        invitation.getSender_name(), invitation.getInvite_role() != null ? invitation.getInvite_role().name() : ""))
                 .setCancelable(false)
                 .setPositiveButton(activity.getString(R.string.lihat), (d, w) -> {
                     openInvitation(activity, authManager, invitation);

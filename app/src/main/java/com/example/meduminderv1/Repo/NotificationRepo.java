@@ -95,7 +95,43 @@ public class NotificationRepo {
         createNotification(notification, callback);
     }
 
+    private static final String INVITE_PREFIX = "invite_";
+
+    /** Notif "undangan baru" yang dibuat dari dokumen invitations (tanpa dokumen notifikasi asli). */
+    @Nullable
+    private Notification inviteNotification(DocumentSnapshot doc) {
+        Invitation inv = doc.toObject(Invitation.class);
+        if (inv == null) return null;
+        String roleName = inv.getInvite_role() != null ? inv.getInvite_role().name() : "";
+        Notification n = new Notification();
+        n.setNotification_id(INVITE_PREFIX + doc.getId());
+        n.setInvitation_id(doc.getId());
+        n.setType(NotificationType.Invitation);
+        n.setSender_uid(inv.getSender_uid());
+        n.setReceiver_uid(inv.getReceiver_uid());
+        n.setTitle(context.getString(R.string.undangan_baru_title));
+        n.setMessage(context.getString(R.string.sender_mengundang_anda_msg, inv.getSender_name(), roleName));
+        NotificationText.apply(n, "undangan_baru_title", "sender_mengundang_anda_msg",
+                inv.getSender_name() != null ? inv.getSender_name() : "", NotificationText.roleArg(inv.getInvite_role()));
+        n.setCreated_at(inv.getCreated_at());
+        n.setIs_read(inv.getStatus() != InvitationStatus.Pending); // anggap "read" begitu direspon
+        n.setTarget_role(inv.getInvite_role() != null ? inv.getInvite_role().name() : null);
+        return n;
+    }
+
     public void getNotifbyId(String notificationId, RepoCallback<Notification> callback) {
+        if (notificationId != null && notificationId.startsWith(INVITE_PREFIX)) {
+            db.collection("invitations").document(notificationId.substring(INVITE_PREFIX.length())).get()
+                    .addOnSuccessListener(doc -> {
+                        Notification n = doc.exists() ? inviteNotification(doc) : null;
+                        if (n == null) {
+                            callback.onFailure(new Exception(context.getString(R.string.notifikasi_tidak_ditemukan)));
+                        } else {
+                            callback.onSuccess(n);
+                        }
+                    }).addOnFailureListener(callback::onFailure);
+            return;
+        }
         db.collection("notifications").document(notificationId).get()
                 .addOnSuccessListener(document -> {
                     if (!document.exists()) {
@@ -114,6 +150,10 @@ public class NotificationRepo {
                 }).addOnFailureListener(callback::onFailure);
     }
     public void markAsRead(String notificationId, RepoCallback<Void> callback) {
+        if (notificationId == null || notificationId.startsWith(INVITE_PREFIX)) {
+            callback.onSuccess(null);   // undangan tanpa dokumen notifikasi: tidak ada yang perlu ditandai
+            return;
+        }
         db.collection("notifications").document(notificationId)
                 .update("is_read", true, "updated_at", Timestamp.now())
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
@@ -287,22 +327,8 @@ public class NotificationRepo {
                     if (error != null || snap == null) return;
                     fromInvite.clear();
                     for (DocumentSnapshot doc : snap.getDocuments()) {
-                        Invitation inv = doc.toObject(Invitation.class);
-                        if (inv == null) continue;
-                        Notification n = new Notification();
-                        n.setNotification_id("invite_" + doc.getId());
-                        n.setInvitation_id(doc.getId());
-                        n.setType(NotificationType.Invitation);
-                        n.setSender_uid(inv.getSender_uid());
-                        n.setReceiver_uid(inv.getReceiver_uid());
-                        n.setTitle(context.getString(R.string.undangan_baru_title));
-                        n.setMessage(context.getString(R.string.sender_mengundang_anda_msg,
-                                inv.getSender_name(), inv.getInvite_role().name()));
-                        NotificationText.apply(n, "undangan_baru_title", "sender_mengundang_anda_msg",
-                                inv.getSender_name(), NotificationText.roleArg(inv.getInvite_role()));
-                        n.setCreated_at(inv.getCreated_at());
-                        n.setIs_read(inv.getStatus() != InvitationStatus.Pending); // anggap "read" begitu direspon
-                        n.setTarget_role(inv.getInvite_role() != null ? inv.getInvite_role().name() : null);
+                        Notification n = inviteNotification(doc);
+                        if (n == null) continue;
                         if (!matchesRole(n, role)) continue;
                         fromInvite.add(n);
                     }

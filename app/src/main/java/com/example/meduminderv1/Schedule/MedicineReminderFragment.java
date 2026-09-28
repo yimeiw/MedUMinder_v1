@@ -40,6 +40,7 @@ import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
+import com.example.meduminderv1.Reminder.StockChecker;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
 import com.google.android.material.button.MaterialButton;
@@ -441,6 +442,8 @@ public class MedicineReminderFragment extends Fragment {
                                         );
 
                                         notifyReminderCreated(medName, result);
+
+                                        StockChecker.check(appContext, medicationId);
                                         Toast.makeText(appContext, appContext.getString(R.string.reminder_berhasil_dibuat), Toast.LENGTH_SHORT).show();
                                         if (!isAdded()) return; // sudah keluar dari halaman
                                         clearFields();
@@ -493,6 +496,8 @@ public class MedicineReminderFragment extends Fragment {
                                             );
 
                                             notifyReminderCreated(medName, result);
+
+                                            StockChecker.check(appContext, medicationId);
                                             Toast.makeText(appContext, appContext.getString(R.string.reminder_berhasil_dibuat), Toast.LENGTH_SHORT).show();
                                             if (!isAdded()) return; // sudah keluar dari halaman
                                             clearFields();

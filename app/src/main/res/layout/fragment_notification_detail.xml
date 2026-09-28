@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Detail notifikasi (sama untuk semua jenis notifikasi):
+     1. kartu utama  : ikon + jenis, judul, waktu lengkap, isi pesan (selalu tampil)
+     2. kartu detail : obat/appointment, jadwal, stok, status (id notifDetail; otomatis
+                       disembunyikan kalau tidak ada baris yang terisi)
+     3. tombol aksi  : tepat di bawah kartu, ikut ter-scroll -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -8,148 +13,234 @@
     tools:context=".Notification.NotificationDetailFragment">
 
     <LinearLayout
+        android:id="@+id/headerSection"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_margin="20dp">
+        android:layout_alignParentTop="true"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="20dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="30dp"
+            android:layout_height="26dp"
+            android:background="@drawable/ic_back"
+            android:contentDescription="@string/kembali"
+            app:tint="@color/hover_pressed" />
+
+        <TextView
+            android:id="@+id/tvHeaderNotif"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:id="@+id/headerSection">
-
-            <ImageButton
-                android:layout_width="30dp"
-                android:layout_height="26dp"
-                android:background="@drawable/ic_back"
-                android:id="@+id/btnBack"
-                android:layout_gravity="center"
-                app:tint="@color/hover_pressed" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/tvHeaderNotif"
-                android:textStyle="bold"
-                android:textSize="22sp"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:textColor="?attr/colorOnSurface"/>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/notifDetail"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:layout_weight="1"
             android:gravity="center"
-            android:background="@drawable/bg_offset"
-            android:padding="20dp"
-            android:layout_marginTop="20dp">
+            android:text="@string/detail_notifikasi_header"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="22sp"
+            android:textStyle="bold" />
 
+        <!-- penyeimbang tombol back supaya judul benar-benar di tengah -->
+        <Space
+            android:layout_width="30dp"
+            android:layout_height="26dp" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/headerSection"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:overScrollMode="never"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- KARTU UTAMA -->
             <LinearLayout
+                android:id="@+id/heroCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center"
-                android:layout_marginBottom="10dp">
+                android:background="@drawable/bg_offset"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/typeIcon"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_notif" />
+
+                    <TextView
+                        android:id="@+id/typeChip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:background="@drawable/bg_chip"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="4dp"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        tools:text="Medicine Reminder" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/titleNotif"
-                    android:layout_weight="1"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/reminder_what"
-                    android:textSize="18sp"
-                    android:textStyle="bold"/>
+                    android:layout_marginTop="16dp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    tools:text="@string/reminder_what" />
 
                 <TextView
                     android:id="@+id/timeNotif"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="00.00"
-                    android:textSize="14sp"/>
+                    android:layout_marginTop="6dp"
+                    android:alpha="0.7"
+                    android:drawablePadding="6dp"
+                    android:gravity="center_vertical"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="13sp"
+                    tools:text="Monday, 29 Sep 2026 • 08:00" />
 
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="16dp"
+                    android:alpha="0.15"
+                    android:background="@drawable/divider_soft" />
+
+                <TextView
+                    android:id="@+id/messageNotif"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:lineSpacingExtra="4dp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textIsSelectable="true"
+                    android:textSize="15sp"
+                    tools:text="@string/message_placeholder" />
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/messageNotif"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/message_placeholder"
-                android:textSize="14sp"
-                android:layout_marginBottom="10dp"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/tvScheduleName"
-                android:textSize="12sp"
-                android:layout_marginTop="4dp"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/tvScheduleDayTime"
-                android:textSize="12sp"
-                android:layout_marginTop="4dp"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/tvStockInfo"
-                android:textSize="12sp"
-                android:layout_marginTop="4dp"/>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnAction"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/button_selector"
-                app:backgroundTint="@null"
-                android:textColor="?attr/colorPrimaryFixed"
-                android:textAllCaps="false"
-                android:visibility="visible"
-                android:layout_marginTop="10dp"/>
-
+            <!-- KARTU DETAIL -->
             <LinearLayout
+                android:id="@+id/notifDetail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:id="@+id/layoutButton"
-                android:visibility="gone"
-                android:layout_marginTop="10dp">
+                android:layout_marginTop="16dp"
+                android:background="@drawable/border_hugcontent_nopadding"
+                android:orientation="vertical"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="18dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:alpha="0.7"
+                    android:text="@string/detail_label"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.08"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvScheduleName"
+                    style="@style/NotifDetailRow"
+                    tools:text="Medicine: Paracetamol" />
+
+                <TextView
+                    android:id="@+id/tvScheduleDayTime"
+                    style="@style/NotifDetailRow"
+                    tools:text="3x a day • 08:00, 13:00, 19:00" />
+
+                <TextView
+                    android:id="@+id/tvStockInfo"
+                    style="@style/NotifDetailRow"
+                    tools:text="Stock left: 12" />
+            </LinearLayout>
+
+            <!-- TOMBOL AKSI: tepat di bawah kartu -->
+            <LinearLayout
+                android:id="@+id/actionBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:orientation="vertical"
+                android:paddingBottom="4dp">
 
                 <com.google.android.material.button.MaterialButton
-                    android:layout_weight="1"
-                    android:id="@+id/btnAcc"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/btnAction"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
                     android:background="@drawable/button_selector"
-                    app:backgroundTint="?attr/colorTertiaryFixed"
-                    android:text="@string/terima"
+                    android:minHeight="52dp"
+                    android:textAllCaps="false"
                     android:textColor="?attr/colorPrimaryFixed"
-                    android:textAllCaps="false"/>
+                    android:textSize="15sp"
+                    android:visibility="gone"
+                    app:backgroundTint="@null" />
 
-                <Space
-                    android:layout_width="10dp"
-                    android:layout_height="wrap_content"/>
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnReject"
-                    android:layout_weight="1"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:id="@+id/layoutButton"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/button_selector"
-                    app:backgroundTint="?attr/colorTertiaryFixedDim"
-                    android:text="@string/tolak"
-                    android:textColor="?attr/colorPrimaryFixed"
-                    android:textAllCaps="false"/>
+                    android:layout_marginBottom="12dp"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
 
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAcc"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/button_selector"
+                        android:minHeight="52dp"
+                        android:text="@string/terima"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/colorPrimaryFixed"
+                        android:textSize="15sp"
+                        app:backgroundTint="?attr/colorTertiaryFixed" />
+
+                    <Space
+                        android:layout_width="12dp"
+                        android:layout_height="wrap_content" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnReject"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/button_selector"
+                        android:minHeight="52dp"
+                        android:text="@string/tolak"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/colorPrimaryFixed"
+                        android:textSize="15sp"
+                        app:backgroundTint="?attr/colorTertiaryFixedDim" />
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
+    </ScrollView>
 
 </RelativeLayout>

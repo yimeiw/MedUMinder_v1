@@ -657,4 +657,28 @@
     <string name="x_menghapus_hubungan_msg" formatted="true">%1$s（%2$s）已解除与您的关系。</string>
     <string name="nama_obat_tidak_dapat_diubah">药品名称无法修改</string>
     <string name="hapus_entri_title">删除此条目</string>
+    <string name="status_undangan_menunggu">状态：等待回复</string>
+    <string name="status_undangan_diterima">状态：已接受</string>
+    <string name="status_undangan_ditolak">状态：已拒绝</string>
+    <string name="refillReminder">补药提醒</string>
+    <string name="remindWhenStockLasts">库存剩余时提醒</string>
+    <string name="refillReminderHint">当药物将在这些天内用完时提醒您一次，用完时再提醒一次。</string>
+    <string name="stok_menipis_msg">%1$s 只剩 %2$s 粒，大约够用 %3$s。请尽快补充！</string>
+    <string name="stok_menipis_hari_ini_msg">%1$s 只剩 %2$s 粒，不够一天。请今天补充！</string>
+    <string name="stok_habis_title">药品已用完（%1$s）</string>
+    <string name="stok_habis_msg">%1$s 已用完。请补充，以免错过服药。</string>
+    <string name="stok_menipis_cg_msg">%4$s 的 %1$s 只剩 %2$s 粒，大约够用 %3$s。</string>
+    <string name="stok_menipis_hari_ini_cg_msg">%4$s 的 %1$s 只剩 %2$s 粒，不够一天。</string>
+    <string name="stok_habis_cg_msg">%4$s 的 %1$s 已用完。</string>
+    <plurals name="jumlah_hari">
+        <item quantity="one">%d 天</item>
+        <item quantity="other">%d 天</item>
+    </plurals>
+    <string name="detail_notifikasi_header">通知详情</string>
+    <string name="detail_label">详情</string>
+    <string name="kembali">返回</string>
+    <string name="login_google_dibatalkan">已取消 Google 登录</string>
+    <string name="tidak_ada_akun_google">此设备上没有 Google 账号，请先在设置中添加。</string>
+    <string name="login_google_gagal">Google 登录失败，请重试。</string>
+    <string name="nav_home">首页</string>
 </resources>

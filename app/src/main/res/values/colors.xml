@@ -29,4 +29,7 @@
     <color name="dark_biru">#7AA2F7</color>
     <color name="dark_merah">#F28B8B</color>
     <color name="dark_outline">#343B47</color>
+    <!-- kartu notifikasi belum dibaca: warna biru utama app dengan opacity rendah -->
+    <color name="notif_unread">#262C68E6</color>
+    <color name="notif_unread_dark">#337AA2F7</color>
 </resources>

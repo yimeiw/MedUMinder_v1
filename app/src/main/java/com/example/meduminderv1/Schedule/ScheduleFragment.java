@@ -258,18 +258,20 @@ public class ScheduleFragment extends Fragment {
         db.collection("medication_schedules").document(schedulesId).get()
                 .addOnSuccessListener(scheduleSnap -> {
                     MedicationSchedules schedule = scheduleSnap.toObject(MedicationSchedules.class);
-                    if (schedule == null) { callback.onResolved("Obat", 0); return; }
+                    if (schedule == null || schedule.getMedication_id() == null || schedule.getMedication_id().isEmpty()) {
+                        callback.onResolved("Obat", 0); return;
+                    }
                     db.collection("medications").document(schedule.getMedication_id()).get()
                             .addOnSuccessListener(medSnap -> {
                                 Medication med = medSnap.toObject(Medication.class);
                                 int stock = 0;
                                 if (med != null && med.getStock() != null && med.getStock().get("stok_obat") != null) {
-                                    stock = ((Number) med.getStock().get("stok_obat")).intValue();
+                                    Object so = med.getStock().get("stok_obat"); stock = so instanceof Number ? ((Number) so).intValue() : 0;
                                 }
                                 int finalStock = stock;
                                 if (med != null && med.getCustom_medicine_name() != null) {
                                     callback.onResolved(med.getCustom_medicine_name(), finalStock);
-                                } else if (med != null && med.getCatalog_id() != null) {
+                                } else if (med != null && med.getCatalog_id() != null && !med.getCatalog_id().isEmpty()) {
                                     db.collection("medicine_catalog").document(med.getCatalog_id()).get()
                                             .addOnSuccessListener(catSnap -> {
                                                 MedicineCatalog cat = catSnap.toObject(MedicineCatalog.class);

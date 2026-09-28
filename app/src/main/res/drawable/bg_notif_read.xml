@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Kartu notifikasi belum dibaca: biru utama app transparan, tanpa offset -->
+<!-- Kartu notifikasi yang sudah dibaca: transparan, garis tipis -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <solid android:color="?attr/unreadSurface"/>
+    <solid android:color="?attr/readSurface"/>
 
     <corners
         android:radius="20dp"/>
 
-    <stroke android:color="?attr/unreadAccent"
+    <stroke android:color="?attr/readOutline"
         android:width="1dp"/>
 
 </shape>

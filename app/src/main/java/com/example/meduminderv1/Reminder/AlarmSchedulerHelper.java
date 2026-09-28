@@ -346,13 +346,19 @@ public class AlarmSchedulerHelper {
 
     private static void resolveNamaObatThenSchedule(Context context, String scheduleId, MedicationSchedules schedules) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("medications").document(schedules.getMedication_id()).get().addOnSuccessListener(medSnap -> {
+        String medId = schedules.getMedication_id();
+        if (medId == null || medId.isEmpty()) {
+            // jadwal tanpa data obat: alarm tetap dijadwalkan dengan nama default
+            scheduleAll(context, scheduleId, "Obat", schedules);
+            return;
+        }
+        db.collection("medications").document(medId).get().addOnSuccessListener(medSnap -> {
             Medication med = medSnap.toObject(Medication.class);
             if (med == null) {
                 scheduleAll(context, scheduleId, "Obat", schedules);
             } else if (med.getCustom_medicine_name() != null) {
                 scheduleAll(context, scheduleId, med.getCustom_medicine_name(), schedules);
-            } else if (med.getCatalog_id() != null) {
+            } else if (med.getCatalog_id() != null && !med.getCatalog_id().isEmpty()) {
                 db.collection("medicine_catalog").document(med.getCatalog_id()).get().addOnSuccessListener(catSnap -> {
                     MedicineCatalog cat = catSnap.toObject(MedicineCatalog.class);
                     scheduleAll(context, scheduleId, cat != null ? cat.getNama_obat() : "Obat", schedules);

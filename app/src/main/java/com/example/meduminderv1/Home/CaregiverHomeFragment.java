@@ -403,37 +403,52 @@ public class CaregiverHomeFragment extends Fragment {
         });
     }
 
+    /** Selalu memanggil callback. name == null berarti jadwal/obat sudah tidak ada. */
     private void resolveMedName(String schedulesId, MedResolveCallback callback) {
+        appContext();
+        if (schedulesId == null || schedulesId.isEmpty()) { callback.onResolved(null, 0, null); return; }
         db.collection("medication_schedules").document(schedulesId).get()
                 .addOnSuccessListener(scheduleSnap -> {
-                    if (!isAdded()) return;
                     MedicationSchedules schedule = scheduleSnap.toObject(MedicationSchedules.class);
-                    if (schedule == null) return;
-                    db.collection("medications").document(schedule.getMedication_id()).get()
+                    String medId = schedule != null ? schedule.getMedication_id() : null;
+                    if (medId == null || medId.isEmpty()) { callback.onResolved(null, 0, null); return; }
+                    db.collection("medications").document(medId).get()
                             .addOnSuccessListener(medSnap -> {
-                                if (!isAdded()) return;
                                 Medication med = medSnap.toObject(Medication.class);
-                                if (med == null) return;
+                                if (med == null) { callback.onResolved(null, 0, null); return; }
                                 int stock = 0;
-                                if (med.getStock() != null && med.getStock().get("stok_obat") != null){
-                                    stock = ((Number) med.getStock().get("stok_obat")).intValue();
+                                if (med.getStock() != null) {
+                                    Object so = med.getStock().get("stok_obat");
+                                    stock = so instanceof Number ? ((Number) so).intValue() : 0;
                                 }
                                 int finalStock = stock;
-                                String medType = med.getMed_type(); //
+                                String medType = med.getMed_type();
+                                String fallback = appContext().getString(R.string.obat_default);
                                 if (med.getCustom_medicine_name() != null){
                                     callback.onResolved(med.getCustom_medicine_name(), finalStock, medType);
-                                } else if (med.getCatalog_id() != null) {
+                                } else if (med.getCatalog_id() != null && !med.getCatalog_id().isEmpty()) {
                                     db.collection("medicine_catalog").document(med.getCatalog_id()).get()
                                             .addOnSuccessListener(catSnap -> {
-                                                if (!isAdded()) return;
                                                 MedicineCatalog catalog = catSnap.toObject(MedicineCatalog.class);
-                                                callback.onResolved(catalog != null ? catalog.getNama_obat() : getString(R.string.obat_default), finalStock, medType);
-                                            });
+                                                callback.onResolved(catalog != null && catalog.getNama_obat() != null
+                                                        ? catalog.getNama_obat() : fallback, finalStock, medType);
+                                            })
+                                            .addOnFailureListener(e -> callback.onResolved(fallback, finalStock, medType));
                                 } else {
-                                    callback.onResolved(getString(R.string.obat_default), finalStock, medType);
+                                    callback.onResolved(fallback, finalStock, medType);
                                 }
-                            });
-                });
+                            })
+                            .addOnFailureListener(e -> callback.onResolved(null, 0, null));
+                })
+                .addOnFailureListener(e -> callback.onResolved(null, 0, null));
+    }
+
+    // context aplikasi yang tetap aman dipakai walau fragment sudah ditutup
+    private android.content.Context appCtx;
+    private android.content.Context appContext() {
+        android.content.Context c = getContext();
+        if (c != null) appCtx = c.getApplicationContext();
+        return appCtx;
     }
 
     private interface MedResolveCallback{
@@ -471,6 +486,12 @@ public class CaregiverHomeFragment extends Fragment {
                         }
                         resolveMedName(log.getMedication_schedules_id(), (medName, stock, medType) -> {
                             if (!isAdded()) return;
+                            if (medName == null) {
+                                // jadwal/obat sudah dihapus: lewati, tapi tetap hitung supaya daftar tetap muncul
+                                remaining[0]--;
+                                if (remaining[0] <= 0) mergeAppointments(consumerUid, combined, startOfDay, startOfTomorrow);
+                                return;
+                            }
 
                             String info = "";
                             if ("PIL".equals(medType)) {
@@ -487,6 +508,7 @@ public class CaregiverHomeFragment extends Fragment {
                             }
                         });
                     }
+                    if (remaining[0] <= 0) mergeAppointments(consumerUid, combined, startOfDay, startOfTomorrow); // semua log kosong
                 });
     }
 

@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    tools:context=".Language.LanguageFragment">'
+    tools:context=".Language.LanguageFragment">
 
     <LinearLayout
         android:id="@+id/headerSection"
