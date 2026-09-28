@@ -1,0 +1,664 @@
+<resources>
+    <string name="app_name">MedUMinder</string>
+    <string name="sign_up_here"><u>Sign Up here!</u></string>
+    <string name="reset_password">Forgot password?</string>
+    <string name="login_here"><u>Login here!</u></string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign in or register</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="welcome">Welcome !</string>
+    <string name="invalid_username">Not a valid username</string>
+    <string name="invalid_password">Password must be >5 characters</string>
+    <string name="login_failed">"Login failed"</string>
+    <string name="login_success">"Login success"</string>
+    <string name="greetings_consumer">"Jangan lupa untuk minum obat Anda!"</string>
+    <string name="greetings_caregiver">"Tolong ingatkan Consumer untuk minum obat!"</string>
+    <string name="desc_kepatuhan_tinggi">"Minggu ini kepatuhan Anda sangat bagus. Pertahankan!"</string>
+    <string name="desc_kepatuhan_okela">"Minggu ini kepatuhan Anda cukup bagus. Ayo ditingkatkan!"</string>
+    <string name="desc_kepatuhan_rendah">"Minggu ini kepatuhan Anda sangat kurang. Segera ditingkatkan!"</string>
+    <string name="alert_invite_consumer">"Menghubungkan consumer untuk memantau kepatuhan konsumsi obat dan menerima notifikasi obat terlewat."</string>
+    <string name="alert_invite_caregiver">"Menambahkan caregiver yang dapat menerima notifikasi dan mengirim pengingat obat."</string>
+
+    <string-array name="role_array">
+        <item>Consumer</item>
+        <item>Caregiver</item>
+    </string-array>
+
+    <!-- Pengaturan Bahasa Indonesia -->
+    <string name="current_language">Bahasa Saat Ini</string>
+    <string name="language_options">Pilihan Bahasa</string>
+
+    <string name="english">English</string>
+    <string name="indonesia">Indonesia</string>
+    <string name="chinese">中文</string>
+
+    <string name="profile">Profil</string>
+    <string name="nama">Nama</string>
+    <string name="email">Email</string>
+    <string name="googleAcc">Akun Google</string>
+    <string name="deleteAcc">Hapus Akun</string>
+    <string name="forgotpass">Lupa Kata Sandi</string>
+    <string name="kepatuhan">Tingkat Kepatuhan</string>
+    <string name="selengkapnya">Lihat Selengkapnya</string>
+    <string name="pengaturan">Pengaturan</string>
+    <string name="bahasa">Bahasa</string>
+    <string name="notifikasi">Notifikasi</string>
+    <string name="activateCaregiver">Aktivasi Caregiver</string>
+    <string name="invCaregiver">Undang Caregiver</string>
+    <string name="invConsumer">Undang Consumer</string>
+    <string name="caregiverList">List Caregiver</string>
+    <string name="consumerList">List Consumer</string>
+    <string name="editProfile">Edit Profile</string>
+    <string name="theme">Tampilan</string>
+    <string name="langSetting">Pengaturan Bahasa</string>
+    <string name="currentLanguage">Bahasa Saat Ini</string>
+    <string name="langOption">Pilihan Bahasa</string>
+
+    <!-- notif setting -->
+    <string name="notifSetting">Pengaturan Notifikasi</string>
+    <string name="ringtone">Nada Dering</string>
+    <string name="customMsg">Kustomisasi Pesan Pengingat</string>
+    <string name="reminderMsg">Pesan Pengingat</string>
+    <string name="time_to_consume_med">Saatnya mengonsumsi obat</string>
+    <string name="jangan_lupa_minum_obat">Jangan lupa minum obat</string>
+    <string name="waktunya_minum_obat">Waktunya minum obat</string>
+    <string name="fiveMin">5 Menit</string>
+    <string name="tenMin">10 Menit</string>
+    <string name="thirtyMin">30 Menit</string>
+    <string name="oneHour">1 Jam</string>
+    <string name="twoHour">2 Jam</string>
+    <string name="snoozeDuration">Durasi Tunda</string>
+    <string name="appointmentReminder">Waktu Pengingat Janji Temu</string>
+    <string name="remindMeBefore">Ingatkan Saya Sebelum</string>
+    <string name="remindUntilConfirm">Pengingat Berulang Hingga Konfirmasi</string>
+
+    <string name="jenisObat">Jenis Obat</string>
+    <string name="obatPil">Pil</string>
+    <string name="obatCair">Cair</string>
+    <string name="stockObat">Stok Obat</string>
+    <string name="isiUlangObat">Isi Ulang Stok Obat</string>
+
+    <string name="download">Unduh</string>
+    <string name="analisisRespon">Analisis Respon</string>
+    <string name="persentaseKepatuhan">Persentase Kepatuhan</string>
+    <string name="grafikKepatuhan">Grafik Kepatuhan</string>
+    <string name="totalObatDiabaikan">Total Obat Diabaikan</string>
+    <string name="totalObatDikonsumsi">Total Obat Dikonsumsi</string>
+    <string name="totalObatSnooze">Total Ingatkan Kembali</string>
+    <string name="noConsumptionData">Belum Ada Data Konsumsi Obat</string>
+    <string name="tingkatKepatuhan">Tingkat Kepatuhan Konsumsi Obat</string>
+    <string name="mingguan">Mingguan</string>
+    <string name="bulanan">Bulanan</string>
+    <string name="tahunan">Tahunan</string>
+    <string name="laporanStatistik">Laporan Statistik</string>
+
+    <string name="saveChanges">Simpan Perubahan</string>
+    <string name="ubahPengingat">Ubah Pengingat</string>
+    <string name="tambahkan">Tambahkan</string>
+
+    <!-- Home Page -->
+    <string name="home_greeting">Halo, %1$s!</string>
+    <string name="home_greeting_caregiver">Halo, %1$s</string>
+    <string name="obat_default">Obat</string>
+    <string name="jumlah_obat">%1$d Obat</string>
+    <string name="add_consumer">Tambah Consumer</string>
+    <string name="remind_consumer">Ingatkan Consumer</string>
+    <string name="consumer_belum_ada_jadwal">Consumer belum ada jadwal</string>
+    <string name="adherence_rate">Tingkat Kepatuhan</string>
+    <string name="total_obat_terlewat">Total Obat Terlewat</string>
+    <string name="total_obat_akan_datang">Total Obat Akan Datang</string>
+    <string name="general">Umum</string>
+    <string name="document">Dokumen</string>
+    <string name="riwayat">Riwayat</string>
+    <string name="statistik">Statistik</string>
+    <string name="list_consumer">Daftar Consumer</string>
+
+    <string name="tambah_pengingat">Tambah Pengingat</string>
+    <string name="tambah_appointment">Tambah Appointment</string>
+    <string name="log_jadwal">Pelacak Jadwal</string>
+
+    <string name="jadwal_berikutnya">Jadwal Berikutnya</string>
+    <string name="stok_obat">Stok Obat: </string>
+    <string name="sudah_dikonsumsi">Sudah Dikonsumsi</string>
+    <string name="belum_ada_jadwal">Belum ada jadwal</string>
+    <string name="tambahkan_jadwal">Tambahkan Jadwal</string>
+
+    <string name="jadwal_hari_ini">Jadwal Hari Ini</string>
+    <string name="lihat_selengkapnya">Lihat Selengkapnya</string>
+    <string name="tidak_ada_jadwal_hari_ini">Tidak ada jadwal hari ini.</string>
+
+    <string name="ringkasan_statistik">Ringkasan Statistik</string>
+    <string name="belum_ada_data_konsumsi">Belum ada data konsumsi obat.</string>
+
+    <string name="dosis_seharusnya">Dosis seharusnya</string>
+    <string name="dosis_dikonsumsi">Dosis dikonsumsi</string>
+
+    <string name="hari_ini">Hari ini</string>
+    <string name="besok">Besok</string>
+    <string name="sisa_stok">Sisa stok: %1$d</string>
+
+    <string name="berhasil_dicatat">Berhasil dicatat</string>
+    <string name="pengingat_terkirim">Pengingat terkirim.</string>
+
+    <!-- stat -->
+    <string name="legend_dikonsumsi">● Dikonsumsi</string>
+    <string name="legend_snooze">● Ingatkan Nanti</string>
+    <string name="legend_ignored">● Diabaikan</string>
+    <string name="legend_dikonsumsi_format">Dikonsumsi (%1$d)</string>
+    <string name="legend_snooze_format">Ingatkan Nanti (%1$d)</string>
+    <string name="legend_ignored_format">Diabaikan (%1$d)</string>
+
+    <string name="mengingatkan_minum_obat">%1$s mengingatkan Anda untuk minum obat %2$s</string>
+
+    <!-- Switch Role -->
+    <string name="caregiver">Caregiver</string>
+    <string name="caregiver_description">Membantu mengawasi kepatuhan Consumer.</string>
+    <string name="consumer">Consumer</string>
+    <string name="consumer_description">Mengelola pengingat untuk kesehatan.</string>
+
+    <!-- popup edit -->
+    <string name="edit">Edit</string>
+    <string name="delete">Hapus</string>
+    <string name="kirim">Kirim</string>
+
+    <!-- item_relation -->
+    <string name="loading">Memuat...</string>
+
+    <!-- item_notification -->
+    <string name="reminder_what">Reminder apa</string>
+    <string name="message_placeholder">Isi message</string>
+
+    <!-- item_medicinelog -->
+    <string name="sisa_stok_label">Sisa stok: </string>
+    <string name="waktu">Waktu:</string>
+    <string name="dikonsumsi">Dikonsumsi</string>
+
+    <!-- dropdown -->
+    <string name="riwayat_konsumsi">Riwayat Konsumsi</string>
+
+    <!-- item appointment log -->
+    <string name="nama_appointment">Nama Appointment</string>
+    <string name="dihadiri">Dihadiri</string>
+
+    <!-- schedule -->
+    <string name="medicine">Obat</string>
+    <string name="schedule">Jadwal</string>
+    <string name="appointment">Janji Temu</string>
+
+    <!-- reminder -->
+    <string name="stok_hampir_habis">Obat Anda sudah mau habis, segera isi ulang obat Anda!</string>
+    <string name="tolak">Tolak</string>
+    <string name="terima">Terima</string>
+    <string name="tunda_pengingat">Tunda Pengingat</string>
+    <string name="sudah_diminum">Sudah Diminum</string>
+    <string name="nama_lokasi">Nama Lokasi</string>
+    <string name="status">Status</string>
+    <string name="nama_obat">Nama Obat</string>
+    <string name="konfirmasi_pengingat">Konfirmasi Pengingat</string>
+
+    <!-- medicine reminder -->
+    <string name="masukkan_nama_obat">Masukkan nama obat Anda</string>
+    <string name="frekuensi_minum_obat">Frekuensi Minum Obat</string>
+    <string name="pilih_frekuensi_minum_obat">Pilih frekuensi minum obat Anda</string>
+    <string name="tanggal_selesai_minum_obat">Tanggal Selesai Minum Obat</string>
+    <string name="masukkan_jumlah_stok_obat">Masukkan jumlah stok obat Anda</string>
+    <string name="save_reminder">Simpan Pengingat</string>
+
+    <string-array name="frekuensi_array">
+        <item>Sekali sehari</item>
+        <item>Dua kali sehari</item>
+        <item>Tiga kali sehari</item>
+        <item>Empat kali sehari</item>
+        <item>Lima kali sehari</item>
+        <item>Enam kali sehari</item>
+    </string-array>
+
+    <string name="belum_ada_relasi">Belum ada relasi.</string>
+
+    <!-- log -->
+    <string name="terlewatkan">Terlewatkan</string>
+    <string name="belum_ada_riwayat_konsumsi">Belum ada riwayat konsumsi.</string>
+    <string name="belum_ada_riwayat_jadwal_temu">Belum ada riwayat jadwal temu.</string>
+    <string name="akan_datang">Akan Datang</string>
+    <string name="semua">Semua</string>
+
+    <!-- invitation-->
+    <string name="kirim_undangan">Kirim Undangan</string>
+    <string name="masukkan_email">Masukkan Email</string>
+    <string name="email_user">Email User</string>
+
+    <!-- edit medicine -->
+    <string name="perbarui_pengingat">Perbarui Pengingat</string>
+    <string name="frekuensi">Frekuensi</string>
+
+    <!-- delete account -->
+    <string name="cancel">Batal</string>
+    <string name="enter_password">Masukkan password Anda</string>
+
+    <!-- appointment reminder -->
+    <string name="simpan_appointment">Simpan Appointment</string>
+    <string name="jam_appointment">Jam Appointment</string>
+    <string name="tanggal_appointment">Tanggal Appointment</string>
+    <string name="masukkan_lokasi_appointment">Masukkan lokasi Appointment Anda</string>
+    <string name="lokasi_appointment">Lokasi Appointment</string>
+    <string name="masukkan_nama_appointment">Masukkan nama Appointment Anda</string>
+    <string name="tambahkan_appointment">Tambahkan Appointment</string>
+
+
+    <!-- pilih consumer -->
+    <string name="pilih_consumer">Pilih Consumer</string>
+
+    <!-- signup -->
+    <string name="already_have_account">Sudah memiliki akun?</string>
+    <string name="or_sign_up_with">Atau Daftar dengan</string>
+    <string name="sign_up">Daftar</string>
+    <string name="enter_email">Masukkan email Anda</string>
+    <string name="enter_full_name">Masukkan nama lengkap Anda</string>
+    <string name="welcome_signup">Selamat Datang! Silakan Daftar di Sini</string>
+
+    <!-- login -->
+    <string name="dont_have_account">Belum memiliki akun?</string>
+    <string name="or_login_with">Atau Login dengan</string>
+    <string name="login">Login</string>
+    <string name="welcome_login">Selamat Datang! Silakan Login di Sini</string>
+
+    <!-- izin -->
+    <string name="izin_alarm_toast">Aktifkan izin \"Alarm &amp; pengingat\" dulu supaya notifikasi obat bisa muncul</string>
+    <string name="pilih_jam_minum_obat_title">Pilih Jam Minum Obat</string>
+    <string name="caregiver_menambahkan_jadwal_untuk_anda">%1$s menambahkan jadwal minum obat %2$s untuk Anda</string>
+    <string name="izin_alarm_dibutuhkan">Izin Alarm Dibutuhkan</string>
+    <string name="izin_alarm_message">Agar pengingat obat berbunyi tepat waktu, aktifkan izin alarm &amp; pengingat untuk MedUMinder.</string>
+    <string name="aktifkan">Aktifkan</string>
+    <string name="nanti">Nanti</string>
+
+    <!-- auth -->
+    <string name="data_user_tidak_boleh_kosong">Data user tidak boleh kosong.</string>
+    <string name="email_tidak_boleh_kosong">Email tidak boleh kosong.</string>
+    <string name="format_email_tidak_valid">Format email tidak valid.</string>
+    <string name="password_minimal">Password minimal 6 karakter.</string>
+    <string name="gagal_membuat_akun">Gagal membuat akun.</string>
+    <string name="login_gagal_user_tidak_ditemukan">Login gagal, User tidak ditemukan.</string>
+    <string name="email_atau_password_salah">Email atau password salah.</string>
+    <string name="email_belum_terdaftar">Email belum terdaftar.</string>
+    <string name="akun_google_login">Jika akun Anda dibuat menggunakan Google, silahkan login menggunakan Google.</string>
+    <string name="password_salah">Password salah.</string>
+    <string name="credential_tidak_valid">Credential tidak valid.</string>
+    <string name="google_credential_tidak_valid">Google Credential tidak valid.</string>
+    <string name="user_tidak_ditemukan">User tidak ditemukan.</string>
+    <string name="user_belum_login">User belum login.</string>
+    <string name="google_sudah_terhubung">Google sudah terhubung</string>
+    <string name="email_google_harus_sama">Email Google harus sama dengan email akun MedUMinder.</string>
+    <string name="belum_login">Belum login.</string>
+    <string name="provider_tidak_didukung">Provider tidak didukung.</string>
+    <string name="nama_minimal">Nama minimal 4 karakter.</string>
+    <string name="data_user_tidak_ditemukan">Data user tidak ditemukan.</string>
+    <string name="email_wajib_diisi">Email wajib diisi.</string>
+    <string name="tidak_dapat_mengundang_diri">Anda tidak dapat mengundang akun sendiri.</string>
+    <string name="user_sudah_terhubung">User sudah terhubung.</string>
+    <string name="invitation_pending">Invitation masih pending.</string>
+    <string name="undangan_diterima">Undangan Anda diterima.</string>
+    <string name="undangan_ditolak">Undangan Anda ditolak.</string>
+    <string name="email_terdaftar_google_msg">Email terdaftar menggunakan akun Google. Silahkan login menggunakan Google.</string>
+    <string name="password_tidak_boleh_kosong">Password tidak boleh kosong.</string>
+    <string name="undangan_terkirim_full_msg">Undangan Anda ke %1$s sebagai %2$s sudah terkirim dan menunggu respon.</string>
+    <string name="sender_mengundang_anda_msg">%1$s mengundang Anda menjadi %2$s</string>
+    <string name="notif_type_invitation">Undangan</string>
+    <string name="notif_type_medicine">Pengingat Obat</string>
+    <string name="notif_type_appointment">Pengingat Janji Temu</string>
+    <string name="notif_type_stock">Pengingat Stok Menipis</string>
+    <string name="notif_type_default">Notifikasi</string>
+
+    <!-- ============ Tambahan: teks yang sebelumnya hardcode (hasil audit) ============ -->
+    <string name="obat_nol">0 Obat</string>
+    <string name="waktu_hint_spasi">00 : 00</string>
+    <string name="waktu_default">00:00</string>
+    <string name="contoh_lokasi">Ada deh</string>
+    <string name="akun_google_sudah_terhubung_toast">Akun Google sudah terhubung.</string>
+    <string name="akun_berhasil_dibuat_pesan">Akun berhasil dibuat.\n</string>
+    <string name="akun_berhasil_dihapus">Akun berhasil dihapus</string>
+    <string name="anda_menambahkan_jadwal_appointment">Anda menambahkan jadwal appointment </string>
+    <string name="anda_menambahkan_jadwal_minum_obat">Anda menambahkan jadwal minum obat </string>
+    <string name="pesan_pengingat_terkirim_consumer">Anda mengirim pengingat kepada consumer untuk memeriksa jadwalnya.</string>
+    <string name="appointment_sudah_ditandai_dihadiri_msg">Anda sudah menandai appointment ini sebagai dihadiri.</string>
+    <string name="contoh_nama_obat">Antimo</string>
+    <string name="konfirmasi_ganti_role_msg">Apakah Anda yakin ingin berpindah ke role </string>
+    <string name="konfirmasi_logout">Apakah Anda yakin ingin logout?</string>
+    <string name="konfirmasi_hapus_akun_msg">Apakah Anda yakin ingin menghapus akun?\nSeluruh data akan dihapus permanen.</string>
+    <string name="konfirmasi_hapus_hubungan_msg">Apakah Anda yakin ingin menghapus hubungan dengan </string>
+    <string name="aplikasi_email_tidak_ditemukan">Aplikasi email tidak ditemukan.</string>
+    <string name="label_appointment_colon">Appointment: </string>
+    <string name="appointment_ditambahkan_title">Appointment Ditambahkan</string>
+    <string name="appointment_id_tidak_ditemukan">Appointment ID tidak ditemukan</string>
+    <string name="appointment_berhasil_dihapus">Appointment berhasil dihapus</string>
+    <string name="appointment_berhasil_diperbarui">Appointment berhasil diperbarui</string>
+    <string name="appointment_berhasil_disimpan">Appointment berhasil disimpan</string>
+    <string name="appointment_ditandai_dihadiri">Appointment ditandai sebagai dihadiri</string>
+    <string name="appointment_tidak_ditemukan">Appointment tidak ditemukan</string>
+    <string name="bagikan">Bagikan</string>
+    <string name="batalkan_status">Batalkan Status</string>
+    <string name="belum_ada_consumer">Belum ada consumer</string>
+    <string name="buka_email">Buka Email</string>
+    <string name="caregiver_menghapus_jadwal_msg">Caregiver menghapus jadwal </string>
+    <string name="caregiver_mengubah_jadwal_appointment_msg">Caregiver mengubah jadwal appointment </string>
+    <string name="consumer_sudah_menghadiri_appointment">Consumer Sudah Menghadiri Appointment</string>
+    <string name="consumer_sudah_minum_obat">Consumer Sudah Minum Obat</string>
+    <string name="data_appointment_tidak_ditemukan">Data appointment tidak ditemukan</string>
+    <string name="data_appointment_tidak_lengkap">Data appointment tidak lengkap</string>
+    <string name="data_pengguna_tidak_ditemukan">Data pengguna tidak ditemukan</string>
+    <string name="data_reminder_belum_lengkap">Data reminder belum lengkap</string>
+    <string name="data_reminder_tidak_ditemukan">Data reminder tidak ditemukan</string>
+    <string name="edit_appointment_title">Edit Appointment</string>
+    <string name="email_belum_diverifikasi_title">Email Belum Diverifikasi</string>
+    <string name="email_sudah_terdaftar_title">Email Sudah Terdaftar</string>
+    <string name="email_berhasil_dikirim">Email berhasil dikirim</string>
+    <string name="email_harus_diisi">Email harus diisi</string>
+    <string name="email_sudah_digunakan_msg">Email ini sudah digunakan. Silakan login atau gunakan email lain.</string>
+    <string name="email_sudah_terdaftar_password_msg">Email ini sudah terdaftar dengan password. Silakan login menggunakan email dan password.</string>
+    <string name="email_tidak_valid">Email tidak valid</string>
+    <string name="filter_bulanan_terpilih">Filter Bulanan terpilih</string>
+    <string name="filter_mingguan_terpilih">Filter Mingguan terpilih</string>
+    <string name="filter_tahunan_terpilih">Filter Tahunan terpilih</string>
+    <string name="frekuensi_minum_obat_wajib_diisi">Frekuensi minum obat wajib diisi</string>
+    <string name="gagal_membuat_file_laporan">Gagal membuat file laporan</string>
+    <string name="gagal_membuat_folder_download">Gagal membuat folder Download</string>
+    <string name="gagal_mengambil_laporan">Gagal mengambil laporan</string>
+    <string name="gagal_mengambil_ukuran_laporan">Gagal mengambil ukuran laporan</string>
+    <string name="gagal_menghapus_msg">Gagal menghapus: </string>
+    <string name="gagal_menghapus_appointment">Gagal menghapus appointment</string>
+    <string name="gagal_menghapus_jadwal">Gagal menghapus jadwal</string>
+    <string name="gagal_mengubah_status_appointment">Gagal mengubah status appointment</string>
+    <string name="gagal_mengunduh_laporan">Gagal mengunduh laporan</string>
+    <string name="gagal_update_status_msg">Gagal update status: </string>
+    <string name="ganti_role_title">Ganti Role</string>
+    <string name="google_berhasil_dihubungkan">Google berhasil dihubungkan.</string>
+    <string name="hapus_hubungan_title">Hapus Hubungan</string>
+    <string name="hubungan_berhasil_dihapus">Hubungan berhasil dihapus</string>
+    <string name="hubungkan">Hubungkan</string>
+    <string name="hubungkan_google_title">Hubungkan Google</string>
+    <string name="hubungkan_akun_google_msg">Hubungkan akun Google ke akun ini?</string>
+    <string name="isi_ulang_obat_notif_title">ISI ULANG OBAT (</string>
+    <string name="invitation_role_title" formatted="true">Undangan %2$s</string>
+    <string name="invitation_title">Invitation </string>
+    <string name="invitation_berhasil_dikirim">Invitation berhasil dikirim.</string>
+    <string name="invite_caregiver_btn">Invite Caregiver</string>
+    <string name="invite_consumer_btn">Invite Consumer</string>
+    <string name="izin_penyimpanan_diperlukan">Izin penyimpanan diperlukan untuk mengunduh laporan</string>
+    <string name="jadwal_appointment_baru_title">Jadwal Appointment Baru</string>
+    <string name="jadwal_appointment_diperbarui_title">Jadwal Appointment Diperbarui</string>
+    <string name="jadwal_obat_baru_title">Jadwal Obat Baru</string>
+    <string name="jadwal_obat_diperbarui_title">Jadwal Obat Diperbarui</string>
+    <string name="jadwal_obat_ditambahkan_title">Jadwal Obat Ditambahkan</string>
+    <string name="jadwal_berhasil_dihapus">Jadwal berhasil dihapus</string>
+    <string name="jadwal_tidak_ditemukan">Jadwal tidak ditemukan</string>
+    <string name="jam_minum_obat_label">Jam Minum Obat </string>
+    <string name="jam_minum_tidak_boleh_sama">Jam minum tidak boleh sama.</string>
+    <string name="jam_tersebut_sudah_dipilih">Jam tersebut sudah dipilih.</string>
+    <string name="laporan_berhasil_diunduh">Laporan berhasil diunduh</string>
+    <string name="laporan_ukuran_tidak_valid">Laporan tidak memiliki ukuran yang valid</string>
+    <string name="linked_status">Linked</string>
+    <string name="logout_title">Logout</string>
+    <string name="lokasi_appointment_wajib_diisi">Lokasi Appointment wajib diisi.</string>
+    <string name="masukkan_email_dahulu">Masukkan email terlebih dahulu.</string>
+    <string name="brand_med">Med</string>
+    <string name="aktivasi_caregiver_msg">Mengaktifkan akses caregiver untuk memantau dan membantu pengingat konsumsi obat consumer.</string>
+    <string name="brand_minder">Minder</string>
+    <string name="nada_1">Nada 1</string>
+    <string name="nama_appointment_wajib_diisi">Nama Appointment wajib diisi.</string>
+    <string name="nama_berhasil_diperbarui">Nama berhasil diperbarui</string>
+    <string name="nama_harus_diisi">Nama harus diisi</string>
+    <string name="nama_maksimal_50_karakter">Nama maksimal 50 karakter</string>
+    <string name="nama_minimal_4_karaker_typo">Nama minimal 4 karaker</string>
+    <string name="nama_obat_tidak_ditemukan">Nama obat tidak ditemukan!</string>
+    <string name="nama_obat_wajib_diisi">Nama obat wajib diisi</string>
+    <string name="not_linked_status">Not Linked</string>
+    <string name="notifikasi_tidak_ditemukan">Notifikasi tidak ditemukan.</string>
+    <string name="ok_label">OK</string>
+    <string name="obat_ditandai_dikonsumsi">Obat ditandai sebagai dikonsumsi</string>
+    <string name="obat_kosong_placeholder">Obat: -</string>
+    <string name="password_harus_diisi">Password harus diisi</string>
+    <string name="password_min_6_karakter">Password harus lebih dari 6 karakter</string>
+    <string name="pengingat_terkirim_title">Pengingat Terkirim</string>
+    <string name="pengingat_berhasil_diubah">Pengingat berhasil diubah</string>
+    <string name="pengingat_dari_caregiver_title">Pengingat dari Caregiver</string>
+    <string name="pilih_jam_hint">Pilih Jam</string>
+    <string name="pilih_role_title">Pilih Role</string>
+    <string name="pilih_consumer_dahulu">Pilih consumer terlebih dahulu</string>
+    <string name="registrasi_berhasil_verifikasi_msg">Registrasi berhasil! Silahkan verifikasi email lalu login.</string>
+    <string name="reminder_berhasil_dibuat">Reminder berhasil dibuat</string>
+    <string name="reminder_berhasil_diperbarui">Reminder berhasil diperbarui</string>
+    <string name="riwayat_janji_temu">Riwayat Janji Temu</string>
+    <string name="role_caregiver_berhasil_diaktifkan">Role caregiver berhasil diaktifkan.</string>
+    <string name="save_appointment_btn">Save Appointment</string>
+    <string name="schedule_id_tidak_ditemukan">Schedule ID tidak ditemukan</string>
+    <string name="seharusnya_label">Seharusnya: </string>
+    <string name="sekarang_kamu_adalah_caregiver">Sekarang kamu adalah Caregiver</string>
+    <string name="sekarang_kamu_adalah_consumer">Sekarang kamu adalah Consumer</string>
+    <string name="semua_field_harus_diisi">Semua field harus diisi.</string>
+    <string name="semua_jam_minum_harus_dipilih">Semua jam minum harus dipilih.</string>
+    <string name="sesi_login_bermasalah">Sesi login bermasalah, coba login ulang</string>
+    <string name="sesi_user_tidak_ditemukan">Sesi user tidak ditemukan, coba login ulang</string>
+    <string name="silahkan_buka_email_reset_password">Silahkan buka email Anda untuk mengatur ulang password.</string>
+    <string name="silahkan_verifikasi_email_dahulu">Silahkan verifikasi email Anda terlebih dahulu sebelum login.</string>
+    <string name="sisa_stok_obat_label">Sisa stok obat: </string>
+    <string name="status_berhasil_diperbarui">Status berhasil diperbarui</string>
+    <string name="stok_harus_angka">Stok harus berupa angka</string>
+    <string name="stok_harus_lebih_dari_0">Stok harus lebih dari 0</string>
+    <string name="stok_obat_wajib_diisi">Stok obat wajib diisi</string>
+    <string name="sudah_hadir_btn">Sudah Hadir</string>
+    <string name="tambahkan_appointment_title">Tambahkan Appointment</string>
+    <string name="tanggal_appointment_wajib_diisi">Tanggal Appointment wajib diisi.</string>
+    <string name="email_belum_terdaftar_di_app_msg">Tetapi email tersebut belum terdaftar pada aplikasi MedUMinder.</string>
+    <string name="placeholder_textview">TextView</string>
+    <string name="tutup_btn">Tutup</string>
+    <string name="undangan_label">Undangan </string>
+    <string name="undangan_anda_ke_label">Undangan Anda ke </string>
+    <string name="undangan_baru_title">Undangan Baru</string>
+    <string name="undangan_terkirim_title">Undangan Terkirim</string>
+    <string name="undangan_berhasil_dibuat">Undangan berhasil dibuat.</string>
+    <string name="undangan_diterima_toast">Undangan diterima</string>
+    <string name="undangan_ditolak_toast">Undangan ditolak</string>
+    <string name="unknown_label">Unknown</string>
+    <string name="update_appointment_btn">Update Appointment</string>
+    <string name="verifikasi_email_title">Verifikasi Email</string>
+    <string name="waktu_appointment_wajib_diisi">Waktu Appointment wajib diisi.</string>
+    <string name="ya_btn">Ya</string>
+    <string name="yakin_mau_menghapus_msg">Yakin mau menghapus </string>
+    <string name="format_tanggal_hint">hh/bb/tttt</string>
+    <string name="placeholder_timestamp">timestamp</string>
+    <string name="separator_pipe">|</string>
+
+    <string name="appointment_lewat_konfirmasi_msg">Jadwal appointment ini sudah lewat. Apakah Anda tetap menghadirinya?</string>
+    <string name="konfirmasi_hadir_appointment_msg">Apakah Anda sudah menghadiri appointment ini?</string>
+    <string name="consumer_telah_menghadiri_appointment">%1$s telah menghadiri appointment %2$s.</string>
+
+    <string name="default_appointment_label">appointment ini</string>
+    <string name="default_jadwal_label">jadwal ini</string>
+    <string name="konfirmasi_hapus_semua_jadwal_msg">Yakin mau menghapus seluruh jadwal %1$s? Semua alarm untuk jadwal ini akan dihentikan.</string>
+    <string name="konfirmasi_hapus_satu_entri_msg">Yakin mau menghapus jadwal %1$s pada waktu ini saja? Jadwal lain dan alarm berikutnya tetap berjalan.</string>
+    <string name="hapus_appointment_title">Hapus Appointment</string>
+    <string name="hapus_jadwal_obat_title">Hapus Jadwal Obat</string>
+    <string name="jadwal_appointment_dihapus_title">Jadwal Appointment Dihapus</string>
+    <string name="jadwal_obat_dihapus_title">Jadwal Obat Dihapus</string>
+    <string name="caregiver_menghapus_jadwal_anda_full">Caregiver menghapus jadwal %1$s Anda</string>
+    <string name="consumer_menghapus_jadwal_msg">Consumer menghapus jadwal: %1$s</string>
+    <string name="jadwal_consumer_telah_dihapus_msg">Jadwal %1$s untuk consumer telah dihapus</string>
+    <string name="consumer_telah_minum_obat_msg">%1$s telah minum obat %2$s.</string>
+    <string name="waktu_alarm_tidak_ditemukan">Waktu alarm tidak ditemukan</string>
+    <string name="gagal_mengubah_status_obat">Gagal mengubah status obat</string>
+    <string name="pengingat_ditunda_menit">Pengingat ditunda %1$d menit</string>
+    <string name="pengingat_ditunda_title">Pengingat Ditunda</string>
+    <string name="pengingat_x_ditunda_msg">Pengingat %1$s ditunda.</string>
+    <string name="consumer_menunda_pengingat_title">Consumer Menunda Pengingat</string>
+    <string name="consumer_menunda_pengingat_msg">%1$s menunda pengingat %2$s.</string>
+    <string name="data_jadwal_obat_tidak_ditemukan">Data jadwal obat tidak ditemukan</string>
+    <string name="gagal_mengambil_pengaturan_snooze">Gagal mengambil pengaturan snooze</string>
+
+    <string name="pilih_jam_appointment_title">Pilih Jam Appointment</string>
+    <string name="caregiver_mengubah_jadwal_appointment_anda_full">Caregiver mengubah jadwal appointment %1$s Anda</string>
+    <string name="consumer_mengubah_jadwal_appointment_msg">Consumer mengubah jadwal appointment: %1$s</string>
+    <string name="jadwal_appointment_consumer_diperbarui_msg">Jadwal appointment %1$s untuk consumer telah diperbarui</string>
+
+    <string name="caregiver_mengubah_jadwal_obat_anda_full">%1$s mengubah jadwal minum obat %2$s Anda</string>
+    <string name="consumer_mengubah_jadwal_obat_msg">%1$s mengubah jadwal minum obat: %2$s</string>
+    <string name="jadwal_obat_consumer_diperbarui_msg">Jadwal minum obat %1$s untuk consumer telah diperbarui</string>
+
+    <string name="undangan_tidak_ditemukan">Undangan tidak ditemukan.</string>
+    <string name="undangan_sudah_tidak_tersedia">Undangan sudah tidak tersedia.</string>
+    <string name="undangan_diterima_title">Undangan Diterima</string>
+    <string name="undangan_ditolak_title">Undangan Ditolak</string>
+    <string name="relasi_mengawasi_anda_label">mengawasi Anda</string>
+    <string name="relasi_diawasi_anda_label">diawasi Anda</string>
+    <string name="invitation_accepted_result_msg">%1$s menerima undangan sebagai %2$s untuk %3$s.</string>
+    <string name="invitation_rejected_result_msg">%1$s menolak undangan sebagai %2$s.</string>
+    <string name="jadwal_obat_sudah_tidak_tersedia">Jadwal obat sudah tidak tersedia.</string>
+    <string name="riwayat_obat_sudah_tidak_tersedia">Riwayat obat sudah tidak tersedia.</string>
+    <string name="jadwal_appointment_sudah_tidak_tersedia">Jadwal appointment sudah tidak tersedia.</string>
+    <string name="obat_label_colon">Obat:</string>
+    <string name="frekuensi_x_sehari_format">%1$dx sehari</string>
+    <string name="caregiver_mengingatkan_periksa_jadwal_msg">%1$s mengingatkan Anda untuk segera memeriksa jadwal Anda.</string>
+
+    <string name="bagikan_link_aplikasi_msg">Bagikan link aplikasi agar pengguna dapat mendaftar menggunakan email tersebut.</string>
+    <string name="share_invitation_message">Saya mengundang Anda bergabung di MedUMinder.\n\nSilahkan download aplikasi MedUMinder menggunakan link berikut:\n\n\nDaftar menggunakan email atau google dengan email: %1$s\n\nSetelah login menggunakan email tersebut, Invitation akan otomatis muncul pada menu Notification.</string>
+    <string name="bagikan_melalui_title">Bagikan melalui</string>
+
+    <string name="gagal_mengambil_statistik">Gagal mengambil statistik</string>
+    <string name="konfirmasi_ganti_role_full_msg">Apakah Anda yakin ingin berpindah ke role %1$s?</string>
+
+    <string name="konfirmasi_hapus_hubungan_full_msg">Apakah Anda yakin ingin menghapus hubungan dengan %1$s?\n\nSetelah dihapus, akses data dan sinkronisasi pengingat dengan %2$s ini akan dihentikan.</string>
+
+    <string name="anda_menambahkan_jadwal_appointment_msg">Anda menambahkan jadwal appointment: %1$s</string>
+    <string name="caregiver_menambahkan_jadwal_appointment_anda_msg">Caregiver menambahkan jadwal appointment %1$s untuk Anda</string>
+    <string name="anda_menambahkan_jadwal_appointment_consumer_msg">Anda menambahkan jadwal appointment %1$s untuk consumer Anda.</string>
+
+    <string name="akun_berhasil_dibuat_verifikasi_msg">Akun berhasil dibuat.\nKami telah mengirim email verifikasi ke: %1$s\nSilahkan verifikasi email terlebih dahulu sebelum login.</string>
+    <string name="buka_email_btn">Buka Email</string>
+
+    <string name="statistik_marker_detail_format">Seharusnya: %1$d | Dikonsumsi: %2$d\nKepatuhan: %3$d%%</string>
+
+    <string name="response_snooze_label">Ingatkan Nanti</string>
+    <string name="response_diabaikan_label">Diabaikan</string>
+    <string name="response_center_label">Respon</string>
+
+    <string name="nama_file_laporan_statistik">Laporan_Statistik</string>
+    <string name="belum_ada_caregiver_klik_undang">Belum ada caregiver. Ketuk untuk mengundang caregiver.</string>
+    <string name="belum_ada_consumer_klik_undang">Belum ada consumer. Ketuk untuk mengundang consumer.</string>
+    <string name="confirm_hapus_notif">Apakah Anda yakin ingin menghapus notifikasi?</string>
+    <string name="title_hapus_notif">Hapus Notifikasi</string>
+    <string name="confirm_read_notif">Apakah Anda yakin ingin menandai notifikasi telah dibaca?</string>
+    <string name="title_read_notif">Tandai telah dibaca</string>
+
+    <string name="error_permission_denied">Terjadi masalah saat mengakses data. Silakan coba lagi nanti.</string>
+    <string name="error_koneksi_bermasalah">Koneksi internet bermasalah. Periksa koneksi Anda dan coba lagi.</string>
+    <string name="error_umum">Terjadi kesalahan. Silakan coba lagi.</string>
+
+    <string name="belum_ada_riwayat_notif">Belum ada notifikasi.</string>
+
+    <string name="senin">Senin</string>
+    <string name="selasa">Selasa</string>
+    <string name="rabu">Rabu</string>
+    <string name="kamis">Kamis</string>
+    <string name="jumat">Jumat</string>
+    <string name="sabtu">Sabtu</string>
+    <string name="minggu">Minggu</string>
+
+    <string name="januari">Jan</string>
+    <string name="februari">Feb</string>
+    <string name="maret">Mar</string>
+    <string name="april">Apr</string>
+    <string name="mei">Mei</string>
+    <string name="juni">Jun</string>
+    <string name="juli">Jul</string>
+    <string name="agustus">Agu</string>
+    <string name="september">Sep</string>
+    <string name="oktober">Okt</string>
+    <string name="november">Nov</string>
+    <string name="desember">Des</string>
+
+    <string name="anda_menerima_undangan_title">Undangan Diterima</string>
+    <string name="anda_menolak_undangan_title">Undangan Ditolak</string>
+    <string name="anda_menerima_undangan_dari_msg">Anda menerima undangan dari %1$s</string>
+    <string name="anda_menolak_undangan_dari_msg">Anda menolak undangan dari %1$s</string>
+    <string name="lihat">Lihat</string>
+
+    <string name="periode_laporan">Periode Laporan</string>
+    <string name="nama_tidak_diketahui">Nama tidak diketahui</string>
+    <string name="penjelasan_dikonsumsi">Dikonsumsi: obat telah diminum sesuai jadwal.</string>
+    <string name="penjelasan_snooze">Remind Me Later: pengingat ditunda dan akan muncul kembali sesuai durasi snooze yang dipilih.</string>
+    <string name="penjelasan_diabaikan">Diabaikan: pengingat obat tidak ditindaklanjuti hingga batas waktu yang ditentukan.</string>
+
+    <string name="user_sudah_mengundang_anda">Pengguna ini sudah lebih dulu mengundang kamu. Cek notifikasi untuk menerima atau menolak undangannya.</string>
+    <string name="snooze_waktu_baru">Waktu baru: %1$s.</string>
+
+    <string name="aplikasi_pembaca_pdf_tidak_ditemukan">Aplikasi pembaca PDF tidak ditemukan di perangkat Anda.</string>
+
+    <string name="pilih_jenis_hapus_msg">Hapus entri log ini saja, atau seluruh jadwal ke depannya?</string>
+    <string name="hapus_entri_ini_saja">Entri Ini Saja</string>
+    <string name="hapus_seluruh_jadwal">Seluruh Jadwal</string>
+
+    <string name="lihat_laporan">Lihat Laporan</string>
+    <string name="file_laporan_tidak_ditemukan">File laporan tidak ditemukan.</string>
+
+    <string name="reminder_appointment_menit_title">Segera Ada Janji Temu</string>
+    <string name="durasi_menit">%1$d Menit</string>
+    <string name="durasi_jam">%1$d Jam</string>
+    <string name="reminder_appointment_menit_msg"> lagi Anda memiliki jadwal %2$s.</string>
+    <string name="reminder_appointment_menit_caregiver_title">Consumer Segera Ada Janji Temu</string>
+    <string name="reminder_appointment_menit_caregiver_msg"> lagi %2$s memiliki jadwal %3$s.</string>
+
+    <!-- Obat -->
+    <string name="caregiver_mengubah_jadwal_obat_anda_detail">%1$s mengubah jadwal obat %2$s Anda: %3$s.</string>
+    <string name="anda_memperbarui_jadwal_obat_detail">Anda memperbarui jadwal obat %1$s: %2$s.</string>
+    <string name="ubah_jam_minum">jam minum menjadi %1$s</string>
+    <string name="ubah_end_date">tanggal berakhir menjadi %1$s</string>
+    <string name="ubah_end_date_dihapus">tanggal berakhir dihapus</string>
+    <string name="ubah_stok">stok menjadi %1$s</string>
+
+    <!-- Appointment -->
+    <string name="caregiver_mengubah_jadwal_appointment_anda_detail">%1$s mengubah jadwal appointment %2$s Anda: %3$s.</string>
+    <string name="anda_memperbarui_jadwal_appointment_detail">Anda memperbarui jadwal appointment %1$s: %2$s.</string>
+    <string name="ubah_nama_appointment">nama menjadi %1$s</string>
+    <string name="ubah_lokasi_appointment">lokasi menjadi %1$s</string>
+    <string name="ubah_waktu_appointment">waktu menjadi %1$s</string>
+
+    <string name="consumer_menambahkan_jadwal_obat_msg">%1$s menambahkan jadwal minum obat %2$s.</string>
+    <string name="caregiver_lain_menambahkan_jadwal_obat_msg">%1$s menambahkan jadwal minum obat %2$s untuk consumer Anda.</string>
+
+    <string name="anda_menambahkan_jadwal_minum_obat_msg">Anda menambahkan jadwal minum obat %1$s.</string>
+    <string name="pengingat_x_ditunda_full_msg">Pengingat %1$s ditunda. Waktu baru: %2$s.</string>
+    <string name="consumer_menunda_pengingat_full_msg">%1$s menunda pengingat %2$s. Waktu baru: %3$s.</string>
+    <string name="jadwal_terlewat_title">Jadwal Terlewat</string>
+    <string name="jadwal_obat_anda_terlewat_msg">Jadwal minum obat %1$s Anda terlewat.</string>
+    <string name="consumer_melewatkan_jadwal_title">Consumer Melewatkan Jadwal</string>
+    <string name="consumer_melewatkan_jadwal_obat_msg">%1$s melewatkan jadwal minum obat %2$s.</string>
+
+    <string name="anda_menghapus_jadwal_msg">Anda menghapus jadwal %1$s.</string>
+
+    <string name="x_menghapus_jadwal_anda_msg">%1$s menghapus jadwal %2$s Anda.</string>
+    <string name="x_menghapus_jadwal_msg">%1$s menghapus jadwal %2$s.</string>
+    <string name="x_menghapus_jadwal_consumer_anda_msg">%1$s menghapus jadwal %2$s untuk consumer Anda.</string>
+
+    <string name="x_menambahkan_jadwal_appointment_anda_msg">%1$s menambahkan jadwal appointment %2$s untuk Anda.</string>
+    <string name="x_menambahkan_jadwal_appointment_msg">%1$s menambahkan jadwal appointment %2$s.</string>
+    <string name="x_menambahkan_jadwal_appointment_consumer_anda_msg">%1$s menambahkan jadwal appointment %2$s untuk consumer Anda.</string>
+
+    <string name="anda_menambahkan_jadwal_obat_consumer_msg">Anda menambahkan jadwal minum obat %1$s untuk consumer Anda.</string>
+    <string name="pesan_pengingat_terkirim_consumer_obat_msg">Anda mengirim pengingat kepada consumer untuk memeriksa jadwalnya (%1$s).</string>
+    <string name="jadwal_appointment_anda_terlewat_msg">Jadwal appointment %1$s Anda terlewat.</string>
+    <string name="consumer_melewatkan_appointment_msg">Consumer Anda melewatkan appointment %1$s.</string>
+    <string name="waktunya_minum_obat_title">Waktunya Minum Obat</string>
+    <string name="sekarang_waktunya_minum_obat_msg">Sekarang waktunya minum obat %1$s.</string>
+    <string name="waktunya_appointment_title">Waktunya Appointment</string>
+    <string name="sekarang_jadwal_appointment_msg">Sekarang jadwal appointment %1$s.</string>
+    <string name="segera_minum_obat_title">Segera Minum Obat</string>
+    <string name="menit_lagi_minum_obat_msg">%1$s menit lagi jadwal minum obat %2$s.</string>
+    <string name="reminder_appointment_full_msg">%1$s lagi Anda memiliki jadwal %2$s.</string>
+    <string name="reminder_appointment_caregiver_full_msg">%1$s lagi %2$s memiliki jadwal %3$s.</string>
+    <string name="isi_ulang_obat_x_title">Isi Ulang Obat (%1$s)</string>
+    <string name="hubungan_dihapus_title">Hubungan Dihapus</string>
+    <string name="anda_menghapus_hubungan_msg" formatted="true">Anda telah menghapus hubungan dengan %1$s (%2$s).</string>
+    <string name="x_menghapus_hubungan_msg" formatted="true">%1$s (%2$s) telah menghapus hubungan dengan Anda.</string>
+    <string name="nama_obat_tidak_dapat_diubah">Nama obat tidak dapat diubah</string>
+    <string name="hapus_entri_title">Hapus Entri Ini</string>
+</resources>

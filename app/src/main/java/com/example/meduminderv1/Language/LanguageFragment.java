@@ -55,7 +55,7 @@ public class LanguageFragment extends Fragment {
 
         String deviceLanguage = Locale.getDefault().getLanguage();
 
-        if ("id".equals(deviceLanguage)) {
+        if ("in".equals(deviceLanguage) || "id".equals(deviceLanguage)) {
             return "id";
         } else if ("zh".equals(deviceLanguage)) {
             return "zh";

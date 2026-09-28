@@ -128,9 +128,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/button_selector"
-                    app:backgroundTint="?attr/colorSecondaryFixedDim"
+                    app:backgroundTint="?attr/colorTertiaryFixed"
                     android:text="@string/terima"
-                    android:textColor="?attr/colorOnSurface"
+                    android:textColor="?attr/colorPrimaryFixed"
                     android:textAllCaps="false"/>
 
                 <Space
@@ -145,7 +145,7 @@
                     android:background="@drawable/button_selector"
                     app:backgroundTint="?attr/colorTertiaryFixedDim"
                     android:text="@string/tolak"
-                    android:textColor="?attr/colorOnSurface"
+                    android:textColor="?attr/colorPrimaryFixed"
                     android:textAllCaps="false"/>
 
             </LinearLayout>

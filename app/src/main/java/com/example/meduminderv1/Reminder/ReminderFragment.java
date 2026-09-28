@@ -250,10 +250,11 @@ public class ReminderFragment extends Fragment {
     private void confirmDeleteSingleLog() {
         if (!isAdded()) return;
         String label = namaObat != null ? namaObat : getString(R.string.default_jadwal_label);
+        String when = new SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()).format(new Date(scheduledAt));
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
         builder.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.bg_dialog));
         builder.setTitle(getString(R.string.hapus_jadwal_obat_title))
-                .setMessage(getString(R.string.konfirmasi_hapus_item_msg, label))
+                .setMessage(getString(R.string.konfirmasi_hapus_satu_entri_msg, label))
                 .setNegativeButton(getString(R.string.cancel), null)
                 .setPositiveButton(getString(R.string.delete), (d, w) -> deleteSingleLogEntry());
         AlertDialog dialog = builder.create();
@@ -392,7 +393,7 @@ public class ReminderFragment extends Fragment {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
         builder.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.bg_dialog));
         builder.setTitle(isAppointment ? getString(R.string.hapus_appointment_title) : getString(R.string.hapus_jadwal_obat_title))
-                .setMessage(getString(R.string.konfirmasi_hapus_item_msg, label))
+                .setMessage(isAppointment ? getString(R.string.konfirmasi_hapus_satu_entri_msg, label) : getString(R.string.konfirmasi_hapus_semua_jadwal_msg, label))
                 .setNegativeButton(getString(R.string.cancel), null)
                 .setPositiveButton(getString(R.string.delete), (dialog, which) -> {
                     Log.d("REMINDER_FRAGMENT", "tombol Hapus di dialog konfirmasi ditekan");

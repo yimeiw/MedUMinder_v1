@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 public class MainActivity extends AppCompatActivity implements ReminderEventBus.Listener {
 
     BottomNavigationView bottomNav;
-
+    private UserRole pendingOpenNotifRole = null;
     private static final java.util.Set<Integer> HIDE_BOTTOM_NAV = new java.util.HashSet<>(java.util.Arrays.asList(
             R.id.notificationFragment,
             R.id.profileFragment,
@@ -288,6 +288,19 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
                     }
                 });
     }
+    public void openNotifAfterRole(UserRole target){
+        if (lastUserRole == target){
+            openNotifIfNotThere();
+        } else {
+            pendingOpenNotifRole = target;
+        }
+    }
+
+    private void openNotifIfNotThere() {
+        if (navController.getCurrentDestination() != null &&
+                navController.getCurrentDestination().getId() == R.id.notificationFragment) return;
+        navController.navigate(R.id.notificationFragment);
+    }
 
     private void setupBottomNavRole(UserRole role) {
         bottomNav.getMenu().clear();
@@ -299,8 +312,10 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         bottomNav.setOnItemSelectedListener(getBottomNavListener());
 
         navigateHome(role);
-
-        if (pendingDeepLinkIntent != null) {
+        if (pendingOpenNotifRole == role){
+          pendingOpenNotifRole = null;
+          openNotifIfNotThere();
+        } if (pendingDeepLinkIntent != null) {
             Intent toHandle = pendingDeepLinkIntent;
             pendingDeepLinkIntent = null;
             handleReminderIntent(toHandle);

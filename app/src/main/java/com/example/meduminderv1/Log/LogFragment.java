@@ -121,14 +121,15 @@ public class LogFragment extends Fragment {
         View pickerRoot = view.findViewById(R.id.consumerPicker);
         consumerPickerHelper = new ConsumerPickerHelper(pickerRoot, requireContext(), uid -> {
             targetUid = uid;
+            filterDropdown();
+            allMedLog.clear();
+            allAppointLog.clear();
+            applyFilter();
             if (uid == null){
                 pickerRoot.setOnClickListener(v ->  NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
-                filterDropdown();
-                allMedLog.clear(); allAppointLog.clear();
-                applyFilter();
                 return;
-            } loadMedicationLogs();
-            filterDropdown();
+            }
+            reloadCurrentType();
         }); consumerPickerHelper.setup();
 
         selectButton(btnAll);
@@ -156,7 +157,13 @@ public class LogFragment extends Fragment {
 
         return view;
     }
-
+    public void reloadCurrentType(){
+        if (currentType == LogType.MEDICATION){
+            loadMedicationLogs();
+        } else {
+            loadAppointmentLogs();
+        }
+    }
     //filter dropdown med dan appoint
     private void filterDropdown() {
         layoutFilter.setOnClickListener(v -> {
@@ -220,11 +227,16 @@ public class LogFragment extends Fragment {
     }
     //Filter dropdown dan button horizontal
     private void applyFilter() {
+        if (medAdapter == null || appointAdapter ==  null) return;
         if (currentType == LogType.MEDICATION) {
             medLog.clear();
             for (MedicationLog log : allMedLog) {
-                if (matchesFilter(log) && isWithinDisplayRange(log.getScheduled_at())) {
+                if (matchesFilter(log) && isWithinDisplayRange(log)) {
                     medLog.add(log);
+                } if (currentFilter == FilterType.UPCOMING){
+                    Collections.sort(medLog, (a, b) -> a.getEffectiveTime().compareTo(b.getEffectiveTime()));
+                } else {
+                    Collections.sort(medLog, (a, b) -> b.getScheduled_at().compareTo(a.getScheduled_at()));
                 }
             }
             Collections.sort(medLog, (a, b) -> b.getScheduled_at().compareTo(a.getScheduled_at())); // terbaru dulu
@@ -270,14 +282,19 @@ public class LogFragment extends Fragment {
                 return true;
         }
     }
-    private boolean isWithinDisplayRange(Timestamp scheduledAt) {
-        if (scheduledAt == null) return false;
-        LocalDate date = scheduledAt.toDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+    private boolean isWithinDisplayRange(MedicationLog log) {
         LocalDate today = LocalDate.now();
-        LocalDate yesterday = today.minusDays(1);
-        return date.isEqual(today) || date.isEqual(yesterday);
+        if (currentFilter == FilterType.UPCOMING){
+            if (log.getEffectiveTime() == null) return false;
+            LocalDate d = log.getEffectiveTime().toDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            return !d.isBefore(today) && !d.isAfter(today.plusDays(3));
+        } if (log.getScheduled_at() == null) return false;
+        LocalDate d = log.getScheduled_at().toDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        return d.isEqual(today) || d.isEqual(today.minusDays(1));
     }
+    private int loadToken = 0;
     private void loadMedicationLogs() {
+        final int token = ++loadToken;
         String users_id = SessionManager.getInstance().getTargetUid();
         if (users_id == null){
             initialMedicine.setVisibility(View.VISIBLE);
@@ -297,7 +314,7 @@ public class LogFragment extends Fragment {
         endCal.set(Calendar.MINUTE, 0);
         endCal.set(Calendar.SECOND, 0);
         endCal.set(Calendar.MILLISECOND, 0);
-        endCal.add(Calendar.DAY_OF_YEAR, 1);
+        endCal.add(Calendar.DAY_OF_YEAR, 4);
         Timestamp startOfTomorrow = new Timestamp(endCal.getTime());
 
         // lewati log dari jadwal yang sudah dihapus (is_active = false)
@@ -309,7 +326,7 @@ public class LogFragment extends Fragment {
                 .orderBy("scheduled_at")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
-                    if (!isAdded()) return;
+                    if (!isAdded() || token != loadToken) return;
                     allMedLog.clear();
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                         MedicationLog log = doc.toObject(MedicationLog.class);
@@ -320,9 +337,10 @@ public class LogFragment extends Fragment {
                 .addOnFailureListener(e -> Log.e("Medication Log", "Gagal ambil data", e)));
     }
     private void loadAppointmentLogs() {
+        final int token = ++loadToken;
         String users_id = SessionManager.getInstance().getTargetUid();
         if (users_id == null){
-            initialMedicine.setVisibility(View.VISIBLE);
+            initialAppoint.setVisibility(View.VISIBLE);
             return;
         }
         Log.d("AUTH", users_id == null ? "NULL" : users_id);
@@ -330,6 +348,7 @@ public class LogFragment extends Fragment {
                 .whereEqualTo("users_id", users_id)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
+                    if (!isAdded() || token != loadToken) return;
                     Log.d("FIRESTORE", "Jumlah data: " + querySnapshot.size());
                     allAppointLog.clear();
                     for (DocumentSnapshot doc : querySnapshot) {
