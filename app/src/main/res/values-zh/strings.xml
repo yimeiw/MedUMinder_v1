@@ -649,4 +649,5 @@
     <string name="hubungan_dihapus_title">关系已解除</string>
     <string name="anda_menghapus_hubungan_msg" formatted="true">您已解除与 %1$s（%2$s）的关系。</string>
     <string name="x_menghapus_hubungan_msg" formatted="true">%1$s（%2$s）已解除与您的关系。</string>
+    <string name="nama_obat_tidak_dapat_diubah">药品名称无法修改</string>
 </resources>

@@ -63,17 +63,34 @@
                     android:textColor="?attr/colorOnSurface"/>
 
 
+                <!-- nama obat dikunci di halaman edit (hanya ditampilkan); field lain tetap bisa diubah -->
                 <EditText
                     android:id="@+id/namaObat"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@drawable/border"
-                    android:drawableEnd="@drawable/ic_search"
                     android:paddingHorizontal="20dp"
                     android:paddingVertical="18dp"
                     android:hint="@string/nama_obat"
                     android:textSize="12sp"
-                    android:textColor="?attr/colorOnSurface"/>>
+                    android:textColor="?attr/colorOnSurface"
+                    android:focusable="false"
+                    android:focusableInTouchMode="false"
+                    android:clickable="false"
+                    android:longClickable="false"
+                    android:cursorVisible="false"
+                    android:inputType="none"
+                    android:alpha="0.6"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/nama_obat_tidak_dapat_diubah"
+                    android:textColor="?attr/colorOnSurface"
+                    android:alpha="0.6"
+                    android:textSize="11sp"/>
 
             </LinearLayout>
 

@@ -649,4 +649,5 @@
     <string name="hubungan_dihapus_title">Connection Removed</string>
     <string name="anda_menghapus_hubungan_msg" formatted="true">You removed your connection with %1$s (%2$s).</string>
     <string name="x_menghapus_hubungan_msg" formatted="true">%1$s (%2$s) removed their connection with you.</string>
+    <string name="nama_obat_tidak_dapat_diubah">Medicine name can\'t be changed</string>
 </resources>
