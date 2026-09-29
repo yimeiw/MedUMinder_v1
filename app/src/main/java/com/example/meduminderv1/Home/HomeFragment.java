@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Home;
 
+import com.example.meduminderv1.Util.SchedulePermission;
+
 import com.example.meduminderv1.Util.BadgeText;
 
 import com.example.meduminderv1.Util.LoadingOverlay;
@@ -148,10 +150,12 @@ public class HomeFragment extends Fragment {
             });
         }
         addMed.setOnClickListener(v -> {
+            if (!SchedulePermission.ensure(requireContext())) return;
             NavHostFragment.findNavController(this)
                     .navigate(R.id.medicineReminderFragment);
         });
         addAppoint.setOnClickListener(v -> {
+            if (!SchedulePermission.ensure(requireContext())) return;
             NavHostFragment.findNavController(this)
                     .navigate(R.id.appointmentReminderFragment);
         });

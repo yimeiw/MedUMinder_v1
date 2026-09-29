@@ -7,14 +7,17 @@ import com.example.meduminderv1.Util.LoadingOverlay;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.drawable.GradientDrawable;
 import android.media.Image;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.recyclerview.widget.ConcatAdapter;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -85,12 +88,16 @@ public class LogFragment extends Fragment {
     private MedicationLogAdapter medAdapter;
     private AppointmentLogAdapter appointAdapter;
     private FirebaseFirestore db;
-    MaterialButton btnAll, btnUpcoming, btnTaken, btnMissed;
+    MaterialButton btnAll, btnRemaining, btnTaken, btnMissed;
     ImageButton btnBack;
-    private enum FilterType { ALL, UPCOMING, TAKEN, MISSED }
+    private enum FilterType { ALL, REMAINING_TODAY, TAKEN, MISSED }
     private enum LogType { MEDICATION, APPOINTMENT }
     private FilterType currentFilter = FilterType.ALL;
     private LogType currentType = LogType.MEDICATION;
+    private static final int DAYS_STEP = 7;
+    private static final int MAX_DAYS = 90;
+    private int daysBack = DAYS_STEP;
+    private LoadOlderAdapter loadOlderAdapter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -108,7 +115,7 @@ public class LogFragment extends Fragment {
         initialMedicine = view.findViewById(R.id.initial_state_medicine);
 
         btnAll = view.findViewById(R.id.btnAll);
-        btnUpcoming = view.findViewById(R.id.btnUpcoming);
+        btnRemaining = view.findViewById(R.id.btnRemaining);
         btnTaken = view.findViewById(R.id.btnTaken);
         btnMissed = view.findViewById(R.id.btnMissed);
         btnBack = view.findViewById(R.id.btnBack);
@@ -121,7 +128,6 @@ public class LogFragment extends Fragment {
         View pickerRoot = view.findViewById(R.id.consumerPicker);
         consumerPickerHelper = new ConsumerPickerHelper(pickerRoot, requireContext(), uid -> {
             targetUid = uid;
-            filterDropdown();
             allMedLog.clear();
             allAppointLog.clear();
             applyFilter();
@@ -134,26 +140,30 @@ public class LogFragment extends Fragment {
 
         selectButton(btnAll);
         btnAll.setOnClickListener(v -> { currentFilter = FilterType.ALL; selectButton(btnAll); applyFilter(); });
-        btnUpcoming.setOnClickListener(v -> { currentFilter = FilterType.UPCOMING; selectButton(btnUpcoming); applyFilter(); });
+        btnRemaining.setOnClickListener(v -> { currentFilter = FilterType.REMAINING_TODAY; selectButton(btnRemaining); applyFilter(); });
         btnTaken.setOnClickListener(v -> { currentFilter = FilterType.TAKEN; selectButton(btnTaken); applyFilter(); });
         btnMissed.setOnClickListener(v -> { currentFilter = FilterType.MISSED; selectButton(btnMissed); applyFilter(); });
 
         rvLogs = view.findViewById(R.id.rvLogs);
         rvLogs.setLayoutManager(new LinearLayoutManager(requireContext()));
         medAdapter = new MedicationLogAdapter(medLog, requireContext());
-        rvLogs.setAdapter(medAdapter);
         medAdapter.setOnMedLogClickListener(this::navigateToReminder);
-
         appointAdapter = new AppointmentLogAdapter(appointLog, requireContext());
         appointAdapter.setOnAppointClickListener(this::navigateToReminderAppointment);
+        loadOlderAdapter = new LoadOlderAdapter();
+        rvLogs.addItemDecoration(new DateHeaderDecoration(requireContext(), this::historyTimeAt));
+        rvLogs.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                maybeLoadOlder();
+            }
+        });
 
-        updateFilterButtonLabels();
-        loadMedicationLogs();
-
+        setupTypeDropdown();
         Bundle args = getArguments();
-        if (args != null && args.getBoolean("open_appointment_tab", false)) {
-            switchToAppointmentTab();
-        }
+        boolean openAppointment = args != null && args.getBoolean("open_appointment_tab", false);
+        currentType = openAppointment ? LogType.APPOINTMENT : LogType.MEDICATION;
+        showCurrentType();
 
         return view;
     }
@@ -164,8 +174,7 @@ public class LogFragment extends Fragment {
             loadAppointmentLogs();
         }
     }
-    //filter dropdown med dan appoint
-    private void filterDropdown() {
+    private void setupTypeDropdown() {
         layoutFilter.setOnClickListener(v -> {
             View popupView = LayoutInflater.from(requireContext())
                     .inflate(R.layout.item_dropdown_log, null);
@@ -186,19 +195,12 @@ public class LogFragment extends Fragment {
             imgArrow.animate().rotation(180f).setDuration(150).start();
 
             itemConsumption.setOnClickListener(itemView -> {
-                tvType.setText(getString(R.string.riwayat_konsumsi));
-                currentType = LogType.MEDICATION;
-                updateFilterButtonLabels();
-                medAdapter = new MedicationLogAdapter(medLog, requireContext());
-                rvLogs.setAdapter(medAdapter);
-                initialMedicine.setVisibility(View.VISIBLE);
-                initialAppoint.setVisibility(View.GONE);
-                applyFilter();
+                if (currentType != LogType.MEDICATION) switchType(LogType.MEDICATION);
                 popupWindow.dismiss();
             });
 
             itemAppointment.setOnClickListener(itemView -> {
-                switchToAppointmentTab();
+                if (currentType != LogType.APPOINTMENT) switchType(LogType.APPOINTMENT);
                 popupWindow.dismiss();
             });
 
@@ -213,7 +215,7 @@ public class LogFragment extends Fragment {
     }
     //state button kalau dipilih
     private void selectButton(MaterialButton selected) {
-        MaterialButton[] buttons = { btnAll, btnUpcoming, btnTaken, btnMissed };
+        MaterialButton[] buttons = { btnAll, btnRemaining, btnTaken, btnMissed };
         for (MaterialButton button : buttons) {
             button.setBackgroundTintList(ContextCompat.getColorStateList(
                     requireContext(),
@@ -225,41 +227,72 @@ public class LogFragment extends Fragment {
         boolean isAppointment = currentType == LogType.APPOINTMENT;
         btnTaken.setText(isAppointment ? getString(R.string.dihadiri) : getString(R.string.dikonsumsi));
     }
-    //Filter dropdown dan button horizontal
     private void applyFilter() {
         if (medAdapter == null || appointAdapter ==  null) return;
+        long since = rangeStartMillis();
         if (currentType == LogType.MEDICATION) {
             medLog.clear();
             for (MedicationLog log : allMedLog) {
-                if (matchesFilter(log) && isWithinDisplayRange(log)) {
+                if (log.getScheduled_at() == null) continue;
+                LogStatus status = log.getStatusBasedOnDate();
+                long effective = log.getEffectiveTime().toDate().getTime();
+                if (isShown(status, log.getScheduled_at().toDate().getTime(), effective, since) && matchesFilter(status, effective)) {
                     medLog.add(log);
-                } if (currentFilter == FilterType.UPCOMING){
-                    Collections.sort(medLog, (a, b) -> a.getEffectiveTime().compareTo(b.getEffectiveTime()));
-                } else {
-                    Collections.sort(medLog, (a, b) -> b.getScheduled_at().compareTo(a.getScheduled_at()));
                 }
             }
-            Collections.sort(medLog, (a, b) -> b.getScheduled_at().compareTo(a.getScheduled_at())); // terbaru dulu
+            Collections.sort(medLog, currentFilter == FilterType.REMAINING_TODAY
+                    ? (a, b) -> a.getEffectiveTime().compareTo(b.getEffectiveTime())
+                    : (a, b) -> b.getScheduled_at().compareTo(a.getScheduled_at()));
             medAdapter.notifyDataSetChanged();
+            initialMedicine.setText(currentFilter == FilterType.REMAINING_TODAY
+                    ? getString(R.string.riwayat_kosong_sisa_obat)
+                    : getString(R.string.riwayat_kosong_obat, daysBack));
             initialMedicine.setVisibility(medLog.isEmpty() ? View.VISIBLE : View.GONE);
+            initialAppoint.setVisibility(View.GONE);
         } else {
             appointLog.clear();
             for (Appointment appt : allAppointLog) {
-                if (matchesFilter(appt)) {
+                if (appt.getAppointment_at() == null || "dibatalkan".equals(appt.getStatus())) continue;
+                LogStatus status = appt.getStatusBasedOnDate();
+                long time = appt.getAppointment_at().toDate().getTime();
+                if (isShown(status, time, time, since) && matchesFilter(status, time)) {
                     appointLog.add(appt);
                 }
             }
-            Collections.sort(appointLog, (a, b) -> b.getAppointment_at().compareTo(a.getAppointment_at()));
+            Collections.sort(appointLog, currentFilter == FilterType.REMAINING_TODAY
+                    ? (a, b) -> a.getAppointment_at().compareTo(b.getAppointment_at())
+                    : (a, b) -> b.getAppointment_at().compareTo(a.getAppointment_at()));
             appointAdapter.notifyDataSetChanged();
+            initialAppoint.setText(currentFilter == FilterType.REMAINING_TODAY
+                    ? getString(R.string.riwayat_kosong_sisa_appointment)
+                    : getString(R.string.riwayat_kosong_appointment, daysBack));
             initialAppoint.setVisibility(appointLog.isEmpty() ? View.VISIBLE : View.GONE);
+            initialMedicine.setVisibility(View.GONE);
+        }
+        updateFooter();
+        if (rvLogs != null) {
+            rvLogs.invalidateItemDecorations();
+            rvLogs.post(this::maybeLoadOlder);
         }
     }
-    private boolean matchesFilter(Appointment appt) {
-        if (currentFilter == FilterType.ALL) return true;
-        LogStatus status = appt.getStatusBasedOnDate();
+    private boolean isShown(LogStatus status, long scheduledMillis, long effectiveMillis, long since) {
+        if (status == LogStatus.DIKONSUMSI || status == LogStatus.TERLEWATKAN) {
+            return scheduledMillis >= since;
+        }
+        return isRemainingToday(status, effectiveMillis);
+    }
+    private boolean isRemainingToday(LogStatus status, long effectiveMillis) {
+        if (status != LogStatus.AKAN_DATANG) return false;
+        Calendar target = Calendar.getInstance();
+        target.setTimeInMillis(effectiveMillis);
+        Calendar today = Calendar.getInstance();
+        return target.get(Calendar.YEAR) == today.get(Calendar.YEAR)
+                && target.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR);
+    }
+    private boolean matchesFilter(LogStatus status, long effectiveMillis) {
         switch (currentFilter) {
-            case UPCOMING:
-                return status == LogStatus.AKAN_DATANG;
+            case REMAINING_TODAY:
+                return isRemainingToday(status, effectiveMillis);
             case TAKEN:
                 return status == LogStatus.DIKONSUMSI;
             case MISSED:
@@ -268,35 +301,65 @@ public class LogFragment extends Fragment {
                 return true;
         }
     }
-    private boolean matchesFilter(MedicationLog log) {
-        if (currentFilter == FilterType.ALL) return true;
-        LogStatus status = log.getStatusBasedOnDate();
-        switch (currentFilter) {
-            case UPCOMING:
-                return status == LogStatus.AKAN_DATANG;
-            case TAKEN:
-                return status == LogStatus.DIKONSUMSI;
-            case MISSED:
-                return status == LogStatus.TERLEWATKAN;
-            default:
-                return true;
-        }
+    private long rangeStartMillis() {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        cal.add(Calendar.DAY_OF_YEAR, -(daysBack - 1));
+        return cal.getTimeInMillis();
     }
-    private boolean isWithinDisplayRange(MedicationLog log) {
-        LocalDate today = LocalDate.now();
-        if (currentFilter == FilterType.UPCOMING){
-            if (log.getEffectiveTime() == null) return false;
-            LocalDate d = log.getEffectiveTime().toDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            return !d.isBefore(today) && !d.isAfter(today.plusDays(3));
-        } if (log.getScheduled_at() == null) return false;
-        LocalDate d = log.getScheduled_at().toDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        return d.isEqual(today) || d.isEqual(today.minusDays(1));
+    private Long historyTimeAt(int position) {
+        if (currentType == LogType.MEDICATION) {
+            if (position < 0 || position >= medLog.size()) return null;
+            return medLog.get(position).getScheduled_at().toDate().getTime();
+        }
+        if (position < 0 || position >= appointLog.size()) return null;
+        return appointLog.get(position).getAppointment_at().toDate().getTime();
+    }
+    private void updateFooter() {
+        if (loadOlderAdapter == null) return;
+        LoadOlderAdapter.State state;
+        if (currentFilter == FilterType.REMAINING_TODAY) {
+            state = LoadOlderAdapter.State.HIDDEN;
+        } else if (loadingOlder) {
+            state = LoadOlderAdapter.State.LOADING;
+        } else if (daysBack >= MAX_DAYS) {
+            state = LoadOlderAdapter.State.END;
+        } else {
+            state = LoadOlderAdapter.State.MORE;
+        }
+        loadOlderAdapter.setState(state, rangeStartMillis(), MAX_DAYS);
+    }
+    private void maybeLoadOlder() {
+        if (!isAdded() || rvLogs == null || loadingOlder) return;
+        if (loadOlderAdapter.getState() != LoadOlderAdapter.State.MORE) return;
+        RecyclerView.LayoutManager lm = rvLogs.getLayoutManager();
+        RecyclerView.Adapter<?> adapter = rvLogs.getAdapter();
+        if (!(lm instanceof LinearLayoutManager) || adapter == null) return;
+        int last = ((LinearLayoutManager) lm).findLastVisibleItemPosition();
+        if (last == RecyclerView.NO_POSITION || last < adapter.getItemCount() - 1) return;
+        loadOlder();
+    }
+    private boolean loadingOlder = false;
+    private void loadOlder() {
+        daysBack = Math.min(daysBack + DAYS_STEP, MAX_DAYS);
+        if (currentType == LogType.MEDICATION) {
+            loadingOlder = true;
+            updateFooter();
+            loadMedicationLogs();
+        } else {
+            applyFilter();
+        }
     }
     private int loadToken = 0;
     private void loadMedicationLogs() {
         final int token = ++loadToken;
         String users_id = SessionManager.getInstance().getTargetUid();
         if (users_id == null){
+            loadingOlder = false;
+            updateFooter();
             initialMedicine.setVisibility(View.VISIBLE);
             return;
         }
@@ -306,22 +369,22 @@ public class LogFragment extends Fragment {
         startCal.set(Calendar.MINUTE, 0);
         startCal.set(Calendar.SECOND, 0);
         startCal.set(Calendar.MILLISECOND, 0);
-        startCal.add(Calendar.DAY_OF_YEAR, -1);
-        Timestamp startOfYesterday = new Timestamp(startCal.getTime());
+        startCal.add(Calendar.DAY_OF_YEAR, -(daysBack - 1));
+        Timestamp startOfRange = new Timestamp(startCal.getTime());
 
         Calendar endCal = Calendar.getInstance();
         endCal.set(Calendar.HOUR_OF_DAY, 0);
         endCal.set(Calendar.MINUTE, 0);
         endCal.set(Calendar.SECOND, 0);
         endCal.set(Calendar.MILLISECOND, 0);
-        endCal.add(Calendar.DAY_OF_YEAR, 4);
+        endCal.add(Calendar.DAY_OF_YEAR, 1);
         Timestamp startOfTomorrow = new Timestamp(endCal.getTime());
 
         // lewati log dari jadwal yang sudah dihapus (is_active = false)
         InactiveSchedules.load(db, users_id, inactiveIds ->
         db.collection("medication_logs")
                 .whereEqualTo("users_id", users_id)
-                .whereGreaterThanOrEqualTo("scheduled_at", startOfYesterday)
+                .whereGreaterThanOrEqualTo("scheduled_at", startOfRange)
                 .whereLessThan("scheduled_at", startOfTomorrow)
                 .orderBy("scheduled_at")
                 .get()
@@ -332,9 +395,15 @@ public class LogFragment extends Fragment {
                         MedicationLog log = doc.toObject(MedicationLog.class);
                         if (log != null && !inactiveIds.contains(log.getMedication_schedules_id())) allMedLog.add(log);
                     }
+                    loadingOlder = false;
                     applyFilter();
                 })
-                .addOnFailureListener(e -> Log.e("Medication Log", "Gagal ambil data", e)));
+                .addOnFailureListener(e -> {
+                    Log.e("Medication Log", "Gagal ambil data", e);
+                    if (!isAdded() || token != loadToken) return;
+                    loadingOlder = false;
+                    updateFooter();
+                }));
     }
     private void loadAppointmentLogs() {
         final int token = ++loadToken;
@@ -450,6 +519,10 @@ public class LogFragment extends Fragment {
     private void notifyCaregiverAppointmentAttended(Appointment appointment) {
         String consumerUid = appointment.getUsers_id();
         if (consumerUid == null) return;
+        if (getContext() != null) {
+            new NotificationRepo(getContext().getApplicationContext())
+                    .notifyConsumerAppointmentAttended(consumerUid, appointment.getDocId(), appointment.getTitle());
+        }
 
         db.collection("users").document(consumerUid).get().addOnSuccessListener(userDoc -> {
             String consumerName = userDoc.exists() ? userDoc.getString("name") : "Consumer";
@@ -513,26 +586,21 @@ public class LogFragment extends Fragment {
                 .navigate(R.id.reminderFragment, bundle);
     }
 
-    private void switchToAppointmentTab() {
-        tvType.setText(getString(R.string.riwayat_janji_temu));
+    private void switchType(LogType type) {
+        currentType = type;
+        daysBack = DAYS_STEP;
+        loadingOlder = false;
+        showCurrentType();
+        reloadCurrentType();
+    }
 
-        currentType = LogType.APPOINTMENT;
-
+    private void showCurrentType() {
+        tvType.setText(currentType == LogType.MEDICATION
+                ? getString(R.string.riwayat_konsumsi) : getString(R.string.riwayat_janji_temu));
         updateFilterButtonLabels();
-
-        appointAdapter =
-                new AppointmentLogAdapter(
-                        appointLog,
-                        requireContext()
-                );
-
-        appointAdapter.setOnAppointClickListener(this::navigateToReminderAppointment);
-
-        rvLogs.setAdapter(appointAdapter);
-
-        initialMedicine.setVisibility(View.GONE);
-
-        loadAppointmentLogs();
+        RecyclerView.Adapter<?> listAdapter = currentType == LogType.MEDICATION ? medAdapter : appointAdapter;
+        rvLogs.setAdapter(new ConcatAdapter(listAdapter, loadOlderAdapter));
+        applyFilter();
     }
 
     @Override

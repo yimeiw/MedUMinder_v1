@@ -16,8 +16,8 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.os.LocaleListCompat;
 
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Util.AppLanguage;
 
-import java.util.Locale;
 
 public class LanguageFragment extends Fragment {
     ImageButton btnBack;
@@ -53,16 +53,7 @@ public class LanguageFragment extends Fragment {
             return currentLanguage;
         }
 
-        String deviceLanguage = Locale.getDefault().getLanguage();
-
-        if ("in".equals(deviceLanguage) || "id".equals(deviceLanguage)) {
-            return "id";
-        } else if ("zh".equals(deviceLanguage)) {
-            return "zh";
-        } else {
-            // Bahasa default yang ga tersedia otomatis diubah jadi English
-            return "en";
-        }
+        return "en";
     }
 
     @Nullable
@@ -80,23 +71,11 @@ public class LanguageFragment extends Fragment {
             NavHostFragment.findNavController(LanguageFragment.this).navigateUp();
         });
 
-        view.findViewById(R.id.btnIndonesia).setOnClickListener(v -> {
-            AppCompatDelegate.setApplicationLocales(
-                    LocaleListCompat.forLanguageTags("id")
-            );
-        });
+        view.findViewById(R.id.btnIndonesia).setOnClickListener(v -> AppLanguage.set(requireContext(), "id"));
 
-        view.findViewById(R.id.btnEnglish).setOnClickListener(v -> {
-            AppCompatDelegate.setApplicationLocales(
-                    LocaleListCompat.forLanguageTags("en")
-            );
-        });
+        view.findViewById(R.id.btnEnglish).setOnClickListener(v -> AppLanguage.set(requireContext(), "en"));
 
-        view.findViewById(R.id.btnChinese).setOnClickListener(v -> {
-            AppCompatDelegate.setApplicationLocales(
-                    LocaleListCompat.forLanguageTags("zh")
-            );
-        });
+        view.findViewById(R.id.btnChinese).setOnClickListener(v -> AppLanguage.set(requireContext(), "zh"));
 
         updateLanguageUI(view);
 

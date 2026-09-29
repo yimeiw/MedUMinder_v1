@@ -50,7 +50,8 @@ public class NotificationDetailFragment extends Fragment {
     LinearLayout layoutButton, notifDetail;
     TextView titleNotif, messageNotif, timeNotif, headerNotif,
             tvScheduleName, tvScheduleDayTime, tvStockInfo;
-    MaterialButton btnAction, btnAcc, btnReject;
+    MaterialButton btnAction, btnAcc, btnReject, btnTaken, btnSnooze;
+    View spaceAccReject, spaceTakenSnooze;
     ImageButton btnBack;
     ImageView typeIcon;
     TextView typeChip;
@@ -74,6 +75,10 @@ public class NotificationDetailFragment extends Fragment {
         btnBack = view.findViewById(R.id.btnBack);
         btnAction = view.findViewById(R.id.btnAction);
         btnAcc = view.findViewById(R.id.btnAcc);
+        btnTaken = view.findViewById(R.id.btnTaken);
+        btnSnooze = view.findViewById(R.id.btnSnooze);
+        spaceAccReject = view.findViewById(R.id.spaceAccReject);
+        spaceTakenSnooze = view.findViewById(R.id.spaceTakenSnooze);
         btnReject = view.findViewById(R.id.btnReject);
         layoutButton = view.findViewById(R.id.layoutButton);
 
@@ -542,12 +547,43 @@ public class NotificationDetailFragment extends Fragment {
             // tombol "Sudah diminum" & "Tunda" hanya muncul kalau obat BELUM ditandai dikonsumsi
             checkLogThenShowReminderButtons();
             loadReminderActionDetail();
+        } else if (isCaregiverReminderForConsumer() && notification.getReference_id() != null) {
+            resolveLogReferenceThenShow();
         } else if (isNewScheduleNotif()) {
             loadNewMedicineScheduleDetail();
         } else {
             loadMedicationDetail();
         }
 
+    }
+
+    private boolean isCaregiverReminderForConsumer() {
+        return "pengingat_dari_caregiver_title".equals(notification.getTitle_key()) && !isCaregiverViewing();
+    }
+
+    private boolean isCaregiverViewing() {
+        User currentUser = authManager.getCurrentUser();
+        return currentUser != null && currentUser.getCurrentRole() == UserRole.Caregiver;
+    }
+
+    private void resolveLogReferenceThenShow() {
+        FirebaseFirestore.getInstance().collection("medication_logs").document(notification.getReference_id()).get()
+                .addOnSuccessListener(snap -> {
+                    if (!isAdded()) return;
+                    String scheduleId = snap.getString("medication_schedules_id");
+                    com.google.firebase.Timestamp scheduledAt = snap.getTimestamp("scheduled_at");
+                    if (snap.exists() && scheduleId != null && scheduledAt != null) {
+                        notification.setReference_id(scheduleId);
+                        notification.setScheduled_at(scheduledAt);
+                        checkLogThenShowReminderButtons();
+                        loadReminderActionDetail();
+                    } else if (isNewScheduleNotif()) {
+                        loadNewMedicineScheduleDetail();
+                    } else {
+                        loadMedicationDetail();
+                    }
+                })
+                .addOnFailureListener(e -> { if (isAdded()) loadMedicationDetail(); });
     }
 
     private boolean isNewScheduleNotif() {
@@ -688,6 +724,7 @@ public class NotificationDetailFragment extends Fragment {
     /** Cek status log dulu. Kalau sudah "dikonsumsi", tombol aksi disembunyikan. */
     private void checkLogThenShowReminderButtons() {
         layoutButton.setVisibility(View.GONE);
+        if (isCaregiverViewing()) return;
         String scheduleId = notification.getReference_id();
         if (scheduleId == null || notification.getScheduled_at() == null) return;
         String logId = buildLogId(scheduleId, notification.getScheduled_at().toDate().getTime());
@@ -696,7 +733,7 @@ public class NotificationDetailFragment extends Fragment {
                     if (!isAdded()) return;
                     com.example.meduminderv1.Model.LogStatus st =
                             com.example.meduminderv1.Model.LogStatus.fromRaw(snap.getString("status"));
-                    if (st == com.example.meduminderv1.Model.LogStatus.DIKONSUMSI) {
+                    if (!snap.exists() || st == com.example.meduminderv1.Model.LogStatus.DIKONSUMSI) {
                         layoutButton.setVisibility(View.GONE);
                     } else {
                         showReminderActionButtons();
@@ -714,6 +751,7 @@ public class NotificationDetailFragment extends Fragment {
         layoutButton.setVisibility(View.GONE);
         btnAction.setVisibility(View.GONE);
         if (!isCaregiverMissedAlert) return;
+        if (NO_REMIND_TITLE_KEYS.contains(notification.getTitle_key())) return;
         // cek status terbaru dulu: tidak perlu mengingatkan kalau obat sudah diminum,
         // appointment sudah dihadiri, atau appointment sudah terlewat/dibatalkan
         checkCanRemind(canRemind -> {
@@ -723,6 +761,11 @@ public class NotificationDetailFragment extends Fragment {
             btnAction.setOnClickListener(v -> remindConsumer(notification.getConsumer_uid()));
         });
     }
+
+    private static final java.util.Set<String> NO_REMIND_TITLE_KEYS = new java.util.HashSet<>(java.util.Arrays.asList(
+            "pengingat_terkirim_title",
+            "consumer_sudah_minum_obat",
+            "consumer_sudah_menghadiri_appointment"));
 
     private void checkCanRemind(java.util.function.Consumer<Boolean> result) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -738,7 +781,7 @@ public class NotificationDetailFragment extends Fragment {
                         // dihadiri / terlewat -> tidak perlu diingatkan lagi
                         result.accept(appt.getStatusBasedOnDate() == LogStatus.AKAN_DATANG);
                     })
-                    .addOnFailureListener(e -> result.accept(true));
+                    .addOnFailureListener(e -> result.accept(false));
             return;
         }
 
@@ -753,7 +796,7 @@ public class NotificationDetailFragment extends Fragment {
                     // sudah diminum -> sembunyikan; akan datang / terlewat -> masih boleh diingatkan
                     result.accept(log == null || log.getStatusEnum() != LogStatus.DIKONSUMSI);
                 })
-                .addOnFailureListener(e -> result.accept(true));
+                .addOnFailureListener(e -> result.accept(false));
     }
 
     /**
@@ -947,10 +990,14 @@ public class NotificationDetailFragment extends Fragment {
         if (!isAdded()) return;
         btnAction.setVisibility(View.GONE);
         layoutButton.setVisibility(View.VISIBLE);
-        btnAcc.setText(getString(R.string.sudah_diminum));
-        btnReject.setText(getString(R.string.tunda_pengingat));
-        btnAcc.setOnClickListener(v -> confirmMedicineTakenFromNotif());
-        btnReject.setOnClickListener(v -> snoozeMedicineFromNotif());
+        btnAcc.setVisibility(View.GONE);
+        spaceAccReject.setVisibility(View.GONE);
+        btnReject.setVisibility(View.GONE);
+        btnTaken.setVisibility(View.VISIBLE);
+        spaceTakenSnooze.setVisibility(View.VISIBLE);
+        btnSnooze.setVisibility(View.VISIBLE);
+        btnTaken.setOnClickListener(v -> confirmMedicineTakenFromNotif());
+        btnSnooze.setOnClickListener(v -> snoozeMedicineFromNotif());
     }
 
     private void loadReminderActionDetail() {
@@ -1030,32 +1077,49 @@ public class NotificationDetailFragment extends Fragment {
                 NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
                 return;
             } String consumerUid = snapshot.getString("users_id");
-            new com.example.meduminderv1.Repo.MedicationRepo(requireContext())
-                    .markTakenAndDecrement(logId, pendingMedicationId, new RepoCallback<Void>() {
-                        @Override public void onSuccess(Void result) {
-                            LoadingOverlay.hide(NotificationDetailFragment.this);
-                            if (!isAdded()) return;
-                            requireContext().stopService(new Intent(requireContext(), com.example.meduminderv1.Reminder.AlarmRingingService.class));
-                            AlarmSchedulerHelper.cancelSnooze(requireContext(), scheduleId);
-                            AlarmSchedulerHelper.onDoseTaken(requireContext(), scheduleId, pendingMedName, scheduledAtMillis);
-                            new NotificationRepo(requireContext().getApplicationContext())
-                                    .notifyCaregiversMedicineTaken(consumerUid, logId, pendingMedName, null);
-                            Toast.makeText(requireContext(), getString(R.string.obat_ditandai_dikonsumsi), Toast.LENGTH_SHORT).show();
-                            NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
-                        }
-                        @Override public void onFailure(Exception e) {
-                            LoadingOverlay.hide(NotificationDetailFragment.this);
-                            if (!isAdded()) return;
-                            layoutButton.setVisibility(View.VISIBLE);
-                            Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
+            if (pendingMedicationId == null) {
+                db.collection("medication_schedules").document(scheduleId).get()
+                        .addOnSuccessListener(sched -> {
+                            pendingMedicationId = sched.getString("medication_id");
+                            markTakenFromNotif(logId, scheduleId, scheduledAtMillis, consumerUid);
+                        })
+                        .addOnFailureListener(e -> markTakenFromNotif(logId, scheduleId, scheduledAtMillis, consumerUid));
+                return;
+            }
+            markTakenFromNotif(logId, scheduleId, scheduledAtMillis, consumerUid);
         }).addOnFailureListener(e -> {
             LoadingOverlay.hide(NotificationDetailFragment.this);
             if (!isAdded()) return;
             layoutButton.setVisibility(View.VISIBLE);
             Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
         });
+    }
+
+    private void markTakenFromNotif(String logId, String scheduleId, long scheduledAtMillis, String consumerUid) {
+        if (!isAdded()) {
+            LoadingOverlay.hide(NotificationDetailFragment.this);
+            return;
+        }
+        new com.example.meduminderv1.Repo.MedicationRepo(requireContext().getApplicationContext())
+                .markTakenAndDecrement(logId, pendingMedicationId, new RepoCallback<Void>() {
+                    @Override public void onSuccess(Void result) {
+                        LoadingOverlay.hide(NotificationDetailFragment.this);
+                        if (!isAdded()) return;
+                        requireContext().stopService(new Intent(requireContext(), com.example.meduminderv1.Reminder.AlarmRingingService.class));
+                        AlarmSchedulerHelper.cancelSnooze(requireContext(), scheduleId);
+                        AlarmSchedulerHelper.onDoseTaken(requireContext(), scheduleId, pendingMedName, scheduledAtMillis);
+                        new NotificationRepo(requireContext().getApplicationContext())
+                                .notifyCaregiversMedicineTaken(consumerUid, logId, pendingMedName, null);
+                        Toast.makeText(requireContext(), getString(R.string.obat_ditandai_dikonsumsi), Toast.LENGTH_SHORT).show();
+                        NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
+                    }
+                    @Override public void onFailure(Exception e) {
+                        LoadingOverlay.hide(NotificationDetailFragment.this);
+                        if (!isAdded()) return;
+                        layoutButton.setVisibility(View.VISIBLE);
+                        Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void snoozeMedicineFromNotif() {

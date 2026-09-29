@@ -106,18 +106,18 @@ public class EditProfileFragment extends Fragment {
         return view;
     }
 
-    private void saveName() {
+    private boolean saveName() {
         if (isUpdatingName){
-            return;
+            return true;
         }
 
         String newName = userName.getText().toString().trim();
         if (newName.equals(currentUser.getName())){
-            return;
-        } if (newName.length() <= 4){
+            return true;
+        } if (newName.length() < 4){
             userName.setError(getString(R.string.nama_minimal_4_karaker_typo));
             userName.requestFocus();
-            return;
+            return false;
         } isUpdatingName = true;
         LoadingOverlay.show(EditProfileFragment.this);
         authManager.updateDisplayName(newName, new AuthCallback<User>() {
@@ -140,20 +140,22 @@ public class EditProfileFragment extends Fragment {
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
+        return true;
     }
 
     private void setupName() {
         userName.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE){
-                saveName();
-                userName.clearFocus();
+                if (saveName()) userName.clearFocus();
                 return true;
             } return false;
         });
 
         userName.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus){
-                saveName();
+            if (!hasFocus && !isUpdatingName && currentUser != null
+                    && !userName.getText().toString().trim().equals(currentUser.getName())){
+                userName.setError(null);
+                userName.setText(currentUser.getName());
             }
         });
     }

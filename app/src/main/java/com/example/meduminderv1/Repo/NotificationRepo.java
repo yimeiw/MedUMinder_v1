@@ -205,8 +205,44 @@ public class NotificationRepo {
         notification.setCreated_at(Timestamp.now());
         createNotification(notification, callback);
     }
+    private static final RepoCallback<Void> IGNORE = new RepoCallback<Void>() {
+        @Override public void onSuccess(Void result) { }
+        @Override public void onFailure(Exception e) { }
+    };
+
+    /** Konfirmasi untuk consumer sendiri: "Anda sudah minum X". */
+    public void notifyConsumerMedicineTaken(String consumerUid, String logId, @Nullable String namaObat) {
+        if (consumerUid == null) return;
+        Notification notif = new Notification();
+        notif.setReceiver_uid(consumerUid);
+        notif.setSender_uid(consumerUid);
+        notif.setType(NotificationType.Medicine);
+        NotificationText.apply(notif, "obat_sudah_diminum_title", "anda_sudah_minum_obat_msg",
+                namaObat != null ? namaObat : "");
+        notif.setReference_id(logId);
+        notif.setTarget_role(UserRole.Consumer.name());
+        notif.setIs_read(false);
+        createNotification(notif, IGNORE);
+    }
+
+    /** Konfirmasi untuk consumer sendiri: "Anda sudah menghadiri X". */
+    public void notifyConsumerAppointmentAttended(String consumerUid, String appointmentId, @Nullable String title) {
+        if (consumerUid == null) return;
+        Notification notif = new Notification();
+        notif.setReceiver_uid(consumerUid);
+        notif.setSender_uid(consumerUid);
+        notif.setType(NotificationType.Appointment);
+        NotificationText.apply(notif, "appointment_dihadiri_title", "anda_sudah_menghadiri_appointment_msg",
+                title != null ? title : "");
+        notif.setReference_id(appointmentId);
+        notif.setTarget_role(UserRole.Consumer.name());
+        notif.setIs_read(false);
+        createNotification(notif, IGNORE);
+    }
+
     public void notifyCaregiversMedicineTaken(String consumerUid, String logId, String namaObat, @Nullable RepoCallback<Void> callback) {
         if (consumerUid == null) { if (callback != null) callback.onSuccess(null); return; }
+        notifyConsumerMedicineTaken(consumerUid, logId, namaObat);
         String medName = namaObat != null ? namaObat : "Obat";
         db.collection("users").document(consumerUid).get().addOnSuccessListener(userDoc -> {
             String consumerName = userDoc.exists() && userDoc.getString("name") != null ? userDoc.getString("name") : "Consumer";
@@ -238,6 +274,7 @@ public class NotificationRepo {
 
     public void notifyCaregiversAppointmentAttended(String consumerUid, String appointmentId, String title, @Nullable RepoCallback<Void> callback) {
         if (consumerUid == null) { if (callback != null) callback.onSuccess(null); return; }
+        notifyConsumerAppointmentAttended(consumerUid, appointmentId, title);
         String apptTitle = title != null ? title : "";
         db.collection("users").document(consumerUid).get().addOnSuccessListener(userDoc -> {
             String consumerName = userDoc.exists() && userDoc.getString("name") != null ? userDoc.getString("name") : "Consumer";

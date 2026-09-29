@@ -30,6 +30,7 @@ import com.example.meduminderv1.Reminder.AppLifecycleTracker;
 import com.example.meduminderv1.Reminder.DailyRescheduleWorker;
 import com.example.meduminderv1.Reminder.StockCheckWorker;
 import com.example.meduminderv1.Reminder.StockChecker;
+import com.example.meduminderv1.Reminder.ScheduleSyncListener;
 import com.example.meduminderv1.Reminder.ReminderEventBus;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
@@ -79,6 +80,7 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        com.example.meduminderv1.Util.AppLanguage.syncFromActivity(this);
         AppLifecycleTracker.init();
         setContentView(R.layout.activity_main);
 
@@ -127,6 +129,10 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         if (user != null) {
             new LogGenerator().generateForAllActiveSchedules(user.getUid());
             StockChecker.checkAllForUser(getApplicationContext(), user.getUid(), null);
+            // pasang ulang semua alarm tiap app dibuka (jadwal bisa ditambah caregiver dari HP lain),
+            // lalu pantau perubahan jadwal selama app terbuka
+            AlarmSchedulerHelper.rescheduleAllActiveForUser(getApplicationContext(), user.getUid());
+            stopScheduleSync = ScheduleSyncListener.start(this, user.getUid());
         }
 
         pendingDeepLinkIntent = getIntent();
@@ -340,12 +346,15 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         }
     }
 
+    private Runnable stopScheduleSync;
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         if (userListener != null){
             userListener.remove();
         }
+        if (stopScheduleSync != null) stopScheduleSync.run();
     }
 
 }

@@ -9,7 +9,6 @@
     android:layout_margin="20dp"
     >
 
-    <!-- bisa di-scroll di layar pendek supaya tombol di bawah tidak terpotong -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -23,7 +22,6 @@
         android:orientation="vertical"
         >
 
-<!--        back button dan title page-->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -46,7 +44,7 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/tvAddReminderMed"
                 android:text="@string/konfirmasi_pengingat"
-                android:textStyle="bold"
+                android:textFontWeight="700"
                 android:textSize="24sp"
                 android:layout_weight="1"
                 android:gravity="center"
@@ -62,7 +60,6 @@
                 />
         </LinearLayout>
 
-<!--         bulat isi nama obat-->
         <LinearLayout
             android:id="@+id/circleNamaObat"
             android:layout_width="@dimen/reminder_circle_size"
@@ -90,7 +87,6 @@
                 android:layout_height="15dp"
                 />
 
-            <!-- ukuran tetap supaya ikon obat & appointment sama besar -->
             <ImageView
                 android:id="@+id/iconReminderType"
                 android:layout_width="@dimen/reminder_icon_size"
@@ -101,7 +97,6 @@
                 />
         </LinearLayout>
 
-<!--        detail tanggal, waktu dan status appoint-->
         <LinearLayout
             android:id="@+id/statusMedicine"
             android:layout_width="match_parent"
@@ -113,7 +108,6 @@
             android:layout_marginBottom="20dp"
             >
 
-<!--            waktu dan tanggal reminder-->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -241,7 +235,6 @@
             </LinearLayout>
 
         </LinearLayout>
-<!--        button confirm taken dan tunda-->
         <LinearLayout
             android:id="@+id/buttonConfirm"
             android:layout_width="match_parent"
@@ -262,6 +255,11 @@
                 android:textAllCaps="false"
                 android:layout_marginVertical="10dp"
                 android:textFontWeight="600"
+                android:maxLines="1"
+                android:paddingHorizontal="8dp"
+                app:autoSizeTextType="uniform"
+                app:autoSizeMinTextSize="11sp"
+                app:autoSizeMaxTextSize="14sp"
                 />
 
             <Space
@@ -270,7 +268,6 @@
                 android:layout_height="match_parent"
                 />
 
-            <!-- lebar dibagi rata; kalau tombol tunda disembunyikan, tombol konfirmasi jadi selebar layar -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnTundaReminder"
                 android:layout_width="0dp"
@@ -283,6 +280,11 @@
                 android:textAllCaps="false"
                 android:layout_marginVertical="10dp"
                 android:textFontWeight="600"
+                android:maxLines="1"
+                android:paddingHorizontal="8dp"
+                app:autoSizeTextType="uniform"
+                app:autoSizeMinTextSize="11sp"
+                app:autoSizeMaxTextSize="14sp"
                 />
         </LinearLayout>
 

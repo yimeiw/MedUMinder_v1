@@ -117,7 +117,7 @@
 
     <string name="tambah_pengingat">Tambah Pengingat</string>
     <string name="tambah_appointment">Tambah Appointment</string>
-    <string name="log_jadwal">Pelacak Jadwal</string>
+    <string name="log_jadwal">Riwayat</string>
 
     <string name="jadwal_berikutnya">Jadwal Berikutnya</string>
     <string name="stok_obat">Stok Obat: </string>
@@ -409,7 +409,7 @@
     <string name="nama_berhasil_diperbarui">Nama berhasil diperbarui</string>
     <string name="nama_harus_diisi">Nama harus diisi</string>
     <string name="nama_maksimal_50_karakter">Nama maksimal 50 karakter</string>
-    <string name="nama_minimal_4_karaker_typo">Nama minimal 4 karaker</string>
+    <string name="nama_minimal_4_karaker_typo">Nama minimal 4 karakter</string>
     <string name="nama_obat_tidak_ditemukan">Nama obat tidak ditemukan!</string>
     <string name="nama_obat_wajib_diisi">Nama obat wajib diisi</string>
     <string name="not_linked_status">Not Linked</string>
@@ -685,4 +685,29 @@
     <string name="tidak_ada_akun_google">Tidak ada akun Google di perangkat ini. Tambahkan dulu di Pengaturan.</string>
     <string name="login_google_gagal">Gagal masuk dengan Google. Silakan coba lagi.</string>
     <string name="nav_home">Beranda</string>
+    <string name="izin_notifikasi_dibutuhkan_toast">Aktifkan notifikasi MedUMinder dulu supaya pengingat bisa muncul.</string>
+    <string name="izin_alarm_dibutuhkan_toast">Aktifkan izin "Alarm &amp; pengingat" untuk MedUMinder dulu supaya alarm bisa berbunyi tepat waktu.</string>
+    <string name="obat_sudah_diminum_title">Obat Sudah Diminum</string>
+    <string name="anda_sudah_minum_obat_msg">Anda sudah minum %1$s. Pertahankan!</string>
+    <string name="appointment_dihadiri_title">Appointment Dihadiri</string>
+    <string name="anda_sudah_menghadiri_appointment_msg">Anda sudah menghadiri %1$s.</string>
+
+    <string name="kemarin">Kemarin</string>
+    <string name="riwayat_kosong_obat">Belum ada riwayat obat dalam %d hari terakhir.</string>
+    <string name="riwayat_kosong_appointment">Belum ada riwayat janji temu dalam %d hari terakhir.</string>
+    <string name="sisa_hari_ini">Sisa hari ini</string>
+    <string name="riwayat_kosong_sisa_obat">Tidak ada lagi jadwal obat hari ini.</string>
+    <string name="riwayat_kosong_sisa_appointment">Tidak ada lagi janji temu hari ini.</string>
+    <string name="riwayat_sejak">Menampilkan riwayat sejak %s</string>
+    <string name="riwayat_gulir_untuk_lebih_lama">Gulir ke bawah untuk melihat yang lebih lama</string>
+    <string name="riwayat_memuat_lebih_lama">Memuat riwayat lebih lama…</string>
+    <string name="riwayat_sudah_semua">Itu semua riwayat %d hari terakhir</string>
+    <string name="tidak_ada_data_untuk_diunduh">Tidak ada data untuk diunduh.</string>
+    <string name="alarm_waktunya_appointment">Waktunya appointment</string>
+    <string name="alarm_btn_dihadiri">Dihadiri</string>
+    <string name="alarm_btn_tidak_dihadiri">Tidak dihadiri</string>
+    <string name="alarm_btn_diminum">Sudah diminum</string>
+    <string name="alarm_btn_tunda">Tunda</string>
+    <string name="alarm_channel_nama">Pengingat obat</string>
+    <string name="alarm_channel_deskripsi">Notifikasi alarm waktu minum obat dan appointment</string>
 </resources>

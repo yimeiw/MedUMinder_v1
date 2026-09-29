@@ -83,14 +83,14 @@
                  />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnUpcoming"
+                android:id="@+id/btnRemaining"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="10dp"
                 style="@style/MaterialButtonLog"
                 android:textAllCaps="false"
                 android:textSize="12sp"
-                android:text="@string/akan_datang" />
+                android:text="@string/sisa_hari_ini" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnTaken"

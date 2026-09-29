@@ -260,7 +260,10 @@ public class EditMedicineFragment extends Fragment {
                                 AlarmSchedulerHelper.cancelSnooze(appContext, scheduleId);
 
                                 long endMillis = (endDate != null) ? endDate.toDate().getTime() : 0;
-                                AlarmSchedulerHelper.scheduleAll(appContext, scheduleId, medName, times, endMillis);
+                                // alarm hanya di HP pemilik jadwal (HP consumer memperbarui sendiri lewat ScheduleSyncListener)
+                                if (user.getAuth_uid().equals(targetUid)) {
+                                    AlarmSchedulerHelper.scheduleAll(appContext, scheduleId, medName, times, endMillis);
+                                }
                                 new LogGenerator().replaceFutureLogs(targetUid, scheduleId, times, now, endDate);
                                 // stok/frekuensi bisa berubah (mis. habis isi ulang) -> cek ulang pengingat isi ulang
                                 StockChecker.check(appContext, medicationId);

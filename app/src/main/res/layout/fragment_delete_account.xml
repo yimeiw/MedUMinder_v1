@@ -69,7 +69,7 @@
                 android:id="@+id/password_input"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/edittext_border"
+                android:background="@drawable/input_edittext_border"
                 android:hint="@string/enter_password"
                 android:paddingStart="20dp"
                 android:textColorHint="?attr/colorPrimaryInverse"

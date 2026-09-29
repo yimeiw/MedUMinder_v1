@@ -1,39 +1,41 @@
 package com.example.meduminderv1.Reminder;
 
+import android.app.AlarmManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
+import android.os.Looper;
 
-import com.example.meduminderv1.Model.MedicationSchedules;
-import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
-import java.util.List;
-
+/**
+ * Pasang ulang semua alarm milik user yang sedang login saat:
+ * - HP selesai restart (alarm AlarmManager hilang saat restart)
+ * - app di-update
+ * - jam / zona waktu HP diubah (supaya tetap bunyi di jam yang diinput)
+ * - izin "Alarm & pengingat" baru diberikan (sebelumnya alarm tidak bisa dipasang sama sekali)
+ */
 public class BootReceiver extends BroadcastReceiver {
+
+    // cukup lama untuk query Firestore selesai, tapi masih di bawah batas goAsync (~10 detik)
+    private static final long FINISH_AFTER_MS = 9_000L;
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (!Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) return;
+        String action = intent.getAction();
+        if (!Intent.ACTION_BOOT_COMPLETED.equals(action)
+                && !Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)
+                && !Intent.ACTION_TIME_CHANGED.equals(action)
+                && !Intent.ACTION_TIMEZONE_CHANGED.equals(action)
+                && !AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED.equals(action)) return;
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;   // belum login: tidak ada alarm yang perlu dipasang
 
         final PendingResult pendingResult = goAsync();
-        final Context appContext = context.getApplicationContext();
-
-        FirebaseFirestore.getInstance()
-                .collectionGroup("medication_schedules")
-                .whereEqualTo("is_active", true)
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        for (QueryDocumentSnapshot doc : task.getResult()) {
-                            MedicationSchedules schedules = doc.toObject(MedicationSchedules.class);
-                            if (schedules != null){
-                                AlarmSchedulerHelper.resolveAndScheduleForBoot(appContext, doc.getId(), schedules);
-                            }
-                        }
-                    }
-                    pendingResult.finish();
-                });
+        AlarmSchedulerHelper.rescheduleAllActiveForUser(context.getApplicationContext(), user.getUid());
+        new Handler(Looper.getMainLooper()).postDelayed(pendingResult::finish, FINISH_AFTER_MS);
     }
 }

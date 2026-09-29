@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppText.Headline1" parent="TextAppearance.MaterialComponents.Headline1">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+    <style name="AppText.Headline2" parent="TextAppearance.MaterialComponents.Headline2">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+    <style name="AppText.Headline3" parent="TextAppearance.MaterialComponents.Headline3">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+    <style name="AppText.Headline4" parent="TextAppearance.MaterialComponents.Headline4">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+    <style name="AppText.Headline5" parent="TextAppearance.MaterialComponents.Headline5">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+    <style name="AppText.Headline6" parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+    <style name="AppText.Subtitle1" parent="TextAppearance.MaterialComponents.Subtitle1">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+    <style name="AppText.Subtitle2" parent="TextAppearance.MaterialComponents.Subtitle2">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+    <style name="AppText.Body1" parent="TextAppearance.MaterialComponents.Body1">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+    <style name="AppText.Body2" parent="TextAppearance.MaterialComponents.Body2">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+    <style name="AppText.Caption" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+    <style name="AppText.Overline" parent="TextAppearance.MaterialComponents.Overline">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+
+    <style name="AppText.Default" parent="TextAppearance.AppCompat">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+    <style name="AppText.Small" parent="TextAppearance.AppCompat.Small">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+    <style name="AppText.Medium" parent="TextAppearance.AppCompat.Medium">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+    <style name="AppText.Large" parent="TextAppearance.AppCompat.Large">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+    <style name="AppText.PopupMenu.Large" parent="TextAppearance.AppCompat.Widget.PopupMenu.Large">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+    <style name="AppText.PopupMenu.Small" parent="TextAppearance.AppCompat.Widget.PopupMenu.Small">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+    <style name="AppText.ListItem" parent="TextAppearance.AppCompat.Subhead">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+    <style name="AppText.ListItemSmall" parent="TextAppearance.AppCompat.Subhead">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+    </style>
+</resources>

@@ -223,6 +223,7 @@
                         app:backgroundTint="?attr/colorTertiaryFixed" />
 
                     <Space
+                        android:id="@+id/spaceAccReject"
                         android:layout_width="12dp"
                         android:layout_height="wrap_content" />
 
@@ -238,6 +239,50 @@
                         android:textColor="?attr/colorPrimaryFixed"
                         android:textSize="15sp"
                         app:backgroundTint="?attr/colorTertiaryFixedDim" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnTaken"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/button_selector"
+                        android:minHeight="52dp"
+                        android:paddingHorizontal="8dp"
+                        android:maxLines="1"
+                        android:text="@string/sudah_diminum"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/colorPrimaryFixed"
+                        android:textFontWeight="600"
+                        app:autoSizeTextType="uniform"
+                        app:autoSizeMinTextSize="11sp"
+                        app:autoSizeMaxTextSize="15sp"
+                        app:backgroundTint="@null"
+                        android:visibility="gone" />
+
+                    <Space
+                        android:id="@+id/spaceTakenSnooze"
+                        android:layout_width="12dp"
+                        android:layout_height="wrap_content"
+                        android:visibility="gone" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSnooze"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/button_border"
+                        android:minHeight="52dp"
+                        android:paddingHorizontal="8dp"
+                        android:maxLines="1"
+                        android:text="@string/tunda_pengingat"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textFontWeight="600"
+                        app:autoSizeTextType="uniform"
+                        app:autoSizeMinTextSize="11sp"
+                        app:autoSizeMaxTextSize="15sp"
+                        app:backgroundTint="@null"
+                        android:visibility="gone" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

@@ -94,8 +94,6 @@ public class StatistikFragment extends Fragment {
         // Required empty public constructor
     }
 
-    // ===== font aplikasi (app_font) untuk grafik & PDF =====
-    // Tanpa ini, grafik dan PDF memakai font bawaan HP (Typeface.DEFAULT).
     private Typeface cachedRegular, cachedBold;
 
     private Typeface fontRegular() {
@@ -108,7 +106,6 @@ public class StatistikFragment extends Fragment {
 
     private Typeface fontBold() {
         if (cachedBold == null) {
-            // app_font punya versi 700 (bold), jadi ini memakai file bold yang asli
             cachedBold = Typeface.create(fontRegular(), Typeface.BOLD);
         }
         return cachedBold;
@@ -178,7 +175,7 @@ public class StatistikFragment extends Fragment {
         });
 
         statistikRepo = new StatistikRepo(requireContext());
-        updatePeriodButton(view);   // tandai "mingguan" saat pertama dibuka
+        updatePeriodButton(view);
         loadStats();
 
         return view;
@@ -266,7 +263,6 @@ public class StatistikFragment extends Fragment {
         boolean isMonthly = "monthly".equals(selectedPeriod);
         List<String> labels = shortChartLabels(stats);
 
-        // bulanan: x = tanggal (1..31) supaya label sumbu bisa 5, 10, 15, ...
         ArrayList<BarEntry> entries = new ArrayList<>();
         for (int i = 0; i < stats.size(); i++) {
             entries.add(new BarEntry(isMonthly ? i + 1 : i, stats.get(i).persentase));
@@ -329,7 +325,7 @@ public class StatistikFragment extends Fragment {
         left.setTypeface(fontRegular());
         left.setAxisMinimum(0f);
         left.setAxisMaximum(100f);
-        left.setLabelCount(5, true);   // 0, 25, 50, 75, 100
+        left.setLabelCount(5, true);
         left.setGridColor(garis);
         left.setDrawAxisLine(false);
         left.setValueFormatter(new ValueFormatter() {
@@ -428,6 +424,19 @@ public class StatistikFragment extends Fragment {
     }
 
     private void downloadReport() {
+        boolean hasData = false;
+        if (currentStats != null) {
+            for (StatistikRepo.DayStat stat : currentStats) {
+                if (stat.seharusnya > 0 || stat.dikonsumsi > 0 || stat.diabaikan > 0 || stat.snooze > 0) {
+                    hasData = true;
+                    break;
+                }
+            }
+        }
+        if (currentStats != null && !currentStats.isEmpty() && !hasData) {
+            Toast.makeText(requireContext(), getString(R.string.tidak_ada_data_untuk_diunduh), Toast.LENGTH_SHORT).show();
+            return;
+        }
         if (currentStats == null || currentStats.isEmpty()) {
             Toast.makeText(
                     requireContext(),
@@ -516,9 +525,6 @@ public class StatistikFragment extends Fragment {
         android.graphics.Paint paint =
                 new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
 
-        // =========================
-        // PAGE 1
-        // =========================
         PdfDocument.PageInfo pageInfo1 =
                 new PdfDocument.PageInfo.Builder(
                         pageWidth,
@@ -531,7 +537,6 @@ public class StatistikFragment extends Fragment {
 
         float y = 50;
 
-        // Judul
         paint.setTextAlign(android.graphics.Paint.Align.CENTER);
         paint.setTypeface(fontBold());
         paint.setTextSize(22);
@@ -545,7 +550,6 @@ public class StatistikFragment extends Fragment {
 
         y += 30;
 
-        // Nama Consumer
         paint.setTypeface(fontRegular());
         paint.setTextSize(15);
 
@@ -558,7 +562,6 @@ public class StatistikFragment extends Fragment {
 
         y += 25;
 
-        // Periode
         paint.setTextSize(11);
 
         canvas1.drawText(
@@ -572,7 +575,6 @@ public class StatistikFragment extends Fragment {
 
         y += 40;
 
-        // Tingkat Kepatuhan
         y = drawSectionTitle(
                 canvas1,
                 paint,
@@ -581,7 +583,6 @@ public class StatistikFragment extends Fragment {
                 y
         );
 
-        // Ring adherence (digambar vektor supaya tajam, tidak blur)
         {
             int ringSize = 130;
             float ringLeft = (pageWidth - ringSize) / 2f;
@@ -603,14 +604,11 @@ public class StatistikFragment extends Fragment {
 
         y += 30;
 
-        // Total
         paint.setTextAlign(android.graphics.Paint.Align.LEFT);
         paint.setTypeface(fontRegular());
         paint.setTextSize(12);
 
         canvas1.drawText(
-                // string "totalObatDikonsumsi" tidak punya %1$d, jadi angkanya tidak ikut tampil.
-                // Sekarang: label + ": " + jumlah (pakai string jumlah_obat yang ada angkanya)
                 getString(R.string.totalObatDikonsumsi) + ": "
                         + getString(R.string.jumlah_obat, currentTotalDikonsumsi),
                 margin,
@@ -621,8 +619,6 @@ public class StatistikFragment extends Fragment {
         y += 20;
 
         canvas1.drawText(
-                // string "totalObatDiabaikan" tidak punya %1$d, jadi angkanya tidak ikut tampil.
-                // Sekarang: label + ": " + jumlah (pakai string jumlah_obat yang ada angkanya)
                 getString(R.string.totalObatDiabaikan) + ": "
                         + getString(R.string.jumlah_obat, currentTotalDiabaikan),
                 margin,
@@ -633,8 +629,6 @@ public class StatistikFragment extends Fragment {
         y += 20;
 
         canvas1.drawText(
-                // string "totalObatSnooze" tidak punya %1$d, jadi angkanya tidak ikut tampil.
-                // Sekarang: label + ": " + jumlah (pakai string jumlah_obat yang ada angkanya)
                 getString(R.string.totalObatSnooze) + ": "
                         + getString(R.string.jumlah_obat, currentTotalSnooze),
                 margin,
@@ -644,7 +638,6 @@ public class StatistikFragment extends Fragment {
 
         y += 40;
 
-        // Adherence Chart
         y = drawSectionTitle(
                 canvas1,
                 paint,
@@ -656,16 +649,12 @@ public class StatistikFragment extends Fragment {
         {
             int chartWidth = pageWidth - 2 * (int) margin;
             int chartHeight = 300;
-            // grafik digambar vektor langsung di PDF (tajam, label rapi)
             drawPdfBarChart(canvas1, margin, y, chartWidth, chartHeight);
         }
 
         document.finishPage(page1);
 
 
-        // =========================
-        // PAGE 2
-        // =========================
         PdfDocument.PageInfo pageInfo2 =
                 new PdfDocument.PageInfo.Builder(
                         pageWidth,
@@ -678,7 +667,6 @@ public class StatistikFragment extends Fragment {
 
         y = 60;
 
-        // Analisis Response
         y = drawSectionTitle(
                 canvas2,
                 paint,
@@ -687,7 +675,6 @@ public class StatistikFragment extends Fragment {
                 y
         );
 
-        // Donut Chart
         {
             int pieSize = 250;
             float pieLeft = (pageWidth - pieSize) / 2f;
@@ -695,7 +682,6 @@ public class StatistikFragment extends Fragment {
             y += pieSize + 30;
         }
 
-        // Legend / angka
         paint.setTextAlign(android.graphics.Paint.Align.LEFT);
         paint.setTypeface(fontRegular());
         paint.setTextSize(12);
@@ -714,7 +700,6 @@ public class StatistikFragment extends Fragment {
 
         float dotRadius = 5f, dotTextGap = 6f, itemGap = 20f;
 
-        //hitung total lebar biar barisnya bisa ditengahkan
         float totalLegendWidth = 0f;
         float[] labelWidths = new float[legendLabels.length];
         for (int i = 0; i < legendLabels.length; i++){
@@ -724,7 +709,7 @@ public class StatistikFragment extends Fragment {
         }
 
         float legendX = (pageWidth - totalLegendWidth) / 2f;
-        float dotCenterY = y - 4f; //biar titik sejajar vertikal dengan teks
+        float dotCenterY = y - 4f;
 
         for (int i = 0; i < legendLabels.length; i++){
             paint.setColor(legendColors[i]);
@@ -736,7 +721,6 @@ public class StatistikFragment extends Fragment {
             legendX += (dotRadius * 2) + dotTextGap + labelWidths[i] + itemGap;
         } y+= 35;
 
-        // Penjelasan
         paint.setTextSize(11);
 
         y = drawWrappedText(canvas2, paint,

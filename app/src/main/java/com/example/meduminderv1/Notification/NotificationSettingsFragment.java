@@ -243,11 +243,9 @@ public class NotificationSettingsFragment extends Fragment {
 
         // reminder message
         private void setupReminderMessageDropdown() {
-            String[] reminderMessages = {
-                    getString(R.string.jangan_lupa_minum_obat),
-                    getString(R.string.waktunya_minum_obat),
-                    getString(R.string.time_to_consume_med)
-            };
+            int[] options = com.example.meduminderv1.Reminder.ReminderMessage.OPTIONS;
+            String[] reminderMessages = new String[options.length];
+            for (int i = 0; i < options.length; i++) reminderMessages[i] = getString(options[i]);
 
             ArrayAdapter<String> adapter = createDropdownAdapter(
                     new ArrayList<>(Arrays.asList(reminderMessages))
@@ -273,9 +271,7 @@ public class NotificationSettingsFragment extends Fragment {
                                 selected, false
                         );
 
-                        pref.edit().putString(
-                                KEY_REMINDER_MESSAGE, selected
-                        ).apply();
+                        com.example.meduminderv1.Reminder.ReminderMessage.save(requireContext(), position);
                         dropdownReminderMessage.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
                     }
             );
@@ -484,10 +480,8 @@ public class NotificationSettingsFragment extends Fragment {
             }
 
             // reminder message
-            String savedReminderMessage = pref.getString(
-                    KEY_REMINDER_MESSAGE,
-                    getString(R.string.jangan_lupa_minum_obat)
-            );
+            String savedReminderMessage = getString(com.example.meduminderv1.Reminder.ReminderMessage.OPTIONS[
+                    com.example.meduminderv1.Reminder.ReminderMessage.selectedIndex(requireContext())]);
 
             dropdownReminderMessage.setText(
                     savedReminderMessage, false

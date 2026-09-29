@@ -50,7 +50,8 @@ public class SignUpActivity extends AppCompatActivity {
         setContentView(R.layout.activity_sign_up);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, Math.max(systemBars.bottom, ime.bottom));
             return insets;
         });
 
@@ -62,17 +63,12 @@ public class SignUpActivity extends AppCompatActivity {
         ScrollView signupScroll = findViewById(R.id.signup_scroll);
         passwordInput = findViewById(R.id.password_input);
 
-        passwordInput.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                signupScroll.postDelayed(() -> {
-                    Rect rect = new Rect();
-                    passwordInput.getDrawingRect(rect);
-                    signupScroll.offsetDescendantRectToMyCoords(passwordInput, rect);
-
-                    signupScroll.smoothScrollTo(0, rect.bottom);
-                }, 300);
-            }
-        });
+        for (EditText input : new EditText[]{nameInput, emailInput, passwordInput}) {
+            input.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) signupScroll.postDelayed(() -> scrollIntoView(signupScroll, v), 300);
+            });
+            input.setOnClickListener(v -> signupScroll.postDelayed(() -> scrollIntoView(signupScroll, v), 300));
+        }
 
         passwordInput.setCompoundDrawablesWithIntrinsicBounds(
                 0, 0, R.drawable.ic_visibility_off, 0
@@ -272,4 +268,14 @@ public class SignUpActivity extends AppCompatActivity {
         } return true;
     }
 
+    private void scrollIntoView(ScrollView scroll, android.view.View field) {
+        Rect rect = new Rect();
+        field.getDrawingRect(rect);
+        scroll.offsetDescendantRectToMyCoords(field, rect);
+        int margin = (int) (24 * getResources().getDisplayMetrics().density);
+        int visibleBottom = scroll.getScrollY() + scroll.getHeight() - scroll.getPaddingBottom();
+        if (rect.bottom + margin > visibleBottom) {
+            scroll.smoothScrollBy(0, rect.bottom + margin - visibleBottom);
+        }
+    }
 }

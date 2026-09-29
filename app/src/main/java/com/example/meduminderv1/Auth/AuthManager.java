@@ -36,6 +36,7 @@ import com.example.meduminderv1.Repo.NotificationRepo;
 import com.example.meduminderv1.Repo.UserRepository;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
+import com.google.firebase.FirebaseNetworkException;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
@@ -146,7 +147,7 @@ public class AuthManager {
             if (e instanceof FirebaseAuthUserCollisionException) {
                 callback.onFailure("EMAIL_ALREADY_IN_USE");
             } else {
-                callback.onFailure(e.getMessage());
+                callback.onFailure(friendlyError(e));
             }
         });
     }
@@ -270,12 +271,14 @@ public class AuthManager {
                     public void onFailure(Exception e) {
                         mAuth.signOut();
                         sessionManager.clearSession();
-                        callback.onFailure(e.getMessage());
+                        callback.onFailure(e instanceof FirebaseFirestoreException
+                                ? friendlyError(e)
+                                : context.getString(R.string.user_tidak_ditemukan));
                     }
                 });
             }).addOnFailureListener(e -> {
                 mAuth.signOut();
-                callback.onFailure(e.getMessage());
+                callback.onFailure(friendlyError(e));
             });
         }).addOnFailureListener(e -> {
             if (e instanceof FirebaseAuthInvalidUserException){
@@ -353,7 +356,18 @@ public class AuthManager {
         if (e instanceof androidx.credentials.exceptions.NoCredentialException) {
             return context.getString(R.string.tidak_ada_akun_google);
         }
+        if (!isOnline()) {
+            return context.getString(R.string.error_koneksi_bermasalah);
+        }
         return context.getString(R.string.login_google_gagal);
+    }
+
+    private boolean isOnline() {
+        android.net.ConnectivityManager cm = (android.net.ConnectivityManager)
+                context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) return true;
+        android.net.NetworkCapabilities caps = cm.getNetworkCapabilities(cm.getActiveNetwork());
+        return caps != null && caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET);
     }
 
     private void handleGoogleCredential(GetCredentialResponse response, AuthCallback<User> callback) {
@@ -385,8 +399,10 @@ public class AuthManager {
         }).addOnFailureListener(e -> {
             if (e instanceof FirebaseAuthUserCollisionException) {
                 callback.onFailure("EMAIL_ALREADY_IN_USE_DIFFERENT_PROVIDER");
+            } else if (e instanceof FirebaseNetworkException) {
+                callback.onFailure(context.getString(R.string.error_koneksi_bermasalah));
             } else {
-                callback.onFailure(e.getMessage());
+                callback.onFailure(context.getString(R.string.login_google_gagal));
             }
         });
     }
@@ -588,6 +604,9 @@ public class AuthManager {
 
     private String friendlyError(Exception e) {
         if (e == null) return context.getString(R.string.error_umum);
+        if (e instanceof FirebaseNetworkException){
+            return context.getString(R.string.error_koneksi_bermasalah);
+        }
         if (e instanceof FirebaseFirestoreException){
             FirebaseFirestoreException fe = (FirebaseFirestoreException) e;
             switch (fe.getCode()){

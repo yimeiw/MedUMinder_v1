@@ -329,11 +329,37 @@ public class AlarmSchedulerHelper {
                 .addOnSuccessListener(query -> rescheduleDocs(context, query.getDocuments()))
                 .addOnFailureListener(e -> Log.e("ALARM", "Gagal ambil schedule aktif untuk uid=" + uid, e));
 
+        // Appointment yang akan datang juga dipasang ulang (dulu hilang setelah HP restart)
+        rescheduleUpcomingAppointments(context, uid);
+
         // Catatan: schedule dengan is_active == true TAPI end_date sudah lewat
         // sengaja TIDAK diambil di sini -> tidak akan direschedule lagi.
         // Idealnya ada job terpisah (mis. dipanggil dari MedicationMissedNotifReceiver
         // atau worker harian) yang men-set is_active = false begitu end_date lewat,
         // supaya data di Firestore juga konsisten (bukan cuma alarm-nya yang berhenti).
+    }
+
+    private static void rescheduleUpcomingAppointments(Context context, String uid) {
+        FirebaseFirestore.getInstance().collection("appointments")
+                .whereEqualTo("users_id", uid)
+                .whereGreaterThan("appointment_at", Timestamp.now())
+                .get()
+                .addOnSuccessListener(query -> {
+                    for (DocumentSnapshot doc : query.getDocuments()) {
+                        if (doc.get("deleted_at") != null) continue;
+                        String status = doc.getString("status");
+                        if ("dihadiri".equals(status) || "dibatalkan".equals(status)) continue;
+                        // yang sedang ditunda tidak disentuh: alarm tundanya sudah dipasang sendiri
+                        if (doc.get("snoozed_until") != null) continue;
+                        Timestamp at = doc.getTimestamp("appointment_at");
+                        if (at == null) continue;
+                        String title = doc.getString("title") != null ? doc.getString("title") : "";
+                        long millis = at.toDate().getTime();
+                        scheduleAppointment(context, doc.getId(), title, millis);
+                        AppointmentAlertScheduler.scheduleAlerts(context, doc.getId(), title, millis);
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("ALARM", "Gagal ambil appointment untuk uid=" + uid, e));
     }
 
     private static void rescheduleDocs(Context context, List<DocumentSnapshot> docs) {

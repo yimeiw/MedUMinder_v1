@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Schedule;
 
+import com.example.meduminderv1.Util.SchedulePermission;
+
 import com.example.meduminderv1.Util.LoadingOverlay;
 
 import android.app.AlarmManager;
@@ -334,23 +336,6 @@ public class MedicineReminderFragment extends Fragment {
         return view;
     }
 
-    private boolean ensureExactAlarmPermission() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-            return true;
-        }
-        AlarmManager alarmManager = (AlarmManager) requireContext().getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager != null && alarmManager.canScheduleExactAlarms()) {
-            return true;
-        }
-        Toast.makeText(
-                requireContext(),
-                getString(R.string.izin_alarm_toast),
-                Toast.LENGTH_LONG
-        ).show();
-        AlarmSchedulerHelper.requestExactAlarmPermission(requireContext());
-        return false;
-    }
-
     private int convertFrequencyToNumber(String selected) {
         String[] options = getResources().getStringArray(R.array.frekuensi_array);
         for (int i = 0; i < options.length; i++) {
@@ -379,7 +364,11 @@ public class MedicineReminderFragment extends Fragment {
             btnSaveReminder.setEnabled(true);
             return;
         }
-        ensureExactAlarmPermission();
+        // izin bisa saja dimatikan saat halaman ini terbuka: jangan simpan jadwal tanpa alarm
+        if (!SchedulePermission.ensure(requireContext())) {
+            btnSaveReminder.setEnabled(true);
+            return;
+        }
         String medName = namaObat.getText().toString().trim();
 
         String freq = freqMinumObat.getText().toString().trim();
@@ -433,13 +422,16 @@ public class MedicineReminderFragment extends Fragment {
                                         );
                                         // result = scheduleId dari Firestore
                                         long endMillis = (endDate != null) ? endDate.toDate().getTime() : 0;
-                                        AlarmSchedulerHelper.scheduleAll(
-                                                appContext,
-                                                result,
-                                                medName,
-                                                times,
-                                                endMillis
-                                        );
+                                        // alarm hanya di HP pemilik jadwal (HP consumer memasang sendiri lewat ScheduleSyncListener)
+                                        if (targetUid.equals(user.getAuth_uid())) {
+                                            AlarmSchedulerHelper.scheduleAll(
+                                                    appContext,
+                                                    result,
+                                                    medName,
+                                                    times,
+                                                    endMillis
+                                            );
+                                        }
 
                                         notifyReminderCreated(medName, result);
 
@@ -490,10 +482,15 @@ public class MedicineReminderFragment extends Fragment {
                                                     endDate
                                             );
 
-                                            AlarmSchedulerHelper.scheduleAll(
-                                                    appContext, result, medName, times,
-                                                    endDate != null ? endDate.toDate().getTime() : 0
-                                            );
+                                            // alarm hanya di HP pemilik jadwal (HP consumer memasang sendiri lewat ScheduleSyncListener)
+
+                                            if (targetUid.equals(user.getAuth_uid())) {
+                                                AlarmSchedulerHelper.scheduleAll(
+                                                        appContext, result, medName, times,
+                                                        endDate != null ? endDate.toDate().getTime() : 0
+                                                );
+
+                                            }
 
                                             notifyReminderCreated(medName, result);
 

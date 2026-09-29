@@ -48,7 +48,8 @@ import java.util.List;
 
 public class ProfileFragment extends Fragment {
 
-    ImageButton btnBack, btnLogout;
+    ImageButton btnBack;
+    View btnLogout;
     SessionManager sessionManager;
     User user;
     AuthManager authManager;

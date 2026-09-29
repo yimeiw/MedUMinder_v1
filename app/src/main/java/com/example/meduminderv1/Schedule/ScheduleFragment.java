@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Schedule;
 
+import com.example.meduminderv1.Util.SchedulePermission;
+
 import com.example.meduminderv1.Util.InactiveSchedules;
 
 import android.content.res.ColorStateList;
@@ -107,10 +109,12 @@ public class ScheduleFragment extends Fragment {
         });
 
         btnAddReminder.setOnClickListener(v -> {
+            if (!SchedulePermission.ensure(requireContext())) return;
             NavHostFragment.findNavController(this)
                     .navigate(R.id.medicineReminderFragment);
         });
         btnAddAppoint.setOnClickListener(v -> {
+            if (!SchedulePermission.ensure(requireContext())) return;
             NavHostFragment.findNavController(this)
                     .navigate(R.id.appointmentReminderFragment);
         });
@@ -242,8 +246,10 @@ public class ScheduleFragment extends Fragment {
         bundle.putString("type", item.getType());
         bundle.putString("source", "schedule");
 
-        NavHostFragment.findNavController(this)
-                .navigate(R.id.reminderFragment, bundle);
+        androidx.navigation.NavController nav = NavHostFragment.findNavController(this);
+        if (nav.getCurrentDestination() == null
+                || nav.getCurrentDestination().getId() != R.id.scheduleFragment) return;
+        nav.navigate(R.id.reminderFragment, bundle);
     }
 
     private void showEmpty() {

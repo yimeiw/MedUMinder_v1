@@ -81,7 +81,7 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
                         long nextTriggerMillis = System.currentTimeMillis() + snoozeMinutes * 60L * 1000L;
                         doc.getReference().update(
                                 "status",
-                                "upcoming",
+                                "akan datang",
                                 "snoozed_until",
                                 new Timestamp(new java.util.Date(nextTriggerMillis)),
                                 "updated_at",
@@ -97,7 +97,7 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
 
                             Log.d(TAG,
                                     "Repeat Until Confirmed aktif. "
-                                            + "Status tetap upcoming. "
+                                            + "Status tetap akan datang. "
                                             + "Alarm berikutnya dalam "
                                             + snoozeMinutes
                                             + " menit. logId="

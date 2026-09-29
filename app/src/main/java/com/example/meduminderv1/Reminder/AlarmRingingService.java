@@ -5,9 +5,11 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioAttributes;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -16,9 +18,11 @@ import android.os.IBinder;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 
 import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Util.AppLanguage;
 
 import java.io.IOException;
 
@@ -27,6 +31,7 @@ public class AlarmRingingService extends Service {
     private static final String CHANNEL_ID = "medication_alarm_channel";
 
     private MediaPlayer mediaPlayer;
+    private int originalAlarmVolume = -1;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -96,6 +101,7 @@ public class AlarmRingingService extends Service {
             soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
         }
 
+        raiseAlarmVolume();
         mediaPlayer = new MediaPlayer();
 
         AudioAttributes attributes = new AudioAttributes.Builder()
@@ -117,9 +123,48 @@ public class AlarmRingingService extends Service {
         }
     }
 
+    private void raiseAlarmVolume() {
+        AudioManager audio = (AudioManager) getSystemService(AUDIO_SERVICE);
+        if (audio == null) return;
+        try {
+            int max = audio.getStreamMaxVolume(AudioManager.STREAM_ALARM);
+            int current = audio.getStreamVolume(AudioManager.STREAM_ALARM);
+            if (originalAlarmVolume < 0) originalAlarmVolume = current;
+            if (current < max) audio.setStreamVolume(AudioManager.STREAM_ALARM, max, 0);
+        } catch (SecurityException ignored) {
+        }
+    }
+
+    private void restoreAlarmVolume() {
+        if (originalAlarmVolume < 0) return;
+        AudioManager audio = (AudioManager) getSystemService(AUDIO_SERVICE);
+        if (audio != null) {
+            try {
+                audio.setStreamVolume(AudioManager.STREAM_ALARM, originalAlarmVolume, 0);
+            } catch (SecurityException ignored) { }
+        }
+        originalAlarmVolume = -1;
+    }
+
+    @Nullable
+    private android.graphics.Bitmap appIconBitmap() {
+        android.graphics.drawable.Drawable icon = ContextCompat.getDrawable(this, R.mipmap.ic_launcher);
+        if (icon == null) return null;
+        int size = Math.round(64 * getResources().getDisplayMetrics().density);
+        android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888);
+        android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
+        android.graphics.Path circle = new android.graphics.Path();
+        circle.addCircle(size / 2f, size / 2f, size / 2f, android.graphics.Path.Direction.CW);
+        canvas.clipPath(circle);
+        icon.setBounds(0, 0, size, size);
+        icon.draw(canvas);
+        return bitmap;
+    }
+
     private Notification buildNotification(String scheduleId, String namaObat,
             long scheduledAt, boolean isAppointment) {
         createChannelIfNeeded();
+        Context lang = AppLanguage.wrap(this);
         Intent contentIntent = new Intent(
                         this, MainActivity.class)
                         .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -159,8 +204,10 @@ public class AlarmRingingService extends Service {
                             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
             builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_tablet)
-                    .setContentTitle("Waktunya appointment")
+                    .setSmallIcon(R.drawable.ic_stat_notification)
+                    .setColor(ContextCompat.getColor(this, R.color.biru))
+                    .setLargeIcon(appIconBitmap())
+                    .setContentTitle(lang.getString(R.string.alarm_waktunya_appointment))
                     .setContentText(namaObat)
                     .setCategory(NotificationCompat.CATEGORY_ALARM)
                     .setPriority(NotificationCompat.PRIORITY_MAX)
@@ -168,8 +215,8 @@ public class AlarmRingingService extends Service {
                     .setOngoing(false)
                     .setAutoCancel(false)
                     .setContentIntent(contentPending)
-                    .addAction(0, "Dihadiri", attendedPending)
-                    .addAction(0, "Tidak Dihadiri", missedPending);
+                    .addAction(0, lang.getString(R.string.alarm_btn_dihadiri), attendedPending)
+                    .addAction(0, lang.getString(R.string.alarm_btn_tidak_dihadiri), missedPending);
         } else { //med
             Intent takenIntent = new Intent(this, AlarmActionReceiver.class)
                             .setAction("ACTION_TAKEN")
@@ -191,12 +238,12 @@ public class AlarmRingingService extends Service {
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
 
-            // Ambil custom reminder message.
-            SharedPreferences pref = getSharedPreferences("notification_settings", MODE_PRIVATE);
-            String reminderMessage = pref.getString("reminder_message", "Jangan lupa minum obat");
+            String reminderMessage = ReminderMessage.resolve(this, lang);
 
             builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_tablet)
+                    .setSmallIcon(R.drawable.ic_stat_notification)
+                    .setColor(ContextCompat.getColor(this, R.color.biru))
+                    .setLargeIcon(appIconBitmap())
                     .setContentTitle(reminderMessage)
                     .setContentText(namaObat)
                     .setCategory(NotificationCompat.CATEGORY_ALARM)
@@ -205,8 +252,8 @@ public class AlarmRingingService extends Service {
                     .setOngoing(false)
                     .setAutoCancel(false)
                     .setContentIntent(contentPending)
-                    .addAction(0, "DIKONSUMSI", takenPending)
-                    .addAction(0, "TUNDA", snoozePending);
+                    .addAction(0, lang.getString(R.string.alarm_btn_diminum), takenPending)
+                    .addAction(0, lang.getString(R.string.alarm_btn_tunda), snoozePending);
         }
 
         // kalau notifikasi alarm di-swipe / dihapus, kirim "ACTION_DISMISS".
@@ -232,15 +279,12 @@ public class AlarmRingingService extends Service {
         }
 
         NotificationManager notificationManager = getSystemService(NotificationManager.class);
-        if (notificationManager.getNotificationChannel(CHANNEL_ID) != null) {
-            return;
-        }
-
+        Context lang = AppLanguage.wrap(this);
         NotificationChannel channel = new NotificationChannel(
-                CHANNEL_ID, "Pengingat Obat", NotificationManager.IMPORTANCE_HIGH
+                CHANNEL_ID, lang.getString(R.string.alarm_channel_nama), NotificationManager.IMPORTANCE_HIGH
         );
 
-        channel.setDescription("Notifikasi alarm waktu minum obat");
+        channel.setDescription(lang.getString(R.string.alarm_channel_deskripsi));
         channel.enableVibration(true);
         channel.setBypassDnd(true);
         channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
@@ -264,6 +308,7 @@ public class AlarmRingingService extends Service {
             mediaPlayer.release();
             mediaPlayer = null;
         }
+        restoreAlarmVolume();
         super.onDestroy();
     }
 

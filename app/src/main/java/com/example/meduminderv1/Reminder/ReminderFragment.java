@@ -590,6 +590,7 @@ public class ReminderFragment extends Fragment {
             if (!logDoc.exists()) return;
             String consumerUid = logDoc.getString("users_id");
             if (consumerUid == null) return;
+            notificationRepo.notifyConsumerMedicineTaken(consumerUid, logId, namaObat);
 
             db.collection("users").document(consumerUid).get().addOnSuccessListener(userDoc -> {
                 String consumerName = userDoc.exists() ? userDoc.getString("name") : "Consumer";
@@ -760,6 +761,7 @@ public class ReminderFragment extends Fragment {
             String consumerUid = apDoc.getString("users_id");
             String title = apDoc.getString("title");
             if (consumerUid == null) return;
+            notificationRepo.notifyConsumerAppointmentAttended(consumerUid, appointmentId, title);
 
             db.collection("users").document(consumerUid).get().addOnSuccessListener(userDoc -> {
                 String consumerName = userDoc.exists() ? userDoc.getString("name") : "Consumer";

@@ -23,6 +23,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:gravity="bottom"
             android:paddingTop="@dimen/signup_capsule_margin_top">
 
             <LinearLayout
@@ -79,7 +80,7 @@
                         android:id="@+id/name_input"
                         android:layout_width="260dp"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/edittext_border"
+                        android:background="@drawable/input_edittext_border"
                         android:hint="@string/enter_full_name"
                         android:singleLine="true"
                         android:maxLines="1"
@@ -116,7 +117,7 @@
                         android:id="@+id/email_input"
                         android:layout_width="260dp"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/edittext_border"
+                        android:background="@drawable/input_edittext_border"
                         android:hint="@string/enter_email"
                         android:singleLine="true"
                         android:maxLines="1"
@@ -154,7 +155,8 @@
                         android:id="@+id/password_input"
                         android:layout_width="260dp"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/edittext_border"
+                        android:paddingEnd="16dp"
+                        android:background="@drawable/input_edittext_border"
                         android:hint="@string/enter_password"
                         android:singleLine="true"
                         android:maxLines="1"

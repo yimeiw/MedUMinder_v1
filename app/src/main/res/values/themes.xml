@@ -42,7 +42,30 @@
         <item name="materialTimePickerTheme">@style/CustomMaterialTimePicker</item>
 
         <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
         <item name="textAppearanceButton">@style/AppButtonText</item>
+        <item name="textAppearanceHeadline1">@style/AppText.Headline1</item>
+        <item name="textAppearanceHeadline2">@style/AppText.Headline2</item>
+        <item name="textAppearanceHeadline3">@style/AppText.Headline3</item>
+        <item name="textAppearanceHeadline4">@style/AppText.Headline4</item>
+        <item name="textAppearanceHeadline5">@style/AppText.Headline5</item>
+        <item name="textAppearanceHeadline6">@style/AppText.Headline6</item>
+        <item name="textAppearanceSubtitle1">@style/AppText.Subtitle1</item>
+        <item name="textAppearanceSubtitle2">@style/AppText.Subtitle2</item>
+        <item name="textAppearanceBody1">@style/AppText.Body1</item>
+        <item name="textAppearanceBody2">@style/AppText.Body2</item>
+        <item name="textAppearanceCaption">@style/AppText.Caption</item>
+        <item name="textAppearanceOverline">@style/AppText.Overline</item>
+        <item name="android:textAppearance">@style/AppText.Default</item>
+        <item name="android:textAppearanceSmall">@style/AppText.Small</item>
+        <item name="android:textAppearanceMedium">@style/AppText.Medium</item>
+        <item name="android:textAppearanceLarge">@style/AppText.Large</item>
+        <item name="textAppearanceLargePopupMenu">@style/AppText.PopupMenu.Large</item>
+        <item name="textAppearanceSmallPopupMenu">@style/AppText.PopupMenu.Small</item>
+        <item name="android:textAppearanceLargePopupMenu">@style/AppText.PopupMenu.Large</item>
+        <item name="android:textAppearanceSmallPopupMenu">@style/AppText.PopupMenu.Small</item>
+        <item name="textAppearanceListItem">@style/AppText.ListItem</item>
+        <item name="textAppearanceListItemSmall">@style/AppText.ListItemSmall</item>
     </style>
 
     <!-- Baris info di kartu detail notifikasi (ikon diatur dari kode) -->

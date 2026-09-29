@@ -202,10 +202,15 @@ public class EditAppointmentFragment extends Fragment {
                     AlarmSchedulerHelper.cancelAppointment(appContext, appointmentId);
                     AppointmentAlertScheduler.cancelAlerts(appContext, appointmentId);
 
-                    AlarmSchedulerHelper.scheduleAppointment(
-                            appContext, appointmentId, nameAppoint, appointmentAt.toDate().getTime());
-                    AppointmentAlertScheduler.scheduleAlerts(
-                            appContext, appointmentId, nameAppoint, appointmentAt.toDate().getTime());
+                    // alarm hanya di HP pemilik jadwal (HP consumer memperbarui sendiri lewat ScheduleSyncListener)
+                    boolean ownSchedule = uid.equals(targetUid);
+                    long apptMillis = appointmentAt.toDate().getTime();
+                    if (ownSchedule) {
+                        AlarmSchedulerHelper.scheduleAppointment(appContext, appointmentId, nameAppoint, apptMillis);
+                    }
+                    if (ownSchedule || apptMillis <= System.currentTimeMillis()) {
+                        AppointmentAlertScheduler.scheduleAlerts(appContext, appointmentId, nameAppoint, apptMillis);
+                    }
 
                     if (!isAdded()) return;
                     notifyAppointmentUpdated(nameAppoint, uid, appointmentAt);

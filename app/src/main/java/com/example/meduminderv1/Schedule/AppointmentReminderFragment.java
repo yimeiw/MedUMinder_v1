@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Schedule;
 
+import com.example.meduminderv1.Util.SchedulePermission;
+
 import com.example.meduminderv1.Util.LoadingOverlay;
 
 import android.content.Context;
@@ -144,6 +146,8 @@ public class AppointmentReminderFragment extends Fragment {
         });
 
         btnSaveAppoint.setOnClickListener(v -> {
+            // izin bisa saja dimatikan saat halaman ini terbuka
+            if (!SchedulePermission.ensure(requireContext())) return;
             btnSaveAppoint.setEnabled(false);
             saveAppointment();
         });
@@ -253,14 +257,22 @@ public class AppointmentReminderFragment extends Fragment {
             notifyCaregiversAppointmentAdded(targetUid, uid, isForSelf, actorName,
                     nameAppoint, documentReference.getId());
 
-            AppointmentAlertScheduler.scheduleAlerts(appContext, documentReference.getId(), nameAppoint, selectedCalendar.getTimeInMillis());
+            // alarm hanya dipasang di HP pemilik jadwal. Kalau caregiver yang menambah,
+            // HP consumer memasangnya sendiri (ScheduleSyncListener / saat app dibuka).
+            // Appointment yang sudah lewat tetap langsung dicek "terlewat".
+            long apptMillis = selectedCalendar.getTimeInMillis();
+            if (isForSelf || apptMillis <= System.currentTimeMillis()) {
+                AppointmentAlertScheduler.scheduleAlerts(appContext, documentReference.getId(), nameAppoint, apptMillis);
+            }
             Toast.makeText(appContext, appContext.getString(R.string.appointment_berhasil_disimpan), Toast.LENGTH_SHORT).show();
-            AlarmSchedulerHelper.scheduleAppointment(
-                    appContext,
-                    documentReference.getId(),
-                    nameAppoint,
-                    appointmentAt.toDate().getTime()
-            );
+            if (isForSelf) {
+                AlarmSchedulerHelper.scheduleAppointment(
+                        appContext,
+                        documentReference.getId(),
+                        nameAppoint,
+                        appointmentAt.toDate().getTime()
+                );
+            }
 
             if (!isAdded()) return; // sudah keluar dari halaman
             LoadingOverlay.hide(AppointmentReminderFragment.this);

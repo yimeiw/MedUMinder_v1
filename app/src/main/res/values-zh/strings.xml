@@ -117,7 +117,7 @@
 
     <string name="tambah_pengingat">添加提醒</string>
     <string name="tambah_appointment">添加预约</string>
-    <string name="log_jadwal">日程跟踪器</string>
+    <string name="log_jadwal">历史记录</string>
 
     <string name="jadwal_berikutnya">下一项日程</string>
     <string name="stok_obat">药品库存： </string>
@@ -407,7 +407,7 @@
     <string name="nama_berhasil_diperbarui">姓名更新成功</string>
     <string name="nama_harus_diisi">请填写姓名</string>
     <string name="nama_maksimal_50_karakter">姓名最多50个字符</string>
-    <string name="nama_minimal_4_karaker_typo">姓名至少需要4个字符</string>
+    <string name="nama_minimal_4_karaker_typo">姓名至少需要 4 个字符</string>
     <string name="nama_obat_tidak_ditemukan">未找到药物名称！</string>
     <string name="nama_obat_wajib_diisi">请填写药物名称</string>
     <string name="not_linked_status">未连接</string>
@@ -681,4 +681,29 @@
     <string name="tidak_ada_akun_google">此设备上没有 Google 账号，请先在设置中添加。</string>
     <string name="login_google_gagal">Google 登录失败，请重试。</string>
     <string name="nav_home">首页</string>
+    <string name="izin_notifikasi_dibutuhkan_toast">请先开启 MedUMinder 的通知权限，以便显示提醒。</string>
+    <string name="izin_alarm_dibutuhkan_toast">请先为 MedUMinder 开启“闹钟和提醒”权限，以便准时响铃。</string>
+    <string name="obat_sudah_diminum_title">已服药</string>
+    <string name="anda_sudah_minum_obat_msg">您已服用 %1$s，继续保持！</string>
+    <string name="appointment_dihadiri_title">已出席预约</string>
+    <string name="anda_sudah_menghadiri_appointment_msg">您已出席 %1$s。</string>
+
+    <string name="kemarin">昨天</string>
+    <string name="riwayat_kosong_obat">最近 %d 天没有服药记录。</string>
+    <string name="riwayat_kosong_appointment">最近 %d 天没有预约记录。</string>
+    <string name="sisa_hari_ini">今日剩余</string>
+    <string name="riwayat_kosong_sisa_obat">今天没有其他服药安排。</string>
+    <string name="riwayat_kosong_sisa_appointment">今天没有其他预约。</string>
+    <string name="riwayat_sejak">显示自 %s 以来的记录</string>
+    <string name="riwayat_gulir_untuk_lebih_lama">向下滚动查看更早的记录</string>
+    <string name="riwayat_memuat_lebih_lama">正在加载更早的记录…</string>
+    <string name="riwayat_sudah_semua">以上是最近 %d 天的全部记录</string>
+    <string name="tidak_ada_data_untuk_diunduh">此期间没有可下载的数据。</string>
+    <string name="alarm_waktunya_appointment">预约时间到了</string>
+    <string name="alarm_btn_dihadiri">已参加</string>
+    <string name="alarm_btn_tidak_dihadiri">未参加</string>
+    <string name="alarm_btn_diminum">已服用</string>
+    <string name="alarm_btn_tunda">推迟</string>
+    <string name="alarm_channel_nama">服药提醒</string>
+    <string name="alarm_channel_deskripsi">服药和预约时间的闹钟通知</string>
 </resources>

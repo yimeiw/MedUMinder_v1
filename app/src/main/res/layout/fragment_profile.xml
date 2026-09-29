@@ -34,13 +34,10 @@
             android:textColor="?attr/colorOnSurface"
             />
 
-        <ImageButton
+        <!-- penyeimbang tombol back supaya judul tetap di tengah (logout pindah ke daftar di bawah) -->
+        <Space
             android:layout_width="30dp"
-            android:layout_height="26dp"
-            android:background="@drawable/ic_logout"
-            android:id="@+id/btnLogout"
-            android:layout_gravity="center"
-            />
+            android:layout_height="26dp" />
 
     </LinearLayout>
 
@@ -62,6 +59,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
+                android:gravity="center_vertical"
                 android:layout_marginBottom="20dp"
                 android:background="@drawable/border">
 
@@ -71,11 +69,10 @@
                     android:layout_marginVertical="10dp"
                     android:layout_marginHorizontal="10dp"
                     android:background="@drawable/ic_profile"
-                    android:layout_gravity="center"
                     />
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:layout_gravity="center_vertical"
@@ -84,7 +81,9 @@
 
                     <TextView
                         android:id="@+id/name_input"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
+                        android:maxLines="1"
+                        android:ellipsize="end"
                         android:layout_height="wrap_content"
                         android:text=" "
                         android:textColor="?attr/colorOnSurface"
@@ -92,7 +91,9 @@
 
                     <TextView
                         android:id="@+id/email_input"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
+                        android:maxLines="1"
+                        android:ellipsize="end"
                         android:layout_height="wrap_content"
                         android:text=" "
                         android:textColor="?attr/colorOnSurface"
@@ -110,7 +111,7 @@
                     android:paddingVertical="6dp"
                     android:textSize="12sp"
                     android:textColor="?attr/colorOnSurface"
-                    android:layout_marginVertical="10dp"
+                    android:layout_marginStart="8dp"
                     />
 
             </LinearLayout>
@@ -405,6 +406,39 @@
                             android:background="@drawable/border_hugcontent_nopadding"/>
 
                     </RelativeLayout>
+
+                </LinearLayout>
+
+                <!--            logout-->
+                <LinearLayout
+                    android:id="@+id/btnLogout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:background="@drawable/border"
+                    android:layout_marginVertical="5dp"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@drawable/ic_logout"
+                        android:layout_margin="8dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/logout_title"
+                        android:layout_weight="1"
+                        android:layout_gravity="center"
+                        android:textFontWeight="600"/>
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_arrow"
+                        android:layout_gravity="center"/>
 
                 </LinearLayout>
             </LinearLayout>

@@ -115,7 +115,7 @@
 
     <string name="tambah_pengingat">Add Reminder</string>
     <string name="tambah_appointment">Add Appointment</string>
-    <string name="log_jadwal">Schedule Tracker</string>
+    <string name="log_jadwal">History</string>
 
     <string name="jadwal_berikutnya">Next Schedule</string>
     <string name="stok_obat">Medicine Stock: </string>
@@ -678,4 +678,29 @@
     <string name="tidak_ada_akun_google">No Google account found on this device. Add one in Settings first.</string>
     <string name="login_google_gagal">Google sign-in failed. Please try again.</string>
     <string name="nav_home">Home</string>
+    <string name="izin_notifikasi_dibutuhkan_toast">Turn on notifications for MedUMinder first, so your reminders can appear.</string>
+    <string name="izin_alarm_dibutuhkan_toast">Turn on "Alarms &amp; reminders" for MedUMinder first, so it can ring at the exact time.</string>
+    <string name="obat_sudah_diminum_title">Medicine Taken</string>
+    <string name="anda_sudah_minum_obat_msg">You took %1$s. Keep it up!</string>
+    <string name="appointment_dihadiri_title">Appointment Attended</string>
+    <string name="anda_sudah_menghadiri_appointment_msg">You attended %1$s.</string>
+
+    <string name="kemarin">Yesterday</string>
+    <string name="riwayat_kosong_obat">No medicine history in the last %d days.</string>
+    <string name="riwayat_kosong_appointment">No appointment history in the last %d days.</string>
+    <string name="sisa_hari_ini">Remaining today</string>
+    <string name="riwayat_kosong_sisa_obat">No more medicine scheduled for today.</string>
+    <string name="riwayat_kosong_sisa_appointment">No more appointments today.</string>
+    <string name="riwayat_sejak">Showing history since %s</string>
+    <string name="riwayat_gulir_untuk_lebih_lama">Scroll down to see older entries</string>
+    <string name="riwayat_memuat_lebih_lama">Loading older history…</string>
+    <string name="riwayat_sudah_semua">That\'s everything from the last %d days</string>
+    <string name="tidak_ada_data_untuk_diunduh">No data to download for this period.</string>
+    <string name="alarm_waktunya_appointment">Time for your appointment</string>
+    <string name="alarm_btn_dihadiri">Attended</string>
+    <string name="alarm_btn_tidak_dihadiri">Not attended</string>
+    <string name="alarm_btn_diminum">Taken</string>
+    <string name="alarm_btn_tunda">Snooze</string>
+    <string name="alarm_channel_nama">Medicine reminders</string>
+    <string name="alarm_channel_deskripsi">Alarm notifications for medicine and appointment times</string>
 </resources>
