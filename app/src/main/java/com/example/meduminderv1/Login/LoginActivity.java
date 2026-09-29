@@ -3,17 +3,20 @@ package com.example.meduminderv1.Login;
 import com.example.meduminderv1.Util.LoadingOverlay;
 
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.Bundle;
+import android.text.InputType;
+import android.view.MotionEvent;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -32,6 +35,7 @@ public class LoginActivity extends AppCompatActivity {
     Button signUpButton, login;
     ImageButton googleBtn;
     EditText emailInput, passwordInput;
+    boolean isPasswordVisible = false;
     TextView forgotPassword;
     CredentialManager credentialManager;
     AuthManager authManager;
@@ -53,6 +57,40 @@ public class LoginActivity extends AppCompatActivity {
         emailInput = findViewById(R.id.email_input);
         passwordInput = findViewById(R.id.password_input);
         forgotPassword = findViewById(R.id.forgot_password);
+
+        ScrollView loginScroll = findViewById(R.id.login_scroll);
+
+        passwordInput.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                loginScroll.postDelayed(() -> {
+                    Rect rect = new Rect();
+                    passwordInput.getDrawingRect(rect);
+                    loginScroll.offsetDescendantRectToMyCoords(passwordInput, rect);
+
+                    loginScroll.smoothScrollTo(0, rect.bottom);
+                }, 300);
+            }
+        });
+
+        passwordInput.setCompoundDrawablesWithIntrinsicBounds(
+                0, 0, R.drawable.ic_visibility_off, 0
+        );
+
+        passwordInput.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_UP && event.getX() >= passwordInput.getWidth() - passwordInput.getCompoundDrawables()[2].getBounds().width() - passwordInput.getPaddingEnd()) {
+                isPasswordVisible = !isPasswordVisible;
+                if (isPasswordVisible) {
+                    passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                    passwordInput.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_visibility, 0);
+                } else {
+                    passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                    passwordInput.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_visibility_off, 0);
+                }
+                passwordInput.setSelection(passwordInput.getText().length());
+                return true;
+            }
+            return false;
+        });
 
         credentialManager = CredentialManager.create(this);
         sessionManager = SessionManager.getInstance();

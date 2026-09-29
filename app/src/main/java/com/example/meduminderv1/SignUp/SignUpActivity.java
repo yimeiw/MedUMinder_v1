@@ -5,12 +5,16 @@ import com.example.meduminderv1.Util.EmailApp;
 import com.example.meduminderv1.Util.LoadingOverlay;
 
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.Bundle;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Patterns;
+import android.view.MotionEvent;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ScrollView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -37,6 +41,7 @@ public class SignUpActivity extends AppCompatActivity {
     ImageButton googleBtn;
     EditText nameInput, emailInput, passwordInput;
     AuthManager authManager;
+    boolean isPasswordVisible = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +59,40 @@ public class SignUpActivity extends AppCompatActivity {
 
         nameInput = findViewById(R.id.name_input);
         emailInput = findViewById(R.id.email_input);
+        ScrollView signupScroll = findViewById(R.id.signup_scroll);
         passwordInput = findViewById(R.id.password_input);
+
+        passwordInput.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                signupScroll.postDelayed(() -> {
+                    Rect rect = new Rect();
+                    passwordInput.getDrawingRect(rect);
+                    signupScroll.offsetDescendantRectToMyCoords(passwordInput, rect);
+
+                    signupScroll.smoothScrollTo(0, rect.bottom);
+                }, 300);
+            }
+        });
+
+        passwordInput.setCompoundDrawablesWithIntrinsicBounds(
+                0, 0, R.drawable.ic_visibility_off, 0
+        );
+
+        passwordInput.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_UP && event.getX() >= passwordInput.getWidth() - passwordInput.getCompoundDrawables()[2].getBounds().width() - passwordInput.getPaddingEnd()) {
+                isPasswordVisible = !isPasswordVisible;
+                if (isPasswordVisible) {
+                    passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                    passwordInput.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_visibility, 0);
+                } else {
+                    passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                    passwordInput.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_visibility_off, 0);
+                }
+                passwordInput.setSelection(passwordInput.getText().length());
+                return true;
+            }
+            return false;
+        });
 
         authManager = authManager.getInstance(getApplicationContext());
 

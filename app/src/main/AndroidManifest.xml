@@ -56,10 +56,12 @@
             android:name=".Login.LoginActivity"
             android:exported="false"
             android:label="@string/title_activity_login"
+            android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.MedUMinderV1" />
         <activity
             android:name=".SignUp.SignUpActivity"
             android:exported="false"
+            android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.MedUMinderV1" />
         <activity
             android:name=".Splash.SplashActivity"

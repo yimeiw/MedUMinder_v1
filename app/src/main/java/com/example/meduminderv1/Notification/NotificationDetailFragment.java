@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
@@ -221,10 +222,34 @@ public class NotificationDetailFragment extends Fragment {
         tv.setCompoundDrawablesRelative(d, null, null, null);
     }
 
+    private Locale getAppLocale() {
+        String language = AppCompatDelegate
+                .getApplicationLocales()
+                .toLanguageTags();
+
+        if ("id".equals(language)) {
+            return new Locale("id", "ID");
+        } else if ("zh".equals(language)) {
+            return Locale.SIMPLIFIED_CHINESE;
+        } else if ("en".equals(language)) {
+            return Locale.ENGLISH;
+        }
+
+        String deviceLanguage = Locale.getDefault().getLanguage();
+
+        if ("in".equals(deviceLanguage) || "id".equals(deviceLanguage)) {
+            return new Locale("id", "ID");
+        } else if ("zh".equals(deviceLanguage)) {
+            return Locale.SIMPLIFIED_CHINESE;
+        } else {
+            return Locale.ENGLISH;
+        }
+    }
+
     /** Waktu lengkap, mis. "Senin, 29 Sep 2026 • 08:00". */
     private String formatFullTime(com.google.firebase.Timestamp ts) {
         if (ts == null) return "";
-        Locale locale = getResources().getConfiguration().getLocales().get(0);
+        Locale locale = getAppLocale();
         Date d = ts.toDate();
         return new SimpleDateFormat("EEEE, dd MMM yyyy", locale).format(d)
                 + " • " + new SimpleDateFormat("HH:mm", locale).format(d);
@@ -631,8 +656,9 @@ public class NotificationDetailFragment extends Fragment {
                     Runnable render = () -> {
                         if (!isAdded()) return;
                         notifDetail.setVisibility(View.VISIBLE);
-                        SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", Locale.getDefault());
-                        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+                        Locale locale = getAppLocale();
+                        SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", locale);
+                        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", locale);
                         if (log.getScheduled_at() != null) {
                             Date scheduleDate = log.getScheduled_at().toDate();
                             tvScheduleDayTime.setText(dayFormat.format(scheduleDate) + " • " + timeFormat.format(scheduleDate));
@@ -821,8 +847,9 @@ public class NotificationDetailFragment extends Fragment {
             notifDetail.setVisibility(View.VISIBLE);
 
             tvScheduleName.setText(getString(R.string.label_appointment_colon) + " " + appointment.getTitle());
-            SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", Locale.getDefault());
-            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            Locale locale = getAppLocale();
+            SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", locale);
+            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", locale);
             if (appointment.getAppointment_at() != null) {
                 Date appointmentDate = appointment.getAppointment_at().toDate();
                 tvScheduleDayTime.setText(dayFormat.format(appointmentDate) + " • " + timeFormat.format(appointmentDate));
@@ -951,8 +978,9 @@ public class NotificationDetailFragment extends Fragment {
                 Runnable render = () -> {
                     if (!isAdded()) return;
                     notifDetail.setVisibility(View.VISIBLE);
-                    SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", Locale.getDefault());
-                    SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+                    Locale locale = getAppLocale();
+                    SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", locale);
+                    SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", locale);
                     Date d = notification.getScheduled_at().toDate();
                     tvScheduleDayTime.setText(dayFormat.format(d) + " • " + timeFormat.format(d));
                     if (med != null && "PIL".equalsIgnoreCase(med.getMed_type())) {

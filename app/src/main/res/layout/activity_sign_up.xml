@@ -13,6 +13,7 @@
     tools:context=".SignUp.SignUpActivity">
 
     <ScrollView
+        android:id="@+id/signup_scroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true"
@@ -27,8 +28,7 @@
             <LinearLayout
                 android:id="@+id/capsule"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
+                android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:background="@drawable/capsule_login_signup"
                 android:paddingTop="@dimen/signup_capsule_padding_top"
