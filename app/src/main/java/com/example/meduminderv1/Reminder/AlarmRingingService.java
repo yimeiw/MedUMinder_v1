@@ -268,6 +268,7 @@ public class AlarmRingingService extends Service {
         PendingIntent dismissPending = PendingIntent.getBroadcast(this, safeId(scheduleId) + 7, dismissIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         builder.setDeleteIntent(dismissPending);
+        builder.setFullScreenIntent(contentPending, true);
 
         return builder.build();
     }

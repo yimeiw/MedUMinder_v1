@@ -28,6 +28,7 @@
         <item name="colorPrimaryInverse">@color/placeholder</item> <!--abu jadi putih-->
         <item name="colorSurfaceContainer">@color/white</item> <!-- navbottom -->
         <item name="android:windowBackground">?attr/colorSurface</item>
+        <item name="pressedRipple">@color/biru</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimary</item>
         <!-- Customize your theme here. -->

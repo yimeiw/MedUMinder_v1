@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.meduminderv1.Model.LogItem;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Util.PressFeedback;
 
 import java.util.List;
 
@@ -43,6 +44,7 @@ public class TodayScheduleAdapter extends RecyclerView.Adapter<TodayScheduleAdap
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_today_schedule, parent, false);
+        PressFeedback.applyTo(view);
         return new ViewHolder(view);
     }
 

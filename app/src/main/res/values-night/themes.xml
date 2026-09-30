@@ -35,6 +35,7 @@
         <item name="colorPrimaryInverse">@color/dark_hint</item> <!--putih jadi abu-->
         <item name="colorSurfaceContainer">@color/abu_tua</item>
         <item name="android:windowBackground">?attr/colorSurface</item>
+        <item name="pressedRipple">@color/dark_blue</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorSurface</item>
         <item name="android:windowLightStatusBar">false</item>

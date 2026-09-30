@@ -11,10 +11,14 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavController;
 import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
@@ -24,6 +28,7 @@ import androidx.work.WorkManager;
 
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Model.LogGenerator;
+import com.example.meduminderv1.Util.PressFeedback;
 import com.example.meduminderv1.Util.UserTimeZone;
 
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
@@ -85,6 +90,12 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         AppLifecycleTracker.init();
         setContentView(R.layout.activity_main);
 
+        getSupportFragmentManager().registerFragmentLifecycleCallbacks(new FragmentManager.FragmentLifecycleCallbacks() {
+            @Override
+            public void onFragmentViewCreated(@NonNull FragmentManager fm, @NonNull Fragment f, @NonNull View v, @Nullable Bundle savedInstanceState) {
+                PressFeedback.applyTree(v);
+            }
+        }, true);
         db = FirebaseFirestore.getInstance();
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         sessionManager = SessionManager.getInstance();

@@ -25,6 +25,7 @@ import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Repo.UserRepository;
+import com.example.meduminderv1.Util.PressFeedback;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.HashMap;
@@ -59,6 +60,7 @@ public class RelationAdapter extends RecyclerView.Adapter<RelationAdapter.ViewHo
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_relation, parent, false);
+        PressFeedback.applyTo(view);
         return new ViewHolder(view);
     }
 

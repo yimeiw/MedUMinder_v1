@@ -14,6 +14,7 @@ import com.example.meduminderv1.Model.CareRelationship;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.UserRepository;
+import com.example.meduminderv1.Util.PressFeedback;
 
 import java.util.HashMap;
 import java.util.List;
@@ -50,6 +51,7 @@ public class DrawerConsumerAdapter extends RecyclerView.Adapter<DrawerConsumerAd
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_drawer_consumer, parent, false);
+        PressFeedback.applyTo(view);
         return new ViewHolder(view);
     }
 

@@ -160,7 +160,7 @@
                     app:contentPadding="16dp"
                     app:cardCornerRadius="18dp">
 
-                    <EditText
+                    <TextView
                         android:id="@+id/endDateReminder"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"

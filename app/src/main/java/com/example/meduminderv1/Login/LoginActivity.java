@@ -29,6 +29,7 @@ import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.SignUp.SignUpActivity;
+import com.example.meduminderv1.Util.PressFeedback;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class LoginActivity extends AppCompatActivity {
@@ -51,6 +52,7 @@ public class LoginActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, Math.max(systemBars.bottom, ime.bottom));
             return insets;
         });
+        PressFeedback.applyTree(findViewById(androidx.appcompat.R.id.content));
 
         login = findViewById(R.id.login_button);
         signUpButton = findViewById(R.id.sign_up);

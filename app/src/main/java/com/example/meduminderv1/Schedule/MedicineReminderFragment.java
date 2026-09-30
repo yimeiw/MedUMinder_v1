@@ -101,7 +101,6 @@ public class MedicineReminderFragment extends Fragment {
     private Runnable debounceRunnable;
     String targetUid;
     private ZoneId targetZone = ZoneId.systemDefault();
-    private final List<TextView> timeLabels = new ArrayList<>();
     // FIX TC-MED-CON-005 / TC-MED-CON-006: nilai stok yang sudah divalidasi
     // (angka valid & > 0) disimpan di sini oleh validateReminder(), supaya
     // saveReminder() tidak perlu parse ulang tanpa pengecekan.
@@ -546,20 +545,19 @@ public class MedicineReminderFragment extends Fragment {
     private void createTimeFields(int frequency) {
         timeReminder.removeAllViews();
         timeViews.clear();
-        timeLabels.clear();
 
         int labelColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface);
         int hintColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorPrimaryInverse);
 
         for (int i = 1; i <= frequency; i++) {
             TextView label = new TextView(requireContext());
-            label.setText(timeLabel(i));
-            timeLabels.add(label);
+            label.setText(getString(R.string.jam_minum_obat_label) + " " + i);
             label.setPadding(20, 10, 20, 5);
             label.setTextColor(labelColor);
 
             TextView tvTime = new TextView(requireContext());
             tvTime.setText(getString(R.string.pilih_jam_hint));
+            tvTime.setTag(null);
             tvTime.setPadding(50, 40, 50, 40);
             tvTime.setTextColor(hintColor);
 
@@ -598,7 +596,8 @@ public class MedicineReminderFragment extends Fragment {
                     return;
                 }
             }
-            selectedView.setText(time);
+            selectedView.setTag(time);
+            selectedView.setText(UserTimeZone.display(targetZone, time));
             selectedView.setTextColor(filledColor);
         });
         picker.show(getParentFragmentManager(), "time_picker");
@@ -669,10 +668,7 @@ public class MedicineReminderFragment extends Fragment {
     private ArrayList<String> getSelectedTimes() {
         ArrayList<String> times = new ArrayList<>();
         for (TextView tv : timeViews) {
-            String value = tv.getText().toString().trim();
-            if (!value.equals(getString(R.string.pilih_jam_hint))) {
-                times.add(value);
-            }
+            if (tv.getTag() instanceof String) times.add((String) tv.getTag());
         }
         return times;
     }
@@ -779,17 +775,12 @@ public class MedicineReminderFragment extends Fragment {
         dialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setTextColor(color);
     }
 
-    private String timeLabel(int index) {
-        String label = getString(R.string.jam_minum_obat_label) + " " + index;
-        return UserTimeZone.differsFromDevice(targetZone)
-                ? label + " (" + UserTimeZone.label(targetZone) + ")"
-                : label;
-    }
-
     private void applyTargetZone(ZoneId zone) {
         targetZone = zone;
-        for (int i = 0; i < timeLabels.size(); i++) {
-            timeLabels.get(i).setText(timeLabel(i + 1));
+        for (TextView tv : timeViews){
+            if (tv.getTag() instanceof String){
+                tv.setText(UserTimeZone.display(zone, (String) tv.getTag()));
+            }
         }
     }
 }

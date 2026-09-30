@@ -9,6 +9,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Util.PressFeedback;
 
 public class ForgotPasswordActivity extends AppCompatActivity {
 
@@ -22,6 +23,8 @@ public class ForgotPasswordActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        PressFeedback.applyTree(findViewById(androidx.appcompat.R.id.content));
+
         if (savedInstanceState == null) {
             Bundle args = new Bundle();
             String prefillEmail = getIntent().getStringExtra("prefill_email");

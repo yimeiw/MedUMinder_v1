@@ -7,6 +7,7 @@ import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.Model.MedicationLog;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
+import com.example.meduminderv1.Util.InactiveSchedules;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -44,7 +45,7 @@ public class StatistikRepo {
             return;
         }
 
-        db.collection("medication_logs")
+        InactiveSchedules.load(db, uid, inactive -> db.collection("medication_logs")
                 .whereEqualTo("users_id", uid)
                 .get()
                 .addOnSuccessListener(query -> {
@@ -54,6 +55,7 @@ public class StatistikRepo {
                     for (DocumentSnapshot doc : query) {
                         MedicationLog log = doc.toObject(MedicationLog.class);
                         if (log == null || log.getScheduled_at() == null) continue;
+                        if (inactive.contains(log.getMedication_schedules_id())) continue;
                         // skip yang belum due (masih akan datang)
                         if (log.getScheduled_at().toDate().getTime()
                                 + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS > System.currentTimeMillis()) {
@@ -68,7 +70,8 @@ public class StatistikRepo {
                             : (int) (totalDikonsumsi * 100f / totalSeharusnya);
 
                     callback.onResult(totalSeharusnya, totalDikonsumsi, percent);
-                }).addOnFailureListener(callback::onFailure);
+                }).addOnFailureListener(callback::onFailure));
+
     }
 
     public void getAdherence(String uid, String period, StatsCallback callback) {

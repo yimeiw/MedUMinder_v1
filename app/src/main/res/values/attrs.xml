@@ -8,4 +8,6 @@
     <!-- Read notification card: clear fill and soft outline -->
     <attr name="readSurface" format="color"/>
     <attr name="readOutline" format="color"/>
+
+    <attr name="pressedRipple" format="color"/>
 </resources>

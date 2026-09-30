@@ -3,7 +3,10 @@ package com.example.meduminderv1.Edit;
 import com.example.meduminderv1.Util.LoadingOverlay;
 import com.example.meduminderv1.Util.UserTimeZone;
 
+import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.DialogInterface;
+import android.graphics.Color;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
@@ -66,7 +69,9 @@ import java.util.Map;
 public class EditMedicineFragment extends Fragment {
     ImageButton btnBack;
     AutoCompleteTextView freqMinumObat;
-    EditText stokObat, namaObat, endDateReminder;
+    EditText stokObat, namaObat;
+    TextView endDateReminder;
+    private final SimpleDateFormat dateFmt = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
     LinearLayout timeReminder;
     FirebaseFirestore db;
     MedicationRepo medicationRepo;
@@ -78,7 +83,6 @@ public class EditMedicineFragment extends Fragment {
     private final ArrayList<TextView> timeViews = new ArrayList<>();
     private String scheduleId, medicationIdArg, notificationId, medicationId;
     private ZoneId targetZone = ZoneId.systemDefault();
-    private final List<TextView> timeLabels = new ArrayList<>();
     private boolean endDateSelected = false;
     private List<String> originalTimesOfDay = new ArrayList<>();
     NotificationRepo notificationRepo;
@@ -139,10 +143,30 @@ public class EditMedicineFragment extends Fragment {
             Toast.makeText(requireContext(), getString(R.string.data_reminder_tidak_ditemukan), Toast.LENGTH_SHORT).show();
         }
 
+        view.findViewById(R.id.cardDate).setOnClickListener(v ->  showEndDatePicker());
+        endDateReminder.setOnClickListener(v -> showEndDatePicker());
 
         btnUpdateReminder.setOnClickListener(v -> updateReminder());
 
         return view;
+    }
+
+    private void showEndDatePicker() {
+        Calendar today = Calendar.getInstance();
+        Calendar init = (endDateSelected && !selectedCalendar.before(today))
+                ? (Calendar) selectedCalendar.clone() : today;
+        DatePickerDialog dialog = new DatePickerDialog(requireContext(), (dp, y, m, d) -> {
+            selectedCalendar.set(y, m, d, 23, 59, 59);
+            selectedCalendar.set(Calendar.MILLISECOND, 0);
+            endDateSelected = true;
+            endDateReminder.setText(dateFmt.format(selectedCalendar.getTime()));
+        }, init.get(Calendar.YEAR), init.get(Calendar.MONTH), init.get(Calendar.DAY_OF_MONTH));
+        dialog.getDatePicker().setMinDate(System.currentTimeMillis());
+        dialog.show();
+
+        int color = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorSecondaryFixedDim, Color.BLUE);
+        dialog.getButton(DialogInterface.BUTTON_NEGATIVE).setTextColor(color);
+        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setTextColor(color);
     }
 
     private void resolveScheduleIdThenLoad() {
@@ -496,14 +520,12 @@ public class EditMedicineFragment extends Fragment {
     private void createTimeFields(int frequency, List<String> existingTimes) {
         timeReminder.removeAllViews();
         timeViews.clear();
-        timeLabels.clear();
         TypedValue typedValue = new TypedValue();
         requireContext().getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurface, typedValue, true);
 
         for (int i = 1; i <= frequency; i++) {
             TextView label = new TextView(requireContext());
-            label.setText(timeLabel(i));
-            timeLabels.add(label);
+            label.setText(getString(R.string.jam_minum_obat_label) + " " + i);
             label.setPadding(20, 10, 20, 5);
             label.setTextColor(typedValue.data);
 
@@ -515,6 +537,14 @@ public class EditMedicineFragment extends Fragment {
             tvTime.setBackgroundResource(R.drawable.border_hugcontent_nopadding);
             tvTime.setClickable(true);
             tvTime.setFocusable(false);
+
+            String saved = (existingTimes != null && existingTimes.size() >= i) ? existingTimes.get(i - 1) : null;
+            if (saved != null){
+                tvTime.setTag(saved);
+                tvTime.setText(UserTimeZone.display(targetZone, saved));
+            } else {
+                tvTime.setText(getString(R.string.pilih_jam_hint));
+            }
 
             tvTime.setOnClickListener(v -> showTimePicker(tvTime));
 
@@ -543,6 +573,7 @@ public class EditMedicineFragment extends Fragment {
                 }
             }
             selectedView.setText(time);
+            selectedView.setText(UserTimeZone.display(targetZone, time));
             selectedView.setTextColor(filledColor);
         });
         picker.show(getParentFragmentManager(), "time_picker");
@@ -586,18 +617,12 @@ public class EditMedicineFragment extends Fragment {
         }
         return items;
     }
-
-    private String timeLabel(int index) {
-        String label = getString(R.string.jam_minum_obat_label) + " " + index;
-        return UserTimeZone.differsFromDevice(targetZone)
-                ? label + " (" + UserTimeZone.label(targetZone) + ")"
-                : label;
-    }
-
     private void applyTargetZone(ZoneId zone) {
         targetZone = zone;
-        for (int i = 0; i < timeLabels.size(); i++) {
-            timeLabels.get(i).setText(timeLabel(i + 1));
+        for (TextView tv : timeViews) {
+            if (tv.getTag() instanceof  String){
+                tv.setText(UserTimeZone.display(zone, (String) tv.getTag()));
+            }
         }
     }
 }

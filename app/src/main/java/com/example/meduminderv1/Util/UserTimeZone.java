@@ -70,4 +70,7 @@ public final class UserTimeZone {
                 return TimeZone.getTimeZone(zone).getDisplayName(false, TimeZone.SHORT);
         }
     }
+    public static String display(ZoneId zone, String hhmm){
+        return hhmm + " " + label(zone);
+    }
 }

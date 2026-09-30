@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item android:state_pressed="true"
-        >
+    <item android:state_pressed="true">
         <shape android:shape="rectangle">
             <corners android:radius="200dp"/>
             <solid android:color="?attr/colorSecondary"/>
@@ -13,6 +12,24 @@
         <shape android:shape="rectangle">
             <corners android:radius="200dp"/>
             <solid android:color="?attr/colorPrimaryVariant"/>
+        </shape>
+    </item>
+    <item android:state_enabled="false">
+        <shape>
+            <corners android:radius="18dp"/>
+            <solid android:color="?attr/colorPrimaryInverse"/>
+        </shape>
+    </item>
+    <item android:state_enabled="true">
+        <shape>
+            <corners android:radius="18dp"/>
+            <solid android:color="?attr/colorSecondaryFixedDim"/>
+        </shape>
+    </item>
+    <item>
+        <shape>
+            <corners android:radius="18dp"/>
+            <solid android:color="?attr/colorPrimary"/>
         </shape>
     </item>
 </selector>

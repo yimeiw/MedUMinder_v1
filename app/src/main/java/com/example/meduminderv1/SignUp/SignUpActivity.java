@@ -32,6 +32,7 @@ import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.Model.AuthProviderType;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Util.PressFeedback;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.Timestamp;
 
@@ -54,6 +55,7 @@ public class SignUpActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, Math.max(systemBars.bottom, ime.bottom));
             return insets;
         });
+        PressFeedback.applyTree(findViewById(androidx.appcompat.R.id.content));
 
         signUp = findViewById(R.id.signup_button);
         googleBtn = findViewById(R.id.google_provider);
