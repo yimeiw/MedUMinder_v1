@@ -165,7 +165,7 @@ public class SignUpActivity extends AppCompatActivity {
 
         user.setPreferred_language(preferredLanguage);
 
-        user.setTimezone("Asia/Jakarta");
+        user.setTimezone(com.example.meduminderv1.Util.UserTimeZone.deviceId());
         user.setCreated_at(Timestamp.now());
         user.setUpdated_at(Timestamp.now());
         user.setDeleted_at(null);

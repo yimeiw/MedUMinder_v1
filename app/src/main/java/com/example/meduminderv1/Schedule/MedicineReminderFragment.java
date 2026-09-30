@@ -3,6 +3,7 @@ package com.example.meduminderv1.Schedule;
 import com.example.meduminderv1.Util.SchedulePermission;
 
 import com.example.meduminderv1.Util.LoadingOverlay;
+import com.example.meduminderv1.Util.UserTimeZone;
 
 import android.app.AlarmManager;
 import android.app.DatePickerDialog;
@@ -65,6 +66,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.time.ZoneId;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -98,6 +100,8 @@ public class MedicineReminderFragment extends Fragment {
     private Handler debounceHandler = new Handler(Looper.getMainLooper());
     private Runnable debounceRunnable;
     String targetUid;
+    private ZoneId targetZone = ZoneId.systemDefault();
+    private final List<TextView> timeLabels = new ArrayList<>();
     // FIX TC-MED-CON-005 / TC-MED-CON-006: nilai stok yang sudah divalidasi
     // (angka valid & > 0) disimpan di sini oleh validateReminder(), supaya
     // saveReminder() tidak perlu parse ulang tanpa pengecekan.
@@ -156,6 +160,13 @@ public class MedicineReminderFragment extends Fragment {
             }
             if (consumerChanged) {
                 clearFields();
+            }
+            if (hasConsumer) {
+                String resolvingFor = uid;
+                UserTimeZone.resolve(uid, zone -> {
+                    if (!isAdded() || !resolvingFor.equals(targetUid)) return;
+                    applyTargetZone(zone);
+                });
             }
         });
         consumerPickerHelper.setup();
@@ -535,13 +546,15 @@ public class MedicineReminderFragment extends Fragment {
     private void createTimeFields(int frequency) {
         timeReminder.removeAllViews();
         timeViews.clear();
+        timeLabels.clear();
 
         int labelColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface);
         int hintColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorPrimaryInverse);
 
         for (int i = 1; i <= frequency; i++) {
             TextView label = new TextView(requireContext());
-            label.setText(getString(R.string.jam_minum_obat_label) + "" + i);
+            label.setText(timeLabel(i));
+            timeLabels.add(label);
             label.setPadding(20, 10, 20, 5);
             label.setTextColor(labelColor);
 
@@ -764,5 +777,19 @@ public class MedicineReminderFragment extends Fragment {
                 requireContext(), com.google.android.material.R.attr.colorSecondaryFixedDim, android.graphics.Color.BLUE);
         dialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(color);
         dialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setTextColor(color);
+    }
+
+    private String timeLabel(int index) {
+        String label = getString(R.string.jam_minum_obat_label) + "" + index;
+        return UserTimeZone.differsFromDevice(targetZone)
+                ? label + " (" + UserTimeZone.label(targetZone) + ")"
+                : label;
+    }
+
+    private void applyTargetZone(ZoneId zone) {
+        targetZone = zone;
+        for (int i = 0; i < timeLabels.size(); i++) {
+            timeLabels.get(i).setText(timeLabel(i + 1));
+        }
     }
 }

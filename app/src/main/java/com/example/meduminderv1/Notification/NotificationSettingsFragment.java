@@ -8,6 +8,8 @@ import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,11 +29,13 @@ import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Reminder.StockChecker;
+import com.example.meduminderv1.Util.LoadingOverlay;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 public class NotificationSettingsFragment extends Fragment {
     private ImageButton btnBack;
@@ -172,38 +176,60 @@ public class NotificationSettingsFragment extends Fragment {
             List<String> ringtoneNames = new ArrayList<>();
             List<String> ringtoneUris = new ArrayList<>();
 
-            RingtoneManager ringtoneManager = new RingtoneManager(requireContext());
-
-            ringtoneManager.setType(
-                    RingtoneManager.TYPE_ALARM
-            );
-
-            Cursor cursor = ringtoneManager.getCursor();
-
-            int ringtoneCount = cursor.getCount();
-
-            for (int i = 0; i < ringtoneCount; i++) {
-                Uri ringtoneUri = ringtoneManager
-                        .getRingtoneUri(i);
-
-               Ringtone ringtone = ringtoneManager.getRingtone(i);
-
-                if (ringtone != null && ringtoneUri != null) {
-                    String ringtoneName = ringtone.getTitle(requireContext());
-
-                    ringtoneNames.add(ringtoneName);
-                    ringtoneUris.add(ringtoneUri.toString());
-                }
-            }
-
-            Log.d("RINGTONE_TEST", "Jumlah ringtone: " + ringtoneCount);
-
-
-            cursor.close();
-
             ArrayAdapter<String> adapter = createDropdownAdapter(ringtoneNames);
 
             dropdownRingtone.setAdapter(adapter);
+            dropdownRingtone.setEnabled(false);
+            LoadingOverlay.show(NotificationSettingsFragment.this);
+
+            Context app = requireContext().getApplicationContext();
+            boolean needsDefault = pref.getString(KEY_RINGTONE_NAME, null) == null;
+            Executors.newSingleThreadExecutor().execute(() -> {
+                List<String> names = new ArrayList<>();
+                List<String> uris = new ArrayList<>();
+                RingtoneManager ringtoneManager = new RingtoneManager(app);
+                ringtoneManager.setType(RingtoneManager.TYPE_ALARM);
+                Cursor cursor = ringtoneManager.getCursor();
+                try {
+                    while (cursor.moveToNext()) {
+                        Uri ringtoneUri = ringtoneManager.getRingtoneUri(cursor.getPosition());
+                        String title = cursor.getString(RingtoneManager.TITLE_COLUMN_INDEX);
+                        if (ringtoneUri != null && title != null) {
+                            names.add(title);
+                            uris.add(ringtoneUri.toString());
+                        }
+                    }
+                } finally {
+                    cursor.close();
+                }
+
+                String defaultName = null;
+                Uri defaultUri = null;
+                if (needsDefault) {
+                    defaultUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+                    Ringtone ringtone = defaultUri != null ? RingtoneManager.getRingtone(app, defaultUri) : null;
+                    if (ringtone != null) defaultName = ringtone.getTitle(app);
+                }
+                String finalDefaultName = defaultName;
+                Uri finalDefaultUri = defaultUri;
+
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    if (!isAdded()) return;
+                    LoadingOverlay.hide(NotificationSettingsFragment.this);
+                    if (getView() == null) return;
+                    ringtoneNames.addAll(names);
+                    ringtoneUris.addAll(uris);
+                    adapter.notifyDataSetChanged();
+                    if (finalDefaultName != null && pref.getString(KEY_RINGTONE_NAME, null) == null) {
+                        dropdownRingtone.setText(finalDefaultName, false);
+                        pref.edit()
+                                .putString(KEY_RINGTONE_NAME, finalDefaultName)
+                                .putString(KEY_RINGTONE_URI, finalDefaultUri.toString())
+                                .apply();
+                    }
+                    dropdownRingtone.setEnabled(true);
+                });
+            });
 
             dropdownRingtone.setOnClickListener(v -> {
                 if (!isDropdownOpen) {
@@ -453,30 +479,6 @@ public class NotificationSettingsFragment extends Fragment {
                 dropdownRingtone.setText(
                         savedRingtoneName, false
                 );
-            } else{
-                // default nada dering
-                Uri defaultUri = RingtoneManager.getDefaultUri(
-                        RingtoneManager.TYPE_ALARM
-                );
-
-                if(defaultUri != null){
-                    android.media.Ringtone ringtone = RingtoneManager.getRingtone(
-                            requireContext(), defaultUri
-                    );
-
-                    if(ringtone != null) {
-                        String defaultName = ringtone.getTitle(requireContext());
-                        dropdownRingtone.setText(
-                                defaultName, false
-                        );
-
-                        pref.edit().putString(
-                                KEY_RINGTONE_NAME, defaultName
-                        ).putString(
-                                KEY_RINGTONE_URI, defaultUri.toString()
-                        ).apply();
-                    }
-                }
             }
 
             // reminder message

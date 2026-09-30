@@ -1,6 +1,7 @@
 package com.example.meduminderv1.Edit;
 
 import com.example.meduminderv1.Util.LoadingOverlay;
+import com.example.meduminderv1.Util.UserTimeZone;
 
 import android.app.DatePickerDialog;
 import android.os.Bundle;
@@ -39,6 +40,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
+import java.time.ZoneId;
 import java.util.Locale;
 
 public class EditAppointmentFragment extends Fragment {
@@ -51,6 +53,7 @@ public class EditAppointmentFragment extends Fragment {
     NotificationRepo notificationRepo;
     CareRelationshipRepo careRelationshipRepo;
     Calendar selectedCalendar;
+    private ZoneId targetZone = ZoneId.systemDefault();
     private String appointmentId;
     private String targetUid;
     private boolean isDatePicked = false;
@@ -120,7 +123,7 @@ public class EditAppointmentFragment extends Fragment {
                 selectedCalendar.set(Calendar.MINUTE, picker.getMinute());
                 selectedCalendar.set(Calendar.SECOND, 0);
                 selectedCalendar.set(Calendar.MILLISECOND, 0);
-                tvTime.setText(String.format(Locale.getDefault(), "%02d:%02d", picker.getHour(), picker.getMinute()));
+                tvTime.setText(formatTime(picker.getHour(), picker.getMinute()));
                 isTimePicked = true;
             });
             picker.show(getParentFragmentManager(), "time_picker");
@@ -149,16 +152,21 @@ public class EditAppointmentFragment extends Fragment {
                     location_input.setText(appointment.getAddress());
 
                     if (appointment.getAppointment_at() != null) {
-                        selectedCalendar.setTime(appointment.getAppointment_at().toDate());
-                        tvDate.setText(String.format(Locale.getDefault(), "%d/%d/%d",
-                                selectedCalendar.get(Calendar.DAY_OF_MONTH),
-                                selectedCalendar.get(Calendar.MONTH) + 1,
-                                selectedCalendar.get(Calendar.YEAR)));
-                        tvTime.setText(String.format(Locale.getDefault(), "%02d:%02d",
-                                selectedCalendar.get(Calendar.HOUR_OF_DAY),
-                                selectedCalendar.get(Calendar.MINUTE)));
-                        isDatePicked = true;
-                        isTimePicked = true;
+                        java.util.Date appointmentDate = appointment.getAppointment_at().toDate();
+                        UserTimeZone.resolve(targetUid, zone -> {
+                            if (!isAdded()) return;
+                            targetZone = zone;
+                            selectedCalendar = UserTimeZone.calendarIn(zone);
+                            selectedCalendar.setTime(appointmentDate);
+                            tvDate.setText(String.format(Locale.getDefault(), "%d/%d/%d",
+                                    selectedCalendar.get(Calendar.DAY_OF_MONTH),
+                                    selectedCalendar.get(Calendar.MONTH) + 1,
+                                    selectedCalendar.get(Calendar.YEAR)));
+                            tvTime.setText(formatTime(selectedCalendar.get(Calendar.HOUR_OF_DAY),
+                                    selectedCalendar.get(Calendar.MINUTE)));
+                            isDatePicked = true;
+                            isTimePicked = true;
+                        });
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -302,5 +310,12 @@ public class EditAppointmentFragment extends Fragment {
                 requireContext(), com.google.android.material.R.attr.colorSecondaryFixedDim, android.graphics.Color.BLUE);
         dialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(color);
         dialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setTextColor(color);
+    }
+
+    private String formatTime(int hour, int minute) {
+        String time = String.format(Locale.getDefault(), "%02d:%02d", hour, minute);
+        return UserTimeZone.differsFromDevice(targetZone)
+                ? time + " " + UserTimeZone.label(targetZone)
+                : time;
     }
 }

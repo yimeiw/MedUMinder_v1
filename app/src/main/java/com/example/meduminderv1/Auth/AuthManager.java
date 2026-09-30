@@ -426,7 +426,7 @@ public class AuthManager {
                 user.setCaregiver_enabled(false);
                 user.setAuthProvider(AuthProviderType.GOOGLE);
                 user.setPreferred_language("Indonesia");
-                user.setTimezone("Asian/Jakarta");
+                user.setTimezone(com.example.meduminderv1.Util.UserTimeZone.deviceId());
                 user.setCreated_at(Timestamp.now());
                 user.setUpdated_at(Timestamp.now());
                 user.setDeleted_at(null);

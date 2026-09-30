@@ -3,6 +3,7 @@ package com.example.meduminderv1.Model;
 import android.util.Log;
 
 import com.example.meduminderv1.Model.MedicationSchedules;
+import com.example.meduminderv1.Util.UserTimeZone;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -34,7 +35,11 @@ public class LogGenerator {
      * Panggil ini sekali tiap app dibuka, buat semua schedule aktif milik user
      */
     public void generateForAllActiveSchedules(String userId) {
-        LocalDate today = LocalDate.now();
+        UserTimeZone.resolve(userId, zone -> generateForAllActiveSchedules(userId, zone));
+    }
+
+    private void generateForAllActiveSchedules(String userId, ZoneId zone) {
+        LocalDate today = LocalDate.now(zone);
 
         db.collection("medication_schedules")
                 .whereEqualTo("users_id", userId)
@@ -50,7 +55,7 @@ public class LogGenerator {
                         // matiin). Kalau ini gak difilter, tiap app dibuka akan terus generate
                         // log/reminder untuk SEMUA schedule lama (termasuk data testing lama),
                         // dan itu yang bikin daftar jadwal kelihatan kebanjiran entry.
-                        if (isExpired(schedule.getEnd_date(), today)) {
+                        if (isExpired(schedule.getEnd_date(), today, zone)) {
                             db.collection("medication_schedules").document(doc.getId())
                                     .update("is_active", false, "updated_at", Timestamp.now())
                                     .addOnFailureListener(e ->
@@ -58,14 +63,15 @@ public class LogGenerator {
                             continue;
                         }
 
-                        ensureLogsGenerated(schedule, doc.getId());
+                        loadExistingAndWrite(schedule.getUsers_id(), doc.getId(),
+                                schedule.getTimes_of_day(), schedule.getStart_date(), schedule.getEnd_date(), zone);
                     }
                 }).addOnFailureListener(e -> Log.e("LogGenerator", "Gagal load schedule aktif", e));
     }
 
-    private boolean isExpired(Timestamp endDate, LocalDate today) {
+    private boolean isExpired(Timestamp endDate, LocalDate today, ZoneId zone) {
         if (endDate == null) return false; // gak ada end date = rolling window, gak pernah "expired" di sini
-        return toLocalDate(endDate).isBefore(today);
+        return toLocalDate(endDate, zone).isBefore(today);
     }
 
     public void ensureLogsGenerated(MedicationSchedules schedule, String scheduleId) {
@@ -75,44 +81,40 @@ public class LogGenerator {
             return;
         }
 
-        db.collection("medication_logs")
-                .whereEqualTo("medication_schedules_id", scheduleId)
-                .get()
-                .addOnSuccessListener(existingSnapshot -> {
-                    java.util.Set<String> existingIds = new java.util.HashSet<>();
-                    for (DocumentSnapshot doc : existingSnapshot.getDocuments()) {
-                        existingIds.add(doc.getId());
-                    }
-                    writeLogs(schedule.getUsers_id(), scheduleId,
-                            schedule.getTimes_of_day(),
-                            schedule.getStart_date(), schedule.getEnd_date(),
-                            existingIds);
-                })
-                .addOnFailureListener(e -> Log.e("LogGenerator", "Gagal cek log existing", e));
+        ensureLogsGenerated(schedule.getUsers_id(), scheduleId,
+                new ArrayList<>(schedule.getTimes_of_day()),
+                schedule.getStart_date(), schedule.getEnd_date());
     }
 
     public void ensureLogsGenerated(String userId, String scheduleId,
                                     ArrayList<String> timesOfDay,
                                     Timestamp startDate, Timestamp endDate) {
         if (startDate == null || timesOfDay == null || timesOfDay.isEmpty()) return;
+        UserTimeZone.resolve(userId, zone ->
+                loadExistingAndWrite(userId, scheduleId, timesOfDay, startDate, endDate, zone));
+    }
 
+    private void loadExistingAndWrite(String userId, String scheduleId, java.util.List<String> timesOfDay,
+                                      Timestamp startDate, Timestamp endDate, ZoneId zone) {
+        if (startDate == null || timesOfDay == null || timesOfDay.isEmpty()) return;
         db.collection("medication_logs")
                 .whereEqualTo("medication_schedules_id", scheduleId)
                 .get()
                 .addOnSuccessListener(existingSnapshot -> {
-                    java.util.Set<String> existingIds = new java.util.HashSet<>();
+                    Map<String, DocumentSnapshot> existing = new HashMap<>();
                     for (DocumentSnapshot doc : existingSnapshot.getDocuments()) {
-                        existingIds.add(doc.getId());
+                        existing.put(doc.getId(), doc);
                     }
-                    writeLogs(userId, scheduleId, timesOfDay, startDate, endDate, existingIds);
+                    writeLogs(userId, scheduleId, timesOfDay, startDate, endDate, existing, zone);
                 })
                 .addOnFailureListener(e -> Log.e("LogGenerator", "Gagal cek log existing", e));
     }
 
     private void writeLogs(String userId, String scheduleId, java.util.List<String> timesOfDay,
-                           Timestamp startDate, Timestamp endDate, java.util.Set<String> existingIds) {
-        LocalDate start = toLocalDate(startDate);
-        LocalDate genUntil = (endDate != null) ? toLocalDate(endDate) : LocalDate.now().plusDays(DAYS_AHEAD_IF_NO_END);
+                           Timestamp startDate, Timestamp endDate,
+                           Map<String, DocumentSnapshot> existing, ZoneId zone) {
+        LocalDate start = toLocalDate(startDate, zone);
+        LocalDate genUntil = (endDate != null) ? toLocalDate(endDate, zone) : LocalDate.now(zone).plusDays(DAYS_AHEAD_IF_NO_END);
         if (start.isAfter(genUntil)) return;
 
         long startMillis = startDate.toDate().getTime();
@@ -124,11 +126,20 @@ public class LogGenerator {
             for (String time : timesOfDay) {
                 String logId = buildLogId(scheduleId, date, time);
 
-                if (existingIds.contains(logId))
-                    continue;
-
-                Timestamp scheduledAt = toTimestamp(date, time);
+                Timestamp scheduledAt = toTimestamp(date, time, zone);
                 if (scheduledAt == null) continue;
+
+                DocumentSnapshot old = existing.get(logId);
+                if (old != null) {
+                    Timestamp oldAt = old.getTimestamp("scheduled_at");
+                    boolean pending = "akan datang".equals(old.getString("status"));
+                    if (pending && oldAt != null && !oldAt.equals(scheduledAt)) {
+                        batch.update(old.getReference(), "scheduled_at", scheduledAt);
+                        count++;
+                    }
+                    continue;
+                }
+
                 if (scheduledAt.toDate().getTime() < startMillis) continue;
 
                 Map<String, Object> log = new HashMap<>();
@@ -155,15 +166,15 @@ public class LogGenerator {
         }
     }
 
-    private LocalDate toLocalDate(Timestamp ts) {
-        return ts.toDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+    private LocalDate toLocalDate(Timestamp ts, ZoneId zone) {
+        return ts.toDate().toInstant().atZone(zone).toLocalDate();
     }
 
-    private Timestamp toTimestamp(LocalDate date, String time) {
+    private Timestamp toTimestamp(LocalDate date, String time, ZoneId zone) {
         try {
             LocalTime localTime = LocalTime.parse(time); // format wajib "HH:mm"
             LocalDateTime dateTime = LocalDateTime.of(date, localTime);
-            Date d = Date.from(dateTime.atZone(ZoneId.systemDefault()).toInstant());
+            Date d = Date.from(dateTime.atZone(zone).toInstant());
             return new Timestamp(d);
         } catch (Exception e) {
             Log.e("LogGenerator", "Format waktu salah: " + time, e);

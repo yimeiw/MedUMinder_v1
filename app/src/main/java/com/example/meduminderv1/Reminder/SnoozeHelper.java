@@ -15,14 +15,12 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 public final class SnoozeHelper {
 
@@ -87,7 +85,7 @@ public final class SnoozeHelper {
                     .addOnCompleteListener(t -> { if (onDone != null) onDone.run(); });
         }
 
-        String newTime = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date(snoozeUntil));
+        String newTime = NotificationText.timeArg(snoozeUntil);
         sendSnoozeNotifications(app, scheduleId, name, isAppointment, minutes, newTime);
 
         return minutes;

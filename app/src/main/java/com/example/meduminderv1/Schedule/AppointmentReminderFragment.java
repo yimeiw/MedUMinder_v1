@@ -1,6 +1,7 @@
 package com.example.meduminderv1.Schedule;
 
 import com.example.meduminderv1.Util.SchedulePermission;
+import com.example.meduminderv1.Util.UserTimeZone;
 
 import com.example.meduminderv1.Util.LoadingOverlay;
 
@@ -46,6 +47,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
+import java.time.ZoneId;
 import java.util.Locale;
 import java.util.Map;
 
@@ -56,6 +58,7 @@ public class AppointmentReminderFragment extends Fragment {
     LinearLayout formContent;
     MaterialButton btnSaveAppoint;
     Calendar selectedCalendar;
+    private ZoneId targetZone = ZoneId.systemDefault();
     FirebaseAuth mAuth;
     FirebaseFirestore db;
     ConsumerPickerHelper consumerPickerHelper;
@@ -100,6 +103,13 @@ public class AppointmentReminderFragment extends Fragment {
             if (consumerChanged) {
                 resetForm();
             }
+            if (hasConsumer) {
+                String resolvingFor = uid;
+                UserTimeZone.resolve(uid, zone -> {
+                    if (!isAdded() || !resolvingFor.equals(targetUid)) return;
+                    applyTargetZone(zone);
+                });
+            }
         }); consumerPickerHelper.setup();
 
         tvDate.setOnClickListener(v -> {
@@ -131,14 +141,7 @@ public class AppointmentReminderFragment extends Fragment {
                 selectedCalendar.set(Calendar.SECOND, 0);
                 selectedCalendar.set(Calendar.MILLISECOND, 0);
 
-                String time = String.format(
-                        Locale.getDefault(),
-                        "%02d:%02d",
-                        picker.getHour(),
-                        picker.getMinute()
-                );
-
-                tvTime.setText(time);
+                tvTime.setText(formatTime(picker.getHour(), picker.getMinute()));
                 isTimePicked = true;
             });
 
@@ -155,12 +158,33 @@ public class AppointmentReminderFragment extends Fragment {
         return viewF;
     }
 
+    private void applyTargetZone(ZoneId zone) {
+        if (zone.equals(targetZone)) return;
+        Calendar zoned = UserTimeZone.calendarIn(zone);
+        zoned.set(selectedCalendar.get(Calendar.YEAR), selectedCalendar.get(Calendar.MONTH),
+                selectedCalendar.get(Calendar.DAY_OF_MONTH), selectedCalendar.get(Calendar.HOUR_OF_DAY),
+                selectedCalendar.get(Calendar.MINUTE), 0);
+        zoned.set(Calendar.MILLISECOND, 0);
+        targetZone = zone;
+        selectedCalendar = zoned;
+        if (isTimePicked) {
+            tvTime.setText(formatTime(selectedCalendar.get(Calendar.HOUR_OF_DAY), selectedCalendar.get(Calendar.MINUTE)));
+        }
+    }
+
+    private String formatTime(int hour, int minute) {
+        String time = String.format(Locale.getDefault(), "%02d:%02d", hour, minute);
+        return UserTimeZone.differsFromDevice(targetZone)
+                ? time + " " + UserTimeZone.label(targetZone)
+                : time;
+    }
+
     private void resetForm() {
         namaAppointment.setText("");
         location_input.setText("");
         tvDate.setText("");
         tvTime.setText("");
-        selectedCalendar = Calendar.getInstance();
+        selectedCalendar = UserTimeZone.calendarIn(targetZone);
         isDatePicked = false;
         isTimePicked = false;
     }

@@ -24,6 +24,7 @@ import androidx.work.WorkManager;
 
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Model.LogGenerator;
+import com.example.meduminderv1.Util.UserTimeZone;
 
 import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
 import com.example.meduminderv1.Reminder.AppLifecycleTracker;
@@ -127,6 +128,7 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
             }
         }
         if (user != null) {
+            UserTimeZone.syncOwn(user.getUid());
             new LogGenerator().generateForAllActiveSchedules(user.getUid());
             StockChecker.checkAllForUser(getApplicationContext(), user.getUid(), null);
             // pasang ulang semua alarm tiap app dibuka (jadwal bisa ditambah caregiver dari HP lain),

@@ -786,9 +786,16 @@ public class NotificationDetailFragment extends Fragment {
         }
 
         // obat: reference_id bisa id log, atau id jadwal + scheduled_at
-        String logId = notification.getScheduled_at() != null
-                ? buildLogId(ref, notification.getScheduled_at().toDate().getTime())
-                : ref;
+        if (notification.getScheduled_at() != null) {
+            com.example.meduminderv1.Model.LogLookup.findLogId(ref,
+                    notification.getScheduled_at().toDate().getTime(),
+                    logId -> checkLogCanRemind(db, logId, result));
+        } else {
+            checkLogCanRemind(db, ref, result);
+        }
+    }
+
+    private void checkLogCanRemind(FirebaseFirestore db, String logId, java.util.function.Consumer<Boolean> result) {
         db.collection("medication_logs").document(logId).get()
                 .addOnSuccessListener(doc -> {
                     if (!doc.exists()) { result.accept(true); return; }   // mis. id jadwal tanpa waktu

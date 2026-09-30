@@ -33,6 +33,7 @@ import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Model.Appointment;
 import com.example.meduminderv1.Model.CareRelationship;
+import com.example.meduminderv1.Model.LogLookup;
 import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.Model.MedicationLog;
 import com.example.meduminderv1.Model.MedicationSchedules;
@@ -273,10 +274,10 @@ public class ReminderFragment extends Fragment {
         } stopRingingAlarm();
 
         AlarmSchedulerHelper.cancelOccurrenceForScheduledAt(requireContext(), scheduleId, scheduledAt);
-        String logId = buildLogId(scheduleId, scheduledAt);
         final android.content.Context appContext = requireContext().getApplicationContext();
 
         LoadingOverlay.show(ReminderFragment.this);
+        LogLookup.findLogId(scheduleId, scheduledAt, logId ->
         db.collection("medication_schedules").document(scheduleId).get()
                 .addOnSuccessListener(scheduleDoc -> {
                     String consumerUid = scheduleDoc.exists() ? scheduleDoc.getString("users_id") : null;
@@ -302,7 +303,7 @@ public class ReminderFragment extends Fragment {
                 .addOnFailureListener(e -> {
                     LoadingOverlay.hide(ReminderFragment.this);
                     if (isAdded()) Toast.makeText(requireContext(), getString(R.string.gagal_menghapus_jadwal), Toast.LENGTH_SHORT).show();
-                });
+                }));
     }
 
     private void sendReminderToConsumer() {
@@ -630,9 +631,7 @@ public class ReminderFragment extends Fragment {
         if (!isAdded()) return;
         if (scheduleId == null || scheduleId.isEmpty() || scheduledAt <= 0L) return;
 
-        String logId = buildLogId(scheduleId, scheduledAt);
-
-        db.collection("medication_logs")
+        LogLookup.findLogId(scheduleId, scheduledAt, logId -> db.collection("medication_logs")
                 .document(logId)
                 .get()
                 .addOnSuccessListener(document -> {
@@ -649,7 +648,7 @@ public class ReminderFragment extends Fragment {
                 })
                 .addOnFailureListener(e ->
                         Log.e("REMINDER_FRAGMENT", "Gagal ambil status log terbaru untuk logId=" + logId, e)
-                );
+                ));
     }
 
     private void markAsTaken() {
@@ -671,11 +670,10 @@ public class ReminderFragment extends Fragment {
         AlarmSchedulerHelper.cancelSnooze(requireContext(), scheduleId);
         AlarmSchedulerHelper.onDoseTaken(requireContext(), scheduleId, namaObat, scheduledAt);
 
-        String logId = buildLogId(scheduleId, scheduledAt);
         final android.content.Context appContext = requireContext().getApplicationContext();
 
         LoadingOverlay.show(ReminderFragment.this);
-        db.collection("medication_logs").document(logId).get()
+        LogLookup.findLogId(scheduleId, scheduledAt, logId -> db.collection("medication_logs").document(logId).get()
                 .addOnSuccessListener(snapshot -> {
                     if (!isAdded()) return;
                     String currentRaw = snapshot.getString("status");
@@ -722,7 +720,7 @@ public class ReminderFragment extends Fragment {
                     btnIsTaken.setEnabled(true);
                     btnTundaReminder.setEnabled(true);
                     Toast.makeText(requireContext(), getString(R.string.gagal_mengubah_status_obat), Toast.LENGTH_SHORT).show();
-                });
+                }));
     }
 
     private void markAppointmentAttended() {
@@ -937,12 +935,6 @@ public class ReminderFragment extends Fragment {
         updateStatusUI(LogStatus.fromRaw(rawStatus));
     }
 
-    private String buildLogId(String scheduleId, long scheduledAtMillis) {
-        LocalDateTime dt = LocalDateTime.ofInstant(Instant.ofEpochMilli(scheduledAtMillis), ZoneId.systemDefault());
-        LocalDate date = dt.toLocalDate();
-        String cleanTime = dt.format(DateTimeFormatter.ofPattern("HHmm"));
-        return scheduleId + "_" + date + "_" + cleanTime;
-    }
 
     private void applyCircleStatusColor(View circleView, LogStatus status) {
         int statusColor = status.resolveColor(requireContext());

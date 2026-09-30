@@ -19,6 +19,7 @@ public final class NotificationText {
     private static final String MINUTES_PREFIX = "@min:";
     private static final String STRING_PREFIX = "@str:";
     private static final String DAYS_PREFIX = "@days:";
+    private static final String TIME_PREFIX = "@time:";
 
     private NotificationText() {}
 
@@ -32,6 +33,10 @@ public final class NotificationText {
         m.put("title_key", titleKey);
         m.put("message_key", messageKey);
         m.put("message_args", new ArrayList<>(Arrays.asList(args)));
+    }
+
+    public static String timeArg(long millis) {
+        return TIME_PREFIX + millis;
     }
 
     public static String minutesArg(int minutes) {
@@ -96,6 +101,12 @@ public final class NotificationText {
         if (arg.startsWith(STRING_PREFIX)) {
             int id = resId(c, arg.substring(STRING_PREFIX.length()));
             return id != 0 ? c.getString(id) : arg.substring(STRING_PREFIX.length());
+        }
+        if (arg.startsWith(TIME_PREFIX)) {
+            try {
+                long millis = Long.parseLong(arg.substring(TIME_PREFIX.length()));
+                return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date(millis));
+            } catch (NumberFormatException ignored) { }
         }
         if (arg.startsWith(DAYS_PREFIX)) {
             try {

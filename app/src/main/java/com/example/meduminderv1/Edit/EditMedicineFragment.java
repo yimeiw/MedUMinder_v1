@@ -1,6 +1,7 @@
 package com.example.meduminderv1.Edit;
 
 import com.example.meduminderv1.Util.LoadingOverlay;
+import com.example.meduminderv1.Util.UserTimeZone;
 
 import android.app.TimePickerDialog;
 import android.os.Bundle;
@@ -58,6 +59,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.time.ZoneId;
 import java.util.Locale;
 import java.util.Map;
 
@@ -75,6 +77,8 @@ public class EditMedicineFragment extends Fragment {
 
     private final ArrayList<TextView> timeViews = new ArrayList<>();
     private String scheduleId, medicationIdArg, notificationId, medicationId;
+    private ZoneId targetZone = ZoneId.systemDefault();
+    private final List<TextView> timeLabels = new ArrayList<>();
     private boolean endDateSelected = false;
     private List<String> originalTimesOfDay = new ArrayList<>();
     NotificationRepo notificationRepo;
@@ -177,6 +181,9 @@ public class EditMedicineFragment extends Fragment {
                 medicationId = schedule.getMedication_id();
                 medicationId = schedule.getMedication_id();
                 targetUid = schedule.getUsers_id();
+                UserTimeZone.resolve(targetUid, zone -> {
+                    if (isAdded()) applyTargetZone(zone);
+                });
                 originalTimesOfDay = schedule.getTimes_of_day() != null
                         ? new ArrayList<>(schedule.getTimes_of_day())
                         : new ArrayList<>();
@@ -489,12 +496,14 @@ public class EditMedicineFragment extends Fragment {
     private void createTimeFields(int frequency, List<String> existingTimes) {
         timeReminder.removeAllViews();
         timeViews.clear();
+        timeLabels.clear();
         TypedValue typedValue = new TypedValue();
         requireContext().getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurface, typedValue, true);
 
         for (int i = 1; i <= frequency; i++) {
             TextView label = new TextView(requireContext());
-            label.setText(getString(R.string.jam_minum_obat_label) + "" + i);
+            label.setText(timeLabel(i));
+            timeLabels.add(label);
             label.setPadding(20, 10, 20, 5);
             label.setTextColor(typedValue.data);
 
@@ -576,5 +585,19 @@ public class EditMedicineFragment extends Fragment {
             items.add("stock|" + newStock);
         }
         return items;
+    }
+
+    private String timeLabel(int index) {
+        String label = getString(R.string.jam_minum_obat_label) + "" + index;
+        return UserTimeZone.differsFromDevice(targetZone)
+                ? label + " (" + UserTimeZone.label(targetZone) + ")"
+                : label;
+    }
+
+    private void applyTargetZone(ZoneId zone) {
+        targetZone = zone;
+        for (int i = 0; i < timeLabels.size(); i++) {
+            timeLabels.get(i).setText(timeLabel(i + 1));
+        }
     }
 }
