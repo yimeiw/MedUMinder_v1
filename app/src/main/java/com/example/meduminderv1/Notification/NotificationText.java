@@ -105,7 +105,7 @@ public final class NotificationText {
         if (arg.startsWith(TIME_PREFIX)) {
             try {
                 long millis = Long.parseLong(arg.substring(TIME_PREFIX.length()));
-                return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date(millis));
+                return com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date(millis)));
             } catch (NumberFormatException ignored) { }
         }
         if (arg.startsWith(DAYS_PREFIX)) {
@@ -147,7 +147,7 @@ public final class NotificationText {
         if (isAppointment && n.getSnapshot_at() != null) {
             Date d = n.getSnapshot_at().toDate();
             return new SimpleDateFormat("EEEE, dd MMM yyyy", locale).format(d)
-                    + " • " + new SimpleDateFormat("HH:mm", locale).format(d);
+                    + " • " + com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(new SimpleDateFormat("HH:mm", locale).format(d));
         }
         if (!isAppointment && n.getSnapshot_frequency() != null && n.getSnapshot_times() != null) {
             return c.getString(R.string.frekuensi_x_sehari_format, n.getSnapshot_frequency())

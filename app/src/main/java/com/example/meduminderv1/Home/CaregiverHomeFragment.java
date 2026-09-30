@@ -310,7 +310,7 @@ public class CaregiverHomeFragment extends Fragment {
                     Date scheduleDate = targetLog.getEffectiveTime().toDate();
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                     tvDay.setText(formatDayLabel(scheduleDate));
-                    tvTime.setText(sdf.format(scheduleDate));
+                    tvTime.setText(com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(sdf.format(scheduleDate)));
 
                     //pastikan id schedule tdk null
                     if (nextScheduleId == null || nextScheduleId.isEmpty()){

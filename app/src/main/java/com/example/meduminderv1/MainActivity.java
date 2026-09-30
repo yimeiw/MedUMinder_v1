@@ -28,6 +28,8 @@ import androidx.work.WorkManager;
 
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Model.LogGenerator;
+import com.example.meduminderv1.Notification.PushCheckWorker;
+import com.example.meduminderv1.Notification.PushNotifier;
 import com.example.meduminderv1.Util.PressFeedback;
 import com.example.meduminderv1.Util.UserTimeZone;
 
@@ -146,6 +148,8 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
             // lalu pantau perubahan jadwal selama app terbuka
             AlarmSchedulerHelper.rescheduleAllActiveForUser(getApplicationContext(), user.getUid());
             stopScheduleSync = ScheduleSyncListener.start(this, user.getUid());
+            stopPushListener = PushNotifier.listen(this, user.getUid());
+            PushCheckWorker.schedule(this);
         }
 
         pendingDeepLinkIntent = getIntent();
@@ -269,6 +273,8 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
             bundle.putString("source", "schedule");   // <-- baris baru
 
             navHostFragment.getNavController().navigate(R.id.reminderFragment, bundle);
+        } else if ("notification".equals(navigateTo)) {
+            openNotifIfNotThere();
         } else if ("appointment_log".equals(navigateTo)) {
             Bundle bundle = new Bundle();
             bundle.putBoolean("open_appointment_tab", true);
@@ -360,6 +366,7 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
     }
 
     private Runnable stopScheduleSync;
+    private Runnable stopPushListener;
 
     @Override
     protected void onDestroy() {
@@ -368,6 +375,7 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
             userListener.remove();
         }
         if (stopScheduleSync != null) stopScheduleSync.run();
+        if (stopPushListener != null) stopPushListener.run();
     }
 
 }

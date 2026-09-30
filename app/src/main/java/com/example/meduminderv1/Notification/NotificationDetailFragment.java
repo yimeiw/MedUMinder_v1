@@ -257,7 +257,7 @@ public class NotificationDetailFragment extends Fragment {
         Locale locale = getAppLocale();
         Date d = ts.toDate();
         return new SimpleDateFormat("EEEE, dd MMM yyyy", locale).format(d)
-                + " • " + new SimpleDateFormat("HH:mm", locale).format(d);
+                + " • " + com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(new SimpleDateFormat("HH:mm", locale).format(d));
     }
 
     private void configureAction() {
@@ -625,6 +625,12 @@ public class NotificationDetailFragment extends Fragment {
                     String frekuensi = getString(R.string.frekuensi_x_sehari_format, freqNum);
                     String jam = schedule.getTimes_of_day() != null ? String.join(", ", schedule.getTimes_of_day()) : "-";
                     tvScheduleDayTime.setText(frekuensi + " • " + jam);
+                    if (schedule.getTimes_of_day() != null) {
+                        com.example.meduminderv1.Util.UserTimeZone.resolve(schedule.getUsers_id(), zone -> {
+                            if (!isAdded()) return;
+                            tvScheduleDayTime.setText(frekuensi + " • " + com.example.meduminderv1.Util.UserTimeZone.displayAll(zone, schedule.getTimes_of_day()));
+                        });
+                    }
 
                     if (med != null && "PIL".equalsIgnoreCase(med.getMed_type())) {
                         tvStockInfo.setVisibility(View.VISIBLE);
@@ -697,7 +703,7 @@ public class NotificationDetailFragment extends Fragment {
                         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", locale);
                         if (log.getScheduled_at() != null) {
                             Date scheduleDate = log.getScheduled_at().toDate();
-                            tvScheduleDayTime.setText(dayFormat.format(scheduleDate) + " • " + timeFormat.format(scheduleDate));
+                            tvScheduleDayTime.setText(dayFormat.format(scheduleDate) + " • " + com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(timeFormat.format(scheduleDate)));
                         }
                         tvStockInfo.setVisibility(View.VISIBLE);
                         tvStockInfo.setText(getString(R.string.sisa_stok_obat_label) + finalStock);
@@ -902,7 +908,7 @@ public class NotificationDetailFragment extends Fragment {
             SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", locale);
             if (appointment.getAppointment_at() != null) {
                 Date appointmentDate = appointment.getAppointment_at().toDate();
-                tvScheduleDayTime.setText(dayFormat.format(appointmentDate) + " • " + timeFormat.format(appointmentDate));
+                tvScheduleDayTime.setText(dayFormat.format(appointmentDate) + " • " + com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(timeFormat.format(appointmentDate)));
             }
             tvStockInfo.setVisibility(View.GONE);
         }).addOnFailureListener(e -> { if (isAdded()) hideDetailCard(); });
@@ -1036,7 +1042,7 @@ public class NotificationDetailFragment extends Fragment {
                     SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE, dd MMM yyyy", locale);
                     SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", locale);
                     Date d = notification.getScheduled_at().toDate();
-                    tvScheduleDayTime.setText(dayFormat.format(d) + " • " + timeFormat.format(d));
+                    tvScheduleDayTime.setText(dayFormat.format(d) + " • " + com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(timeFormat.format(d)));
                     if (med != null && "PIL".equalsIgnoreCase(med.getMed_type())) {
                         tvStockInfo.setVisibility(View.VISIBLE);
                         tvStockInfo.setText(getString(R.string.sisa_stok, finalStock));
@@ -1162,6 +1168,14 @@ public class NotificationDetailFragment extends Fragment {
                 ? getString(R.string.label_appointment_colon) + " " + name
                 : getString(R.string.obat_label_colon) + name);
         tvScheduleDayTime.setText(detail);
+        if (!isAppointment && notification.getSnapshot_times() != null && notification.getSnapshot_frequency() != null) {
+            String ownerUid = notification.getConsumer_uid() != null ? notification.getConsumer_uid() : notification.getReceiver_uid();
+            com.example.meduminderv1.Util.UserTimeZone.resolve(ownerUid, zone -> {
+                if (!isAdded()) return;
+                tvScheduleDayTime.setText(getString(R.string.frekuensi_x_sehari_format, notification.getSnapshot_frequency())
+                        + " • " + com.example.meduminderv1.Util.UserTimeZone.displayAll(zone, notification.getSnapshot_times()));
+            });
+        }
         if (notification.getSnapshot_stock() != null) {
             tvStockInfo.setVisibility(View.VISIBLE);
             tvStockInfo.setText(getString(R.string.sisa_stok, notification.getSnapshot_stock()));

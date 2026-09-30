@@ -591,7 +591,7 @@ public class MedicineReminderFragment extends Fragment {
         picker.addOnPositiveButtonClickListener(v -> {
             String time = String.format(Locale.getDefault(), "%02d:%02d", picker.getHour(), picker.getMinute());
             for (TextView tv : timeViews) {
-                if (tv != selectedView && tv.getText().toString().equals(time)) {
+                if (tv != selectedView && time.equals(tv.getTag())) {
                     Toast.makeText(requireContext(), getString(R.string.jam_tersebut_sudah_dipilih), Toast.LENGTH_SHORT).show();
                     return;
                 }

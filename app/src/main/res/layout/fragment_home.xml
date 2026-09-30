@@ -310,6 +310,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:id="@+id/tvTotalStok"
+                            android:layout_marginStart="4dp"
                             android:text=""
                             android:textSize="12sp"
                             android:textColor="?attr/colorPrimaryFixed"/>

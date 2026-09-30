@@ -656,6 +656,7 @@
     <string name="anda_menghapus_hubungan_msg" formatted="true">您已解除与 %1$s（%2$s）的关系。</string>
     <string name="x_menghapus_hubungan_msg" formatted="true">%1$s（%2$s）已解除与您的关系。</string>
     <string name="nama_obat_tidak_dapat_diubah">药品名称无法修改</string>
+    <string name="frekuensi_tidak_dapat_diubah">服药频率无法修改</string>
     <string name="hapus_entri_title">删除此条目</string>
     <string name="status_undangan_menunggu">状态：等待回复</string>
     <string name="status_undangan_diterima">状态：已接受</string>
@@ -706,4 +707,8 @@
     <string name="alarm_btn_tunda">推迟</string>
     <string name="alarm_channel_nama">服药提醒</string>
     <string name="alarm_channel_deskripsi">服药和预约时间的闹钟通知</string>
+    <string name="push_channel_penting">重要提醒</string>
+    <string name="push_channel_penting_desc">错过的安排、看护者提醒、邀请和补药提醒</string>
+    <string name="push_channel_aktivitas">服药者动态</string>
+    <string name="push_channel_aktivitas_desc">服药者服药或参加预约时</string>
 </resources>

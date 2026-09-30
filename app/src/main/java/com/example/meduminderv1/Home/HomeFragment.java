@@ -265,7 +265,7 @@ public class HomeFragment extends Fragment {
                     noSchedule.setVisibility(View.GONE);
                     tvDay.setText(formatDayLabel(targetLog.getEffectiveTime().toDate()));
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                    tvTime.setText(sdf.format(targetLog.getEffectiveTime().toDate()));
+                    tvTime.setText(com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(sdf.format(targetLog.getEffectiveTime().toDate())));
                     resolveMedName(targetLog.getMedication_schedules_id(), (medName, stock, medId, medType) -> {
                         if (!isAdded()) return;
                         nextMedId = medId;

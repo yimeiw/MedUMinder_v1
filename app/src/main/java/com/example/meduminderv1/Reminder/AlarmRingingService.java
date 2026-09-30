@@ -32,6 +32,7 @@ public class AlarmRingingService extends Service {
 
     private MediaPlayer mediaPlayer;
     private int originalAlarmVolume = -1;
+    private static final float ALARM_VOLUME_RATIO = 0.6f;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -130,7 +131,8 @@ public class AlarmRingingService extends Service {
             int max = audio.getStreamMaxVolume(AudioManager.STREAM_ALARM);
             int current = audio.getStreamVolume(AudioManager.STREAM_ALARM);
             if (originalAlarmVolume < 0) originalAlarmVolume = current;
-            if (current < max) audio.setStreamVolume(AudioManager.STREAM_ALARM, max, 0);
+            int target = Math.round(max * ALARM_VOLUME_RATIO);
+            if (current < target) audio.setStreamVolume(AudioManager.STREAM_ALARM, target, 0);
         } catch (SecurityException ignored) {
         }
     }

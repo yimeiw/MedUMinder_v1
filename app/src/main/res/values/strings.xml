@@ -653,6 +653,7 @@
     <string name="anda_menghapus_hubungan_msg" formatted="true">You removed your connection with %1$s (%2$s).</string>
     <string name="x_menghapus_hubungan_msg" formatted="true">%1$s (%2$s) removed their connection with you.</string>
     <string name="nama_obat_tidak_dapat_diubah">Medicine name can\'t be changed</string>
+    <string name="frekuensi_tidak_dapat_diubah">Frequency can\'t be changed</string>
     <string name="hapus_entri_title">Delete This Entry</string>
     <string name="status_undangan_menunggu">Status: Waiting for a response</string>
     <string name="status_undangan_diterima">Status: Accepted</string>
@@ -703,4 +704,8 @@
     <string name="alarm_btn_tunda">Snooze</string>
     <string name="alarm_channel_nama">Medicine reminders</string>
     <string name="alarm_channel_deskripsi">Alarm notifications for medicine and appointment times</string>
+    <string name="push_channel_penting">Important alerts</string>
+    <string name="push_channel_penting_desc">Missed schedules, caregiver reminders, invitations and refill reminders</string>
+    <string name="push_channel_aktivitas">Consumer activity</string>
+    <string name="push_channel_aktivitas_desc">When a consumer takes their medicine or attends an appointment</string>
 </resources>

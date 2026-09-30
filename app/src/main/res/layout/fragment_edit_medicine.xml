@@ -117,14 +117,27 @@
                     android:id="@+id/freqMinumObat"
                     android:hint="@string/frekuensi"
                     android:background="@drawable/border"
-                    android:drawableEnd="@drawable/ic_arrow_down"
                     android:paddingHorizontal="20dp"
                     android:paddingVertical="18dp"
                     android:textSize="12sp"
                     android:focusable="false"
-                    android:clickable="true"
+                    android:focusableInTouchMode="false"
+                    android:clickable="false"
+                    android:longClickable="false"
+                    android:cursorVisible="false"
                     android:inputType="none"
+                    android:alpha="0.6"
                     android:textColor="?attr/colorOnSurface"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/frekuensi_tidak_dapat_diubah"
+                    android:textColor="?attr/colorOnSurface"
+                    android:alpha="0.6"
+                    android:textSize="11sp"/>
             </LinearLayout>
 
             <LinearLayout
@@ -165,7 +178,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/format_tanggal_hint"
-                        android:paddingHorizontal="10dp"
+                        android:paddingStart="4dp"
+                        android:paddingEnd="10dp"
                         android:textSize="14sp"
                         android:textColor="?attr/colorOnSurface"
                         android:background="@android:color/transparent"

@@ -660,6 +660,7 @@
     <string name="anda_menghapus_hubungan_msg" formatted="true">Anda telah menghapus hubungan dengan %1$s (%2$s).</string>
     <string name="x_menghapus_hubungan_msg" formatted="true">%1$s (%2$s) telah menghapus hubungan dengan Anda.</string>
     <string name="nama_obat_tidak_dapat_diubah">Nama obat tidak dapat diubah</string>
+    <string name="frekuensi_tidak_dapat_diubah">Frekuensi tidak dapat diubah</string>
     <string name="hapus_entri_title">Hapus Entri Ini</string>
     <string name="status_undangan_menunggu">Status: Menunggu respons</string>
     <string name="status_undangan_diterima">Status: Diterima</string>
@@ -710,4 +711,8 @@
     <string name="alarm_btn_tunda">Tunda</string>
     <string name="alarm_channel_nama">Pengingat obat</string>
     <string name="alarm_channel_deskripsi">Notifikasi alarm waktu minum obat dan appointment</string>
+    <string name="push_channel_penting">Pemberitahuan penting</string>
+    <string name="push_channel_penting_desc">Jadwal terlewat, pengingat dari caregiver, undangan, dan pengingat isi ulang obat</string>
+    <string name="push_channel_aktivitas">Aktivitas consumer</string>
+    <string name="push_channel_aktivitas_desc">Saat consumer minum obat atau menghadiri janji temu</string>
 </resources>

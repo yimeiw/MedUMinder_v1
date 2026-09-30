@@ -73,4 +73,14 @@ public final class UserTimeZone {
     public static String display(ZoneId zone, String hhmm){
         return hhmm + " " + label(zone);
     }
+
+    public static String withDeviceZone(String hhmm) {
+        return display(ZoneId.systemDefault(), hhmm);
+    }
+
+    public static String displayAll(ZoneId zone, java.util.List<String> times) {
+        java.util.List<String> labeled = new java.util.ArrayList<>();
+        for (String t : times) labeled.add(display(zone, t));
+        return android.text.TextUtils.join(", ", labeled);
+    }
 }

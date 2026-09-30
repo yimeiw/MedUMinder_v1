@@ -159,7 +159,7 @@ public class ReminderFragment extends Fragment {
 //            updateStatusUI(resolveStatus(currentStatus));
             Date scheduledDate = new Date(scheduledAt);
             String formattedDate = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(scheduledDate);
-            String formattedTime = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(scheduledDate);
+            String formattedTime = com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(new SimpleDateFormat("HH:mm", Locale.getDefault()).format(scheduledDate));
 
             statusMedicine.setVisibility(isAppointment ? View.GONE : View.VISIBLE);
             statusAppoint.setVisibility(isAppointment ? View.VISIBLE : View.GONE);
@@ -641,8 +641,8 @@ public class ReminderFragment extends Fragment {
                         updateStatusUI(log.getStatusBasedOnDate());
                         // FIX: kalau sudah di-snooze, tampilkan jam barunya
                         if (log.getEffectiveTime() != null) {
-                            timeReminder.setText(new SimpleDateFormat("HH:mm", Locale.getDefault())
-                                    .format(log.getEffectiveTime().toDate()));
+                            timeReminder.setText(com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(new SimpleDateFormat("HH:mm", Locale.getDefault())
+                                    .format(log.getEffectiveTime().toDate())));
                         }
                     }
                 })

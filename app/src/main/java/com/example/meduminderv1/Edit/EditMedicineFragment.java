@@ -471,10 +471,7 @@ public class EditMedicineFragment extends Fragment {
     private ArrayList<String> getSelectedTimes() {
         ArrayList<String> times = new ArrayList<>();
         for (TextView tv : timeViews) {
-            String value = tv.getText().toString().trim();
-            if (!value.equals(getString(R.string.pilih_jam_hint))) {
-                times.add(value);
-            }
+            if (tv.getTag() instanceof String) times.add((String) tv.getTag());
         }
         return times;
     }
@@ -530,8 +527,6 @@ public class EditMedicineFragment extends Fragment {
             label.setTextColor(typedValue.data);
 
             TextView tvTime = new TextView(requireContext());
-            String prefill = (existingTimes != null && existingTimes.size() >= i) ? existingTimes.get(i - 1) : "Pilih Jam";
-            tvTime.setText(prefill);
             tvTime.setPadding(50, 40, 50, 40);
             tvTime.setTextColor(typedValue.data);
             tvTime.setBackgroundResource(R.drawable.border_hugcontent_nopadding);
@@ -567,12 +562,12 @@ public class EditMedicineFragment extends Fragment {
         picker.addOnPositiveButtonClickListener(v -> {
             String time = String.format(Locale.getDefault(), "%02d:%02d", picker.getHour(), picker.getMinute());
             for (TextView tv : timeViews) {
-                if (tv != selectedView && tv.getText().toString().equals(time)) {
+                if (tv != selectedView && time.equals(tv.getTag())) {
                     Toast.makeText(requireContext(), getString(R.string.jam_tersebut_sudah_dipilih), Toast.LENGTH_SHORT).show();
                     return;
                 }
             }
-            selectedView.setText(time);
+            selectedView.setTag(time);
             selectedView.setText(UserTimeZone.display(targetZone, time));
             selectedView.setTextColor(filledColor);
         });
