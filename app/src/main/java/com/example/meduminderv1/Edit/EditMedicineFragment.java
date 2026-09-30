@@ -588,7 +588,7 @@ public class EditMedicineFragment extends Fragment {
     }
 
     private String timeLabel(int index) {
-        String label = getString(R.string.jam_minum_obat_label) + "" + index;
+        String label = getString(R.string.jam_minum_obat_label) + " " + index;
         return UserTimeZone.differsFromDevice(targetZone)
                 ? label + " (" + UserTimeZone.label(targetZone) + ")"
                 : label;
