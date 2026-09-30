@@ -9,7 +9,7 @@
     <dimen name="signup_capsule_margin_top">40dp</dimen>
     <dimen name="signup_capsule_padding_top">48dp</dimen>
     <!-- Halaman reminder: jarak header, lingkaran nama obat, ikon di dalamnya -->
-    <dimen name="reminder_header_gap">24dp</dimen>
-    <dimen name="reminder_circle_size">240dp</dimen>
+    <dimen name="reminder_header_gap">18dp</dimen>
+    <dimen name="reminder_circle_size">600dp</dimen>
     <dimen name="reminder_icon_size">92dp</dimen>
 </resources>

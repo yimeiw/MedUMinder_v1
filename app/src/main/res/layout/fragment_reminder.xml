@@ -62,24 +62,27 @@
 
         <LinearLayout
             android:id="@+id/circleNamaObat"
-            android:layout_width="@dimen/reminder_circle_size"
-            android:layout_height="@dimen/reminder_circle_size"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="70dp"
             android:orientation="vertical"
             android:layout_gravity="center"
             android:gravity="center"
             android:background="@drawable/circle_confirm_reminder"
             android:outlineSpotShadowColor="?attr/colorTertiaryFixed"
             android:elevation="20dp"
-            android:layout_marginBottom="20dp"
+            android:layout_marginBottom="@dimen/reminder_header_gap"
             >
             <TextView
                 android:id="@+id/namaObatConfirmReminder"
                 android:layout_width="wrap_content"
-                android:maxWidth="220dp"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/reminder_header_gap"
+                android:maxWidth="210dp"
                 android:text="@string/nama_obat"
                 android:textSize="20sp"
                 android:textStyle="bold"
+                android:gravity="center_vertical|center_horizontal"
                 android:textColor="?attr/colorOnSurface"
                 />
             
@@ -92,6 +95,7 @@
                 android:id="@+id/iconReminderType"
                 android:layout_width="@dimen/reminder_icon_size"
                 android:layout_height="@dimen/reminder_icon_size"
+                android:layout_marginBottom="@dimen/reminder_header_gap"
                 android:scaleType="fitCenter"
                 android:adjustViewBounds="false"
                 android:src="@drawable/ic_tablet"
@@ -159,9 +163,9 @@
         <LinearLayout
             android:id="@+id/statusAppoint"
             android:layout_width="match_parent"
-            android:layout_height="130dp"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@drawable/border_hugcontent_nopadding"
+            android:background="@drawable/border"
             android:padding="20dp"
             android:paddingStart="30dp"
             android:layout_marginBottom="20dp"
@@ -214,7 +218,7 @@
 
             <LinearLayout
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layout_gravity="center_vertical"
                 android:gravity="center"
