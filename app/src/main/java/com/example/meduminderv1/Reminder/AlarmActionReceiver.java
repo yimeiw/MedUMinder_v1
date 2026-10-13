@@ -31,6 +31,9 @@ public class AlarmActionReceiver extends BroadcastReceiver {
         if (intent == null) {
             Log.e(TAG, "Intent null");
             return;
+        } if (AlarmGuard.currentUid() == null){
+            context.stopService(new Intent(context, AlarmRingingService.class));
+            return;
         }
 
         String scheduleId = intent.getStringExtra("schedule_id");

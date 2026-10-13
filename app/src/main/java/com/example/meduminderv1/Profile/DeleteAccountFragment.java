@@ -8,7 +8,9 @@ import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
+import android.text.InputType;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -17,13 +19,9 @@ import android.widget.Toast;
 
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Callback.AuthCallback;
-import com.example.meduminderv1.Login.LoginActivity;
-import com.example.meduminderv1.Model.AuthProviderType;
-import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.SignUp.SignUpActivity;
 import com.google.android.material.button.MaterialButton;
-import com.google.rpc.context.AttributeContext;
 
 
 public class DeleteAccountFragment extends Fragment {
@@ -32,6 +30,7 @@ public class DeleteAccountFragment extends Fragment {
     MaterialButton btnCancel, btnDeleteAcc;
     EditText etPassword;
     AuthManager authManager;
+    boolean isPasswordVisible = false;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -48,6 +47,26 @@ public class DeleteAccountFragment extends Fragment {
 
         btnBack.setOnClickListener(v -> NavHostFragment.findNavController(this).popBackStack());
         btnCancel.setOnClickListener(v -> NavHostFragment.findNavController(this).popBackStack());
+
+        etPassword.setCompoundDrawablesWithIntrinsicBounds(
+                0, 0, R.drawable.ic_visibility_off, 0
+        );
+
+        etPassword.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_UP && event.getX() >= etPassword.getWidth() - etPassword.getCompoundDrawables()[2].getBounds().width() - etPassword.getPaddingEnd()) {
+                isPasswordVisible = !isPasswordVisible;
+                if (isPasswordVisible) {
+                    etPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                    etPassword.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_visibility, 0);
+                } else {
+                    etPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                    etPassword.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_visibility_off, 0);
+                }
+                etPassword.setSelection(etPassword.getText().length());
+                return true;
+            }
+            return false;
+        });
 
         btnDeleteAcc.setOnClickListener(v -> {
             String password = etPassword.getText().toString().trim();

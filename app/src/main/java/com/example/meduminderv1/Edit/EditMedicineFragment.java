@@ -308,10 +308,10 @@ public class EditMedicineFragment extends Fragment {
                                     db.collection("notifications").document(notificationId)
                                             .update("is_read", true, "updated_at", Timestamp.now())
                                             .addOnCompleteListener(task -> {
-                                                if (isAdded()) NavHostFragment.findNavController(EditMedicineFragment.this).navigateUp();
+                                                if (isAdded()) sendResultAndClose(times);
                                             });
                                 } else {
-                                    NavHostFragment.findNavController(EditMedicineFragment.this).navigateUp();
+                                    sendResultAndClose(times);
                                 }
                             })
                             .addOnFailureListener(e -> {
@@ -619,5 +619,18 @@ public class EditMedicineFragment extends Fragment {
                 tv.setText(UserTimeZone.display(zone, (String) tv.getTag()));
             }
         }
+    }
+
+    private void sendResultAndClose(ArrayList<String> newTimes){
+        if (!isAdded()) return;
+        ArrayList<String> oldSorted = new ArrayList<>(originalTimesOfDay);
+        Collections.sort(oldSorted);
+
+        Bundle result = new Bundle();
+        result.putString("schedule_id", scheduleId);
+        result.putStringArrayList("old_times", oldSorted);
+        result.putStringArrayList("new_times", newTimes);
+        getParentFragmentManager().setFragmentResult("reminder_edited", result);
+        NavHostFragment.findNavController(this).navigateUp();
     }
 }

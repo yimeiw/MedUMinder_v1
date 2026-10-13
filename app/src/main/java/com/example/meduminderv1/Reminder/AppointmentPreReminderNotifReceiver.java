@@ -16,6 +16,8 @@ import java.util.Map;
 public class AppointmentPreReminderNotifReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
+        if (AlarmGuard.shouldIgnore(intent)) return;
+
         String appointmentId = intent.getStringExtra("appointment_id");
         String extraTitle = intent.getStringExtra("title");
         int offsetMinutes = intent.getIntExtra("offset_minutes", 30);

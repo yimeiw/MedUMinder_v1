@@ -4,8 +4,10 @@ import com.example.meduminderv1.Util.BadgeText;
 
 import com.example.meduminderv1.Util.LoadingOverlay;
 
+import android.graphics.Typeface;
 import android.os.Bundle;
 
+import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -97,6 +99,16 @@ public class CaregiverHomeFragment extends Fragment {
     private ListenerRegistration invitationListener; // popup undangan realtime
     private Timestamp nextScheduleScheduledAt;
     String targetUid;
+    private Typeface cachedRegular;
+
+    private Typeface fontRegular() {
+        if (cachedRegular == null) {
+            Typeface f = ResourcesCompat.getFont(requireContext(), R.font.app_font);
+            cachedRegular = f != null ? f : Typeface.DEFAULT;
+        }
+        return cachedRegular;
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -567,6 +579,7 @@ public class CaregiverHomeFragment extends Fragment {
                 adherenceRing.setProgress(percent);
                 adherenceRing.setProgressColor(MaterialColors.getColor(adherenceRing, com.google.android.material.R.attr.colorPrimaryVariant));
                 tvAdherenceDesc.setText(adherenceDesc(percent));
+                tvAdherenceDesc.setTypeface(fontRegular());
             }
 
             @Override

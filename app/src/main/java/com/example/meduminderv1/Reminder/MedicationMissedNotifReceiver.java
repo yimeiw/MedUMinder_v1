@@ -29,6 +29,8 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        if (AlarmGuard.shouldIgnore(intent)) return;
+
         String scheduleId = intent.getStringExtra("schedule_id");
         String namaObat = intent.getStringExtra("nama_obat");
         long scheduledAtMillis = intent.getLongExtra("scheduled_at", 0L);

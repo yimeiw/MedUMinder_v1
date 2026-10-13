@@ -26,6 +26,8 @@ public class AppointmentMissedNotifReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        if (AlarmGuard.shouldIgnore(intent)) return;
+
         String appointmentId = intent.getStringExtra("appointment_id");
         String extraTitle = intent.getStringExtra("title");
         final boolean alreadyPassed = intent.getBooleanExtra(EXTRA_ALREADY_PASSED, false);

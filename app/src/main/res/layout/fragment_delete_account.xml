@@ -73,7 +73,7 @@
                 android:hint="@string/enter_password"
                 android:paddingStart="20dp"
                 android:textColorHint="?attr/colorPrimaryInverse"
-                android:textColor="?attr/colorPrimary"
+                android:textColor="?attr/colorPrimaryFixed"
                 android:inputType="textPassword"
                 android:textSize="12sp"
                 />

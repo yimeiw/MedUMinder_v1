@@ -2,6 +2,7 @@ package com.example.meduminderv1.Auth;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.util.Patterns;
 
@@ -30,6 +31,8 @@ import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Reminder.AlarmCanceller;
+import com.example.meduminderv1.Reminder.AlarmRingingService;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
 import com.example.meduminderv1.Repo.InvitationRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
@@ -652,23 +655,29 @@ public class AuthManager {
     public void logout(Context context, AuthCallback<Void> callback){
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null){
+            context.stopService(new Intent(context, AlarmRingingService.class));
             sessionManager.clearSession();
             callback.onSuccess(null);
             return;
-        } mAuth.signOut();
-        sessionManager.clearSession();
-        ClearCredentialStateRequest request = new ClearCredentialStateRequest();
-        credentialManager.clearCredentialStateAsync(request, null, Runnable::run, new CredentialManagerCallback<Void, ClearCredentialException>() {
-            @Override
-            public void onResult(Void unused) {
-                callback.onSuccess(null);
-            }
+        } final String uid = firebaseUser.getUid();
 
-            @Override
-            public void onError(@NonNull ClearCredentialException e) {
-                Log.e("LOGOUT", "Clear credential gagal", e);
-                callback.onSuccess(null);
-            }
+        //batalkan alarm dulu, selagi user masih login
+        AlarmCanceller.cancelAllForUser(context, uid, () -> {
+            mAuth.signOut();
+            sessionManager.clearSession();
+            ClearCredentialStateRequest request = new ClearCredentialStateRequest();
+            credentialManager.clearCredentialStateAsync(request, null, Runnable::run, new CredentialManagerCallback<Void, ClearCredentialException>() {
+                @Override
+                public void onResult(Void unused) {
+                    callback.onSuccess(null);
+                }
+
+                @Override
+                public void onError(@NonNull ClearCredentialException e) {
+                    Log.e("LOGOUT", "Clear credential gagal", e);
+                    callback.onSuccess(null);
+                }
+            });
         });
     }
 

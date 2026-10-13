@@ -105,6 +105,7 @@ public class AlarmSchedulerHelper {
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (am == null || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms())) return;
         Intent intent = new Intent(context, MedicationPreReminderNotifReceiver.class);
+        AlarmGuard.putOwner(intent);
         intent.putExtra("schedule_id", scheduleId);
         intent.putExtra("nama_obat", namaObat);
         PendingIntent pi = PendingIntent.getBroadcast(context, (scheduleId + "_pre_" + occurrenceKey).hashCode(), intent,
@@ -136,6 +137,7 @@ public class AlarmSchedulerHelper {
         }
 
         Intent intent = new Intent(context, MedicationMissedNotifReceiver.class);
+        AlarmGuard.putOwner(intent);
         intent.putExtra("schedule_id", scheduleId);
         intent.putExtra("nama_obat", namaObat);
         intent.putExtra("scheduled_at", logScheduledAtMillis);
@@ -176,6 +178,7 @@ public class AlarmSchedulerHelper {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) return;
 
         Intent intent = new Intent(context, MedicationAlarmReceiver.class);
+        AlarmGuard.putOwner(intent);
         intent.putExtra("schedule_id", logScheduleId);
         intent.putExtra("nama_obat", namaObat);
         intent.putExtra("scheduled_at", logScheduledAtMillis);
@@ -263,6 +266,7 @@ public class AlarmSchedulerHelper {
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (am == null || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms())) return;
         Intent intent = new Intent(context, MedicationMissedNotifReceiver.class);
+        AlarmGuard.putOwner(intent);
         intent.putExtra("schedule_id", scheduleId);
         intent.putExtra("nama_obat", namaObat);
         intent.putExtra("scheduled_at", originalScheduledAt); // tetap jam asli -> id log tetap sama
@@ -463,6 +467,7 @@ public class AlarmSchedulerHelper {
     // di intent alarm), supaya kalau user baru mengedit/menonaktifkan jadwal,
     // reschedule ini otomatis ikut yang terbaru.
     public static void rescheduleNextDay(Context context, String scheduleId, String namaObat, long previousTriggerMillis) {
+        if (AlarmGuard.currentUid() == null) return;
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("medication_schedules").document(scheduleId).get()
                 .addOnSuccessListener(doc -> {

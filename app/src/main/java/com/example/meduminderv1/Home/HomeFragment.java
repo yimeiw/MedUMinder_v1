@@ -9,9 +9,11 @@ import com.example.meduminderv1.Util.LoadingOverlay;
 import static android.content.Context.MODE_PRIVATE;
 
 import android.content.SharedPreferences;
+import android.graphics.Typeface;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -97,6 +99,16 @@ public class HomeFragment extends Fragment {
     private final Handler refreshHandler = new Handler(Looper.getMainLooper());
     private long displayedScheduleAtMillis = -1;
     private final Runnable refreshRunnable = this::checkNextScheduleFreshness;
+
+    private Typeface cachedRegular;
+
+    private Typeface fontRegular() {
+        if (cachedRegular == null) {
+            Typeface f = ResourcesCompat.getFont(requireContext(), R.font.app_font);
+            cachedRegular = f != null ? f : Typeface.DEFAULT;
+        }
+        return cachedRegular;
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -638,6 +650,7 @@ public class HomeFragment extends Fragment {
         xAxis.setAxisMaximum(labels.size() - 1);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setTextColor(itam);
+        xAxis.setTypeface(fontRegular());
         xAxis.setDrawGridLines(false);
 
         YAxis leftAxis = lineChart.getAxisLeft();
@@ -652,15 +665,18 @@ public class HomeFragment extends Fragment {
         leftAxis.setAxisMinimum(0f);
         leftAxis.setDrawGridLines(false);
         leftAxis.setTextColor(itam);
+        leftAxis.setTypeface(fontRegular());
 
         YAxis rightAxis = lineChart.getAxisRight();
         rightAxis.setEnabled(true);
         rightAxis.setAxisMinimum(0f);
         rightAxis.setAxisMaximum(100f);
         rightAxis.setGranularity(20f);
+        rightAxis.setTypeface(fontRegular());
 
         Legend legend = lineChart.getLegend();
         legend.setTextColor(itam);
+        legend.setTypeface(fontRegular());
         legend.setForm(Legend.LegendForm.LINE);
 
         lineChart.setExtraOffsets(5f, 12f, 8f, 8f);

@@ -23,7 +23,6 @@
     <color name="abu_tengah">#2E3642</color>
     <color name="abu_muda">#718096</color>
 
-    <!-- Dark mode: softer text and desaturated accents to reduce glare on dark backgrounds -->
     <color name="dark_teks">#E3E6EB</color>
     <color name="dark_hint">#8B95A5</color>
     <color name="dark_biru">#7AA2F7</color>

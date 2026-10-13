@@ -16,6 +16,8 @@ import java.util.Map;
 public class MedicationPreReminderNotifReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
+        if (AlarmGuard.shouldIgnore(intent)) return;
+
         String scheduleId = intent.getStringExtra("schedule_id");
         String namaObat = intent.getStringExtra("nama_obat");
         if (scheduleId == null) return;

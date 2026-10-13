@@ -44,6 +44,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -147,8 +148,8 @@ public class ScheduleFragment extends Fragment {
         List<LogItem> result = new ArrayList<>();
         if (currType == Type.Medication){
             // lewati log dari jadwal yang sudah dihapus (is_active = false)
-            InactiveSchedules.load(db, targetUid, inactiveIds ->
-            db.collection("medication_logs").whereEqualTo("users_id", targetUid)
+            InactiveSchedules.load(db, uid, inactiveIds ->
+            db.collection("medication_logs").whereEqualTo("users_id", uid)
                     .whereGreaterThanOrEqualTo("scheduled_at", startofDay)
                     .whereLessThan("scheduled_at", startOfNextDay).orderBy("scheduled_at")
                     .get().addOnSuccessListener(query ->{
@@ -170,7 +171,9 @@ public class ScheduleFragment extends Fragment {
                             }
                             resolveMedName(log.getMedication_schedules_id(), (medName, stock) -> {
                                 if (!isAdded()) return;
-                                LogItem item = new LogItem("medicine", medName, sdf.format(log.getScheduled_at().toDate()),
+                                Date shown = log.getEffectiveTime() != null ?
+                                        log.getEffectiveTime().toDate() : log.getScheduled_at().toDate();
+                                LogItem item = new LogItem("medicine", medName, sdf.format(shown),
                                         getString(R.string.sisa_stok, stock), log.getStatus(),
                                         log.getMedication_schedules_id(), log.getScheduled_at().toDate().getTime());
                                 result.add(item);
@@ -183,7 +186,7 @@ public class ScheduleFragment extends Fragment {
                         if (remaining[0] <= 0) showResult(result, token); // semua log null
                     }).addOnFailureListener(e -> showEmpty(token)));
         } else {
-            db.collection("appointments").whereEqualTo("users_id", targetUid)
+            db.collection("appointments").whereEqualTo("users_id", uid)
                     .whereGreaterThanOrEqualTo("appointment_at", startofDay)
                     .whereLessThan("appointment_at", startOfNextDay).get().addOnSuccessListener(query -> {
                         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
@@ -191,7 +194,7 @@ public class ScheduleFragment extends Fragment {
                             Appointment appoint = doc.toObject(Appointment.class);
                             if (appoint == null) continue;
                             if (appoint.getDeleted_at() != null) continue;
-                            LogItem item = new LogItem("appointment", appoint.getTitle(), sdf.format(appoint.getAppointment_at().toDate()),
+                            LogItem item = new LogItem("appointment", appoint.getTitle(), sdf.format(appoint.getDisplayTime().toDate()),
                                     appoint.getAddress(), appoint.getStatus(),
                                     doc.getId(), appoint.getAppointment_at().toDate().getTime());
                             result.add(item);
