@@ -96,7 +96,7 @@
                 android:layout_centerHorizontal="true"
                 android:background="@drawable/button_selector"
                 android:fontFamily="@font/inter_18pt_medium"
-                app:backgroundTint="?attr/colorPrimaryInverse"
+                app:backgroundTint="?attr/colorSecondaryFixedDim"
                 android:textAllCaps="false"
                 android:layout_weight="1"
                 />
@@ -116,7 +116,7 @@
                 android:layout_centerHorizontal="true"
                 android:background="@drawable/button_selector"
                 android:fontFamily="@font/inter_18pt_medium"
-                app:backgroundTint="?attr/colorSecondary"
+                app:backgroundTint="?attr/colorTertiaryFixedDim"
                 android:textAllCaps="false"
                 android:layout_weight="1"
                 />
