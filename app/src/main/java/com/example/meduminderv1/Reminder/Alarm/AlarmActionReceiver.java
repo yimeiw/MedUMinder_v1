@@ -1,4 +1,4 @@
-package com.example.meduminderv1.Reminder;
+package com.example.meduminderv1.Reminder.Alarm;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -6,20 +6,18 @@ import android.content.Intent;
 import android.util.Log;
 
 import com.example.meduminderv1.Callback.RepoCallback;
+import com.example.meduminderv1.Reminder.AppointmentAlertScheduler;
+import com.example.meduminderv1.Reminder.SnoozeHelper;
 import com.example.meduminderv1.Repo.MedicationRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
 import com.google.firebase.Timestamp;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.SetOptions;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
 
 public class AlarmActionReceiver extends BroadcastReceiver {
 

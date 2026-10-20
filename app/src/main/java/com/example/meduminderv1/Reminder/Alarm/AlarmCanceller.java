@@ -1,10 +1,11 @@
-package com.example.meduminderv1.Reminder;
+package com.example.meduminderv1.Reminder.Alarm;
 
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.example.meduminderv1.Reminder.AppointmentAlertScheduler;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.DocumentSnapshot;

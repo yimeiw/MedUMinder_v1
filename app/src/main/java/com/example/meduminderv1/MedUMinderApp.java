@@ -1,22 +1,24 @@
 package com.example.meduminderv1;
 
 import android.app.Application;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
 
 import androidx.appcompat.app.AppCompatDelegate;
 
+import com.example.meduminderv1.Util.ActivityTracker;
 import com.example.meduminderv1.Util.AppLanguage;
 
 public class MedUMinderApp extends Application {
 
     private static final String PREFS = "language";
     private static final String KEY_INITIALIZED = "initialized";
-
     @Override
     public void onCreate() {
         super.onCreate();
         applyDefaultLanguage();
+        ActivityTracker.register(this);
     }
 
     private void applyDefaultLanguage() {

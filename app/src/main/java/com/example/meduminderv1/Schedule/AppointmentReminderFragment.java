@@ -1,5 +1,6 @@
 package com.example.meduminderv1.Schedule;
 
+import com.example.meduminderv1.Util.DatePickerHelper;
 import com.example.meduminderv1.Util.SchedulePermission;
 import com.example.meduminderv1.Util.UserTimeZone;
 
@@ -20,7 +21,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.RepoCallback;
@@ -32,11 +33,12 @@ import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.R;
-import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
+import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 import com.example.meduminderv1.Reminder.AppointmentAlertScheduler;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
 import com.google.firebase.Timestamp;
@@ -112,20 +114,14 @@ public class AppointmentReminderFragment extends Fragment {
             }
         }); consumerPickerHelper.setup();
 
-        tvDate.setOnClickListener(v -> {
-            Calendar today = Calendar.getInstance();
-            DatePickerDialog dialog = new DatePickerDialog(requireContext(), (view, year, month, day)->{
-                selectedCalendar.set(Calendar.YEAR, year);
-                selectedCalendar.set(Calendar.MONTH, month);
-                selectedCalendar.set(Calendar.DAY_OF_MONTH, day);
-                String date = day + "/" + (month + 1) + "/" + year;
-                tvDate.setText(date);
-                isDatePicked = true;
-            }, today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH));
-            dialog.getDatePicker().setMinDate(System.currentTimeMillis());
-            dialog.show();
-            styleDateDialogButtons(dialog);
-        });
+        tvDate.setOnClickListener(v ->
+                DatePickerHelper.show(requireContext(), selectedCalendar, true, (y, m, d) -> {
+                    selectedCalendar.set(Calendar.YEAR, y);
+                    selectedCalendar.set(Calendar.MONTH, m);
+                    selectedCalendar.set(Calendar.DAY_OF_MONTH, d);
+                    tvDate.setText(d + "/" + (m + 1) + "/" + y);
+                    isDatePicked = true;
+                }));
 
         tvTime.setOnClickListener(v -> {
             MaterialTimePicker picker = new MaterialTimePicker.Builder()
@@ -345,11 +341,10 @@ public class AppointmentReminderFragment extends Fragment {
         });
     }
 
-    /** Hanya warna tombol OK/Batal di dialog tanggal (desain kalender tetap bawaan). */
     private void styleDateDialogButtons(DatePickerDialog dialog) {
         // biru di light mode, biru muda di dark mode
-        int color = com.google.android.material.color.MaterialColors.getColor(
-                requireContext(), com.google.android.material.R.attr.colorSecondaryFixedDim, android.graphics.Color.BLUE);
+        int color = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorSecondaryFixedDim,
+                android.graphics.Color.BLUE);
         dialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(color);
         dialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setTextColor(color);
     }

@@ -2,7 +2,7 @@ package com.example.meduminderv1.Invitation;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;

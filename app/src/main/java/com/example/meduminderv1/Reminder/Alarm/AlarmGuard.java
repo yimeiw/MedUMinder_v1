@@ -1,4 +1,4 @@
-package com.example.meduminderv1.Reminder;
+package com.example.meduminderv1.Reminder.Alarm;
 
 import android.content.Intent;
 

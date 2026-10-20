@@ -1,4 +1,4 @@
-package com.example.meduminderv1.Reminder;
+package com.example.meduminderv1.Reminder.Alarm;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -12,6 +12,10 @@ import android.util.Log;
 import com.example.meduminderv1.Model.Medication;
 import com.example.meduminderv1.Model.MedicationSchedules;
 import com.example.meduminderv1.Model.MedicineCatalog;
+import com.example.meduminderv1.Reminder.AppointmentAlertScheduler;
+import com.example.meduminderv1.Reminder.MedicationAlarmReceiver;
+import com.example.meduminderv1.Reminder.MedicationMissedNotifReceiver;
+import com.example.meduminderv1.Reminder.MedicationPreReminderNotifReceiver;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -27,8 +31,8 @@ public class AlarmSchedulerHelper {
     private static final String TIME_FORMAT = "HH:mm";
     private static final long DEFAULT_WINDOW_MILLIS = 7L * 24 * 60 * 60 * 1000;
     private static final long PRE_REMINDER_OFFSET_MS = 5 * 60 * 1000L;
-    public static final long MISSED_CHECK_DELAY_MS = 0L;
-    public static final long MED_MISSED_DELAY_MS = 0L;                // obat: terlewat tepat di jamnya
+    public static final long MISSED_CHECK_DELAY_MS = 2 * 60 * 1000L;
+    public static final long MED_MISSED_DELAY_MS = 2 * 60 * 1000L;
 
     private static final long EXPIRED = -1L;
 

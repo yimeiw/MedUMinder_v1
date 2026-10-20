@@ -1,7 +1,9 @@
 package com.example.meduminderv1.Profile;
 
+import com.example.meduminderv1.Util.ActivityTracker;
 import com.example.meduminderv1.Util.LoadingOverlay;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
@@ -11,15 +13,19 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Auth.SessionManager;
@@ -28,6 +34,7 @@ import com.example.meduminderv1.Login.LoginActivity;
 import com.example.meduminderv1.Model.AuthProviderType;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -39,7 +46,9 @@ public class EditProfileFragment extends Fragment {
     LinearLayout deleteAcc;
     AuthManager authManager;
     User currentUser;
+    MaterialButton btnSave;
     boolean isUpdatingName = false;
+    private boolean binding = false;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -52,6 +61,7 @@ public class EditProfileFragment extends Fragment {
         btnGoogle = view.findViewById(R.id.googleLinked);
         btnBack = view.findViewById(R.id.btnBack);
         deleteAcc = view.findViewById(R.id.deleteAcc);
+        btnSave = view.findViewById(R.id.btnSaveProfile);
 
         authManager = AuthManager.getInstance(requireContext());
         currentUser = authManager.getCurrentUser();
@@ -59,6 +69,27 @@ public class EditProfileFragment extends Fragment {
         loadProfile();
         setupName();
         setupGoogle();
+
+        btnSave.setOnClickListener(v -> {
+            submitName();
+        });
+
+        userName.setOnTouchListener((v, ev) -> {
+            if (ev.getAction() == MotionEvent.ACTION_DOWN){
+                if (btnSave != null){
+                    btnSave.setVisibility(View.VISIBLE);
+                }
+            } return false;
+        });
+
+        userName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void afterTextChanged(Editable editable) {}
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+        });
 
         deleteAcc.setOnClickListener(v -> {
             MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
@@ -75,9 +106,9 @@ public class EditProfileFragment extends Fragment {
                                 public void onSuccess(Void result) {
                                     LoadingOverlay.hide(EditProfileFragment.this);
                                     if (getActivity() == null) return; // akun sudah terhapus; halaman sudah ditutup
-                                    Toast.makeText(requireContext(), getString(R.string.akun_berhasil_dihapus), Toast.LENGTH_SHORT).show();
                                     Intent intent = new Intent(requireContext(), LoginActivity.class);
                                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                    intent.putExtra(ActivityTracker.EXTRA_TOAST, R.string.akun_berhasil_dihapus);
                                     startActivity(intent);
                                     requireActivity().finish();
                                 }
@@ -106,57 +137,54 @@ public class EditProfileFragment extends Fragment {
         return view;
     }
 
-    private boolean saveName() {
-        if (isUpdatingName){
-            return true;
-        }
+    private void submitName() {
+        if (isUpdatingName || currentUser == null) return;
+        userName.clearFocus();
+        InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) imm.hideSoftInputFromWindow(userName.getWindowToken(), 0);
 
-        String newName = userName.getText().toString().trim();
-        if (newName.equals(currentUser.getName())){
-            return true;
-        } if (newName.length() < 4){
+        final String newName = userName.getText().toString().trim();
+        if (newName.equals(currentUser.getName() != null ? currentUser.getName().trim() : "")){
+            android.widget.Toast.makeText(requireContext(), getString(R.string.tidak_ada_perubahan), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (newName.length() < 4) {
             userName.setError(getString(R.string.nama_minimal_4_karaker_typo));
             userName.requestFocus();
-            return false;
-        } isUpdatingName = true;
+            return;
+        }
+
+        isUpdatingName = true;
+        btnSave.setEnabled(false);
         LoadingOverlay.show(EditProfileFragment.this);
         authManager.updateDisplayName(newName, new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
                 LoadingOverlay.hide(EditProfileFragment.this);
-                if (!isAdded()) return;
                 isUpdatingName = false;
+                if (!isAdded()) return;
+                btnSave.setEnabled(true);
                 currentUser = result;
-                refreshProfile();
+                refreshProfile();   // mengisi ulang nama -> tombol otomatis hilang
                 Toast.makeText(requireContext(), getString(R.string.nama_berhasil_diperbarui), Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onFailure(String message) {
                 LoadingOverlay.hide(EditProfileFragment.this);
-                if (!isAdded()) return;
                 isUpdatingName = false;
-                userName.setText(currentUser.getName());
+                if (!isAdded()) return;
+                btnSave.setEnabled(true);
+                android.util.Log.e("EditProfile", "Gagal simpan nama: " + message);
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
-        return true;
     }
 
     private void setupName() {
         userName.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_DONE){
-                if (saveName()) userName.clearFocus();
-                return true;
-            } return false;
-        });
-
-        userName.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus && !isUpdatingName && currentUser != null
-                    && !userName.getText().toString().trim().equals(currentUser.getName())){
-                userName.setError(null);
-                userName.setText(currentUser.getName());
-            }
+            if (actionId == EditorInfo.IME_ACTION_DONE) { submitName(); return true; }
+            return false;
         });
     }
 
@@ -213,10 +241,13 @@ public class EditProfileFragment extends Fragment {
 
     private void refreshProfile() {
         currentUser = authManager.getCurrentUser();
+        binding = true;
         userName.setText(currentUser.getName());
+        binding = false;
         emailUser.setText(currentUser.getEmail());
-
-        updateGoogle();
+        if (btnSave != null){
+            btnSave.setVisibility(View.GONE);
+        } updateGoogle();
     }
 
     private void updateGoogle() {

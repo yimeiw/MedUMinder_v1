@@ -1,5 +1,8 @@
 package com.example.meduminderv1.Profile;
 
+import com.example.meduminderv1.Login.LoginActivity;
+import com.example.meduminderv1.MainActivity;
+import com.example.meduminderv1.Util.ActivityTracker;
 import com.example.meduminderv1.Util.LoadingOverlay;
 
 import android.content.Intent;
@@ -15,7 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Callback.AuthCallback;
@@ -77,8 +80,11 @@ public class DeleteAccountFragment extends Fragment {
                     LoadingOverlay.hide(DeleteAccountFragment.this);
                     if (getActivity() == null) return; // akun sudah terhapus; halaman sudah ditutup
                     Toast.makeText(requireContext(), getString(R.string.akun_berhasil_dihapus), Toast.LENGTH_SHORT).show();
-                   startActivity(new Intent(requireContext(), SignUpActivity.class));
-                   requireActivity().finish();
+                    Intent i = new Intent(requireContext(), SignUpActivity.class);
+                    i.putExtra(ActivityTracker.EXTRA_TOAST, R.string.akun_berhasil_dihapus);
+                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(i);
+                    requireActivity().finish();
                 }
 
                 @Override

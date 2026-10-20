@@ -1,4 +1,4 @@
-package com.example.meduminderv1.Reminder;
+package com.example.meduminderv1.Reminder.Alarm;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -22,6 +22,7 @@ import androidx.core.content.ContextCompat;
 
 import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Reminder.ReminderMessage;
 import com.example.meduminderv1.Util.AppLanguage;
 
 import java.io.IOException;
@@ -32,9 +33,9 @@ public class AlarmRingingService extends Service {
 
     private MediaPlayer mediaPlayer;
     private int originalAlarmVolume = -1;
-    private static final float ALARM_VOLUME_RATIO = 0.6f;
     private static final long RING_LIMIT_MS = 3 * 60 * 1000L;
     private final android.os.Handler ringHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private static final float ALARM_VOLUME_RATIO = 0.4f;   // hanya batas minimum biar tetap terdengar alarmnya
     private final Runnable stopRunnable = () -> {
         stopForeground(Service.STOP_FOREGROUND_REMOVE);
         stopSelf();
@@ -89,8 +90,7 @@ public class AlarmRingingService extends Service {
             mediaPlayer = null;
         }
 
-        Uri soundUri = soundUriExtra != null
-                        ? Uri.parse(soundUriExtra) : null;
+        Uri soundUri = soundUriExtra != null ? Uri.parse(soundUriExtra) : null;
 
         if (soundUri == null) {
             soundUri = RingtoneManager.getActualDefaultRingtoneUri(
@@ -110,6 +110,8 @@ public class AlarmRingingService extends Service {
                         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                         .build();
         mediaPlayer.setAudioAttributes(attributes);
+        float v = AlarmVolume.scalar(this);
+        mediaPlayer.setVolume(v, v);
 
         try {
             mediaPlayer.setDataSource(this, soundUri);

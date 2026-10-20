@@ -23,18 +23,20 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
 import android.os.Environment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import com.github.mikephil.charting.charts.Chart;
 import com.google.android.material.button.MaterialButton;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
 import android.graphics.Color;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.RepoCallback;
@@ -258,7 +260,7 @@ public class StatistikFragment extends Fragment {
                 tvTotalIgnored.setText(getString(R.string.jumlah_obat, totalDiabaikan));
                 tvTotalSnooze.setText(getString(R.string.jumlah_obat, totalSnooze));
 
-                android.util.Log.d("STAT_DEBUG", "Taken=" + totalDikonsumsi + ", Ignored=" + totalDiabaikan + ", Snooze=" + totalSnooze);
+                Log.d("STAT_DEBUG", "Taken=" + totalDikonsumsi + ", Ignored=" + totalDiabaikan + ", Snooze=" + totalSnooze);
 
                 renderAdherenceChart(weekStats);
                 renderResponseAnalysis(totalDikonsumsi, totalDiabaikan, totalSnooze);
@@ -290,6 +292,7 @@ public class StatistikFragment extends Fragment {
     private void renderAdherenceChart(List<StatistikRepo.DayStat> stats) {
         dailyChartContainer.removeAllViews();
         BarChart chart = new BarChart(requireContext());
+        styleNoData(chart);
         adherenceChart = chart;
         dailyChartContainer.addView(chart, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 
@@ -378,7 +381,6 @@ public class StatistikFragment extends Fragment {
         chart.invalidate();
     }
 
-    /** Label pendek untuk sumbu X (Sen/Mon/周一, Jan/1月); label panjang tetap dipakai di tempat lain. */
     private List<String> shortChartLabels(List<StatistikRepo.DayStat> stats) {
         Locale locale = getResources().getConfiguration().getLocales().get(0);
         java.text.DateFormatSymbols symbols = java.text.DateFormatSymbols.getInstance(locale);
@@ -403,6 +405,7 @@ public class StatistikFragment extends Fragment {
 
         PieChart chart = new PieChart(requireContext());
         responseChart = chart;
+        styleNoData(chart);
 
         responsePieContainer.addView(
                 chart,
@@ -431,6 +434,7 @@ public class StatistikFragment extends Fragment {
         }
 
         if (entries.isEmpty()) {
+            chart.invalidate();
             return;
         }
 
@@ -1175,5 +1179,10 @@ public class StatistikFragment extends Fragment {
                     public void onFailure(Exception e) {}
                 });
     }
-
+    private void styleNoData(Chart<?> chart) {
+        chart.setNoDataText(getString(R.string.noConsumptionData));
+        chart.setNoDataTextColor(MaterialColors.getColor(requireView(),
+                com.google.android.material.R.attr.colorOnSurface));
+        chart.getPaint(Chart.PAINT_INFO).setTypeface(fontRegular());
+    }
 }

@@ -1,5 +1,6 @@
 package com.example.meduminderv1.SignUp;
 
+import com.example.meduminderv1.Util.ActivityTracker;
 import com.example.meduminderv1.Util.EmailApp;
 
 import com.example.meduminderv1.Util.LoadingOverlay;
@@ -15,7 +16,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ScrollView;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
@@ -114,7 +115,9 @@ public class SignUpActivity extends AppCompatActivity {
             @Override
             public void onSuccess(User result) {
                 LoadingOverlay.hide(SignUpActivity.this);
-                startActivity(new Intent(SignUpActivity.this, MainActivity.class));
+                Intent i = new Intent(SignUpActivity.this, MainActivity.class);
+                i.putExtra(ActivityTracker.EXTRA_TOAST, R.string.login_success);
+                startActivity(i);
                 finishAffinity();
             }
 
