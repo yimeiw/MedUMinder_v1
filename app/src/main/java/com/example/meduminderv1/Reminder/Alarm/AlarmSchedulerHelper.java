@@ -27,7 +27,8 @@ public class AlarmSchedulerHelper {
     private static final String TIME_FORMAT = "HH:mm";
     private static final long DEFAULT_WINDOW_MILLIS = 7L * 24 * 60 * 60 * 1000;
     private static final long PRE_REMINDER_OFFSET_MS = 5 * 60 * 1000L;
-    public static final long MISSED_CHECK_DELAY_MS = 3 * 60 * 1000L;
+    public static final long MISSED_CHECK_DELAY_MS = 0L;
+    public static final long MED_MISSED_DELAY_MS = 0L;                // obat: terlewat tepat di jamnya
 
     private static final long EXPIRED = -1L;
 
@@ -143,7 +144,7 @@ public class AlarmSchedulerHelper {
         intent.putExtra("scheduled_at", logScheduledAtMillis);
 
         PendingIntent pi = PendingIntent.getBroadcast(context, missedRequestCode(scheduleId, occurrenceKey, mainTrigger), intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, mainTrigger + MISSED_CHECK_DELAY_MS, pi);
+        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, mainTrigger + MED_MISSED_DELAY_MS, pi);
     }
     private static long nextTriggerMillisForTime(String timeStr, SimpleDateFormat timeFormat) {
         try {
@@ -272,7 +273,7 @@ public class AlarmSchedulerHelper {
         intent.putExtra("scheduled_at", originalScheduledAt); // tetap jam asli -> id log tetap sama
         PendingIntent pi = PendingIntent.getBroadcast(context, missedRequestCode(scheduleId, occurrenceKey, originalScheduledAt), intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, snoozeUntilMillis + MISSED_CHECK_DELAY_MS, pi);
+        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, snoozeUntilMillis + MED_MISSED_DELAY_MS, pi);
     }
 
     public static void applyAppointmentSnooze(Context context, String appointmentId, String title,
