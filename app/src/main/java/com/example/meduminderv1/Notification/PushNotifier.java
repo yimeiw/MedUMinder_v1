@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat;
 import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Util.AppLanguage;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
@@ -25,6 +26,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 public final class PushNotifier {
@@ -43,7 +45,8 @@ public final class PushNotifier {
             "isi_ulang_obat_x_title",
             "stok_habis_title",
             "invitation_role_title",
-            "undangan_baru_title"
+            "undangan_baru_title",
+            "jadwal_terlewat_title"
     ));
 
     private static final Set<String> ACTIVITY_KEYS = new HashSet<>(Arrays.asList(
@@ -173,5 +176,17 @@ public final class PushNotifier {
         activity.setDescription(lang.getString(R.string.push_channel_aktivitas_desc));
         manager.createNotificationChannel(alerts);
         manager.createNotificationChannel(activity);
+    }
+    public static void postLocal(Context context, String id, String titleKey, String messageKey, List<String> args) {
+        Context app = context.getApplicationContext();
+        markStart(app);   // pastikan "since" tidak lebih baru dari created_at
+        Notification n = new Notification();
+        n.setNotification_id(id);
+        n.setTitle_key(titleKey);
+        n.setMessage_key(messageKey);
+        n.setMessage_args(args);
+        n.setTarget_role("Consumer");
+        n.setCreated_at(Timestamp.now());
+        post(app, n);
     }
 }

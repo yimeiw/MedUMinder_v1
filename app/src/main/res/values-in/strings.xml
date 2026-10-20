@@ -157,6 +157,9 @@
     <string name="caregiver_description">Membantu mengawasi kepatuhan Consumer.</string>
     <string name="consumer">Consumer</string>
     <string name="consumer_description">Mengelola pengingat untuk kesehatan.</string>
+    <string name="ganti_ke_role">Beralih ke %1$s</string>
+
+    <string name="simpan_profil">Simpan Profil</string>
 
     <!-- popup edit -->
     <string name="edit">Edit</string>
@@ -715,4 +718,11 @@
     <string name="push_channel_penting_desc">Jadwal terlewat, pengingat dari caregiver, undangan, dan pengingat isi ulang obat</string>
     <string name="push_channel_aktivitas">Aktivitas consumer</string>
     <string name="push_channel_aktivitas_desc">Saat consumer minum obat atau menghadiri janji temu</string>
+
+    <string name="alarmVolume">Volume Alarm</string>
+    <string name="alarmVolumeHint">Tekan tombol volume HP untuk mengatur volume alarm. Gunakan slider ini untuk memperkecilnya. Lepas untuk mencoba suaranya.</string>
+    <string name="refill_mode_hint">Mode isi ulang: hanya stok yang dapat diubah.</string>
+    <string name="end_date_not_set_hint">Anda tidak mengisi tanggal selesai saat membuat jadwal ini (opsional).</string>
+    <string name="tidak_ada_perubahan">Tidak ada perubahan yang dilakukan</string>
+
 </resources>

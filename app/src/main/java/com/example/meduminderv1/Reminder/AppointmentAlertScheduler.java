@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 
+import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
+
 public class AppointmentAlertScheduler {
     // sama dengan obat: 3 menit tidak direspon -> terlewat / diulang (Repeat Until Confirmed)
     private static final long MISSED_DELAY_MS = AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS;

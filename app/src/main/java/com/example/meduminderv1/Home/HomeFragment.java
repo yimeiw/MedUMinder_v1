@@ -1,5 +1,6 @@
 package com.example.meduminderv1.Home;
 
+import com.example.meduminderv1.Model.LogGenerator;
 import com.example.meduminderv1.Util.SchedulePermission;
 
 import com.example.meduminderv1.Util.BadgeText;
@@ -8,10 +9,13 @@ import com.example.meduminderv1.Util.LoadingOverlay;
 
 import static android.content.Context.MODE_PRIVATE;
 
+import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Typeface;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -26,14 +30,12 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.RepoCallback;
-import com.example.meduminderv1.Caregiver.TodayScheduleAdapter;
 import com.example.meduminderv1.Invitation.InvitationPopupHelper;
-import com.example.meduminderv1.Model.Appointment;
 import com.example.meduminderv1.Model.LogItem;
 import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.Model.Medication;
@@ -42,11 +44,13 @@ import com.example.meduminderv1.Model.MedicationSchedules;
 import com.example.meduminderv1.Model.MedicineCatalog;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
-import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
+import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 import com.example.meduminderv1.Repo.MedicationRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
 import com.example.meduminderv1.Repo.StatistikRepo;
 import com.example.meduminderv1.Statistik.ChartMakerView;
+import com.example.meduminderv1.Util.TodayScheduleLoader;
+import com.example.meduminderv1.Util.UserTimeZone;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
@@ -97,6 +101,16 @@ public class HomeFragment extends Fragment {
     private final Handler refreshHandler = new Handler(Looper.getMainLooper());
     private long displayedScheduleAtMillis = -1;
     private final Runnable refreshRunnable = this::checkNextScheduleFreshness;
+    private TodayScheduleLoader todayScheduleLoader;
+    private TodayScheduleAdapter todayScheduleAdapter;
+    private Typeface cachedRegular;
+    private Typeface fontRegular() {
+        if (cachedRegular == null) {
+            Typeface f = ResourcesCompat.getFont(requireContext(), R.font.app_font);
+            cachedRegular = f != null ? f : Typeface.DEFAULT;
+        }
+        return cachedRegular;
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -169,7 +183,16 @@ public class HomeFragment extends Fragment {
             NavHostFragment.findNavController(this)
                     .navigate(R.id.scheduleFragment);
         });
-        rvTodaySchedule.setLayoutManager(new LinearLayoutManager(requireContext()));
+        rvTodaySchedule.setLayoutManager(new LinearLayoutManager(requireContext()){
+            @Override
+            public boolean canScrollVertically() {
+                return false;
+            }
+        });
+        rvTodaySchedule.setHasFixedSize(false);
+        rvTodaySchedule.setNestedScrollingEnabled(false);
+        rvTodaySchedule.setOverScrollMode(View.OVER_SCROLL_NEVER);
+
         btnLihatSemua.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
             bundle.putLong("selected_date", System.currentTimeMillis());
@@ -192,7 +215,6 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-
         InvitationPopupHelper.checkAndShow(this, authManager);
         if (invitationListener != null) invitationListener.remove();
         invitationListener = InvitationPopupHelper.listen(this, authManager);
@@ -200,11 +222,11 @@ public class HomeFragment extends Fragment {
         loadNextSchedule();
         loadTodaySchedule();
         loadStats();
-
-        refreshHandler.postDelayed(refreshRunnable, 30_000L);
+        FirebaseUser fu = FirebaseAuth.getInstance().getCurrentUser();
+        if (fu != null) new LogGenerator().ensureFresh(fu.getUid());
     }
 
-    /** Tampilkan jumlah notif belum dibaca di ikon lonceng (realtime). */
+    // Tampilkan jumlah notif belum dibaca di ikon lonceng (realtime).
     private void checkUnreadNotif() {
         User user = authManager.getCurrentUser();
         if (user == null) return;
@@ -246,7 +268,7 @@ public class HomeFragment extends Fragment {
                         if (log == null || log.getStatusBasedOnDate() != LogStatus.AKAN_DATANG) continue;
                         Timestamp eff = log.getEffectiveTime();
                         if (eff == null) continue;
-                        if (eff.toDate().getTime() + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS < nowMs) continue;
+                        if (eff.toDate().getTime() + AlarmSchedulerHelper.MED_MISSED_DELAY_MS < nowMs) continue;
                         if (targetLog == null || eff.compareTo(targetLog.getEffectiveTime()) < 0){
                             target = doc;
                             targetLog = log;
@@ -254,6 +276,7 @@ public class HomeFragment extends Fragment {
                     } if (targetLog == null){
                         haveSchedule.setVisibility(View.GONE);
                         noSchedule.setVisibility(View.VISIBLE);
+                        displayedScheduleAtMillis = -1;
                         return;
                     } nextLogId = target.getId();
                     nextScheduleIdForAlarm = targetLog.getMedication_schedules_id();
@@ -262,10 +285,11 @@ public class HomeFragment extends Fragment {
                     haveSchedule.setVisibility(View.VISIBLE);
                     displayedScheduleAtMillis = targetLog.getEffectiveTime().toDate().getTime()
                             + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS;
+                    scheduleFreshnessCheck();
                     noSchedule.setVisibility(View.GONE);
                     tvDay.setText(formatDayLabel(targetLog.getEffectiveTime().toDate()));
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                    tvTime.setText(com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(sdf.format(targetLog.getEffectiveTime().toDate())));
+                    tvTime.setText(UserTimeZone.withDeviceZone(sdf.format(targetLog.getEffectiveTime().toDate())));
                     resolveMedName(targetLog.getMedication_schedules_id(), (medName, stock, medId, medType) -> {
                         if (!isAdded()) return;
                         nextMedId = medId;
@@ -303,11 +327,21 @@ public class HomeFragment extends Fragment {
                 && target.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR);
     }
 
-    private void checkNextScheduleFreshness(){
+    private void scheduleFreshnessCheck() {
+        refreshHandler.removeCallbacks(refreshRunnable);
+        if (displayedScheduleAtMillis > 0) {
+            long wait = Math.max(500L, displayedScheduleAtMillis - System.currentTimeMillis() + 300L);
+            refreshHandler.postDelayed(refreshRunnable, Math.min(wait, 60_000L));
+        }
+    }
+
+    private void checkNextScheduleFreshness() {
         if (!isAdded()) return;
-        if (displayedScheduleAtMillis > 0 && displayedScheduleAtMillis <= System.currentTimeMillis()){
+        if (displayedScheduleAtMillis > 0 && displayedScheduleAtMillis <= System.currentTimeMillis()) {
             loadNextSchedule();
-        } refreshHandler.postDelayed(refreshRunnable, 30_000L);
+            return;
+        }
+        scheduleFreshnessCheck();
     }
     private void confirmTaken() {
         if (nextLogId == null) return;
@@ -382,7 +416,6 @@ public class HomeFragment extends Fragment {
                 });
     }
 
-    /** Selalu memanggil callback. name == null berarti jadwal/obat sudah tidak ada. */
     private void resolveMedName(String schedulesId, MedResolveCallback callback) {
         appContext();
         if (schedulesId == null || schedulesId.isEmpty()) { callback.onResolved(null, 0, null, null); return; }
@@ -423,9 +456,9 @@ public class HomeFragment extends Fragment {
     }
 
     // context aplikasi yang tetap aman dipakai walau fragment sudah ditutup
-    private android.content.Context appCtx;
-    private android.content.Context appContext() {
-        android.content.Context c = getContext();
+    private Context appCtx;
+    private Context appContext() {
+        Context c = getContext();
         if (c != null) appCtx = c.getApplicationContext();
         return appCtx;
     }
@@ -433,108 +466,44 @@ public class HomeFragment extends Fragment {
     private interface MedResolveCallback{
         void onResolved(String name, int stock, String medicationId, String medType);
     }
+    private void loadTodaySchedule(){
+        FirebaseUser u = FirebaseAuth.getInstance().getCurrentUser();
+        if (u == null) return;
+        if (todayScheduleLoader == null){
+            todayScheduleLoader = new TodayScheduleLoader(requireContext(), true, this::showToday);
+        } Calendar s = Calendar.getInstance();
+        s.set(Calendar.HOUR_OF_DAY, 0);
+        s.set(Calendar.MINUTE, 0);
+        s.set(Calendar.SECOND, 0);
+        s.set(Calendar.MILLISECOND, 0);
 
-    private void loadTodaySchedule() {
-        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (firebaseUser == null) return;
-        String uid = firebaseUser.getUid();
-        Calendar startCal = Calendar.getInstance();
-        startCal.set(Calendar.HOUR_OF_DAY, 0);
-        startCal.set(Calendar.MINUTE, 0);
-        startCal.set(Calendar.SECOND, 0);
-        startCal.set(Calendar.MILLISECOND, 0);
-        Timestamp startOfDay = new Timestamp(startCal.getTime());
-
-        Calendar endCal = (Calendar) startCal.clone();
-        endCal.add(Calendar.DAY_OF_YEAR, 1);
-        Timestamp startOfTomorrow = new Timestamp(endCal.getTime());
-
-        List<LogItem> combined = new ArrayList<>();
-
-        db.collection("medication_logs").whereEqualTo("users_id", uid)
-                .whereGreaterThanOrEqualTo("scheduled_at", startOfDay)
-                .whereLessThan("scheduled_at", startOfTomorrow).get()
-                .addOnSuccessListener(medQuery -> {
-                    if (!isAdded()) return;
-                    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                    List<DocumentSnapshot> medDocs = medQuery.getDocuments();
-                    if (medDocs.isEmpty()){
-                        mergeAppointments(uid, combined, startOfDay, startOfTomorrow);
-                        return;
-                    }
-                    int[] remaining = {medDocs.size()};
-                    for (DocumentSnapshot doc : medDocs) {
-                        MedicationLog log = doc.toObject(MedicationLog.class);
-                        if (log == null) { remaining[0]--; continue; }
-                        resolveMedName(log.getMedication_schedules_id(), (medName, stock, medId, medType) -> {
-                            if (!isAdded()) return;
-                            if (medName == null) {
-                                // jadwal/obat sudah dihapus: lewati, tapi tetap hitung supaya daftar tetap muncul
-                                remaining[0]--;
-                                if (remaining[0] <= 0) mergeAppointments(uid, combined, startOfDay, startOfTomorrow);
-                                return;
-                            }
-                            String info = "";
-                            if ("PIL".equals(medType)) {
-                                info = getString(R.string.sisa_stok, stock);
-                            }
-                            combined.add(new LogItem("medicine", medName,
-                                    sdf.format(log.getEffectiveTime().toDate()), info, log.getStatus(),
-                                    log.getMedication_schedules_id(), log.getScheduled_at().toDate().getTime(),
-                                    log.getCreated_at() != null ? log.getCreated_at().toDate().getTime() : 0));
-                            remaining[0]--;
-                            if (remaining[0] <= 0) mergeAppointments(uid, combined, startOfDay, startOfTomorrow);
-                        });
-                    }
-                    if (remaining[0] <= 0) mergeAppointments(uid, combined, startOfDay, startOfTomorrow); // semua log kosong
-                }).addOnFailureListener(e -> {
-                    emptyTodaySchedule.setVisibility(View.VISIBLE);
-                    rvTodaySchedule.setVisibility(View.GONE);
-                    btnLihatSemua.setVisibility(View.GONE);
-                });
+        Calendar e = (Calendar) s.clone();
+        e.add(Calendar.DAY_OF_YEAR, 1);
+        todayScheduleLoader.start(u.getUid(), s.getTime(), e.getTime());
     }
-
-    private void mergeAppointments(String consumerUid, List<LogItem> combined, Timestamp startOfDay, Timestamp startOfTomorrow) {
-        db.collection("appointments")
-                .whereEqualTo("users_id", consumerUid)
-                .whereGreaterThanOrEqualTo("appointment_at", startOfDay)
-                .whereLessThan("appointment_at", startOfTomorrow)
-                .get()
-                .addOnSuccessListener(apptQuery -> {
-                    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                    for (DocumentSnapshot doc : apptQuery.getDocuments()) {
-                        Appointment appt = doc.toObject(Appointment.class);
-                        if (appt == null) continue;
-                        if (appt.getDeleted_at() != null) continue;
-                        combined.add(new LogItem("appointment", appt.getTitle(),
-                                sdf.format(appt.getDisplayTime().toDate()),
-                                appt.getAddress(), appt.getStatus(),
-                                doc.getId(), appt.getAppointment_at().toDate().getTime(),
-                                appt.getCreated_at() != null ? appt.getCreated_at().toDate().getTime() : 0));
-                    }
-                    Collections.sort(combined, (a, b) -> Long.compare(b.getCreatedAtMillis(), a.getCreatedAtMillis()));
-                    if (!isAdded() || getContext() == null) return;
-                    List<LogItem> displayList = combined.size() > 3 ? combined.subList(0,3) :combined;
-                    TodayScheduleAdapter adapter = new TodayScheduleAdapter(displayList, requireContext());
-                    adapter.setOnItemClickListener(this::navigateToReminder);
-                    rvTodaySchedule.setAdapter(adapter);
-                    if (combined.isEmpty()){
-                        emptyTodaySchedule.setVisibility(View.VISIBLE);
-                        rvTodaySchedule.setVisibility(View.GONE);
-                        btnLihatSemua.setVisibility(View.GONE);
-                    } else {
-                        emptyTodaySchedule.setVisibility(View.GONE);
-                        rvTodaySchedule.setVisibility(View.VISIBLE);
-                        btnLihatSemua.setVisibility(View.VISIBLE);
-                    }
-                }).addOnFailureListener(e -> {
-                    Log.e("HOME_TODAY_SCHEDULE", "Gagal load appointments", e);
-                    emptyTodaySchedule.setVisibility(View.VISIBLE);
-                    rvTodaySchedule.setVisibility(View.GONE);
-                    btnLihatSemua.setVisibility(View.GONE);
-                });
+    private void showToday(List<LogItem> combined){
+        if (!isAdded() || getContext() == null) return;
+        List<LogItem> displayList = TodayScheduleLoader.pickForHome(combined,3);
+        Log.d("HOME_TODAY", "combined=" + combined.size() + " tampil=" + displayList.size());
+        if (todayScheduleAdapter == null){
+            todayScheduleAdapter = new TodayScheduleAdapter(displayList, requireContext());
+            todayScheduleAdapter.setOnItemClickListener(this::navigateToReminder);
+            rvTodaySchedule.setAdapter(todayScheduleAdapter);
+        } else {
+            todayScheduleAdapter.setItems(displayList);
+        }
+        boolean empty = combined.isEmpty();
+        emptyTodaySchedule.setVisibility(empty ? View.VISIBLE : View.GONE);
+        rvTodaySchedule.setVisibility(empty ? View.GONE : View.VISIBLE);
+        btnLihatSemua.setVisibility(empty ? View.GONE : View.VISIBLE);
+        rvTodaySchedule.post(() -> {
+            rvTodaySchedule.measure(View.MeasureSpec.makeMeasureSpec(rvTodaySchedule.getWidth(), View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.UNSPECIFIED);
+            ViewGroup.LayoutParams lp = rvTodaySchedule.getLayoutParams();
+            lp.height = rvTodaySchedule.getMeasuredHeight();
+            rvTodaySchedule.setLayoutParams(lp);
+        });
     }
-
     private void navigateToReminder(LogItem item) {
         if (!isAdded()) return;
         Bundle bundle = new Bundle();
@@ -638,6 +607,7 @@ public class HomeFragment extends Fragment {
         xAxis.setAxisMaximum(labels.size() - 1);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setTextColor(itam);
+        xAxis.setTypeface(fontRegular());
         xAxis.setDrawGridLines(false);
 
         YAxis leftAxis = lineChart.getAxisLeft();
@@ -652,15 +622,18 @@ public class HomeFragment extends Fragment {
         leftAxis.setAxisMinimum(0f);
         leftAxis.setDrawGridLines(false);
         leftAxis.setTextColor(itam);
+        leftAxis.setTypeface(fontRegular());
 
         YAxis rightAxis = lineChart.getAxisRight();
         rightAxis.setEnabled(true);
         rightAxis.setAxisMinimum(0f);
         rightAxis.setAxisMaximum(100f);
         rightAxis.setGranularity(20f);
+        rightAxis.setTypeface(fontRegular());
 
         Legend legend = lineChart.getLegend();
         legend.setTextColor(itam);
+        legend.setTypeface(fontRegular());
         legend.setForm(Legend.LegendForm.LINE);
 
         lineChart.setExtraOffsets(5f, 12f, 8f, 8f);
@@ -681,11 +654,13 @@ public class HomeFragment extends Fragment {
         refreshHandler.removeCallbacks(refreshRunnable);
         if (invitationListener != null) { invitationListener.remove(); invitationListener = null; }
         if (unreadListener != null) { unreadListener.remove(); unreadListener = null; }
+        if (todayScheduleLoader != null) todayScheduleLoader.stop();
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         if (nextScheduleListener != null) nextScheduleListener.remove();
+        todayScheduleAdapter = null;
     }
 }

@@ -9,7 +9,10 @@ import androidx.annotation.Nullable;
 
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.NotificationText;
+import com.example.meduminderv1.Reminder.Alarm.AlarmRingingService;
+import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -54,40 +57,80 @@ public final class SnoozeHelper {
      */
     public static int snooze(Context context, String scheduleId, @Nullable String itemName,
                              long scheduledAt, boolean isAppointment, @Nullable Runnable onDone) {
+//        final Context app = context.getApplicationContext();
+//        final int minutes = getSnoozeMinutes(app);
+//        final long snoozeUntil = AlarmSchedulerHelper.computeSnoozeUntil(scheduledAt, minutes);
+//        final String name = itemName != null ? itemName : "";
+//
+//        app.stopService(new Intent(app, AlarmRingingService.class));
+//        AlarmSchedulerHelper.scheduleSnoozeAt(app, scheduleId, name, scheduledAt, snoozeUntil,
+//                isAppointment ? "appointment" : "medicine");
+//        if (isAppointment) {
+//            AlarmSchedulerHelper.applyAppointmentSnooze(app, scheduleId, name, scheduledAt, snoozeUntil);
+//        } else {
+//            AlarmSchedulerHelper.applyMedicineSnooze(app, scheduleId, name, scheduledAt, snoozeUntil);
+//        }
+//
+//        FirebaseFirestore db = FirebaseFirestore.getInstance();
+//        Timestamp untilTs = new Timestamp(new Date(snoozeUntil));
+//
+//        Map<String, Object> update = new HashMap<>();
+//        update.put("snoozed_until", untilTs);
+//        update.put("snooze_count", FieldValue.increment(1));
+//        update.put("updated_at", Timestamp.now());
+//        if (isAppointment) {
+//            db.collection("appointments").document(scheduleId)
+//                    .set(update, SetOptions.merge())
+//                    .addOnCompleteListener(t -> { if (onDone != null) onDone.run(); });
+//        } else {
+//            db.collection("medication_logs").document(buildLogId(scheduleId, scheduledAt))
+//                    .set(update, SetOptions.merge())
+//                    .addOnCompleteListener(t -> { if (onDone != null) onDone.run(); });
+//        }
+//
+//        String newTime = NotificationText.timeArg(snoozeUntil);
+//        sendSnoozeNotifications(app, scheduleId, name, isAppointment, minutes, newTime);
+//
+//        return minutes;
+
         final Context app = context.getApplicationContext();
         final int minutes = getSnoozeMinutes(app);
-        final long snoozeUntil = AlarmSchedulerHelper.computeSnoozeUntil(scheduledAt, minutes);
         final String name = itemName != null ? itemName : "";
 
-        app.stopService(new Intent(app, AlarmRingingService.class));
-        AlarmSchedulerHelper.scheduleSnoozeAt(app, scheduleId, name, scheduledAt, snoozeUntil,
-                isAppointment ? "appointment" : "medicine");
-        if (isAppointment) {
-            AlarmSchedulerHelper.applyAppointmentSnooze(app, scheduleId, name, scheduledAt, snoozeUntil);
-        } else {
-            AlarmSchedulerHelper.applyMedicineSnooze(app, scheduleId, name, scheduledAt, snoozeUntil);
-        }
+        app.stopService(new Intent(app, AlarmRingingService.class));   // bunyi berhenti seketika
 
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        Timestamp untilTs = new Timestamp(new Date(snoozeUntil));
+        final FirebaseFirestore db = FirebaseFirestore.getInstance();
+        final DocumentReference ref = isAppointment
+                ? db.collection("appointments").document(scheduleId)
+                : db.collection("medication_logs").document(buildLogId(scheduleId, scheduledAt));
 
-        Map<String, Object> update = new HashMap<>();
-        update.put("snoozed_until", untilTs);
-        update.put("snooze_count", FieldValue.increment(1));
-        update.put("updated_at", Timestamp.now());
-        if (isAppointment) {
-            db.collection("appointments").document(scheduleId)
-                    .set(update, SetOptions.merge())
-                    .addOnCompleteListener(t -> { if (onDone != null) onDone.run(); });
-        } else {
-            db.collection("medication_logs").document(buildLogId(scheduleId, scheduledAt))
-                    .set(update, SetOptions.merge())
-                    .addOnCompleteListener(t -> { if (onDone != null) onDone.run(); });
-        }
+        // baca jam snooze terakhir: snooze ke-2, ke-3, dst. menambah dari jam efektif, bukan jam asli
+        ref.get().addOnCompleteListener(task -> {
+            long base = scheduledAt;
+            if (task.isSuccessful() && task.getResult() != null) {
+                Timestamp prev = task.getResult().getTimestamp("snoozed_until");
+                if (prev != null) base = Math.max(base, prev.toDate().getTime());
+            }
+            final long snoozeUntil = AlarmSchedulerHelper.computeSnoozeUntil(base, minutes);
 
-        String newTime = NotificationText.timeArg(snoozeUntil);
-        sendSnoozeNotifications(app, scheduleId, name, isAppointment, minutes, newTime);
+            AlarmSchedulerHelper.scheduleSnoozeAt(app, scheduleId, name, scheduledAt, snoozeUntil,
+                    isAppointment ? "appointment" : "medicine");
+            if (isAppointment) {
+                AlarmSchedulerHelper.applyAppointmentSnooze(app, scheduleId, name, scheduledAt, snoozeUntil);
+            } else {
+                AlarmSchedulerHelper.applyMedicineSnooze(app, scheduleId, name, scheduledAt, snoozeUntil);
+            }
 
+            Map<String, Object> update = new HashMap<>();
+            update.put("snoozed_until", new Timestamp(new Date(snoozeUntil)));
+            update.put("snooze_count", FieldValue.increment(1));
+            update.put("status", "akan datang");   // kalau sempat "terlewatkan", kembali menjadi menunggu
+            update.put("updated_at", Timestamp.now());
+            ref.set(update, SetOptions.merge()).addOnCompleteListener(t -> { if (onDone != null) onDone.run(); });
+
+            sendSnoozeNotifications(app, scheduleId, name, isAppointment, minutes,
+                    NotificationText.timeArg(snoozeUntil));
+        });
         return minutes;
     }
 

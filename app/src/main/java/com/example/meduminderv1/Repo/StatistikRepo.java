@@ -1,12 +1,10 @@
 package com.example.meduminderv1.Repo;
 
 import android.content.Context;
-import android.util.Log;
 
-import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.Model.MedicationLog;
 import com.example.meduminderv1.R;
-import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
+import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 import com.example.meduminderv1.Util.InactiveSchedules;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -58,7 +56,7 @@ public class StatistikRepo {
                         if (inactive.contains(log.getMedication_schedules_id())) continue;
                         // skip yang belum due (masih akan datang)
                         if (log.getScheduled_at().toDate().getTime()
-                                + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS > System.currentTimeMillis()) {
+                                + AlarmSchedulerHelper.MED_MISSED_DELAY_MS > System.currentTimeMillis()) {
                             continue;
                         } totalSeharusnya++;
                         if (log.getTaken_at() != null) {

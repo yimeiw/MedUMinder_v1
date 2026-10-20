@@ -7,6 +7,7 @@ import android.content.Intent;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.Notification.NotificationType;
+import com.example.meduminderv1.Reminder.Alarm.AlarmGuard;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -16,6 +17,8 @@ import java.util.Map;
 public class MedicationPreReminderNotifReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
+        if (AlarmGuard.shouldIgnore(intent)) return;
+
         String scheduleId = intent.getStringExtra("schedule_id");
         String namaObat = intent.getStringExtra("nama_obat");
         if (scheduleId == null) return;

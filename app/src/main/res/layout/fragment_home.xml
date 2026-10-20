@@ -10,7 +10,7 @@
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:paddingVertical="20dp"
         android:paddingHorizontal="20dp"
         android:scrollIndicators="none"
@@ -419,10 +419,10 @@
                     android:id="@+id/rvTodaySchedule"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:nestedScrollingEnabled="false"
                     android:scrollbars="none"
                     android:layout_marginHorizontal="10dp"
                     android:visibility="gone"/>
+                    <!-- android:nestedScrollingEnabled="false" -->
 
                 <!--            gada jadwal-->
                 <TextView

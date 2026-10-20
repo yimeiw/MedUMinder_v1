@@ -109,13 +109,13 @@
     <string name="total_obat_akan_datang">Total Upcoming Medication</string>
     <string name="general">General</string>
     <string name="document">Documents</string>
-    <string name="riwayat">History</string>
+    <string name="riwayat">Schedule Tracker</string>
     <string name="statistik">Statistics</string>
     <string name="list_consumer">Consumer List</string>
 
     <string name="tambah_pengingat">Add Reminder</string>
     <string name="tambah_appointment">Add Appointment</string>
-    <string name="log_jadwal">History</string>
+    <string name="log_jadwal">Schedule Tracker</string>
 
     <string name="jadwal_berikutnya">Next Schedule</string>
     <string name="stok_obat">Medicine Stock: </string>
@@ -154,6 +154,9 @@
     <string name="caregiver_description">Helps monitor Consumer adherence.</string>
     <string name="consumer">Consumer</string>
     <string name="consumer_description">Manages health reminders.</string>
+    <string name="ganti_ke_role">Switch to %1$s</string>
+
+    <string name="simpan_profil">Save Profile</string>
 
     <!-- popup edit -->
     <string name="edit">Edit</string>
@@ -173,7 +176,7 @@
     <string name="dikonsumsi">Taken</string>
 
     <!-- dropdown -->
-    <string name="riwayat_konsumsi">Consumption History</string>
+    <string name="riwayat_konsumsi">Consumption Tracker</string>
 
     <!-- item appointment log -->
     <string name="nama_appointment">Appointment Name</string>
@@ -423,7 +426,7 @@
     <string name="registrasi_berhasil_verifikasi_msg">Registration successful! Please verify your email then log in.</string>
     <string name="reminder_berhasil_dibuat">Reminder created successfully</string>
     <string name="reminder_berhasil_diperbarui">Reminder updated successfully</string>
-    <string name="riwayat_janji_temu">Appointment History</string>
+    <string name="riwayat_janji_temu">Appointment Tracker</string>
     <string name="role_caregiver_berhasil_diaktifkan">Caregiver role activated successfully.</string>
     <string name="save_appointment_btn">Save Appointment</string>
     <string name="schedule_id_tidak_ditemukan">Schedule ID not found</string>
@@ -708,4 +711,10 @@
     <string name="push_channel_penting_desc">Missed schedules, caregiver reminders, invitations and refill reminders</string>
     <string name="push_channel_aktivitas">Consumer activity</string>
     <string name="push_channel_aktivitas_desc">When a consumer takes their medicine or attends an appointment</string>
+
+    <string name="alarmVolume">Alarm Volume</string>
+    <string name="alarmVolumeHint">Press your phone’s volume buttons to set the alarm volume. Use this slider to make it softer. Release to preview.</string>
+    <string name="refill_mode_hint">Refill mode: only the stock can be changed.</string>
+    <string name="end_date_not_set_hint">You did not set an end date when creating this schedule (optional).</string>
+    <string name="tidak_ada_perubahan">No changes were made</string>
 </resources>

@@ -1,9 +1,9 @@
 package com.example.meduminderv1.Reminder;
 
+import com.example.meduminderv1.Reminder.Alarm.AlarmRingingService;
+import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 import com.example.meduminderv1.Util.LoadingOverlay;
 
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
@@ -15,14 +15,12 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
-import android.widget.PopupWindow;
 import android.widget.TextView;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
@@ -45,22 +43,23 @@ import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
+import com.example.meduminderv1.Util.UserTimeZone;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.WriteBatch;
 
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
+import java.time.ZonedDateTime;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -96,7 +95,12 @@ public class ReminderFragment extends Fragment {
     private boolean isCaregiverViewing = false;
     private String targetConsumerUid;
     private String source = "";
-
+    private ListenerRegistration scheduleReg, logReg, apptReg;
+    private int slotIndex = -1;                 // urutan jam (dari times_of_day) milik kartu ini
+    private ZoneId ownerZone = ZoneId.systemDefault();
+    private long effectiveAtMillis = 0L;        // jam setelah snooze (kalau ada)
+    private MedicationLog lastLog;
+    private final Handler tick = new Handler(Looper.getMainLooper());
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -170,11 +174,6 @@ public class ReminderFragment extends Fragment {
             timeReminderAppoint.setText(formattedTime);
             namaObatConfirmReminder.setText(namaObat);
             updateStatusUIFromRaw(currentStatus);
-            if (isAppointment) {
-                refreshLiveStatusAppoint();
-            } else {
-                refreshLiveStatus();
-            }
         } if (isCaregiverViewing){
             btnIsTaken.setText(getString(R.string.remind_consumer));
             btnTundaReminder.setVisibility(View.GONE);
@@ -200,21 +199,36 @@ public class ReminderFragment extends Fragment {
             popupMenu.getMenu().findItem(R.id.editMedicine).setVisible(canEditSchedule);
 
             popupMenu.setOnMenuItemClickListener(menuItem -> {
+//                if (menuItem.getItemId() == R.id.editMedicine) {
+//                    if (!canEditSchedule) return true;
+//
+//                    Bundle editBundle = new Bundle();
+//                    if (isAppointment) {
+//                        editBundle.putString("appointment_id", scheduleId);
+//                        NavHostFragment.findNavController(this)
+//                                .navigate(R.id.editAppointmentFragment, editBundle);
+//                    } else {
+//                        editBundle.putString("medication_schedules_id", scheduleId);
+//                        NavHostFragment.findNavController(this)
+//                                .navigate(R.id.editMedicineFragment, editBundle);
+//                    }
+//                    return true;
+//                }
                 if (menuItem.getItemId() == R.id.editMedicine) {
                     if (!canEditSchedule) return true;
-
                     Bundle editBundle = new Bundle();
                     if (isAppointment) {
                         editBundle.putString("appointment_id", scheduleId);
-                        NavHostFragment.findNavController(this)
-                                .navigate(R.id.editAppointmentFragment, editBundle);
+                        NavHostFragment.findNavController(this).navigate(R.id.editAppointmentFragment, editBundle);
                     } else {
                         editBundle.putString("medication_schedules_id", scheduleId);
-                        NavHostFragment.findNavController(this)
-                                .navigate(R.id.editMedicineFragment, editBundle);
+                        editBundle.putLong("occurrence_at", scheduledAt);
+                        editBundle.putLong("effective_at", effectiveAtMillis > 0 ? effectiveAtMillis : scheduledAt);
+                        NavHostFragment.findNavController(this).navigate(R.id.editMedicineFragment, editBundle);
                     }
                     return true;
-                } if (menuItem.getItemId() == R.id.deleteMedicine) {
+                }
+                if (menuItem.getItemId() == R.id.deleteMedicine) {
                     if (!isAppointment){
                         showDeleteChoiceDialog();
                     } else {
@@ -626,31 +640,6 @@ public class ReminderFragment extends Fragment {
             });
         });
     }
-
-    private void refreshLiveStatus() {
-        if (!isAdded()) return;
-        if (scheduleId == null || scheduleId.isEmpty() || scheduledAt <= 0L) return;
-
-        LogLookup.findLogId(scheduleId, scheduledAt, logId -> db.collection("medication_logs")
-                .document(logId)
-                .get()
-                .addOnSuccessListener(document -> {
-                    if (!isAdded() || document == null || !document.exists()) return;
-                    MedicationLog log = document.toObject(MedicationLog.class);
-                    if (log != null) {
-                        updateStatusUI(log.getStatusBasedOnDate());
-                        // FIX: kalau sudah di-snooze, tampilkan jam barunya
-                        if (log.getEffectiveTime() != null) {
-                            timeReminder.setText(com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(new SimpleDateFormat("HH:mm", Locale.getDefault())
-                                    .format(log.getEffectiveTime().toDate())));
-                        }
-                    }
-                })
-                .addOnFailureListener(e ->
-                        Log.e("REMINDER_FRAGMENT", "Gagal ambil status log terbaru untuk logId=" + logId, e)
-                ));
-    }
-
     private void markAsTaken() {
         if (!isAdded()) return;
         if (scheduleId == null || scheduleId.isEmpty()) {
@@ -880,30 +869,6 @@ public class ReminderFragment extends Fragment {
                 });
     }
 
-    private void refreshLiveStatusAppoint() {
-        if (!isAdded()) return;
-        if (scheduleId == null || scheduleId.isEmpty()) return;
-
-        db.collection("appointments")
-                .document(scheduleId)
-                .get()
-                .addOnSuccessListener(document -> {
-                    if (!isAdded() || document == null) return;
-//                    if (!document.exists()) {
-//                        updateStatusUI(resolveStatus(currentStatus));
-//                        return;
-//                    }
-                    Appointment appointment = document.toObject(Appointment.class);
-                    if (appointment != null) {
-                        updateStatusUI(appointment.getStatusBasedOnDate());
-                        locationReminderAppoint.setText(appointment.getAddress());
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("REMINDER_FRAGMENT", "Gagal ambil status appointment untuk id=" + scheduleId, e);
-                    if (!isAdded()) return;
-                });
-    }
     private void updateStatusUI(LogStatus logStatus) {
         currentStatus = logStatus.name();
 
@@ -952,5 +917,150 @@ public class ReminderFragment extends Fragment {
                 TypedValue.COMPLEX_UNIT_DIP,
                 dp, requireContext().getResources().getDisplayMetrics()
         );
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (scheduleId == null || scheduleId.isEmpty()) return;
+        if (isAppointment) watchAppointment(); else watchMedicine();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        removeWatchers();
+    }
+
+    private void removeWatchers() {
+        if (scheduleReg != null) { scheduleReg.remove(); scheduleReg = null; }
+        if (logReg != null) { logReg.remove(); logReg = null; }
+        if (apptReg != null) { apptReg.remove(); apptReg = null; }
+        tick.removeCallbacksAndMessages(null);
+    }
+
+    private boolean alive() {
+        return isAdded() && getView() != null;
+    }
+
+    // ---------- OBAT ----------
+    private void watchMedicine() {
+        removeWatchers();
+        UserTimeZone.resolve(targetConsumerUid, zone -> {
+            if (!alive()) return;
+            ownerZone = zone;
+            watchLog();
+            scheduleReg = db.collection("medication_schedules").document(scheduleId)
+                    .addSnapshotListener((snap, e) -> {
+                        if (!alive() || e != null || snap == null || !snap.exists()) return;
+                        List<String> times = readTimes(snap);
+                        if (times.isEmpty()) return;
+
+                        Bundle args = getArguments();
+                        int idx = args != null ? args.getInt("slot_index", -1) : -1;
+                        String current = hhmm(scheduledAt);
+                        if (idx < 0) {                       // pertama kali: petakan jam ini ke urutannya
+                            idx = times.indexOf(current);
+                            if (idx < 0) return;
+                            if (args != null) args.putInt("slot_index", idx);
+                        }
+                        // frekuensi tidak bisa diubah, jadi urutan tetap sama setelah edit
+                        if (idx < times.size() && !times.get(idx).equals(current)) {
+                            moveOccurrenceTo(times.get(idx));
+                        }
+                    });
+        });
+    }
+
+    private void moveOccurrenceTo(String hhmm) {
+        ZonedDateTime old = Instant.ofEpochMilli(scheduledAt).atZone(ownerZone);
+        long newAt = old.toLocalDate().atTime(LocalTime.parse(hhmm)).atZone(ownerZone).toInstant().toEpochMilli();
+        if (newAt == scheduledAt) return;
+
+        scheduledAt = newAt;
+        effectiveAtMillis = newAt;
+        if (getArguments() != null) getArguments().putLong("scheduled_at", newAt);
+
+        Date d = new Date(newAt);
+        dateReminder.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(d));
+        timeReminder.setText(UserTimeZone.withDeviceZone(new SimpleDateFormat("HH:mm", Locale.getDefault()).format(d)));
+        lastLog = null;
+        updateStatusUI(LogStatus.AKAN_DATANG);
+        watchLog();   // log lama sudah dihapus: pantau log pada jam baru
+    }
+
+    private void watchLog() {
+        if (logReg != null) { logReg.remove(); logReg = null; }
+        tick.removeCallbacksAndMessages(null);
+        logReg = db.collection("medication_logs")
+                .whereEqualTo("medication_schedules_id", scheduleId)
+                .whereEqualTo("scheduled_at", new Timestamp(new Date(scheduledAt)))
+                .limit(1)
+                .addSnapshotListener((q, e) -> {
+                    if (!alive() || e != null || q == null || q.isEmpty()) return;
+                    MedicationLog log = q.getDocuments().get(0).toObject(MedicationLog.class);
+                    if (log == null) return;
+                    lastLog = log;
+                    updateStatusUI(log.getStatusBasedOnDate());
+                    Timestamp eff = log.getEffectiveTime();
+                    if (eff != null) {
+                        effectiveAtMillis = eff.toDate().getTime();
+                        timeReminder.setText(UserTimeZone.withDeviceZone(
+                                new SimpleDateFormat("HH:mm", Locale.getDefault()).format(eff.toDate())));
+                        scheduleStatusTick(effectiveAtMillis + AlarmSchedulerHelper.MED_MISSED_DELAY_MS,
+                                log.getStatusBasedOnDate() == LogStatus.AKAN_DATANG);
+                    }
+                });
+    }
+
+    // status berubah tepat saat jam tiba, tanpa menunggu snapshot
+    private void scheduleStatusTick(long atMillis, boolean pending) {
+        tick.removeCallbacksAndMessages(null);
+        if (!pending) return;
+        long wait = atMillis - System.currentTimeMillis() + 300L;
+        if (wait <= 0) return;
+        tick.postDelayed(() -> {
+            if (alive() && lastLog != null) updateStatusUI(lastLog.getStatusBasedOnDate());
+        }, wait);
+    }
+
+    private List<String> readTimes(DocumentSnapshot snap) {
+        List<String> out = new ArrayList<>();
+        Object o = snap.get("times_of_day");
+        if (o instanceof List) for (Object x : (List<?>) o) if (x instanceof String) out.add((String) x);
+        Collections.sort(out);
+        return out;
+    }
+
+    private String hhmm(long ms) {
+        ZonedDateTime z = Instant.ofEpochMilli(ms).atZone(ownerZone);
+        return String.format(Locale.US, "%02d:%02d", z.getHour(), z.getMinute());
+    }
+
+    // ---------- APPOINTMENT ----------
+    private void watchAppointment() {
+        removeWatchers();
+        apptReg = db.collection("appointments").document(scheduleId).addSnapshotListener((doc, e) -> {
+            if (!alive() || e != null || doc == null || !doc.exists()) return;
+            Appointment a = doc.toObject(Appointment.class);
+            if (a == null || a.getAppointment_at() == null) return;
+
+            namaObat = a.getTitle();
+            namaObatConfirmReminder.setText(namaObat);
+            locationReminderAppoint.setText(a.getAddress());
+            scheduledAt = a.getAppointment_at().toDate().getTime();
+            Date shown = a.getDisplayTime().toDate();
+            effectiveAtMillis = shown.getTime();
+            dateReminderAppoint.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(shown));
+            timeReminderAppoint.setText(UserTimeZone.withDeviceZone(
+                    new SimpleDateFormat("HH:mm", Locale.getDefault()).format(shown)));
+            if (getArguments() != null) {
+                getArguments().putLong("scheduled_at", scheduledAt);
+                getArguments().putString("nama_obat", namaObat);
+            }
+            updateStatusUI(a.getStatusBasedOnDate());
+            scheduleStatusTick(effectiveAtMillis + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS,
+                    a.getStatusBasedOnDate() == LogStatus.AKAN_DATANG);
+        });
     }
 }
