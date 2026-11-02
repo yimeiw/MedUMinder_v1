@@ -7,6 +7,9 @@ import android.os.Build;
 import android.util.Log;
 
 import com.example.meduminderv1.Notification.NotificationText;
+import com.example.meduminderv1.Reminder.Alarm.AlarmGuard;
+import com.example.meduminderv1.Reminder.Alarm.AlarmRingingService;
+import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -23,6 +26,10 @@ public class MedicationAlarmReceiver extends BroadcastReceiver {
                         + " type=" + intent.getStringExtra("type")
                         + " trigger=" + intent.getLongExtra("trigger_at", 0L)
         );
+        if (AlarmGuard.shouldIgnore(intent)) {
+            context.stopService(new Intent(context, AlarmRingingService.class));
+            return;
+        }
 
         String scheduleId = intent.getStringExtra("schedule_id");
         if (scheduleId == null || scheduleId.isEmpty()) return;   // alarm rusak: jangan crash di background

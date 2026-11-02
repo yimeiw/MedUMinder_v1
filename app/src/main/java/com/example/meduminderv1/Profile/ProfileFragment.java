@@ -24,7 +24,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Auth.SessionManager;
@@ -54,11 +54,12 @@ public class ProfileFragment extends Fragment {
     User user;
     AuthManager authManager;
     TextView curr_role, name_input, email_input, txtAktivasi, txtListRelation,
-            adherencePercent, adherenceDesc;
+            adherencePercent, adherenceDesc, tvSwitchRole;
     RelativeLayout themeSwitch;
     ImageView iconToggle, imgAktivasi;
     SharedPreferences prefs;
-    LinearLayout btnEditProfile, btnAktivasi, btnListRelation, btnChangeLanguage, btnNotificationSetting, cardStatistik;
+    LinearLayout btnEditProfile, btnAktivasi, btnListRelation, btnChangeLanguage,
+            btnNotificationSetting, cardStatistik, btnSwitchRole;
     MaterialButton btnSeeStatistic;
     ProgressView adherenceRing;
     StatistikRepo statistikRepo;
@@ -92,9 +93,11 @@ public class ProfileFragment extends Fragment {
         imgAktivasi = view.findViewById(R.id.imgAktivasi);
         txtAktivasi = view.findViewById(R.id.txtAktivasi);
         txtListRelation = view.findViewById(R.id.txtListRelation);
+        tvSwitchRole = view.findViewById(R.id.txtSwitchRole);
         btnListRelation = view.findViewById(R.id.btnRelationList);
         btnChangeLanguage = view.findViewById(R.id.btnChangeLanguage);
         btnNotificationSetting = view.findViewById(R.id.btnNotificationSetting);
+        btnSwitchRole = view.findViewById(R.id.btnSwitchRole);
 
         if (user != null){
             loadUser();
@@ -102,6 +105,12 @@ public class ProfileFragment extends Fragment {
 
         curr_role.setOnClickListener(v -> {
             showRoleDialog();
+        });
+
+        btnSwitchRole.setOnClickListener(v -> {
+            if (user == null) return;
+            //selectrole sdh mengatasi role yg sm, caregvier blm aktif, dan dialog konfirmasi
+            selectRole(user.getCurrentRole() == UserRole.Consumer ? UserRole.Caregiver : UserRole.Consumer);
         });
 
         btnEditProfile = view.findViewById(R.id.btnEditProfile);
@@ -172,8 +181,6 @@ public class ProfileFragment extends Fragment {
             NavHostFragment.findNavController(this)
                     .navigate(R.id.statistikFragment);
         });
-
-
 
         return view;
     }
@@ -403,6 +410,7 @@ public class ProfileFragment extends Fragment {
         setUpCaregiverButton();
 
         boolean isConsumer = user.getCurrentRole() == UserRole.Consumer;
+        tvSwitchRole.setText(getString(R.string.ganti_ke_role, isConsumer ? "Caregvier" : "Consumer"));
         txtListRelation.setText(
                 isConsumer ? getString(R.string.caregiverList) : getString(R.string.consumerList)
         );

@@ -33,7 +33,7 @@ import com.example.meduminderv1.Notification.PushNotifier;
 import com.example.meduminderv1.Util.PressFeedback;
 import com.example.meduminderv1.Util.UserTimeZone;
 
-import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
+import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 import com.example.meduminderv1.Reminder.AppLifecycleTracker;
 import com.example.meduminderv1.Reminder.DailyRescheduleWorker;
 import com.example.meduminderv1.Reminder.StockCheckWorker;
@@ -197,12 +197,16 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
     protected void onStart() {
         super.onStart();
         ReminderEventBus.setListener(this);
+        sweepTick.removeCallbacks(sweepRunnable);
+        sweepTick.postDelayed(sweepRunnable, 3_000L);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         ReminderEventBus.setListener(null);
+        sweepTick.removeCallbacks(sweepRunnable);
+
     }
 
     @Override
@@ -378,4 +382,13 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         if (stopPushListener != null) stopPushListener.run();
     }
 
+    private final android.os.Handler sweepTick = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable sweepRunnable = new Runnable() {
+        @Override public void run() {
+            FirebaseUser u = FirebaseAuth.getInstance().getCurrentUser();
+            if (u != null) com.example.meduminderv1.Reminder.CaregiverMissedScanner
+                    .scanOwn(getApplicationContext(), u.getUid(), null);
+            sweepTick.postDelayed(this, 20_000L);
+        }
+    };
 }

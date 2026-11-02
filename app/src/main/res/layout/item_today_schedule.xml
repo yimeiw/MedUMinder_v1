@@ -34,9 +34,27 @@
             android:textSize="12sp"/>
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/timeSchedule"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="13sp"/>
+        android:orientation="vertical"
+        android:gravity="end">
+
+        <TextView
+            android:id="@+id/timeSchedule"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"/>
+
+        <TextView
+            android:id="@+id/chipStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_status"
+            android:paddingVertical="3dp"
+            android:paddingHorizontal="12dp"
+            android:textSize="11sp"
+            android:textColor="?attr/colorPrimary"/>
+    </LinearLayout>
 </LinearLayout>

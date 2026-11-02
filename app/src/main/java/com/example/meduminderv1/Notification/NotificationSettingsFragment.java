@@ -17,6 +17,9 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
+import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
 
 import androidx.annotation.NonNull;
@@ -28,8 +31,11 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Reminder.Alarm.AlarmVolume;
 import com.example.meduminderv1.Reminder.StockChecker;
 import com.example.meduminderv1.Util.LoadingOverlay;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.slider.Slider;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
@@ -53,6 +59,8 @@ public class NotificationSettingsFragment extends Fragment {
     private static final String KEY_APPOINTMENT_REMINDER = "appointment_reminder";
     private static final String KEY_REPEAT_REMINDER = "repeat_reminder";
     boolean isDropdownOpen = false;
+    private Slider sliderVolume;
+    private TextView tvVolumeValue;
 
     @Nullable
     @Override
@@ -73,6 +81,7 @@ public class NotificationSettingsFragment extends Fragment {
 
         setupBackButton();
         setupRingtoneDropdown();
+        setupAlarmVolume();
         setupReminderMessageDropdown();
         setupSnoozeDuration();
         setupAppointmentDropdown();
@@ -98,6 +107,8 @@ public class NotificationSettingsFragment extends Fragment {
         layoutRepeatReminder = view.findViewById(R.id.layoutRepeatReminder);
         dropdownRefillReminder = view.findViewById(R.id.dropdownRefillReminder);
         layoutRefillReminder = view.findViewById(R.id.layoutRefillReminder);
+        sliderVolume = view.findViewById(R.id.sliderVolume);
+        tvVolumeValue = view.findViewById(R.id.tvVolumeValue);
 
         view.findViewById(R.id.boxSnoozeDuration)
                 .setOnClickListener(v -> dropdownSnoozeDuration.performClick());
@@ -107,165 +118,224 @@ public class NotificationSettingsFragment extends Fragment {
                 .setOnClickListener(v -> dropdownRefillReminder.performClick());
     }
 
-        private void setupBackButton() {
-            btnBack.setOnClickListener(v ->
-                    NavHostFragment.findNavController(
-                            NotificationSettingsFragment.this
-                    ).navigateUp()
-            );
+    private void setupBackButton() {
+        btnBack.setOnClickListener(v ->
+                NavHostFragment.findNavController(
+                        NotificationSettingsFragment.this
+                ).navigateUp()
+        );
+    }
+
+    // untuk preview ringtone
+    private void playRingtonePreview(Uri uri) {
+        stopRingtonePreview();
+
+        previewRingtone = RingtoneManager.getRingtone(
+                requireContext(),
+                uri
+        );
+
+        if (previewRingtone != null) {
+            previewRingtone.play();
         }
+    }
 
-        // untuk preview ringtone
-        private void playRingtonePreview(Uri uri) {
-            stopRingtonePreview();
-
-            previewRingtone = RingtoneManager.getRingtone(
-                    requireContext(),
-                    uri
-            );
-
-            if (previewRingtone != null) {
-                previewRingtone.play();
-            }
+    // untuk stop preview ringtone
+    private void stopRingtonePreview() {
+        if (previewRingtone != null && previewRingtone.isPlaying()) {
+            previewRingtone.stop();
+            previewRingtone = null;
         }
+    }
 
-        // untuk stop preview ringtone
-        private void stopRingtonePreview() {
-            if (previewRingtone != null && previewRingtone.isPlaying()) {
-                previewRingtone.stop();
-                previewRingtone = null;
-            }
-        }
+    // ketika keluar page, auto stop preview ringtone
+    @Override
+    public void onDestroyView() {
+        stopRingtonePreview();
+        AlarmVolume.stopPreview();
+        super.onDestroyView();
+    }
 
-        // ketika keluar page, auto stop preview ringtone
-        @Override
-        public void onDestroyView() {
-            stopRingtonePreview();
-            super.onDestroyView();
-        }
+    @Override
+    public void onResume() {
+        super.onResume();
+        requireActivity().setVolumeControlStream(android.media.AudioManager.STREAM_ALARM);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        requireActivity().setVolumeControlStream(android.media.AudioManager.USE_DEFAULT_STREAM_TYPE);
+    }
  
-        private ArrayAdapter<String> createDropdownAdapter(List<String>items) {
-            return new ArrayAdapter<String>(
-                    requireContext(),
-                    android.R.layout.simple_dropdown_item_1line,
-                    items
+    private ArrayAdapter<String> createDropdownAdapter(List<String>items) {
+        return new ArrayAdapter<String>(
+                requireContext(),
+                android.R.layout.simple_dropdown_item_1line,
+                items
+        ) {
+            @Override
+            public View getDropDownView(
+                    int position,
+                    View convertView,
+                    ViewGroup parent
             ) {
-                @Override
-                public View getDropDownView(
-                        int position,
-                        View convertView,
-                        ViewGroup parent
-                ) {
-                    View view = super.getDropDownView(
-                            position,
-                            convertView,
-                            parent
-                    );
+                View view = super.getDropDownView(
+                        position,
+                        convertView,
+                        parent
+                );
 
-                    view.setBackgroundColor(
-                            Color.TRANSPARENT
-                    );
+                view.setBackgroundColor(
+                        Color.TRANSPARENT
+                );
 
-                    return view;
+                return view;
+            }
+        };
+    }
+
+    //  ringtone
+    private void setupRingtoneDropdown() {
+        List<String> ringtoneNames = new ArrayList<>();
+        List<String> ringtoneUris = new ArrayList<>();
+
+        ArrayAdapter<String> adapter = createDropdownAdapter(ringtoneNames);
+
+        dropdownRingtone.setAdapter(adapter);
+        dropdownRingtone.setEnabled(false);
+        LoadingOverlay.show(NotificationSettingsFragment.this);
+
+        Context app = requireContext().getApplicationContext();
+        boolean needsDefault = pref.getString(KEY_RINGTONE_NAME, null) == null;
+        Executors.newSingleThreadExecutor().execute(() -> {
+        List<String> names = new ArrayList<>();
+        List<String> uris = new ArrayList<>();
+        RingtoneManager ringtoneManager = new RingtoneManager(app);
+        ringtoneManager.setType(RingtoneManager.TYPE_ALARM);
+        Cursor cursor = ringtoneManager.getCursor();
+        try {
+            while (cursor.moveToNext()) {
+                Uri ringtoneUri = ringtoneManager.getRingtoneUri(cursor.getPosition());
+                String title = cursor.getString(RingtoneManager.TITLE_COLUMN_INDEX);
+                if (ringtoneUri != null && title != null) {
+                    names.add(title);
+                    uris.add(ringtoneUri.toString());
                 }
-            };
+            }
+        } finally {
+            cursor.close();
         }
 
-        //  ringtone
-        private void setupRingtoneDropdown() {
-            List<String> ringtoneNames = new ArrayList<>();
-            List<String> ringtoneUris = new ArrayList<>();
-
-            ArrayAdapter<String> adapter = createDropdownAdapter(ringtoneNames);
-
-            dropdownRingtone.setAdapter(adapter);
-            dropdownRingtone.setEnabled(false);
-            LoadingOverlay.show(NotificationSettingsFragment.this);
-
-            Context app = requireContext().getApplicationContext();
-            boolean needsDefault = pref.getString(KEY_RINGTONE_NAME, null) == null;
-            Executors.newSingleThreadExecutor().execute(() -> {
-                List<String> names = new ArrayList<>();
-                List<String> uris = new ArrayList<>();
-                RingtoneManager ringtoneManager = new RingtoneManager(app);
-                ringtoneManager.setType(RingtoneManager.TYPE_ALARM);
-                Cursor cursor = ringtoneManager.getCursor();
-                try {
-                    while (cursor.moveToNext()) {
-                        Uri ringtoneUri = ringtoneManager.getRingtoneUri(cursor.getPosition());
-                        String title = cursor.getString(RingtoneManager.TITLE_COLUMN_INDEX);
-                        if (ringtoneUri != null && title != null) {
-                            names.add(title);
-                            uris.add(ringtoneUri.toString());
-                        }
-                    }
-                } finally {
-                    cursor.close();
-                }
-
-                String defaultName = null;
-                Uri defaultUri = null;
-                if (needsDefault) {
-                    defaultUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
-                    Ringtone ringtone = defaultUri != null ? RingtoneManager.getRingtone(app, defaultUri) : null;
-                    if (ringtone != null) defaultName = ringtone.getTitle(app);
-                }
-                String finalDefaultName = defaultName;
-                Uri finalDefaultUri = defaultUri;
-
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    if (!isAdded()) return;
-                    LoadingOverlay.hide(NotificationSettingsFragment.this);
-                    if (getView() == null) return;
-                    ringtoneNames.addAll(names);
-                    ringtoneUris.addAll(uris);
-                    adapter.notifyDataSetChanged();
-                    if (finalDefaultName != null && pref.getString(KEY_RINGTONE_NAME, null) == null) {
-                        dropdownRingtone.setText(finalDefaultName, false);
-                        pref.edit()
-                                .putString(KEY_RINGTONE_NAME, finalDefaultName)
-                                .putString(KEY_RINGTONE_URI, finalDefaultUri.toString())
-                                .apply();
-                    }
-                    dropdownRingtone.setEnabled(true);
-                });
-            });
-
-            dropdownRingtone.setOnClickListener(v -> {
-                if (!isDropdownOpen) {
-                    dropdownRingtone.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_up, 0);
-                    dropdownRingtone.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border));
-                    dropdownRingtone.setDropDownVerticalOffset(20);
-                    dropdownRingtone.showDropDown();
-                    isDropdownOpen = true;
-                }
-            });
-
-            dropdownRingtone.setOnItemClickListener(
-                    (parent, view, position, id) -> {
-                        String selectedName = ringtoneNames.get(position);
-                        String selectedUri = ringtoneUris.get(position);
-                        dropdownRingtone.setText(selectedName, false);
-                        pref.edit().putString(
-                                KEY_RINGTONE_NAME, selectedName
-                        ).putString(
-                                KEY_RINGTONE_URI, selectedUri
-                        ).apply();
-
-                        // preview ringtone yang dipilih oleh user
-                        playRingtonePreview(Uri.parse(selectedUri));
-                        dropdownRingtone.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
-                    }
-            );
-
-            dropdownRingtone.setOnDismissListener(() -> {
-                dropdownRingtone.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
-                dropdownRingtone.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border));
-                dropdownRingtone.setDropDownVerticalOffset(20);
-                isDropdownOpen = false;
-            });
-
+        String defaultName = null;
+        Uri defaultUri = null;
+        if (needsDefault) {
+            defaultUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+            Ringtone ringtone = defaultUri != null ? RingtoneManager.getRingtone(app, defaultUri) : null;
+            if (ringtone != null) defaultName = ringtone.getTitle(app);
         }
+        String finalDefaultName = defaultName;
+        Uri finalDefaultUri = defaultUri;
+
+        new Handler(Looper.getMainLooper()).post(() -> {
+            if (!isAdded()) return;
+            LoadingOverlay.hide(NotificationSettingsFragment.this);
+            if (getView() == null) return;
+            ringtoneNames.addAll(names);
+            ringtoneUris.addAll(uris);
+            adapter.notifyDataSetChanged();
+            if (finalDefaultName != null && pref.getString(KEY_RINGTONE_NAME, null) == null) {
+                dropdownRingtone.setText(finalDefaultName, false);
+                pref.edit()
+                        .putString(KEY_RINGTONE_NAME, finalDefaultName)
+                        .putString(KEY_RINGTONE_URI, finalDefaultUri.toString())
+                        .apply();
+            }
+            dropdownRingtone.setEnabled(true);
+        });
+    });
+
+    dropdownRingtone.setOnClickListener(v -> {
+        if (ringtoneNames.isEmpty()) return;
+        final Context ctx = requireContext();
+        String[] names = ringtoneNames.toArray(new String[0]);
+        int curr = ringtoneNames.indexOf(dropdownRingtone.getText().toString());
+        final int[] sel = {curr};
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(ctx)
+                .setTitle(R.string.ringtone).setSingleChoiceItems(names, curr, (d, which) -> {
+                    sel[0] = which;
+                    AlarmVolume.previewUri(ctx, Uri.parse(ringtoneUris.get(which)), AlarmVolume.percent(ctx));
+                }).setPositiveButton(R.string.ok_label, (d, w) -> {
+                    if (sel[0] < 0) return;
+                    String name = ringtoneNames.get(sel[0]);
+                    dropdownRingtone.setText(name, false);
+                    pref.edit().putString(KEY_RINGTONE_NAME, name)
+                            .putString(KEY_RINGTONE_URI, ringtoneUris.get(sel[0])).apply();
+                }).setNegativeButton(R.string.cancel, null)
+                .setOnDismissListener(d -> AlarmVolume.stopPreview()).create();
+        dialog.show();
+        if (dialog.getWindow() != null){
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
+        }
+        if (!isDropdownOpen) {
+            dropdownRingtone.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_up, 0);
+            dropdownRingtone.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border));
+            dropdownRingtone.setDropDownVerticalOffset(20);
+            dropdownRingtone.showDropDown();
+            isDropdownOpen = true;
+        }
+    });
+
+    dropdownRingtone.setOnItemClickListener(
+            (parent, view, position, id) -> {
+                String selectedName = ringtoneNames.get(position);
+                String selectedUri = ringtoneUris.get(position);
+                dropdownRingtone.setText(selectedName, false);
+                pref.edit().putString(
+                        KEY_RINGTONE_NAME, selectedName
+                ).putString(
+                        KEY_RINGTONE_URI, selectedUri
+                ).apply();
+
+                // preview ringtone yang dipilih oleh user
+        playRingtonePreview(Uri.parse(selectedUri));
+        dropdownRingtone.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
+            });
+
+    dropdownRingtone.setOnDismissListener(() -> {
+        dropdownRingtone.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
+        dropdownRingtone.setDropDownBackgroundDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.border));
+        dropdownRingtone.setDropDownVerticalOffset(20);
+        isDropdownOpen = false;
+    });
+
+}
+
+    private void setupAlarmVolume() {
+        int p = AlarmVolume.percent(requireContext());
+        p = Math.max(10, Math.min(100, Math.round(p / 5f) * 5));   // pastikan kelipatan step
+        sliderVolume.setValue(p);
+        tvVolumeValue.setText(p + "%");
+
+        sliderVolume.addOnChangeListener((s, value, fromUser) ->
+                tvVolumeValue.setText(((int) value) + "%"));
+
+        sliderVolume.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
+            @Override public void onStartTrackingTouch(@NonNull Slider s) {
+                AlarmVolume.stopPreview();
+                stopRingtonePreview();
+            }
+            @Override public void onStopTrackingTouch(@NonNull Slider s) {
+                int v = (int) s.getValue();
+                AlarmVolume.save(requireContext(), v);
+                AlarmVolume.preview(requireContext(), v);   // dengarkan hasilnya
+            }
+        });
+    }
 
         // reminder message
         private void setupReminderMessageDropdown() {

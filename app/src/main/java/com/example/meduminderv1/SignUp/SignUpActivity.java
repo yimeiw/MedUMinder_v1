@@ -1,5 +1,6 @@
 package com.example.meduminderv1.SignUp;
 
+import com.example.meduminderv1.Util.ActivityTracker;
 import com.example.meduminderv1.Util.EmailApp;
 
 import com.example.meduminderv1.Util.LoadingOverlay;
@@ -15,7 +16,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ScrollView;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
@@ -32,7 +33,6 @@ import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.Model.AuthProviderType;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
-import com.example.meduminderv1.Util.PressFeedback;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.Timestamp;
 
@@ -51,11 +51,9 @@ public class SignUpActivity extends AppCompatActivity {
         setContentView(R.layout.activity_sign_up);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, Math.max(systemBars.bottom, ime.bottom));
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        PressFeedback.applyTree(findViewById(androidx.appcompat.R.id.content));
 
         signUp = findViewById(R.id.signup_button);
         googleBtn = findViewById(R.id.google_provider);
@@ -65,12 +63,17 @@ public class SignUpActivity extends AppCompatActivity {
         ScrollView signupScroll = findViewById(R.id.signup_scroll);
         passwordInput = findViewById(R.id.password_input);
 
-        for (EditText input : new EditText[]{nameInput, emailInput, passwordInput}) {
-            input.setOnFocusChangeListener((v, hasFocus) -> {
-                if (hasFocus) signupScroll.postDelayed(() -> scrollIntoView(signupScroll, v), 300);
-            });
-            input.setOnClickListener(v -> signupScroll.postDelayed(() -> scrollIntoView(signupScroll, v), 300));
-        }
+        passwordInput.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                signupScroll.postDelayed(() -> {
+                    Rect rect = new Rect();
+                    passwordInput.getDrawingRect(rect);
+                    signupScroll.offsetDescendantRectToMyCoords(passwordInput, rect);
+
+                    signupScroll.smoothScrollTo(0, rect.bottom);
+                }, 300);
+            }
+        });
 
         passwordInput.setCompoundDrawablesWithIntrinsicBounds(
                 0, 0, R.drawable.ic_visibility_off, 0
@@ -112,7 +115,9 @@ public class SignUpActivity extends AppCompatActivity {
             @Override
             public void onSuccess(User result) {
                 LoadingOverlay.hide(SignUpActivity.this);
-                startActivity(new Intent(SignUpActivity.this, MainActivity.class));
+                Intent i = new Intent(SignUpActivity.this, MainActivity.class);
+                i.putExtra(ActivityTracker.EXTRA_TOAST, R.string.login_success);
+                startActivity(i);
                 finishAffinity();
             }
 
@@ -167,7 +172,7 @@ public class SignUpActivity extends AppCompatActivity {
 
         user.setPreferred_language(preferredLanguage);
 
-        user.setTimezone(com.example.meduminderv1.Util.UserTimeZone.deviceId());
+        user.setTimezone("Asia/Jakarta");
         user.setCreated_at(Timestamp.now());
         user.setUpdated_at(Timestamp.now());
         user.setDeleted_at(null);
@@ -270,14 +275,4 @@ public class SignUpActivity extends AppCompatActivity {
         } return true;
     }
 
-    private void scrollIntoView(ScrollView scroll, android.view.View field) {
-        Rect rect = new Rect();
-        field.getDrawingRect(rect);
-        scroll.offsetDescendantRectToMyCoords(field, rect);
-        int margin = (int) (24 * getResources().getDisplayMetrics().density);
-        int visibleBottom = scroll.getScrollY() + scroll.getHeight() - scroll.getPaddingBottom();
-        if (rect.bottom + margin > visibleBottom) {
-            scroll.smoothScrollBy(0, rect.bottom + margin - visibleBottom);
-        }
-    }
 }

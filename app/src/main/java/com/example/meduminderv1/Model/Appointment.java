@@ -1,6 +1,6 @@
 package com.example.meduminderv1.Model;
 
-import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
+import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 import com.google.firebase.Timestamp;
 
 public class Appointment {

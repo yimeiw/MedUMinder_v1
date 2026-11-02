@@ -156,6 +156,9 @@
     <string name="caregiver_description">帮助监督 Consumer 的服药依从性。</string>
     <string name="consumer">Consumer</string>
     <string name="consumer_description">管理健康提醒。</string>
+    <string name="ganti_ke_role">切换到 %1$s</string>
+
+    <string name="simpan_profil">保存资料</string>
 
     <!-- popup edit -->
     <string name="edit">编辑</string>
@@ -711,4 +714,10 @@
     <string name="push_channel_penting_desc">错过的安排、看护者提醒、邀请和补药提醒</string>
     <string name="push_channel_aktivitas">服药者动态</string>
     <string name="push_channel_aktivitas_desc">服药者服药或参加预约时</string>
+
+    <string name="alarmVolume">闹钟音量</string>
+    <string name="alarmVolumeHint">按手机音量键调节闹钟音量，用此滑块可进一步调小。松开即可试听。</string>
+    <string name="refill_mode_hint">补药模式：只能修改库存。</string>
+    <string name="end_date_not_set_hint">创建此日程时您未设置结束日期（可选）。</string>
+    <string name="tidak_ada_perubahan">没有任何更改</string>
 </resources>

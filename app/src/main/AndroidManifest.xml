@@ -84,7 +84,7 @@
             android:name=".Reminder.MedicationAlarmReceiver"
             android:exported="false" />
         <receiver
-            android:name=".Reminder.AlarmActionReceiver"
+            android:name=".Reminder.Alarm.AlarmActionReceiver"
             android:exported="false" />
         <receiver
             android:name=".Reminder.MedicationMissedNotifReceiver"
@@ -111,7 +111,7 @@
         </receiver>
 
         <service
-            android:name=".Reminder.AlarmRingingService"
+            android:name=".Reminder.Alarm.AlarmRingingService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
     </application>

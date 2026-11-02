@@ -37,6 +37,7 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
     private FirebaseFirestore db;
     private Map<String, String> namaObatCache = new HashMap<>();
     private Map<String, Integer> stockCache = new HashMap<>();
+    private Map<String, String> typeCache = new HashMap<>();
     private Set<String> loadingScheduleIds = new HashSet<>();
     private OnMedLogClickListener listener;
     public MedicationLogAdapter(List<MedicationLog> medicationLogs, Context context) {
@@ -80,6 +81,9 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
         } else {
             holder.sisaStokLog.setText("-");
         }
+        boolean liquid = "CAIR".equals(typeCache.get(medication_schedules_id));
+        View stockRow = (View) holder.sisaStokLog.getParent();
+        stockRow.setVisibility(liquid ? View.GONE : View.VISIBLE);
 
         if (!namaObatCache.containsKey(medication_schedules_id) || !stockCache.containsKey(medication_schedules_id)) {
             if (!loadingScheduleIds.contains(medication_schedules_id)) {
@@ -190,14 +194,11 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
                 .get()
                 .addOnSuccessListener(scheduleSnap -> {
                     MedicationSchedules schedules = scheduleSnap.toObject(MedicationSchedules.class);
-
                     if (schedules == null){
                         loadingScheduleIds.remove(medication_schedules_id);
                         return;
                     }
-
                     String medication_id = schedules.getMedication_id();
-
                     db.collection("medications").document(medication_id)
                             .get()
                             .addOnSuccessListener(medSnap -> {
@@ -208,12 +209,10 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
                                 }
 
                                 int stock = 0;
-
                                 if (medication.getStock() != null
                                         && medication.getStock().get("stok_obat") != null) {
 
-                                    Object stockObject =
-                                            medication.getStock().get("stok_obat");
+                                    Object stockObject = medication.getStock().get("stok_obat");
 
                                     if (stockObject instanceof Number) {
                                         stock = ((Number) stockObject).intValue();
@@ -221,7 +220,11 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
                                 }
 
                                 stockCache.put(medication_schedules_id, stock);
-
+                                typeCache.put(medication_schedules_id, medication.getMed_type());
+                                if (medication_schedules_id.equals(holder.itemView.getTag())) {
+                                    ((View) holder.sisaStokLog.getParent())
+                                            .setVisibility("CAIR".equals(medication.getMed_type()) ? View.GONE : View.VISIBLE);
+                                }
                                 if (medication_schedules_id.equals(holder.itemView.getTag())) {
                                     holder.sisaStokLog.setText(String.valueOf(stock));
                                 }

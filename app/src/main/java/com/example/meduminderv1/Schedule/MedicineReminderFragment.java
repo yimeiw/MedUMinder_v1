@@ -1,14 +1,13 @@
 package com.example.meduminderv1.Schedule;
 
+import com.example.meduminderv1.Util.DatePickerHelper;
 import com.example.meduminderv1.Util.SchedulePermission;
 
 import com.example.meduminderv1.Util.LoadingOverlay;
 import com.example.meduminderv1.Util.UserTimeZone;
 
-import android.app.AlarmManager;
 import android.app.DatePickerDialog;
 import android.content.Context;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.os.Handler;
@@ -27,7 +26,7 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -42,7 +41,7 @@ import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.R;
-import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
+import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 import com.example.meduminderv1.Reminder.StockChecker;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
@@ -319,24 +318,32 @@ public class MedicineReminderFragment extends Fragment {
             isDropdownOpen = false;
         });
 
-        endDateReminder.setOnClickListener(v -> {
-            Calendar today = Calendar.getInstance();
-
-            DatePickerDialog dialog = new DatePickerDialog(requireContext(), (view1, year, month, day) -> {
-                selectedCalendar.set(Calendar.YEAR, year);
-                selectedCalendar.set(Calendar.MONTH, month);
-                selectedCalendar.set(Calendar.DAY_OF_MONTH, day);
-                selectedCalendar.set(Calendar.HOUR_OF_DAY, 23);
-                selectedCalendar.set(Calendar.MINUTE, 59);
-                selectedCalendar.set(Calendar.SECOND, 59);
-                endDateSelected = true;
-                endDateReminder.setText(day + "/" + (month + 1) + "/" + year);
-            }, today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH)
-            );
-            dialog.getDatePicker().setMinDate(System.currentTimeMillis());
-            dialog.show();
-            styleDateDialogButtons(dialog);
-        });
+//        endDateReminder.setOnClickListener(v -> {
+//            Calendar today = Calendar.getInstance();
+//
+//            DatePickerDialog dialog = new DatePickerDialog(requireContext(), (view1, year, month, day) -> {
+//                selectedCalendar.set(Calendar.YEAR, year);
+//                selectedCalendar.set(Calendar.MONTH, month);
+//                selectedCalendar.set(Calendar.DAY_OF_MONTH, day);
+//                selectedCalendar.set(Calendar.HOUR_OF_DAY, 23);
+//                selectedCalendar.set(Calendar.MINUTE, 59);
+//                selectedCalendar.set(Calendar.SECOND, 59);
+//                endDateSelected = true;
+//                endDateReminder.setText(day + "/" + (month + 1) + "/" + year);
+//            }, today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH)
+//            );
+//            dialog.getDatePicker().setMinDate(System.currentTimeMillis());
+//            dialog.show();
+//            styleDateDialogButtons(dialog);
+//        });
+        endDateReminder.setOnClickListener(v ->
+                DatePickerHelper.show(requireContext(),
+                        endDateSelected ? selectedCalendar : null, true, (y, m, d) -> {
+                            selectedCalendar.set(y, m, d, 23, 59, 59);
+                            selectedCalendar.set(Calendar.MILLISECOND, 0);
+                            endDateSelected = true;
+                            endDateReminder.setText(d + "/" + (m + 1) + "/" + y);
+                        }));
 
         btnSaveReminder.setOnClickListener(v -> {
             btnSaveReminder.setEnabled(false);
