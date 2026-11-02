@@ -1,6 +1,0 @@
-{
- "project": "meduminderv-1",
- "decided_at": "2026-10-07T16:34:45Z",
- "note": "Option A: delete these test medicines completely (medications, schedules, logs, notifications, catalog entry). No private copy. Matched by name.",
- "names": ["Nama Obat Cair", "Tes124", "Tes2g1x", "Tes3g4x", "Tes3g5x", "Tes4g1x", "Tes4g3x", "Tes4g4x", "Tes4g5x", "Tespls3g"]
-}
