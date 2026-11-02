@@ -6,6 +6,12 @@
     android:layout_height="match_parent"
     tools:context=".Edit.EditAppointmentFragment">
 
+    <!-- bisa digulir supaya tombol Simpan tetap terjangkau saat keyboard terbuka -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="none">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -237,5 +243,7 @@
         </LinearLayout>
 
     </LinearLayout>
+
+    </ScrollView>
 
 </FrameLayout>

@@ -80,6 +80,7 @@ public class AlarmSchedulerHelper {
 
     private static void scheduleAllInternal(Context context, String scheduleId, String namaObat,
                                             List<String> timesOfDay, long endMillis) {
+        AlarmOwner.rememberMedicine(context, scheduleId, timesOfDay);
         SimpleDateFormat timeFormat = new SimpleDateFormat(TIME_FORMAT, Locale.getDefault());
 
         for (String timeStr : timesOfDay) {
@@ -107,6 +108,7 @@ public class AlarmSchedulerHelper {
         Intent intent = new Intent(context, MedicationPreReminderNotifReceiver.class);
         intent.putExtra("schedule_id", scheduleId);
         intent.putExtra("nama_obat", namaObat);
+        AlarmOwner.stamp(intent);
         PendingIntent pi = PendingIntent.getBroadcast(context, (scheduleId + "_pre_" + occurrenceKey).hashCode(), intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, preTrigger, pi);
@@ -138,6 +140,7 @@ public class AlarmSchedulerHelper {
         Intent intent = new Intent(context, MedicationMissedNotifReceiver.class);
         intent.putExtra("schedule_id", scheduleId);
         intent.putExtra("nama_obat", namaObat);
+        AlarmOwner.stamp(intent);
         intent.putExtra("scheduled_at", logScheduledAtMillis);
 
         PendingIntent pi = PendingIntent.getBroadcast(context, missedRequestCode(scheduleId, occurrenceKey, mainTrigger), intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
@@ -178,6 +181,7 @@ public class AlarmSchedulerHelper {
         Intent intent = new Intent(context, MedicationAlarmReceiver.class);
         intent.putExtra("schedule_id", logScheduleId);
         intent.putExtra("nama_obat", namaObat);
+        AlarmOwner.stamp(intent);
         intent.putExtra("scheduled_at", logScheduledAtMillis);
         intent.putExtra("trigger_at", triggerMillis);
         intent.putExtra("type", type);
@@ -203,6 +207,7 @@ public class AlarmSchedulerHelper {
 
     public static void scheduleAppointment(Context context, String appointmentId, String title, long triggerMillis) {
         if (triggerMillis <= System.currentTimeMillis()) return;
+        AlarmOwner.rememberAppointment(context, appointmentId);
         scheduleSingleAlarm(context, appointmentId, appointmentId, title, triggerMillis, triggerMillis, "0", "appointment");
     }
 
@@ -265,6 +270,7 @@ public class AlarmSchedulerHelper {
         Intent intent = new Intent(context, MedicationMissedNotifReceiver.class);
         intent.putExtra("schedule_id", scheduleId);
         intent.putExtra("nama_obat", namaObat);
+        AlarmOwner.stamp(intent);
         intent.putExtra("scheduled_at", originalScheduledAt); // tetap jam asli -> id log tetap sama
         PendingIntent pi = PendingIntent.getBroadcast(context, missedRequestCode(scheduleId, occurrenceKey, originalScheduledAt), intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
@@ -468,6 +474,8 @@ public class AlarmSchedulerHelper {
                 .addOnSuccessListener(doc -> {
                     MedicationSchedules schedule = doc.toObject(MedicationSchedules.class);
                     if (schedule == null) return;
+                    // jadwal akun lain (HP dipakai bergantian): jangan dipasang lagi untuk besok
+                    if (!AlarmOwner.isCurrentUser(schedule.getUsers_id())) return;
                     if (schedule.getIs_active() == null || !schedule.getIs_active()) {
                         Log.d("ALARM", "rescheduleNextDay dilewati, jadwal sudah tidak aktif. scheduleId=" + scheduleId);
                         return;

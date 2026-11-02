@@ -29,6 +29,8 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        // alarm milik akun lain (atau belum ada yang login) di HP ini: abaikan
+        if (!AlarmOwner.allows(intent)) return;
         String scheduleId = intent.getStringExtra("schedule_id");
         String namaObat = intent.getStringExtra("nama_obat");
         long scheduledAtMillis = intent.getLongExtra("scheduled_at", 0L);
@@ -67,7 +69,7 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
 
                     String consumerUid = doc.getString("users_id");
 
-                    if (consumerUid == null) {
+                    if (consumerUid == null || !AlarmOwner.isCurrentUser(consumerUid)) {
                         pendingResult.finish();
                         return;
                     }

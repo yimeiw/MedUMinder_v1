@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">MedUMinder</string>
     <string name="sign_up_here"><u>Sign Up here!</u></string>
-    <string name="reset_password">Forgot password?</string>
+    <string name="reset_password"><u>Forgot password?</u></string>
     <string name="login_here"><u>Login here!</u></string>
     <string name="title_activity_login">LoginActivity</string>
     <string name="prompt_email">Email</string>
@@ -708,4 +708,30 @@
     <string name="push_channel_penting_desc">Missed schedules, caregiver reminders, invitations and refill reminders</string>
     <string name="push_channel_aktivitas">Consumer activity</string>
     <string name="push_channel_aktivitas_desc">When a consumer takes their medicine or attends an appointment</string>
+    <string name="akun_sudah_dihapus">This account was deleted. Please sign up again to use MedUMinder.</string>
+    <string name="konfirmasi_identitas_title">Confirm it\'s you to delete your account</string>
+    <string name="konfirmasi_google_hapus_msg">Please choose your Google account once more. Google may show \"Signing you in\": this only checks that it\'s you. You will not be signed in again. Your account will then be deleted.</string>
+    <string name="lanjutkan_btn">Continue</string>
+    <string name="pilih_akun_google_sama">Please choose the same Google account you use for MedUMinder.</string>
+    <string name="hapus_akun_belum_selesai">We couldn\'t finish deleting your account. Please check your internet and try again.</string>
+    <string name="nama_gagal_disimpan">Your name couldn\'t be saved. Please try again.</string>
+    <string name="role_berhasil_diganti">You are now using the %1$s role.</string>
+    <string name="role_gagal_diganti">The role couldn\'t be changed. Please try again.</string>
+    <string name="simpan_profil_btn">Save</string>
+    <string name="menghapus_akun_loading">Deleting your account…</string>
+    <string name="home_gagal_dimuat">We couldn\'t load your schedule. Please check your internet.</string>
+    <string name="buang_perubahan_title">Discard changes?</string>
+    <string name="buang_perubahan_msg">Your changes have not been saved yet.</string>
+    <string name="buang_btn">Discard</string>
+    <string name="lanjut_edit_btn">Keep editing</string>
+    <string name="riwayat_gagal_dimuat">We couldn\'t load your history. Please check your internet.</string>
+    <string name="coba_lagi_btn">Try again</string>
+    <string name="salin_btn">Copy</string>
+    <string name="email_disalin">Email copied</string>
+    <string name="email_terkirim_cek_spam">We sent an email. If you do not see it, check your Spam folder.</string>
+    <string name="kirim_ulang">Send again</string>
+    <string name="kirim_ulang_tunggu">Send again (%1$d)</string>
+    <string name="update_dibutuhkan_title">Update required</string>
+    <string name="update_dibutuhkan_msg">A new version of MedUMinder is available. Please update the app to keep using it.</string>
+    <string name="update_btn">Update</string>
 </resources>

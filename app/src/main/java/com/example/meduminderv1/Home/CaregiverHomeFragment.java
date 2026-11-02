@@ -77,6 +77,8 @@ public class CaregiverHomeFragment extends Fragment {
     ImageButton btnSideNav, btnNotif;
     LinearLayout haveSchedule, noSchedule,  groupGeneralMenu, navRiwayat, navStatistik;
     RecyclerView rvTodaySchedule, rvDrawerConsumer;
+    // spinner hanya saat muatan pertama halaman ini
+    private com.example.meduminderv1.Util.SectionLoader nextLoader, todayLoader;
     DrawerConsumerAdapter drawerConsumerAdapter;
     MaterialButton btnRemindConsumer;
     ProgressView adherenceRing;
@@ -155,6 +157,13 @@ public class CaregiverHomeFragment extends Fragment {
         setupSideNavInteractions(view);
 
         rvTodaySchedule.setLayoutManager(new LinearLayoutManager(requireContext()));
+        nextLoader = new com.example.meduminderv1.Util.SectionLoader(
+                view.findViewById(R.id.nextLoading), haveSchedule, noSchedule);
+        todayLoader = new com.example.meduminderv1.Util.SectionLoader(
+                view.findViewById(R.id.todayLoading), rvTodaySchedule, emptyTodaySchedule, btnLihatSemua);
+        // data baru dimuat setelah daftar consumer siap -> spinner dari awal
+        nextLoader.startFirstLoad(this::showNextError);
+        todayLoader.startFirstLoad(this::showTodayError);
         btnLihatSemua.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
             bundle.putLong("selected_date", System.currentTimeMillis());
@@ -168,6 +177,10 @@ public class CaregiverHomeFragment extends Fragment {
         consumerPicker = new ConsumerPickerHelper( pickerRoot, requireContext(), uid -> {
             if (uid == null){
                 pickerRoot.setOnClickListener(v ->  NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
+                // belum punya consumer: tidak ada yang dimuat -> tampilkan keadaan kosong biasa
+                loadNextSchedule(null);
+                todayLoader.done();
+                showTodayEmpty();
                 return;
             } targetUid = uid;
             selectedConsumerUid(uid);
@@ -243,6 +256,7 @@ public class CaregiverHomeFragment extends Fragment {
             nextScheduleListener = null;
         } if (consumerUid == null || consumerUid.isEmpty()){
             if (!isAdded()) return;
+            nextLoader.done();
             haveSchedule.setVisibility(View.GONE);
             noSchedule.setVisibility(View.VISIBLE);
             nextScheduleId = null;
@@ -260,6 +274,11 @@ public class CaregiverHomeFragment extends Fragment {
                     //query error
                     if (error != null){
                         Log.e("NEXT_SCHEDULE", "Gagal mengambil jadwal berikutnya", error);
+                        if (nextLoader.isLoading()) {
+                            nextLoader.failed();
+                            showNextError();
+                            return;
+                        }
                         if (!isAdded()) return;
                         haveSchedule.setVisibility(View.GONE);
                         noSchedule.setVisibility(View.VISIBLE);
@@ -268,7 +287,8 @@ public class CaregiverHomeFragment extends Fragment {
                         nextScheduleMedName = null;
                         btnRemindConsumer.setOnClickListener(null);
                         return;
-                    } MedicationLog targetLog = null;
+                    } nextLoader.done();
+                    MedicationLog targetLog = null;
                     //cari schedule future pertama yg bnr bnr akan datang
                     long nowMs = System.currentTimeMillis();
                     for (DocumentSnapshot doc : query.getDocuments()){
@@ -321,7 +341,13 @@ public class CaregiverHomeFragment extends Fragment {
                     } resolveMedName(nextScheduleId, (medName, stock, medType)-> {
                         if (!isAdded()) return;
                         nextScheduleMedName = medName;
-                        if (medName == null || medName.isEmpty()){
+                        if (medName == null) { // jadwal sudah dihapus: jangan tampilkan lagi
+                            haveSchedule.setVisibility(View.GONE);
+                            noSchedule.setVisibility(View.VISIBLE);
+                            btnRemindConsumer.setOnClickListener(null);
+                            return;
+                        }
+                        if (medName.isEmpty()){
                             tvtitleCard.setText("-");
                         } else {
                             tvtitleCard.setText(medName);
@@ -339,8 +365,8 @@ public class CaregiverHomeFragment extends Fragment {
         Calendar today = Calendar.getInstance();
         Calendar tomorrow = (Calendar) today.clone();
         tomorrow.add(Calendar.DAY_OF_YEAR, 1);
-        Locale localeId = new Locale("id", "ID");
-        SimpleDateFormat sdfDay = new SimpleDateFormat("EEEE", localeId);
+        Locale appLocale = getResources().getConfiguration().getLocales().get(0);
+        SimpleDateFormat sdfDay = new SimpleDateFormat("EEEE", appLocale);
 
         if (isSameDay(target, today)) return getString(R.string.hari_ini);
         if (isSameDay(target, tomorrow)) return getString(R.string.besok);
@@ -410,6 +436,8 @@ public class CaregiverHomeFragment extends Fragment {
         db.collection("medication_schedules").document(schedulesId).get()
                 .addOnSuccessListener(scheduleSnap -> {
                     MedicationSchedules schedule = scheduleSnap.toObject(MedicationSchedules.class);
+                    // jadwal yang sudah dihapus tidak ditampilkan lagi
+                    if (schedule != null && schedule.getDeleted_at() != null) { callback.onResolved(null, 0, null); return; }
                     String medId = schedule != null ? schedule.getMedication_id() : null;
                     if (medId == null || medId.isEmpty()) { callback.onResolved(null, 0, null); return; }
                     db.collection("medications").document(medId).get()
@@ -470,7 +498,12 @@ public class CaregiverHomeFragment extends Fragment {
         todayScheduleListener = db.collection("medication_logs").whereEqualTo("users_id", consumerUid)
                 .whereGreaterThanOrEqualTo("scheduled_at", startOfDay)
                 .whereLessThan("scheduled_at", startOfTomorrow).addSnapshotListener((medQuery, error) -> {
-                    if (!isAdded() || error != null || medQuery == null) return;
+                    if (!isAdded()) return;
+                    if (error != null || medQuery == null) {
+                        Log.e("TODAY_SCHEDULE", "Gagal mengambil jadwal hari ini", error);
+                        if (todayLoader.isLoading()) { todayLoader.failed(); showTodayError(); }
+                        return;
+                    }
                     List<LogItem> combined = new ArrayList<>();
                     List<DocumentSnapshot> medDocs = medQuery.getDocuments();
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
@@ -522,7 +555,9 @@ public class CaregiverHomeFragment extends Fragment {
                     if (!isAdded()) return;
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                     for (DocumentSnapshot doc : apptQuery.getDocuments()) {
-                        Appointment appt = doc.toObject(Appointment.class);
+                        // ESTIMATE: appointment baru (created_at = jam server) belum dibalas server -> pakai perkiraan,
+                        // bukan null (null dianggap paling lama -> appointment baru jatuh ke urutan paling bawah)
+                        Appointment appt = doc.toObject(Appointment.class, DocumentSnapshot.ServerTimestampBehavior.ESTIMATE);
                         if (appt == null) continue;
                         if (appt.getDeleted_at() != null) continue;
                         combined.add(new LogItem("appointment", appt.getTitle(),
@@ -532,20 +567,46 @@ public class CaregiverHomeFragment extends Fragment {
                                 appt.getCreated_at() != null ? appt.getCreated_at().toDate().getTime() : 0));
                     }
                     Collections.sort(combined, (a, b) -> Long.compare(b.getCreatedAtMillis(), a.getCreatedAtMillis()));
-                    List<LogItem> displayList = combined.size() > 3 ? combined.subList(0,3) : combined;
+                    // dulu dipotong 3 item -> jadwal ke-4 dst tidak pernah muncul; sekarang semua jadwal hari ini tampil
+                    List<LogItem> displayList = combined;
                     TodayScheduleAdapter adapter = new TodayScheduleAdapter(displayList, requireContext());
                     adapter.setOnItemClickListener(this::navigateToReminder);
                     rvTodaySchedule.setAdapter(adapter);
+                    todayLoader.done();
                     if (combined.isEmpty()){
-                        emptyTodaySchedule.setVisibility(View.VISIBLE);
-                        rvTodaySchedule.setVisibility(View.GONE);
-                        btnLihatSemua.setVisibility(View.GONE);
+                        showTodayEmpty();
                     } else {
                         emptyTodaySchedule.setVisibility(View.GONE);
                         rvTodaySchedule.setVisibility(View.VISIBLE);
                         btnLihatSemua.setVisibility(View.VISIBLE);
                     }
+                }).addOnFailureListener(e -> {
+                    Log.e("TODAY_SCHEDULE", "Gagal mengambil appointment hari ini", e);
+                    if (isAdded() && todayLoader.isLoading()) { todayLoader.failed(); showTodayError(); }
                 });
+    }
+
+    private void showTodayEmpty() {
+        emptyTodaySchedule.setText(R.string.tidak_ada_jadwal_hari_ini);
+        emptyTodaySchedule.setVisibility(View.VISIBLE);
+        rvTodaySchedule.setVisibility(View.GONE);
+        btnLihatSemua.setVisibility(View.GONE);
+    }
+
+    /** Gagal / terlalu lama memuat: pesan singkat, bukan spinner selamanya. */
+    private void showTodayError() {
+        if (!isAdded()) return;
+        rvTodaySchedule.setVisibility(View.GONE);
+        btnLihatSemua.setVisibility(View.GONE);
+        emptyTodaySchedule.setText(R.string.home_gagal_dimuat);
+        emptyTodaySchedule.setVisibility(View.VISIBLE);
+    }
+
+    private void showNextError() {
+        if (!isAdded()) return;
+        // kartu tidak menampilkan "belum ada jadwal" (bisa salah); pesan error ada di bagian Jadwal Hari Ini
+        haveSchedule.setVisibility(View.GONE);
+        noSchedule.setVisibility(View.GONE);
     }
 
     private void navigateToReminder(LogItem item) {
@@ -646,6 +707,8 @@ public class CaregiverHomeFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (nextLoader != null) nextLoader.release();
+        if (todayLoader != null) todayLoader.release();
         if (nextScheduleListener != null) nextScheduleListener.remove();
         if (todayScheduleListener != null) todayScheduleListener.remove();
     }

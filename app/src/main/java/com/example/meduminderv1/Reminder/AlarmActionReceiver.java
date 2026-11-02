@@ -27,6 +27,8 @@ public class AlarmActionReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        // alarm milik akun lain (atau belum ada yang login) di HP ini: abaikan
+        if (!AlarmOwner.allows(intent)) return;
 
         if (intent == null) {
             Log.e(TAG, "Intent null");

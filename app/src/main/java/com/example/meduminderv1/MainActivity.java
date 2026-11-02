@@ -58,22 +58,12 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
 
     BottomNavigationView bottomNav;
     private UserRole pendingOpenNotifRole = null;
-    private static final java.util.Set<Integer> HIDE_BOTTOM_NAV = new java.util.HashSet<>(java.util.Arrays.asList(
-            R.id.notificationFragment,
-            R.id.profileFragment,
-            R.id.appointmentReminderFragment,
-            R.id.medicineReminderFragment,
-            R.id.forgotPassFragment,
-            R.id.invitationFragment,
-            R.id.statistikFragment,
-            R.id.logFragment,
-            R.id.reminderFragment,
-            R.id.notificationSettingsFragment,
-            R.id.relationListFragment,
-            R.id.editProfileFragment,
-            R.id.languageFragment,
-            R.id.notificationDetailFragment,
-            R.id.reminderStockFragment
+    // navbar HANYA tampil di tab utama; halaman lain (termasuk halaman baru nanti) otomatis tanpa navbar.
+    // Profil sengaja tidak di sini: punya panah kembali sendiri.
+    private static final java.util.Set<Integer> SHOW_BOTTOM_NAV = new java.util.HashSet<>(java.util.Arrays.asList(
+            R.id.homeFragment,
+            R.id.caregiverHomeFragment,
+            R.id.scheduleFragment
     ));
     NavController navController;
     SessionManager sessionManager;
@@ -96,6 +86,8 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
             @Override
             public void onFragmentViewCreated(@NonNull FragmentManager fm, @NonNull Fragment f, @NonNull View v, @Nullable Bundle savedInstanceState) {
                 PressFeedback.applyTree(v);
+                // panah kembali: area tekan minimal 48x48dp (tampilan tetap)
+                com.example.meduminderv1.Util.TouchTarget.ensureMin(v.findViewById(R.id.btnBack));
             }
         }, true);
         db = FirebaseFirestore.getInstance();
@@ -109,6 +101,7 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
                 .start();
 
         bottomNav = findViewById(R.id.bottomNav);
+        setupBottomInsets();
 
         NavHostFragment navHostFragment =
                 (NavHostFragment) getSupportFragmentManager()
@@ -121,10 +114,12 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         navController.addOnDestinationChangedListener(
                 (navController1, navDestination, bundle) -> {
                     int destId = navDestination.getId();
-                    if (HIDE_BOTTOM_NAV.contains(destId)){
+                    if (!SHOW_BOTTOM_NAV.contains(destId)){
                         bottomNav.setVisibility(View.GONE);
+                        androidx.core.view.ViewCompat.requestApplyInsets(findViewById(R.id.main));
                     } else {
                         bottomNav.setVisibility(View.VISIBLE);
+                        androidx.core.view.ViewCompat.requestApplyInsets(findViewById(R.id.main));
                         if (bottomNav.getMenu().findItem(destId) != null){
                             bottomNav.setOnItemSelectedListener(null);
                             bottomNav.setSelectedItemId(destId);
@@ -141,6 +136,8 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
             }
         }
         if (user != null) {
+            // sisa alarm akun lain yang pernah login di HP ini dibatalkan
+            com.example.meduminderv1.Reminder.AlarmOwner.cancelOtherUsers(getApplicationContext(), user.getUid());
             UserTimeZone.syncOwn(user.getUid());
             new LogGenerator().generateForAllActiveSchedules(user.getUid());
             StockChecker.checkAllForUser(getApplicationContext(), user.getUid(), null);
@@ -182,6 +179,26 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         StockCheckWorker.schedule(this);
     }
 
+    /**
+     * Android 15+ menggambar app sampai ke balik garis gestur bawah. Navbar menjaga jaraknya sendiri;
+     * saat navbar disembunyikan, isi halaman diberi jarak bawah (garis gestur / keyboard) supaya tidak tertutup.
+     * Android 14 ke bawah: sistem sudah mengatur ini, jadi tidak diubah.
+     */
+    private void setupBottomInsets() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return;
+        View root = findViewById(R.id.main);
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            int bottom = 0;
+            if (bottomNav.getVisibility() != View.VISIBLE) {
+                bottom = Math.max(
+                        insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars()).bottom,
+                        insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.ime()).bottom);
+            }
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), bottom);
+            return insets;
+        });
+    }
+
     private long computeInitialDelayToMidninght() {
         Calendar now = Calendar.getInstance();
         Calendar nextMidnight = (Calendar) now.clone();
@@ -209,6 +226,7 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
     protected void onResume() {
         super.onResume();
         checkAndRescheduleIfPermissionNewlyGranted();
+        com.example.meduminderv1.Util.UpdateGate.check(this); // versi terlalu lama -> minta update
     }
 
     private void checkAndRescheduleIfPermissionNewlyGranted() {

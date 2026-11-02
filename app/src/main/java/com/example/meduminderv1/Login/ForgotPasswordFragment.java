@@ -33,6 +33,11 @@ public class ForgotPasswordFragment extends Fragment {
     EditText emailInput;
     ImageButton btnBack;
     MaterialButton btnKirim;
+    private static final long RESEND_WAIT_MS = 60_000L;
+    // static: tetap berlaku walau layar dibuat ulang (mis. diputar), supaya tidak bisa kirim beruntun
+    private static long resendAllowedAt = 0L;
+    private final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable tick = this::updateSendButton;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -57,6 +62,7 @@ public class ForgotPasswordFragment extends Fragment {
         btnKirim.setOnClickListener(v -> {
             resetPassword();
         });
+        updateSendButton();
 
         return view;
     }
@@ -71,18 +77,20 @@ public class ForgotPasswordFragment extends Fragment {
             emailInput.setError(getString(R.string.format_email_tidak_valid));
             emailInput.requestFocus();
             return;
-        } btnKirim.setEnabled(false);
+        } if (System.currentTimeMillis() < resendAllowedAt) return; // masih menunggu
+        btnKirim.setEnabled(false);
 
         LoadingOverlay.show(ForgotPasswordFragment.this);
         authManager.resetPassword(email, new AuthCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
                 LoadingOverlay.hide(ForgotPasswordFragment.this);
+                resendAllowedAt = System.currentTimeMillis() + RESEND_WAIT_MS;
                 if (!isAdded()) return;
-                btnKirim.setEnabled(true);
+                updateSendButton();
                 MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
                 builder.setTitle(getString(R.string.email_berhasil_dikirim))
-                        .setMessage(getString(R.string.silahkan_buka_email_reset_password))
+                        .setMessage(getString(R.string.email_terkirim_cek_spam))
                         .setPositiveButton(getString(R.string.buka_email), (dialog, which) -> {
                             EmailApp.open(requireContext());
                         }).setNegativeButton(getString(R.string.tutup_btn), null);
@@ -99,9 +107,30 @@ public class ForgotPasswordFragment extends Fragment {
             public void onFailure(String message) {
                 LoadingOverlay.hide(ForgotPasswordFragment.this);
                 if (!isAdded()) return;
-                btnKirim.setEnabled(true);
+                updateSendButton();
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    /** Setelah terkirim: tombol jadi "Kirim ulang (60)" lalu hitung mundur, baru bisa ditekan lagi. */
+    private void updateSendButton() {
+        handler.removeCallbacks(tick);
+        if (btnKirim == null || !isAdded()) return;
+        long left = resendAllowedAt - System.currentTimeMillis();
+        if (left > 0) {
+            btnKirim.setEnabled(false);
+            btnKirim.setText(getString(R.string.kirim_ulang_tunggu, (int) Math.ceil(left / 1000.0)));
+            handler.postDelayed(tick, 1000);
+        } else {
+            btnKirim.setEnabled(true);
+            btnKirim.setText(resendAllowedAt > 0 ? getString(R.string.kirim_ulang) : getString(R.string.kirim));
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        handler.removeCallbacks(tick);
     }
 }

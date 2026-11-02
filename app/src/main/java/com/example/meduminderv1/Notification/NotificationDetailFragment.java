@@ -228,27 +228,10 @@ public class NotificationDetailFragment extends Fragment {
     }
 
     private Locale getAppLocale() {
-        String language = AppCompatDelegate
-                .getApplicationLocales()
-                .toLanguageTags();
-
-        if ("id".equals(language)) {
-            return new Locale("id", "ID");
-        } else if ("zh".equals(language)) {
-            return Locale.SIMPLIFIED_CHINESE;
-        } else if ("en".equals(language)) {
-            return Locale.ENGLISH;
-        }
-
-        String deviceLanguage = Locale.getDefault().getLanguage();
-
-        if ("in".equals(deviceLanguage) || "id".equals(deviceLanguage)) {
-            return new Locale("id", "ID");
-        } else if ("zh".equals(deviceLanguage)) {
-            return Locale.SIMPLIFIED_CHINESE;
-        } else {
-            return Locale.ENGLISH;
-        }
+        String language = com.example.meduminderv1.Util.AppLanguage.current(requireContext());
+        if ("id".equals(language)) return new Locale("id", "ID");
+        if ("zh".equals(language)) return Locale.SIMPLIFIED_CHINESE;
+        return Locale.ENGLISH;
     }
 
     /** Waktu lengkap, mis. "Senin, 29 Sep 2026 • 08:00". */

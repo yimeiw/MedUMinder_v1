@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <item name="app_loading_overlay" type="id"/>
+    <item name="touch_target_expanded" type="id"/>
 </resources>

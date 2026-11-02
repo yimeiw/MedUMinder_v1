@@ -216,4 +216,10 @@ public class LoginActivity extends AppCompatActivity {
             scroll.smoothScrollBy(0, rect.bottom + margin - visibleBottom);
         }
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        com.example.meduminderv1.Util.UpdateGate.check(this); // versi terlalu lama -> minta update
+    }
 }

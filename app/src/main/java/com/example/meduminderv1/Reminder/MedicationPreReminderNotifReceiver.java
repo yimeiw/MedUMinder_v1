@@ -16,6 +16,8 @@ import java.util.Map;
 public class MedicationPreReminderNotifReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
+        // alarm milik akun lain (atau belum ada yang login) di HP ini: abaikan
+        if (!AlarmOwner.allows(intent)) return;
         String scheduleId = intent.getStringExtra("schedule_id");
         String namaObat = intent.getStringExtra("nama_obat");
         if (scheduleId == null) return;
@@ -25,7 +27,7 @@ public class MedicationPreReminderNotifReceiver extends BroadcastReceiver {
         db.collection("medication_schedules").document(scheduleId)
                 .get().addOnSuccessListener(doc -> {
                     String consumerUid = doc.getString("users_id");
-                    if (consumerUid == null) return;
+                    if (consumerUid == null || !AlarmOwner.isCurrentUser(consumerUid)) return;
                     Map<String, Object> notif = new HashMap<>();
                     notif.put("receiver_uid", consumerUid);
                     notif.put("reference_id", scheduleId);

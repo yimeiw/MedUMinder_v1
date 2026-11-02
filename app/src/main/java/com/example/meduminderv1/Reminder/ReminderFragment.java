@@ -96,6 +96,7 @@ public class ReminderFragment extends Fragment {
     private boolean isCaregiverViewing = false;
     private String targetConsumerUid;
     private String source = "";
+    private com.google.firebase.firestore.ListenerRegistration itemListener, logsListener;
 
 
     @Override
@@ -170,11 +171,8 @@ public class ReminderFragment extends Fragment {
             timeReminderAppoint.setText(formattedTime);
             namaObatConfirmReminder.setText(namaObat);
             updateStatusUIFromRaw(currentStatus);
-            if (isAppointment) {
-                refreshLiveStatusAppoint();
-            } else {
-                refreshLiveStatus();
-            }
+            // data di halaman ini selalu "live": setelah edit / hapus langsung ikut berubah
+            startLiveUpdates();
         } if (isCaregiverViewing){
             btnIsTaken.setText(getString(R.string.remind_consumer));
             btnTundaReminder.setVisibility(View.GONE);
@@ -267,6 +265,8 @@ public class ReminderFragment extends Fragment {
     }
 
     private void deleteSingleLogEntry() {
+        // halaman ini sendiri yang menghapus & menutup halaman: listener jangan ikut menutup
+        stopLiveUpdates();
         if (!isAdded()) return;
         if (scheduleId == null || scheduledAt <= 0L) {
             Toast.makeText(requireContext(), getString(R.string.schedule_id_tidak_ditemukan), Toast.LENGTH_SHORT).show();
@@ -413,6 +413,8 @@ public class ReminderFragment extends Fragment {
     }
 
     private void deleteMedicationSchedule() {
+        // halaman ini sendiri yang menghapus & menutup halaman: listener jangan ikut menutup
+        stopLiveUpdates();
         if (!isAdded()) return;
         if (scheduleId == null || scheduleId.isEmpty()) {
             Toast.makeText(requireContext(), getString(R.string.schedule_id_tidak_ditemukan), Toast.LENGTH_SHORT).show();
@@ -460,6 +462,8 @@ public class ReminderFragment extends Fragment {
                 });
     }
     private void deleteAppointment() {
+        // halaman ini sendiri yang menghapus & menutup halaman: listener jangan ikut menutup
+        stopLiveUpdates();
         if (!isAdded()) return;
         if (scheduleId == null || scheduleId.isEmpty()) {
             Toast.makeText(requireContext(), getString(R.string.appointment_id_tidak_ditemukan), Toast.LENGTH_SHORT).show();
@@ -627,28 +631,105 @@ public class ReminderFragment extends Fragment {
         });
     }
 
-    private void refreshLiveStatus() {
-        if (!isAdded()) return;
-        if (scheduleId == null || scheduleId.isEmpty() || scheduledAt <= 0L) return;
-
-        LogLookup.findLogId(scheduleId, scheduledAt, logId -> db.collection("medication_logs")
-                .document(logId)
-                .get()
-                .addOnSuccessListener(document -> {
-                    if (!isAdded() || document == null || !document.exists()) return;
-                    MedicationLog log = document.toObject(MedicationLog.class);
-                    if (log != null) {
-                        updateStatusUI(log.getStatusBasedOnDate());
-                        // FIX: kalau sudah di-snooze, tampilkan jam barunya
-                        if (log.getEffectiveTime() != null) {
-                            timeReminder.setText(com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(new SimpleDateFormat("HH:mm", Locale.getDefault())
-                                    .format(log.getEffectiveTime().toDate())));
+    private void startLiveUpdates() {
+        stopLiveUpdates();
+        if (scheduleId == null || scheduleId.isEmpty()) return;
+        if (isAppointment) {
+            itemListener = db.collection("appointments").document(scheduleId)
+                    .addSnapshotListener((doc, error) -> {
+                        if (!isAdded() || error != null || doc == null) return;
+                        Appointment appointment = doc.toObject(Appointment.class);
+                        if (!doc.exists() || appointment == null || appointment.getDeleted_at() != null) {
+                            closeBecauseDeleted();
+                            return;
+                        }
+                        if (appointment.getTitle() != null) {
+                            namaObat = appointment.getTitle();
+                            namaObatConfirmReminder.setText(namaObat);
+                        }
+                        if (appointment.getAppointment_at() != null) {
+                            setScheduledAt(appointment.getAppointment_at().toDate().getTime());
+                            Date shown = appointment.getDisplayTime() != null
+                                    ? appointment.getDisplayTime().toDate() : appointment.getAppointment_at().toDate();
+                            dateReminderAppoint.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(shown));
+                            timeReminderAppoint.setText(com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(
+                                    new SimpleDateFormat("HH:mm", Locale.getDefault()).format(shown)));
+                        }
+                        updateStatusUI(appointment.getStatusBasedOnDate());
+                        locationReminderAppoint.setText(appointment.getAddress());
+                    });
+            return;
+        }
+        itemListener = db.collection("medication_schedules").document(scheduleId)
+                .addSnapshotListener((doc, error) -> {
+                    if (!isAdded() || error != null || doc == null) return;
+                    MedicationSchedules schedule = doc.toObject(MedicationSchedules.class);
+                    if (!doc.exists() || schedule == null || schedule.getDeleted_at() != null) {
+                        closeBecauseDeleted();
+                        return;
+                    }
+                    if (schedule.getMedication_id() != null) {
+                        new com.example.meduminderv1.Repo.MedicationRepo(requireContext())
+                                .resolveMedicationName(schedule.getMedication_id(), name -> {
+                                    if (!isAdded() || name == null) return;
+                                    namaObat = name;
+                                    namaObatConfirmReminder.setText(name);
+                                });
+                    }
+                });
+        // semua log jadwal ini (filter 1 field saja -> tidak butuh index tambahan)
+        logsListener = db.collection("medication_logs").whereEqualTo("medication_schedules_id", scheduleId)
+                .addSnapshotListener((query, error) -> {
+                    if (!isAdded() || error != null || query == null) return;
+                    MedicationLog exact = null, nextUpcoming = null;
+                    long now = System.currentTimeMillis();
+                    for (DocumentSnapshot d : query.getDocuments()) {
+                        MedicationLog log = d.toObject(MedicationLog.class);
+                        if (log == null || log.getScheduled_at() == null) continue;
+                        long at = log.getScheduled_at().toDate().getTime();
+                        if (at == scheduledAt) exact = log;
+                        if (log.getStatusBasedOnDate() == LogStatus.AKAN_DATANG && at >= now - AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS
+                                && (nextUpcoming == null || log.getScheduled_at().compareTo(nextUpcoming.getScheduled_at()) < 0)) {
+                            nextUpcoming = log;
                         }
                     }
-                })
-                .addOnFailureListener(e ->
-                        Log.e("REMINDER_FRAGMENT", "Gagal ambil status log terbaru untuk logId=" + logId, e)
-                ));
+                    // jam minum diubah -> log lama diganti: tampilkan jadwal berikutnya yang baru
+                    MedicationLog shown = exact != null ? exact : nextUpcoming;
+                    if (shown == null) return;
+                    setScheduledAt(shown.getScheduled_at().toDate().getTime());
+                    dateReminder.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(shown.getScheduled_at().toDate()));
+                    Timestamp eff = shown.getEffectiveTime() != null ? shown.getEffectiveTime() : shown.getScheduled_at();
+                    timeReminder.setText(com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(
+                            new SimpleDateFormat("HH:mm", Locale.getDefault()).format(eff.toDate())));
+                    updateStatusUI(shown.getStatusBasedOnDate());
+                });
+    }
+
+    private void setScheduledAt(long millis) {
+        scheduledAt = millis;
+        // simpan juga ke argumen, supaya kalau halaman dibuat ulang tetap memakai jam terbaru
+        if (getArguments() != null) getArguments().putLong("scheduled_at", millis);
+    }
+
+    private void stopLiveUpdates() {
+        if (itemListener != null) { itemListener.remove(); itemListener = null; }
+        if (logsListener != null) { logsListener.remove(); logsListener = null; }
+    }
+
+    /** Jadwal ini sudah dihapus (di halaman lain / HP lain): tutup halaman ini. */
+    private void closeBecauseDeleted() {
+        stopLiveUpdates();
+        if (!isResumed()) return;
+        androidx.navigation.NavController nav = NavHostFragment.findNavController(this);
+        if (nav.getCurrentDestination() != null && nav.getCurrentDestination().getId() == R.id.reminderFragment) {
+            nav.navigateUp();
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        stopLiveUpdates();
     }
 
     private void markAsTaken() {
@@ -880,30 +961,6 @@ public class ReminderFragment extends Fragment {
                 });
     }
 
-    private void refreshLiveStatusAppoint() {
-        if (!isAdded()) return;
-        if (scheduleId == null || scheduleId.isEmpty()) return;
-
-        db.collection("appointments")
-                .document(scheduleId)
-                .get()
-                .addOnSuccessListener(document -> {
-                    if (!isAdded() || document == null) return;
-//                    if (!document.exists()) {
-//                        updateStatusUI(resolveStatus(currentStatus));
-//                        return;
-//                    }
-                    Appointment appointment = document.toObject(Appointment.class);
-                    if (appointment != null) {
-                        updateStatusUI(appointment.getStatusBasedOnDate());
-                        locationReminderAppoint.setText(appointment.getAddress());
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("REMINDER_FRAGMENT", "Gagal ambil status appointment untuk id=" + scheduleId, e);
-                    if (!isAdded()) return;
-                });
-    }
     private void updateStatusUI(LogStatus logStatus) {
         currentStatus = logStatus.name();
 

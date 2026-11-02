@@ -89,7 +89,7 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCancel"
                 android:text="@string/cancel"
-                android:textColor="?attr/colorPrimary"
+                android:textColor="@color/black"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -109,7 +109,7 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDeleteAcc"
                 android:text="@string/delete"
-                android:textColor="?attr/colorPrimary"
+                android:textColor="?attr/colorOnSurface"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"

@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Edit;
 
+import com.example.meduminderv1.Util.DisabledField;
+
 import com.example.meduminderv1.Util.LoadingOverlay;
 import com.example.meduminderv1.Util.UserTimeZone;
 
@@ -91,6 +93,9 @@ public class EditMedicineFragment extends Fragment {
     private long originalEndMillis = 0;   // 0 = tanpa end date
     private String originalStock = "";
     private String medType = "";
+    // dibuka dari pengingat isi ulang (hanya medication_id): yang boleh diubah cuma stok
+    private boolean refillMode = false;
+    private View cardDate;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -135,6 +140,9 @@ public class EditMedicineFragment extends Fragment {
             notificationId = bundle.getString("notification_id");
         }
 
+        refillMode = (scheduleId == null || scheduleId.isEmpty())
+                && medicationIdArg != null && !medicationIdArg.isEmpty();
+
         if (scheduleId != null && !scheduleId.isEmpty()) {
             loadExistingData();
         } else if (medicationIdArg != null && !medicationIdArg.isEmpty()) {
@@ -143,10 +151,20 @@ public class EditMedicineFragment extends Fragment {
             Toast.makeText(requireContext(), getString(R.string.data_reminder_tidak_ditemukan), Toast.LENGTH_SHORT).show();
         }
 
-        view.findViewById(R.id.cardDate).setOnClickListener(v ->  showEndDatePicker());
+        cardDate = view.findViewById(R.id.cardDate);
+        cardDate.setOnClickListener(v ->  showEndDatePicker());
         endDateReminder.setOnClickListener(v -> showEndDatePicker());
 
         btnUpdateReminder.setOnClickListener(v -> updateReminder());
+        // nama obat & frekuensi selalu terkunci (Ubah maupun Isi Ulang), gaya dari satu tempat
+        DisabledField.apply(namaObat);
+        DisabledField.apply(freqMinumObat);
+        if (refillMode) {
+            // isi ulang: kolom tetap terlihat terkunci, tanpa pesan "tidak dapat diubah" (gone = tanpa celah)
+            view.findViewById(R.id.namaObatLockedHint).setVisibility(View.GONE);
+            view.findViewById(R.id.freqLockedHint).setVisibility(View.GONE);
+        }
+        applyRefillLock();
 
         return view;
     }
@@ -547,6 +565,16 @@ public class EditMedicineFragment extends Fragment {
             timeReminder.addView(tvTime);
             timeViews.add(tvTime);
         }
+        applyRefillLock();
+    }
+
+    /** Mode isi ulang: semua kolom dikunci & terlihat abu-abu, kecuali kolom stok. */
+    private void applyRefillLock() {
+        if (!refillMode) return;
+        DisabledField.apply(cardDate); // ikut mengunci tanggal di dalamnya (tidak pudar dua kali)
+        for (TextView tv : timeViews) DisabledField.apply(tv);
+        stokObat.setEnabled(true);
+        stokObat.setAlpha(1f);
     }
 
     private void showTimePicker(TextView selectedView) {

@@ -64,6 +64,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -93,6 +94,13 @@ public class HomeFragment extends Fragment {
     LineChart lineChart;
     StatistikRepo statistikRepo;
     private ListenerRegistration nextScheduleListener;
+    // data Home selalu "live" dari Firestore: tambah / ubah / hapus langsung tampil tanpa pindah tab
+    private ListenerRegistration todayLogsListener, todayApptListener, schedulesListener;
+    private QuerySnapshot lastNextLogs, lastTodayLogs, lastTodayAppts;
+    private int nextRenderGen = 0, todayRenderGen = 0;
+    private boolean todayApptsArrived = false;
+    // spinner hanya saat muatan pertama halaman ini
+    private com.example.meduminderv1.Util.SectionLoader nextLoader, todayLoader;
     private ListenerRegistration invitationListener; // popup undangan realtime
     private final Handler refreshHandler = new Handler(Looper.getMainLooper());
     private long displayedScheduleAtMillis = -1;
@@ -170,6 +178,10 @@ public class HomeFragment extends Fragment {
                     .navigate(R.id.scheduleFragment);
         });
         rvTodaySchedule.setLayoutManager(new LinearLayoutManager(requireContext()));
+        nextLoader = new com.example.meduminderv1.Util.SectionLoader(
+                view.findViewById(R.id.nextLoading), haveSchedule, noSchedule);
+        todayLoader = new com.example.meduminderv1.Util.SectionLoader(
+                view.findViewById(R.id.todayLoading), rvTodaySchedule, emptyTodaySchedule, btnLihatSemua);
         btnLihatSemua.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
             bundle.putLong("selected_date", System.currentTimeMillis());
@@ -197,8 +209,11 @@ public class HomeFragment extends Fragment {
         if (invitationListener != null) invitationListener.remove();
         invitationListener = InvitationPopupHelper.listen(this, authManager);
         checkUnreadNotif();
+        nextLoader.startFirstLoad(this::showNextError);
+        todayLoader.startFirstLoad(this::showTodayError);
         loadNextSchedule();
         loadTodaySchedule();
+        listenScheduleChanges();
         loadStats();
 
         refreshHandler.postDelayed(refreshRunnable, 30_000L);
@@ -237,50 +252,91 @@ public class HomeFragment extends Fragment {
         nextScheduleListener = db.collection("medication_logs").whereEqualTo("users_id", uid)
                 .whereEqualTo("status", "akan datang").whereGreaterThanOrEqualTo("scheduled_at", windowStart)
                 .orderBy("scheduled_at").limit(30).addSnapshotListener((query, error) -> {
-                    if (error != null || query == null || !isAdded()) return;
-                    MedicationLog targetLog = null;
-                    DocumentSnapshot target = null;
-                    long nowMs = System.currentTimeMillis();
-                    for (DocumentSnapshot doc : query.getDocuments()){
-                        MedicationLog log = doc.toObject(MedicationLog.class);
-                        if (log == null || log.getStatusBasedOnDate() != LogStatus.AKAN_DATANG) continue;
-                        Timestamp eff = log.getEffectiveTime();
-                        if (eff == null) continue;
-                        if (eff.toDate().getTime() + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS < nowMs) continue;
-                        if (targetLog == null || eff.compareTo(targetLog.getEffectiveTime()) < 0){
-                            target = doc;
-                            targetLog = log;
-                        }
-                    } if (targetLog == null){
-                        haveSchedule.setVisibility(View.GONE);
-                        noSchedule.setVisibility(View.VISIBLE);
+                    if (!isAdded()) return;
+                    if (error != null || query == null) {
+                        Log.e("HOME_NEXT_SCHEDULE", "Gagal load jadwal berikutnya", error);
+                        if (nextLoader.isLoading()) { nextLoader.failed(); showNextError(); }
                         return;
-                    } nextLogId = target.getId();
-                    nextScheduleIdForAlarm = targetLog.getMedication_schedules_id();
-                    nextScheduledAtMillis = targetLog.getScheduled_at().toDate().getTime();
-                    btnKonfirmasi.setEnabled(true);
-                    haveSchedule.setVisibility(View.VISIBLE);
-                    displayedScheduleAtMillis = targetLog.getEffectiveTime().toDate().getTime()
-                            + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS;
-                    noSchedule.setVisibility(View.GONE);
-                    tvDay.setText(formatDayLabel(targetLog.getEffectiveTime().toDate()));
-                    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                    tvTime.setText(com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(sdf.format(targetLog.getEffectiveTime().toDate())));
-                    resolveMedName(targetLog.getMedication_schedules_id(), (medName, stock, medId, medType) -> {
-                        if (!isAdded()) return;
-                        nextMedId = medId;
-                        tvtitleCard.setText(medName != null ? medName : "-");
+                    }
+                    lastNextLogs = query;
+                    renderNextSchedule();
+                });
+    }
 
-                        if ("CAIR".equals(medType)) {
-                            tvStokObat.setVisibility(View.GONE);
-                            tvTotalStok.setVisibility(View.GONE);
-                        } else {
-                            tvStokObat.setVisibility(View.VISIBLE);
-                            tvTotalStok.setVisibility(View.VISIBLE);
-                            tvTotalStok.setText(String.valueOf(stock));
-                        }
-                    });
-                    btnKonfirmasi.setOnClickListener(v -> confirmTaken());
+    /** Pilih jadwal terdekat yang jadwal/obatnya masih ada (yang sudah dihapus dilewati). */
+    private void renderNextSchedule() {
+        if (lastNextLogs == null || !isAdded()) return;
+        final int gen = ++nextRenderGen;
+        long nowMs = System.currentTimeMillis();
+        List<DocumentSnapshot> candidates = new ArrayList<>();
+        for (DocumentSnapshot doc : lastNextLogs.getDocuments()){
+            MedicationLog log = doc.toObject(MedicationLog.class);
+            if (log == null || log.getStatusBasedOnDate() != LogStatus.AKAN_DATANG) continue;
+            Timestamp eff = log.getEffectiveTime();
+            if (eff == null) continue;
+            if (eff.toDate().getTime() + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS < nowMs) continue;
+            candidates.add(doc);
+        }
+        Collections.sort(candidates, (a, b) -> a.toObject(MedicationLog.class).getEffectiveTime()
+                .compareTo(b.toObject(MedicationLog.class).getEffectiveTime()));
+        showFirstValidNext(candidates, 0, gen);
+    }
+
+    private void showFirstValidNext(List<DocumentSnapshot> candidates, int index, int gen) {
+        if (!isAdded() || gen != nextRenderGen) return; // sudah ada data yang lebih baru
+        if (index >= candidates.size()){
+            nextLoader.done();
+            haveSchedule.setVisibility(View.GONE);
+            noSchedule.setVisibility(View.VISIBLE);
+            nextLogId = null;
+            return;
+        }
+        DocumentSnapshot target = candidates.get(index);
+        MedicationLog targetLog = target.toObject(MedicationLog.class);
+        resolveMedName(targetLog.getMedication_schedules_id(), (medName, stock, medId, medType) -> {
+            if (!isAdded() || gen != nextRenderGen) return;
+            if (medName == null) { // jadwal/obat sudah dihapus -> coba jadwal berikutnya
+                showFirstValidNext(candidates, index + 1, gen);
+                return;
+            }
+            nextLoader.done();
+            nextLogId = target.getId();
+            nextScheduleIdForAlarm = targetLog.getMedication_schedules_id();
+            nextScheduledAtMillis = targetLog.getScheduled_at().toDate().getTime();
+            nextMedId = medId;
+            btnKonfirmasi.setEnabled(true);
+            haveSchedule.setVisibility(View.VISIBLE);
+            noSchedule.setVisibility(View.GONE);
+            displayedScheduleAtMillis = targetLog.getEffectiveTime().toDate().getTime()
+                    + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS;
+            tvDay.setText(formatDayLabel(targetLog.getEffectiveTime().toDate()));
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            tvTime.setText(com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(sdf.format(targetLog.getEffectiveTime().toDate())));
+            tvtitleCard.setText(medName);
+            if ("CAIR".equals(medType)) {
+                tvStokObat.setVisibility(View.GONE);
+                tvTotalStok.setVisibility(View.GONE);
+            } else {
+                tvStokObat.setVisibility(View.VISIBLE);
+                tvTotalStok.setVisibility(View.VISIBLE);
+                tvTotalStok.setText(String.valueOf(stock));
+            }
+            btnKonfirmasi.setOnClickListener(v -> confirmTaken());
+        });
+    }
+
+    /** Jadwal diubah / dihapus (termasuk dari HP caregiver) -> tampilan Home ikut diperbarui. */
+    private void listenScheduleChanges() {
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser == null) return;
+        if (schedulesListener != null) schedulesListener.remove();
+        boolean[] first = {true};
+        schedulesListener = db.collection("medication_schedules").whereEqualTo("users_id", firebaseUser.getUid())
+                .addSnapshotListener((snap, error) -> {
+                    if (error != null || snap == null || !isAdded()) return;
+                    if (first[0]) { first[0] = false; return; } // data awal sudah ditangani listener log
+                    renderNextSchedule();
+                    renderTodaySchedule();
                 });
     }
 
@@ -290,8 +346,8 @@ public class HomeFragment extends Fragment {
         Calendar today = Calendar.getInstance();
         Calendar tomorrow = (Calendar) today.clone();
         tomorrow.add(Calendar.DAY_OF_YEAR, 1);
-        Locale localeId = new Locale("id", "ID");
-        SimpleDateFormat sdfDay = new SimpleDateFormat("EEEE", localeId);
+        Locale appLocale = getResources().getConfiguration().getLocales().get(0);
+        SimpleDateFormat sdfDay = new SimpleDateFormat("EEEE", appLocale);
 
         if (isSameDay(target, today)) return getString(R.string.hari_ini);
         if (isSameDay(target, tomorrow)) return getString(R.string.besok);
@@ -349,20 +405,13 @@ public class HomeFragment extends Fragment {
                                     public void onSuccess(Void result) {
                                         if (!isAdded() || getContext() == null) return;
                                         Toast.makeText(requireContext(), getString(R.string.berhasil_dicatat), Toast.LENGTH_SHORT).show();
-                                        loadNextSchedule();
-                                        loadTodaySchedule();
                                     }
                                     @Override
                                     public void onFailure(Exception e) {
                                         if (!isAdded() || getContext() == null) return;
-                                        Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-                                        loadNextSchedule();
-                                        loadTodaySchedule();
+                                        Toast.makeText(requireContext(), getString(R.string.error_umum), Toast.LENGTH_SHORT).show();
                                     }
                                 });
-                            } else {
-                                loadNextSchedule();
-                                loadTodaySchedule();
                             }
                         }
 
@@ -371,7 +420,7 @@ public class HomeFragment extends Fragment {
                             if (!isAdded() || getContext() == null) return;
                             LoadingOverlay.hide(HomeFragment.this);
                             btnKonfirmasi.setEnabled(true);
-                            Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(requireContext(), getString(R.string.error_umum), Toast.LENGTH_SHORT).show();
                         }
                     });
                 })
@@ -389,6 +438,8 @@ public class HomeFragment extends Fragment {
         db.collection("medication_schedules").document(schedulesId).get()
                 .addOnSuccessListener(scheduleSnap -> {
                     MedicationSchedules schedule = scheduleSnap.toObject(MedicationSchedules.class);
+                    // jadwal yang sudah dihapus tidak ditampilkan lagi di Home
+                    if (schedule != null && schedule.getDeleted_at() != null) { callback.onResolved(null, 0, null, null); return; }
                     String medId = schedule != null ? schedule.getMedication_id() : null;
                     if (medId == null || medId.isEmpty()) { callback.onResolved(null, 0, null, null); return; }
                     db.collection("medications").document(medId).get()
@@ -449,90 +500,130 @@ public class HomeFragment extends Fragment {
         endCal.add(Calendar.DAY_OF_YEAR, 1);
         Timestamp startOfTomorrow = new Timestamp(endCal.getTime());
 
-        List<LogItem> combined = new ArrayList<>();
-
-        db.collection("medication_logs").whereEqualTo("users_id", uid)
+        removeTodayListeners();
+        lastTodayLogs = null;
+        lastTodayAppts = null;
+        todayApptsArrived = false;
+        todayLogsListener = db.collection("medication_logs").whereEqualTo("users_id", uid)
                 .whereGreaterThanOrEqualTo("scheduled_at", startOfDay)
-                .whereLessThan("scheduled_at", startOfTomorrow).get()
-                .addOnSuccessListener(medQuery -> {
+                .whereLessThan("scheduled_at", startOfTomorrow)
+                .addSnapshotListener((medQuery, error) -> {
                     if (!isAdded()) return;
-                    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                    List<DocumentSnapshot> medDocs = medQuery.getDocuments();
-                    if (medDocs.isEmpty()){
-                        mergeAppointments(uid, combined, startOfDay, startOfTomorrow);
+                    if (error != null || medQuery == null) {
+                        Log.e("HOME_TODAY_SCHEDULE", "Gagal load jadwal hari ini", error);
+                        if (todayLoader.isLoading()) { todayLoader.failed(); showTodayError(); }
                         return;
                     }
-                    int[] remaining = {medDocs.size()};
-                    for (DocumentSnapshot doc : medDocs) {
-                        MedicationLog log = doc.toObject(MedicationLog.class);
-                        if (log == null) { remaining[0]--; continue; }
-                        resolveMedName(log.getMedication_schedules_id(), (medName, stock, medId, medType) -> {
-                            if (!isAdded()) return;
-                            if (medName == null) {
-                                // jadwal/obat sudah dihapus: lewati, tapi tetap hitung supaya daftar tetap muncul
-                                remaining[0]--;
-                                if (remaining[0] <= 0) mergeAppointments(uid, combined, startOfDay, startOfTomorrow);
-                                return;
-                            }
-                            String info = "";
-                            if ("PIL".equals(medType)) {
-                                info = getString(R.string.sisa_stok, stock);
-                            }
-                            combined.add(new LogItem("medicine", medName,
-                                    sdf.format(log.getEffectiveTime().toDate()), info, log.getStatus(),
-                                    log.getMedication_schedules_id(), log.getScheduled_at().toDate().getTime(),
-                                    log.getCreated_at() != null ? log.getCreated_at().toDate().getTime() : 0));
-                            remaining[0]--;
-                            if (remaining[0] <= 0) mergeAppointments(uid, combined, startOfDay, startOfTomorrow);
-                        });
-                    }
-                    if (remaining[0] <= 0) mergeAppointments(uid, combined, startOfDay, startOfTomorrow); // semua log kosong
-                }).addOnFailureListener(e -> {
-                    emptyTodaySchedule.setVisibility(View.VISIBLE);
-                    rvTodaySchedule.setVisibility(View.GONE);
-                    btnLihatSemua.setVisibility(View.GONE);
+                    lastTodayLogs = medQuery;
+                    renderTodaySchedule();
+                });
+        todayApptListener = db.collection("appointments")
+                .whereEqualTo("users_id", uid)
+                .whereGreaterThanOrEqualTo("appointment_at", startOfDay)
+                .whereLessThan("appointment_at", startOfTomorrow)
+                .addSnapshotListener((apptQuery, error) -> {
+                    if (!isAdded()) return;
+                    if (error != null) Log.e("HOME_TODAY_SCHEDULE", "Gagal load appointments", error);
+                    lastTodayAppts = apptQuery;
+                    todayApptsArrived = true;
+                    renderTodaySchedule();
                 });
     }
 
-    private void mergeAppointments(String consumerUid, List<LogItem> combined, Timestamp startOfDay, Timestamp startOfTomorrow) {
-        db.collection("appointments")
-                .whereEqualTo("users_id", consumerUid)
-                .whereGreaterThanOrEqualTo("appointment_at", startOfDay)
-                .whereLessThan("appointment_at", startOfTomorrow)
-                .get()
-                .addOnSuccessListener(apptQuery -> {
-                    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                    for (DocumentSnapshot doc : apptQuery.getDocuments()) {
-                        Appointment appt = doc.toObject(Appointment.class);
-                        if (appt == null) continue;
-                        if (appt.getDeleted_at() != null) continue;
-                        combined.add(new LogItem("appointment", appt.getTitle(),
-                                sdf.format(appt.getDisplayTime().toDate()),
-                                appt.getAddress(), appt.getStatus(),
-                                doc.getId(), appt.getAppointment_at().toDate().getTime(),
-                                appt.getCreated_at() != null ? appt.getCreated_at().toDate().getTime() : 0));
+    private void removeTodayListeners() {
+        if (todayLogsListener != null) { todayLogsListener.remove(); todayLogsListener = null; }
+        if (todayApptListener != null) { todayApptListener.remove(); todayApptListener = null; }
+    }
+
+    private void renderTodaySchedule() {
+        // tunggu obat DAN appointment, supaya muatan pertama tidak tampil setengah lalu "lompat"
+        if (!isAdded() || lastTodayLogs == null || !todayApptsArrived) return;
+        final int gen = ++todayRenderGen;
+        List<LogItem> combined = new ArrayList<>();
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        List<MedicationLog> logs = new ArrayList<>();
+        for (DocumentSnapshot doc : lastTodayLogs.getDocuments()) {
+            MedicationLog log = doc.toObject(MedicationLog.class);
+            if (log != null) logs.add(log);
+        }
+        if (logs.isEmpty()) {
+            mergeAppointments(combined, gen);
+            return;
+        }
+        int[] remaining = {logs.size()};
+        for (MedicationLog log : logs) {
+            resolveMedName(log.getMedication_schedules_id(), (medName, stock, medId, medType) -> {
+                if (!isAdded() || gen != todayRenderGen) return; // sudah ada data yang lebih baru
+                if (medName != null) { // null = jadwal/obat sudah dihapus: tidak ditampilkan
+                    String info = "";
+                    if ("PIL".equals(medType)) {
+                        info = getString(R.string.sisa_stok, stock);
                     }
-                    Collections.sort(combined, (a, b) -> Long.compare(b.getCreatedAtMillis(), a.getCreatedAtMillis()));
-                    if (!isAdded() || getContext() == null) return;
-                    List<LogItem> displayList = combined.size() > 3 ? combined.subList(0,3) :combined;
-                    TodayScheduleAdapter adapter = new TodayScheduleAdapter(displayList, requireContext());
-                    adapter.setOnItemClickListener(this::navigateToReminder);
-                    rvTodaySchedule.setAdapter(adapter);
-                    if (combined.isEmpty()){
-                        emptyTodaySchedule.setVisibility(View.VISIBLE);
-                        rvTodaySchedule.setVisibility(View.GONE);
-                        btnLihatSemua.setVisibility(View.GONE);
-                    } else {
-                        emptyTodaySchedule.setVisibility(View.GONE);
-                        rvTodaySchedule.setVisibility(View.VISIBLE);
-                        btnLihatSemua.setVisibility(View.VISIBLE);
-                    }
-                }).addOnFailureListener(e -> {
-                    Log.e("HOME_TODAY_SCHEDULE", "Gagal load appointments", e);
-                    emptyTodaySchedule.setVisibility(View.VISIBLE);
-                    rvTodaySchedule.setVisibility(View.GONE);
-                    btnLihatSemua.setVisibility(View.GONE);
-                });
+                    combined.add(new LogItem("medicine", medName,
+                            sdf.format(log.getEffectiveTime().toDate()), info, log.getStatus(),
+                            log.getMedication_schedules_id(), log.getScheduled_at().toDate().getTime(),
+                            log.getCreated_at() != null ? log.getCreated_at().toDate().getTime() : 0));
+                }
+                remaining[0]--;
+                if (remaining[0] <= 0) mergeAppointments(combined, gen);
+            });
+        }
+    }
+
+    private void mergeAppointments(List<LogItem> combined, int gen) {
+        if (!isAdded() || gen != todayRenderGen) return;
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        if (lastTodayAppts != null) {
+            for (DocumentSnapshot doc : lastTodayAppts.getDocuments()) {
+                // ESTIMATE: appointment baru (created_at = jam server) belum dibalas server -> pakai perkiraan,
+                // bukan null (null dianggap paling lama -> appointment baru jatuh ke urutan paling bawah)
+                Appointment appt = doc.toObject(Appointment.class, DocumentSnapshot.ServerTimestampBehavior.ESTIMATE);
+                if (appt == null) continue;
+                if (appt.getDeleted_at() != null) continue;
+                combined.add(new LogItem("appointment", appt.getTitle(),
+                        sdf.format(appt.getDisplayTime().toDate()),
+                        appt.getAddress(), appt.getStatus(),
+                        doc.getId(), appt.getAppointment_at().toDate().getTime(),
+                        appt.getCreated_at() != null ? appt.getCreated_at().toDate().getTime() : 0));
+            }
+        }
+        Collections.sort(combined, (a, b) -> Long.compare(b.getCreatedAtMillis(), a.getCreatedAtMillis()));
+        todayLoader.done();
+        // dulu dipotong 3 item -> jadwal ke-4 dst tidak pernah muncul; sekarang semua jadwal hari ini tampil
+        List<LogItem> displayList = combined;
+        TodayScheduleAdapter adapter = new TodayScheduleAdapter(displayList, requireContext());
+        adapter.setOnItemClickListener(this::navigateToReminder);
+        rvTodaySchedule.setAdapter(adapter);
+        if (combined.isEmpty()){
+            showTodayEmpty();
+        } else {
+            emptyTodaySchedule.setVisibility(View.GONE);
+            rvTodaySchedule.setVisibility(View.VISIBLE);
+            btnLihatSemua.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void showTodayEmpty() {
+        emptyTodaySchedule.setText(R.string.tidak_ada_jadwal_hari_ini);
+        emptyTodaySchedule.setVisibility(View.VISIBLE);
+        rvTodaySchedule.setVisibility(View.GONE);
+        btnLihatSemua.setVisibility(View.GONE);
+    }
+
+    /** Gagal / terlalu lama memuat: pesan singkat, bukan spinner selamanya. */
+    private void showTodayError() {
+        if (!isAdded()) return;
+        rvTodaySchedule.setVisibility(View.GONE);
+        btnLihatSemua.setVisibility(View.GONE);
+        emptyTodaySchedule.setText(R.string.home_gagal_dimuat);
+        emptyTodaySchedule.setVisibility(View.VISIBLE);
+    }
+
+    private void showNextError() {
+        if (!isAdded()) return;
+        // kartu tidak menampilkan "belum ada jadwal" (bisa salah); pesan error ada di bagian Jadwal Hari Ini
+        haveSchedule.setVisibility(View.GONE);
+        noSchedule.setVisibility(View.GONE);
     }
 
     private void navigateToReminder(LogItem item) {
@@ -681,11 +772,16 @@ public class HomeFragment extends Fragment {
         refreshHandler.removeCallbacks(refreshRunnable);
         if (invitationListener != null) { invitationListener.remove(); invitationListener = null; }
         if (unreadListener != null) { unreadListener.remove(); unreadListener = null; }
+        if (nextScheduleListener != null) { nextScheduleListener.remove(); nextScheduleListener = null; }
+        if (schedulesListener != null) { schedulesListener.remove(); schedulesListener = null; }
+        removeTodayListeners();
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (nextLoader != null) nextLoader.release();
+        if (todayLoader != null) todayLoader.release();
         if (nextScheduleListener != null) nextScheduleListener.remove();
     }
 }

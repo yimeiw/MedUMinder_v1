@@ -98,6 +98,10 @@ public class LogFragment extends Fragment {
     private static final int MAX_DAYS = 90;
     private int daysBack = DAYS_STEP;
     private LoadOlderAdapter loadOlderAdapter;
+    private View logLoading, logError;
+    // spinner hanya untuk muatan pertama (per jenis riwayat / per consumer); refresh berikutnya tanpa spinner
+    private com.example.meduminderv1.Util.SectionLoader firstLoader;
+    private boolean loadFailed = false;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -119,6 +123,9 @@ public class LogFragment extends Fragment {
         btnTaken = view.findViewById(R.id.btnTaken);
         btnMissed = view.findViewById(R.id.btnMissed);
         btnBack = view.findViewById(R.id.btnBack);
+        logLoading = view.findViewById(R.id.logLoading);
+        logError = view.findViewById(R.id.logError);
+        view.findViewById(R.id.btnRetryLog).setOnClickListener(v -> reloadCurrentType());
 
         btnBack.setOnClickListener(v -> {
             NavHostFragment.findNavController(LogFragment.this)
@@ -130,6 +137,7 @@ public class LogFragment extends Fragment {
             targetUid = uid;
             allMedLog.clear();
             allAppointLog.clear();
+            resetFirstLoad();
             applyFilter();
             if (uid == null){
                 pickerRoot.setOnClickListener(v ->  NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
@@ -145,6 +153,7 @@ public class LogFragment extends Fragment {
         btnMissed.setOnClickListener(v -> { currentFilter = FilterType.MISSED; selectButton(btnMissed); applyFilter(); });
 
         rvLogs = view.findViewById(R.id.rvLogs);
+        resetFirstLoad();
         rvLogs.setLayoutManager(new LinearLayoutManager(requireContext()));
         medAdapter = new MedicationLogAdapter(medLog, requireContext());
         medAdapter.setOnMedLogClickListener(this::navigateToReminder);
@@ -247,7 +256,6 @@ public class LogFragment extends Fragment {
             initialMedicine.setText(currentFilter == FilterType.REMAINING_TODAY
                     ? getString(R.string.riwayat_kosong_sisa_obat)
                     : getString(R.string.riwayat_kosong_obat, daysBack));
-            initialMedicine.setVisibility(medLog.isEmpty() ? View.VISIBLE : View.GONE);
             initialAppoint.setVisibility(View.GONE);
         } else {
             appointLog.clear();
@@ -266,14 +274,57 @@ public class LogFragment extends Fragment {
             initialAppoint.setText(currentFilter == FilterType.REMAINING_TODAY
                     ? getString(R.string.riwayat_kosong_sisa_appointment)
                     : getString(R.string.riwayat_kosong_appointment, daysBack));
-            initialAppoint.setVisibility(appointLog.isEmpty() ? View.VISIBLE : View.GONE);
             initialMedicine.setVisibility(View.GONE);
         }
+        updateStateViews();
         updateFooter();
         if (rvLogs != null) {
             rvLogs.invalidateItemDecorations();
             rvLogs.post(this::maybeLoadOlder);
         }
+    }
+    /** Hanya satu yang tampil: spinner, pesan gagal, pesan kosong, atau daftar. */
+    private void updateStateViews() {
+        if (rvLogs == null || firstLoader == null) return;
+        boolean loading = firstLoader.isLoading();
+        boolean failed = !loading && loadFailed;
+        // daftar / pesan kosong hanya setelah data benar-benar datang (bukan sebelum muatan dimulai)
+        boolean busy = !firstLoader.hasLoaded() || loading || failed;
+        boolean isMed = currentType == LogType.MEDICATION;
+        boolean empty = isMed ? medLog.isEmpty() : appointLog.isEmpty();
+        logLoading.setVisibility(loading ? View.VISIBLE : View.GONE);
+        logError.setVisibility(failed ? View.VISIBLE : View.GONE);
+        rvLogs.setVisibility(busy ? View.GONE : View.VISIBLE);
+        initialMedicine.setVisibility(!busy && isMed && empty ? View.VISIBLE : View.GONE);
+        initialAppoint.setVisibility(!busy && !isMed && empty ? View.VISIBLE : View.GONE);
+    }
+    /** Data baru (ganti jenis / consumer): muatan berikutnya dianggap muatan pertama lagi. */
+    private void resetFirstLoad() {
+        if (firstLoader != null) firstLoader.release();
+        firstLoader = new com.example.meduminderv1.Util.SectionLoader(logLoading);
+        loadFailed = false;
+    }
+    /** Dipanggil di awal setiap load; spinner hanya muncul kalau data belum pernah tampil. */
+    private void beginLoad() {
+        firstLoader.startFirstLoad(() -> {
+            // terlalu lama: berhenti memuat, tampilkan pesan + Coba lagi
+            loadFailed = true;
+            updateStateViews();
+        });
+        if (firstLoader.isLoading()) loadFailed = false;
+        updateStateViews();
+    }
+    private void onLoadSuccess() {
+        loadFailed = false;
+        firstLoader.done();
+        applyFilter();
+    }
+    /** Gagal saat muatan pertama -> pesan + Coba lagi. Gagal saat refresh -> data lama tetap tampil. */
+    private void onLoadFailure() {
+        if (!firstLoader.isLoading()) return;
+        firstLoader.failed();
+        loadFailed = true;
+        updateStateViews();
     }
     private boolean isShown(LogStatus status, long scheduledMillis, long effectiveMillis, long since) {
         if (status == LogStatus.DIKONSUMSI || status == LogStatus.TERLEWATKAN) {
@@ -334,6 +385,7 @@ public class LogFragment extends Fragment {
     }
     private void maybeLoadOlder() {
         if (!isAdded() || rvLogs == null || loadingOlder) return;
+        if (!firstLoader.hasLoaded() || loadFailed) return;
         if (loadOlderAdapter.getState() != LoadOlderAdapter.State.MORE) return;
         RecyclerView.LayoutManager lm = rvLogs.getLayoutManager();
         RecyclerView.Adapter<?> adapter = rvLogs.getAdapter();
@@ -359,10 +411,11 @@ public class LogFragment extends Fragment {
         String users_id = SessionManager.getInstance().getTargetUid();
         if (users_id == null){
             loadingOlder = false;
-            updateFooter();
-            initialMedicine.setVisibility(View.VISIBLE);
+            firstLoader.done();
+            applyFilter();
             return;
         }
+        if (!loadingOlder) beginLoad(); // muat lebih lama cukup spinner kecil di bawah daftar
 
         Calendar startCal = Calendar.getInstance();
         startCal.set(Calendar.HOUR_OF_DAY, 0);
@@ -396,22 +449,29 @@ public class LogFragment extends Fragment {
                         if (log != null && !inactiveIds.contains(log.getMedication_schedules_id())) allMedLog.add(log);
                     }
                     loadingOlder = false;
-                    applyFilter();
+                    onLoadSuccess();
                 })
                 .addOnFailureListener(e -> {
                     Log.e("Medication Log", "Gagal ambil data", e);
                     if (!isAdded() || token != loadToken) return;
-                    loadingOlder = false;
-                    updateFooter();
+                    if (loadingOlder) {
+                        // hari-hari lama belum termuat: kembalikan rentang supaya tidak tertulis "sejak ..." yang salah
+                        daysBack = Math.max(DAYS_STEP, daysBack - DAYS_STEP);
+                        loadingOlder = false;
+                        applyFilter();
+                    }
+                    onLoadFailure();
                 }));
     }
     private void loadAppointmentLogs() {
         final int token = ++loadToken;
         String users_id = SessionManager.getInstance().getTargetUid();
         if (users_id == null){
-            initialAppoint.setVisibility(View.VISIBLE);
+            firstLoader.done();
+            applyFilter();
             return;
         }
+        beginLoad();
         Log.d("AUTH", users_id == null ? "NULL" : users_id);
         db.collection("appointments")
                 .whereEqualTo("users_id", users_id)
@@ -429,10 +489,14 @@ public class LogFragment extends Fragment {
                             allAppointLog.add(appointment);
                         }
                     }
-                    applyFilter();
+                    onLoadSuccess();
                     Log.d("FIRESTORE", "List size: " + medLog.size());
                 })
-                .addOnFailureListener(e -> Log.d("FIRESTORE", "Gagal ambil data", e));
+                .addOnFailureListener(e -> {
+                    Log.d("FIRESTORE", "Gagal ambil data", e);
+                    if (!isAdded() || token != loadToken) return;
+                    onLoadFailure();
+                });
     }
     //passing data dari log ke reminder view
     private void showAppointmentStatusDialog(Appointment appointment) {
@@ -590,6 +654,9 @@ public class LogFragment extends Fragment {
         currentType = type;
         daysBack = DAYS_STEP;
         loadingOlder = false;
+        allMedLog.clear();
+        allAppointLog.clear();
+        resetFirstLoad();
         showCurrentType();
         reloadCurrentType();
     }
@@ -601,6 +668,12 @@ public class LogFragment extends Fragment {
         RecyclerView.Adapter<?> listAdapter = currentType == LogType.MEDICATION ? medAdapter : appointAdapter;
         rvLogs.setAdapter(new ConcatAdapter(listAdapter, loadOlderAdapter));
         applyFilter();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (firstLoader != null) firstLoader.release();
     }
 
     @Override

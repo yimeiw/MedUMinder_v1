@@ -79,7 +79,6 @@ public class StatistikFragment extends Fragment {
     private FrameLayout dailyChartContainer;
     private FrameLayout responsePieContainer;
     private Button btnDownloadReport;
-    // cegah unduh dobel kalau tombol ditekan berulang kali
     private boolean isDownloading = false;
     private TextView tvAdherenceDescription;
     private List<StatistikRepo.DayStat> currentStats = new ArrayList<>();

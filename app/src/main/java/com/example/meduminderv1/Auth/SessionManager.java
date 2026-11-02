@@ -28,6 +28,7 @@ public class SessionManager {
     }
     public void clearSession(){
         currentUser = null;
+        activeConsumerUid = null;
         auth.signOut();
     }
     public void setActiveConsumerUid(String uid){

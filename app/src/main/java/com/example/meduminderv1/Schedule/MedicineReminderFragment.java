@@ -1,6 +1,8 @@
 package com.example.meduminderv1.Schedule;
 
 import com.example.meduminderv1.Util.SchedulePermission;
+import com.example.meduminderv1.Util.MedicineName;
+import com.example.meduminderv1.Repo.CustomMedicineRepo;
 
 import com.example.meduminderv1.Util.LoadingOverlay;
 import com.example.meduminderv1.Util.UserTimeZone;
@@ -92,7 +94,12 @@ public class MedicineReminderFragment extends Fragment {
     SessionManager sessionManager;
     MedicationRepo medicationRepo;
     NotificationRepo notificationRepo;
-    private String selectedCatalogId = null;
+    // daftar obat = katalog resmi + obat pribadi milik targetUid (key nama -> {id, nama})
+    private final ArrayList<String> medList = new ArrayList<>();
+    private final Map<String, String[]> officialByKey = new HashMap<>();
+    private final Map<String, String[]> privateByKey = new HashMap<>();
+    private String privateOwnerUid = null;
+    private CustomMedicineRepo customMedicineRepo;
     boolean isNewMed = false;
     String selectedMed = "";
     User user;
@@ -130,6 +137,7 @@ public class MedicineReminderFragment extends Fragment {
         db = FirebaseFirestore.getInstance();
         logGenerator = new LogGenerator();
         notificationRepo = new NotificationRepo(requireContext());
+        customMedicineRepo = new CustomMedicineRepo();
 
         btnBack.setOnClickListener(v -> {
             NavHostFragment.findNavController(MedicineReminderFragment.this)
@@ -161,6 +169,7 @@ public class MedicineReminderFragment extends Fragment {
                 clearFields();
             }
             if (hasConsumer) {
+                loadPrivateMedicines(uid);
                 String resolvingFor = uid;
                 UserTimeZone.resolve(uid, zone -> {
                     if (!isAdded() || !resolvingFor.equals(targetUid)) return;
@@ -170,7 +179,6 @@ public class MedicineReminderFragment extends Fragment {
         });
         consumerPickerHelper.setup();
 
-        ArrayList<String> medList = new ArrayList<>();
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(requireContext(), R.layout.item_suggestion, R.id.tvNamaObat, new ArrayList<>()) {
             @NonNull
             @Override
@@ -209,11 +217,12 @@ public class MedicineReminderFragment extends Fragment {
                 debounceRunnable = () -> {
                     adapter.clear();
                     boolean exactMatch = false;
+                    String keywordKey = MedicineName.key(keyword);
                     for (String med : medList) {
-                        if (keyword.isEmpty() || med.toLowerCase().contains(keyword.toLowerCase())) {
+                        if (keyword.isEmpty() || MedicineName.key(med).contains(keywordKey)) {
                             adapter.add(med);
                         }
-                        if (med.equalsIgnoreCase(keyword)) {
+                        if (MedicineName.key(med).equals(keywordKey)) {
                             exactMatch = true;
                         }
                     }
@@ -245,19 +254,15 @@ public class MedicineReminderFragment extends Fragment {
             }
         });
 
-        Map<String, String> catalogMap = new HashMap<>();
         db.collection("medicine_catalog").orderBy("nama_obat").get().addOnSuccessListener(query -> {
             // halaman sudah ditutup sebelum data selesai dimuat
             if (!isAdded() || getView() == null) return;
-            medList.clear();
-            catalogMap.clear();
+            officialByKey.clear();
             for (DocumentSnapshot doc : query) {
                 String obat = doc.getString("nama_obat");
-                if (obat != null) {
-                    medList.add(obat);
-                    catalogMap.put(obat, doc.getId());
-                }
+                if (obat != null) officialByKey.put(MedicineName.key(obat), new String[]{doc.getId(), obat});
             }
+            rebuildMedList();
             Log.d("MEDICINE", "Jumlah = " + medList.size());
             adapter.notifyDataSetChanged();
             namaObat.setDropDownBackgroundDrawable(requireContext().getDrawable(R.drawable.border));
@@ -404,142 +409,152 @@ public class MedicineReminderFragment extends Fragment {
         }
 
         LoadingOverlay.show(MedicineReminderFragment.this);
-        db.collection("medicine_catalog").get()
-                .addOnSuccessListener(query -> {
-                    selectedCatalogId = null;
-                    for (DocumentSnapshot doc : query) {
-                        String dbName = doc.getString("nama_obat");
-                        if (dbName != null && dbName.equalsIgnoreCase(medName)) {
-                            selectedCatalogId = doc.getId();
-                            break;
+        final String ownerUid = targetUid;
+        resolveMedicine(medName, ownerUid, resolved -> {
+            final String displayName = resolved[2];
+            Medication med = new Medication(ownerUid, resolved[0], resolved[1] != null ? displayName : null, true, medType, stockMap, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
+            med.setCustom_medicine_id(resolved[1]);
+            medicationRepo.saveMedication(med, new RepoCallback<String>() {
+                @Override
+                public void onSuccess(String medicationId) {
+                    MedicationSchedules schedules = new MedicationSchedules(ownerUid, medicationId, frequency, times, startDate, endDate, true, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
+                    medicationRepo.saveMedSchedule(schedules, new RepoCallback<String>() {
+                        @Override
+                        public void onSuccess(String result) {
+                            new LogGenerator().ensureLogsGenerated(
+                                    ownerUid,
+                                    result,
+                                    times,
+                                    startDate,
+                                    endDate
+                            );
+                            // result = scheduleId dari Firestore
+                            long endMillis = (endDate != null) ? endDate.toDate().getTime() : 0;
+                            // alarm hanya di HP pemilik jadwal (HP consumer memasang sendiri lewat ScheduleSyncListener)
+                            if (ownerUid.equals(user.getAuth_uid())) {
+                                AlarmSchedulerHelper.scheduleAll(
+                                        appContext,
+                                        result,
+                                        displayName,
+                                        times,
+                                        endMillis
+                                );
+                            }
+
+                            notifyReminderCreated(displayName, result);
+
+                            StockChecker.check(appContext, medicationId);
+                            Toast.makeText(appContext, appContext.getString(R.string.reminder_berhasil_dibuat), Toast.LENGTH_SHORT).show();
+                            if (!isAdded()) return; // sudah keluar dari halaman
+                            clearFields();
+                            LoadingOverlay.hide(MedicineReminderFragment.this);
+                            btnSaveReminder.setEnabled(true);
+                            NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
                         }
-                    } if (selectedCatalogId != null) {
-                        Medication med = new Medication(targetUid, selectedCatalogId, null, true, medType, stockMap, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
 
-                        medicationRepo.saveMedication(med, new RepoCallback<String>() {
-                            @Override
-                            public void onSuccess(String medicationId) {
-                                MedicationSchedules schedules = new MedicationSchedules(targetUid, medicationId, frequency, times, startDate, endDate, true, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
-                                medicationRepo.saveMedSchedule(schedules, new RepoCallback<String>() {
-                                    @Override
-                                    public void onSuccess(String result) {
-                                        new LogGenerator().ensureLogsGenerated(
-                                                targetUid,
-                                                result,
-                                                times,
-                                                startDate,
-                                                endDate
-                                        );
-                                        // result = scheduleId dari Firestore
-                                        long endMillis = (endDate != null) ? endDate.toDate().getTime() : 0;
-                                        // alarm hanya di HP pemilik jadwal (HP consumer memasang sendiri lewat ScheduleSyncListener)
-                                        if (targetUid.equals(user.getAuth_uid())) {
-                                            AlarmSchedulerHelper.scheduleAll(
-                                                    appContext,
-                                                    result,
-                                                    medName,
-                                                    times,
-                                                    endMillis
-                                            );
-                                        }
-
-                                        notifyReminderCreated(medName, result);
-
-                                        StockChecker.check(appContext, medicationId);
-                                        Toast.makeText(appContext, appContext.getString(R.string.reminder_berhasil_dibuat), Toast.LENGTH_SHORT).show();
-                                        if (!isAdded()) return; // sudah keluar dari halaman
-                                        clearFields();
-                                        LoadingOverlay.hide(MedicineReminderFragment.this);
-                                        btnSaveReminder.setEnabled(true);
-                                        NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
-                                    }
-
-                                    @Override
-                                    public void onFailure(Exception e) {
-                                        Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
-                                        LoadingOverlay.hide(MedicineReminderFragment.this);
-                                        if (isAdded()) btnSaveReminder.setEnabled(true);
-                                    }
-                                });
-                            }
-
-                            @Override
-                            public void onFailure(Exception e) {
-                                Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
-                                LoadingOverlay.hide(MedicineReminderFragment.this);
-                                if (isAdded()) btnSaveReminder.setEnabled(true);
-                            }
-                        });
-                    } else { //ini kalau obat nya belum ada di database
-                        Map<String, Object> catalog = new HashMap<>();
-                        catalog.put("nama_obat", toTitleCase(medName));
-                        catalog.put("created_at", Timestamp.now());
-                        db.collection("medicine_catalog").add(catalog).addOnSuccessListener(documentReference -> {
-                            selectedCatalogId = documentReference.getId();
-                            Medication med = new Medication(targetUid, selectedCatalogId, null, true, medType, stockMap, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
-                            medicationRepo.saveMedication(med, new RepoCallback<String>() {
-                                @Override
-                                public void onSuccess(String medicationId) {
-                                    MedicationSchedules schedules = new MedicationSchedules(targetUid, medicationId, frequency, times, startDate, endDate, true, Timestamp.now(), user.getAuth_uid(), Timestamp.now(), user.getAuth_uid(), null);
-                                    medicationRepo.saveMedSchedule(schedules, new RepoCallback<String>() {
-                                        @Override
-                                        public void onSuccess(String result) {
-                                            new LogGenerator().ensureLogsGenerated(
-                                                    targetUid,
-                                                    result,
-                                                    times,
-                                                    startDate,
-                                                    endDate
-                                            );
-
-                                            // alarm hanya di HP pemilik jadwal (HP consumer memasang sendiri lewat ScheduleSyncListener)
-
-                                            if (targetUid.equals(user.getAuth_uid())) {
-                                                AlarmSchedulerHelper.scheduleAll(
-                                                        appContext, result, medName, times,
-                                                        endDate != null ? endDate.toDate().getTime() : 0
-                                                );
-
-                                            }
-
-                                            notifyReminderCreated(medName, result);
-
-                                            StockChecker.check(appContext, medicationId);
-                                            Toast.makeText(appContext, appContext.getString(R.string.reminder_berhasil_dibuat), Toast.LENGTH_SHORT).show();
-                                            if (!isAdded()) return; // sudah keluar dari halaman
-                                            clearFields();
-                                            LoadingOverlay.hide(MedicineReminderFragment.this);
-                                            btnSaveReminder.setEnabled(true);
-                                            NavHostFragment.findNavController(MedicineReminderFragment.this).navigateUp();
-                                        }
-
-                                        @Override
-                                        public void onFailure(Exception e) {
-                                            Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
-                                            LoadingOverlay.hide(MedicineReminderFragment.this);
-                                            if (isAdded()) btnSaveReminder.setEnabled(true);
-                                        }
-                                    });
-                                }
-
-                                @Override
-                                public void onFailure(Exception e) {
-                                    Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
-                                    LoadingOverlay.hide(MedicineReminderFragment.this);
-                                    if (isAdded()) btnSaveReminder.setEnabled(true);
-                                }
-                            });
-                        }).addOnFailureListener(e -> {
+                        @Override
+                        public void onFailure(Exception e) {
                             Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
                             LoadingOverlay.hide(MedicineReminderFragment.this);
                             if (isAdded()) btnSaveReminder.setEnabled(true);
-                        });
-                    }
-                }).addOnFailureListener(e -> {
+                        }
+                    });
+                }
+
+                @Override
+                public void onFailure(Exception e) {
                     Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
                     LoadingOverlay.hide(MedicineReminderFragment.this);
                     if (isAdded()) btnSaveReminder.setEnabled(true);
-                });
+                }
+            });
+        }, message -> {
+            Toast.makeText(appContext, message, Toast.LENGTH_SHORT).show();
+            LoadingOverlay.hide(MedicineReminderFragment.this);
+            if (isAdded()) btnSaveReminder.setEnabled(true);
+        });
+    }
+
+    private interface ResolvedMedicine {
+        /** r[0] = catalog_id (obat resmi), r[1] = id obat pribadi, r[2] = nama yang ditampilkan */
+        void onResolved(String[] r);
+    }
+
+    private interface ResolveFailed {
+        void onFailed(String message);
+    }
+
+    /**
+     * Tentukan obat yang dipakai: nama sama dengan katalog resmi -> pakai yang resmi;
+     * sama dengan obat pribadi -> pakai yang itu; selain itu -> buat obat pribadi baru (bukan ke katalog bersama).
+     */
+    private void resolveMedicine(String typedName, String ownerUid, ResolvedMedicine onResolved, ResolveFailed onFailed) {
+        if (!officialByKey.isEmpty()) {
+            onResolved.onResolved(pickMedicine(typedName, ownerUid));
+            return;
+        }
+        // katalog belum termuat (mis. koneksi lambat): muat dulu, jangan sampai obat resmi tersimpan sebagai pribadi
+        db.collection("medicine_catalog").get().addOnSuccessListener(query -> {
+            for (DocumentSnapshot doc : query) {
+                String obat = doc.getString("nama_obat");
+                if (obat != null) officialByKey.put(MedicineName.key(obat), new String[]{doc.getId(), obat});
+            }
+            if (officialByKey.isEmpty()) {
+                onFailed.onFailed(getAppString(R.string.error_koneksi_bermasalah));
+                return;
+            }
+            onResolved.onResolved(pickMedicine(typedName, ownerUid));
+        }).addOnFailureListener(e -> onFailed.onFailed(getAppString(R.string.error_koneksi_bermasalah)));
+    }
+
+    private String[] pickMedicine(String typedName, String ownerUid) {
+        String key = MedicineName.key(typedName);
+        String[] official = officialByKey.get(key);
+        if (official != null) return new String[]{official[0], null, official[1]};
+
+        String[] existing = ownerUid.equals(privateOwnerUid) ? privateByKey.get(key) : null;
+        String name = existing != null ? existing[1] : toTitleCase(typedName);
+        String id = customMedicineRepo.save(ownerUid, name, user.getAuth_uid(), existing == null);
+        if (ownerUid.equals(privateOwnerUid)) {
+            privateByKey.put(key, new String[]{id, name});
+            rebuildMedList();
+        }
+        return new String[]{null, id, name};
+    }
+
+    private String getAppString(int resId) {
+        return requireContext().getApplicationContext().getString(resId);
+    }
+
+    /** Obat pribadi milik orang yang dipilih (diri sendiri / consumer yang dirawat). */
+    private void loadPrivateMedicines(String ownerUid) {
+        privateOwnerUid = ownerUid;
+        privateByKey.clear();
+        rebuildMedList();
+        customMedicineRepo.load(ownerUid, new RepoCallback<Map<String, String[]>>() {
+            @Override
+            public void onSuccess(Map<String, String[]> result) {
+                if (!isAdded() || !ownerUid.equals(privateOwnerUid)) return;
+                privateByKey.clear();
+                privateByKey.putAll(result);
+                rebuildMedList();
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                Log.w("MEDICINE", "Gagal memuat obat pribadi", e);
+            }
+        });
+    }
+
+    /** Satu daftar: obat resmi + obat pribadi yang namanya tidak sama dengan obat resmi (tidak dobel). */
+    private void rebuildMedList() {
+        medList.clear();
+        for (String[] official : officialByKey.values()) medList.add(official[1]);
+        for (Map.Entry<String, String[]> e : privateByKey.entrySet()) {
+            if (!officialByKey.containsKey(e.getKey())) medList.add(e.getValue()[1]);
+        }
+        Collections.sort(medList, String.CASE_INSENSITIVE_ORDER);
     }
 
     private void createTimeFields(int frequency) {

@@ -258,9 +258,6 @@ public class AlarmRingingService extends Service {
                     .addAction(0, lang.getString(R.string.alarm_btn_tunda), snoozePending);
         }
 
-        // kalau notifikasi alarm di-swipe / dihapus, kirim "ACTION_DISMISS".
-        // Sebelumnya menghapus notifikasi hanya menghilangkan tampilannya, sedangkan
-        // service pemutar suara tetap jalan -> alarm terus bunyi.
         Intent dismissIntent = new Intent(this, AlarmActionReceiver.class)
                 .setAction("ACTION_DISMISS")
                 .putExtra("schedule_id", scheduleId)

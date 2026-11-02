@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- harus paling atas: item dibaca dari atas, dan "state_pressed=false" di bawah
+         juga cocok untuk tombol nonaktif, jadi dulu tampilan abu-abu ini tidak pernah muncul -->
+    <item android:state_enabled="false">
+        <shape android:shape="rectangle">
+            <corners android:radius="200dp"/>
+            <solid android:color="?attr/colorPrimaryInverse"/>
+        </shape>
+    </item>
+
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
             <corners android:radius="200dp"/>
@@ -12,12 +21,6 @@
         <shape android:shape="rectangle">
             <corners android:radius="200dp"/>
             <solid android:color="?attr/colorPrimaryVariant"/>
-        </shape>
-    </item>
-    <item android:state_enabled="false">
-        <shape>
-            <corners android:radius="18dp"/>
-            <solid android:color="?attr/colorPrimaryInverse"/>
         </shape>
     </item>
     <item android:state_enabled="true">

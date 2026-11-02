@@ -24,20 +24,51 @@ public class CareRelationshipRepo {
                 .limit(1).get().addOnSuccessListener(query -> callback.onSuccess(!query.isEmpty()))
                 .addOnFailureListener(callback::onFailure);
     }
+    /**
+     * care_links/{consumerUid}_{caregiverUid}: salinan kecil relasi dengan id yang bisa ditebak,
+     * supaya aturan database bisa memeriksa "apakah X caregiver dari Y" (mis. untuk obat pribadi).
+     */
+    public static String linkId(String consumerUid, String caregiverUid) {
+        return consumerUid + "_" + caregiverUid;
+    }
+
     public void createRelationship(CareRelationship relationship, RepoCallback<Void> callback){
         String id = db.collection("care_relationships").document().getId();
         relationship.setRelationship_id(id);
         relationship.setCreated_at(Timestamp.now());
         db.collection("care_relationships")
                 .document(id).set(relationship)
-                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnSuccessListener(unused -> {
+                    writeLink(relationship.getConsumer_uid(), relationship.getCaregiver_uid());
+                    callback.onSuccess(null);
+                })
                 .addOnFailureListener(callback::onFailure);
     }
+
+    private void writeLink(String consumerUid, String caregiverUid) {
+        if (consumerUid == null || caregiverUid == null) return;
+        java.util.Map<String, Object> link = new java.util.HashMap<>();
+        link.put("consumer_uid", consumerUid);
+        link.put("caregiver_uid", caregiverUid);
+        link.put("created_at", Timestamp.now());
+        db.collection("care_links").document(linkId(consumerUid, caregiverUid)).set(link);
+    }
+
     public void deleteRelationship(String relationshipId, RepoCallback<Void> callback){
-        db.collection("care_relationships")
-                .document(relationshipId).delete()
-                .addOnSuccessListener(unused -> callback.onSuccess(null))
-                .addOnFailureListener(callback::onFailure);
+        db.collection("care_relationships").document(relationshipId).get().addOnCompleteListener(read -> {
+            // hapus juga care_links-nya (kalau relasinya terbaca)
+            if (read.isSuccessful() && read.getResult() != null && read.getResult().exists()) {
+                String consumerUid = read.getResult().getString("consumer_uid");
+                String caregiverUid = read.getResult().getString("caregiver_uid");
+                if (consumerUid != null && caregiverUid != null) {
+                    db.collection("care_links").document(linkId(consumerUid, caregiverUid)).delete();
+                }
+            }
+            db.collection("care_relationships")
+                    .document(relationshipId).delete()
+                    .addOnSuccessListener(unused -> callback.onSuccess(null))
+                    .addOnFailureListener(callback::onFailure);
+        });
     }
     public void getConsumerForCaregiver(String caregiverUid, RepoCallback<List<CareRelationship>> callback){
         db.collection("care_relationships").whereEqualTo("caregiver_uid", caregiverUid).get()
