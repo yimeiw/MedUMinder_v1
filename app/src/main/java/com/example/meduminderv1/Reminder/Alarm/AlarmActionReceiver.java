@@ -1,4 +1,4 @@
-package com.example.meduminderv1.Reminder;
+package com.example.meduminderv1.Reminder.Alarm;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -6,20 +6,18 @@ import android.content.Intent;
 import android.util.Log;
 
 import com.example.meduminderv1.Callback.RepoCallback;
+import com.example.meduminderv1.Reminder.AppointmentAlertScheduler;
+import com.example.meduminderv1.Reminder.SnoozeHelper;
 import com.example.meduminderv1.Repo.MedicationRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
 import com.google.firebase.Timestamp;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.SetOptions;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
 
 public class AlarmActionReceiver extends BroadcastReceiver {
 
@@ -27,11 +25,13 @@ public class AlarmActionReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        // alarm milik akun lain (atau belum ada yang login) di HP ini: abaikan
-        if (!AlarmOwner.allows(intent)) return;
-
         if (intent == null) {
             Log.e(TAG, "Intent null");
+            return;
+        }
+        // alarm milik akun lain (atau belum ada yang login) di HP ini: abaikan dan hentikan bunyinya
+        if (!AlarmOwner.allows(intent)) {
+            context.stopService(new Intent(context, AlarmRingingService.class));
             return;
         }
 
@@ -71,7 +71,7 @@ public class AlarmActionReceiver extends BroadcastReceiver {
                     pendingResult::finish);
 
         } else if ("ACTION_DISMISS".equals(action)) {
-            context.stopService(new Intent(context, AlarmRingingService.class));
+            AlarmRingingService.stopFor(context, scheduleId);
 
         } else if ("ACTION_APPOINTMENT_ATTENDED".equals(action)
                         || "ACTION_APPOINTMENT_MISSED".equals(action)) {
@@ -94,11 +94,11 @@ public class AlarmActionReceiver extends BroadcastReceiver {
                             } else if (!task.isSuccessful()) {
                                 Log.e(TAG, "Gagal update status appointment. id=" + scheduleId, task.getException());
                             }
-                            context.stopService(new Intent(context, AlarmRingingService.class));
+                            AlarmRingingService.stopFor(context, scheduleId);
                             pendingResult.finish();
                         });
             }).addOnFailureListener(e -> {
-                context.stopService(new Intent(context, AlarmRingingService.class));
+                AlarmRingingService.stopFor(context, scheduleId);
                 pendingResult.finish();
             });
         }
@@ -114,7 +114,7 @@ public class AlarmActionReceiver extends BroadcastReceiver {
                     String currentStatus = snapshot.getString("status");
                     String consumerUid = snapshot.getString("users_id");
                     if ("dikonsumsi".equals(currentStatus)) {
-                        stopAlarmService(context, pendingResult);
+                        stopAlarmService(context, scheduleId, pendingResult);
                         return;
                     }
 
@@ -128,7 +128,7 @@ public class AlarmActionReceiver extends BroadcastReceiver {
                                         .addOnSuccessListener(scheduleDoc -> {
                                             String medicationId = scheduleDoc.getString("medication_id");
                                             if (medicationId == null || medicationId.isEmpty()) {
-                                                stopAlarmService(context, pendingResult);
+                                                stopAlarmService(context, scheduleId, pendingResult);
                                                 return;
                                             }
 
@@ -136,27 +136,27 @@ public class AlarmActionReceiver extends BroadcastReceiver {
                                             medicationRepo.resolveMedicationName(medicationId, medName -> {
                                                 new NotificationRepo(context).notifyCaregiversMedicineTaken(consumerUid, logId, medName, null);
                                                 if (medicationId == null || medicationId.isEmpty()){
-                                                    stopAlarmService(context, pendingResult);
+                                                    stopAlarmService(context, scheduleId, pendingResult);
                                                     return;
                                                 } medicationRepo.decrementStock(medicationId, new RepoCallback<Void>() {
                                                     @Override
                                                     public void onSuccess(Void result) {
-                                                        stopAlarmService(context, pendingResult);
+                                                        stopAlarmService(context, scheduleId, pendingResult);
                                                     }
                                                     @Override
                                                     public void onFailure(Exception e) {
-                                                        stopAlarmService(context, pendingResult);
+                                                        stopAlarmService(context, scheduleId, pendingResult);
                                                     }
                                                 });
                                             });
-                                        }).addOnFailureListener(e -> stopAlarmService(context, pendingResult));
+                                        }).addOnFailureListener(e -> stopAlarmService(context, scheduleId, pendingResult));
                             })
-                            .addOnFailureListener(e -> stopAlarmService(context, pendingResult));
-                }).addOnFailureListener(e -> stopAlarmService(context, pendingResult));
+                            .addOnFailureListener(e -> stopAlarmService(context, scheduleId, pendingResult));
+                }).addOnFailureListener(e -> stopAlarmService(context, scheduleId, pendingResult));
     }
 
-    private void stopAlarmService(Context context, PendingResult pendingResult) {
-        context.stopService(new Intent(context, AlarmRingingService.class));
+    private void stopAlarmService(Context context, String scheduleId, PendingResult pendingResult) {
+        AlarmRingingService.stopFor(context, scheduleId);   // jadwal lain di jam yang sama tetap berbunyi
         pendingResult.finish();
     }
 

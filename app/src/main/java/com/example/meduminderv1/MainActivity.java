@@ -33,7 +33,7 @@ import com.example.meduminderv1.Notification.PushNotifier;
 import com.example.meduminderv1.Util.PressFeedback;
 import com.example.meduminderv1.Util.UserTimeZone;
 
-import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
+import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 import com.example.meduminderv1.Reminder.AppLifecycleTracker;
 import com.example.meduminderv1.Reminder.DailyRescheduleWorker;
 import com.example.meduminderv1.Reminder.StockCheckWorker;
@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         }
         if (user != null) {
             // sisa alarm akun lain yang pernah login di HP ini dibatalkan
-            com.example.meduminderv1.Reminder.AlarmOwner.cancelOtherUsers(getApplicationContext(), user.getUid());
+            com.example.meduminderv1.Reminder.Alarm.AlarmOwner.cancelOtherUsers(getApplicationContext(), user.getUid());
             UserTimeZone.syncOwn(user.getUid());
             new LogGenerator().generateForAllActiveSchedules(user.getUid());
             StockChecker.checkAllForUser(getApplicationContext(), user.getUid(), null);
@@ -180,7 +180,8 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
     }
 
     /**
-     * Android 15+ menggambar app sampai ke balik garis gestur bawah. Navbar menjaga jaraknya sendiri;
+     * Android 15+ menggambar app sampai ke balik status bar & garis gestur bawah. Atas: selalu diberi jarak.
+     * Bawah: navbar menjaga jaraknya sendiri;
      * saat navbar disembunyikan, isi halaman diberi jarak bawah (garis gestur / keyboard) supaya tidak tertutup.
      * Android 14 ke bawah: sistem sudah mengatur ini, jadi tidak diubah.
      */
@@ -194,7 +195,9 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
                         insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars()).bottom,
                         insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.ime()).bottom);
             }
-            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), bottom);
+            // atas: jangan tergambar di bawah jam/baterai (Android 15+ selalu edge-to-edge)
+            int top = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars()).top;
+            v.setPadding(v.getPaddingLeft(), top, v.getPaddingRight(), bottom);
             return insets;
         });
     }
@@ -214,12 +217,16 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
     protected void onStart() {
         super.onStart();
         ReminderEventBus.setListener(this);
+        sweepTick.removeCallbacks(sweepRunnable);
+        sweepTick.postDelayed(sweepRunnable, 3_000L);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         ReminderEventBus.setListener(null);
+        sweepTick.removeCallbacks(sweepRunnable);
+
     }
 
     @Override
@@ -396,4 +403,13 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         if (stopPushListener != null) stopPushListener.run();
     }
 
+    private final android.os.Handler sweepTick = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable sweepRunnable = new Runnable() {
+        @Override public void run() {
+            FirebaseUser u = FirebaseAuth.getInstance().getCurrentUser();
+            if (u != null) com.example.meduminderv1.Reminder.CaregiverMissedScanner
+                    .scanOwn(getApplicationContext(), u.getUid(), null);
+            sweepTick.postDelayed(this, 20_000L);
+        }
+    };
 }

@@ -1,5 +1,6 @@
 package com.example.meduminderv1.Notification;
 
+import com.example.meduminderv1.Reminder.Alarm.AlarmRingingService;
 import com.example.meduminderv1.Util.LoadingOverlay;
 
 import android.content.Intent;
@@ -18,7 +19,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Callback.AuthCallback;
@@ -34,7 +35,7 @@ import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.R;
-import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
+import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 import com.example.meduminderv1.Repo.InvitationRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
 import com.example.meduminderv1.Repo.UserRepository;
@@ -689,7 +690,7 @@ public class NotificationDetailFragment extends Fragment {
                             tvScheduleDayTime.setText(dayFormat.format(scheduleDate) + " • " + com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(timeFormat.format(scheduleDate)));
                         }
                         tvStockInfo.setVisibility(View.VISIBLE);
-                        tvStockInfo.setText(getString(R.string.sisa_stok_obat_label) + finalStock);
+                        tvStockInfo.setText(getString(R.string.sisa_stok, finalStock));
                     };
                     if (med != null && med.getCustom_medicine_name() != null){
                         tvScheduleName.setText(getString(R.string.obat_label_colon) + " " + med.getCustom_medicine_name());
@@ -965,6 +966,7 @@ public class NotificationDetailFragment extends Fragment {
             }
             bundle.putString("medication_id", medId);
             bundle.putString("notification_id", notification.getNotification_id());
+            bundle.putBoolean("refill_mode", true);
             NavHostFragment.findNavController(NotificationDetailFragment.this)
                     .navigate(R.id.editMedicineFragment, bundle);
         });
@@ -1101,7 +1103,7 @@ public class NotificationDetailFragment extends Fragment {
                     @Override public void onSuccess(Void result) {
                         LoadingOverlay.hide(NotificationDetailFragment.this);
                         if (!isAdded()) return;
-                        requireContext().stopService(new Intent(requireContext(), com.example.meduminderv1.Reminder.AlarmRingingService.class));
+                        AlarmRingingService.stopFor(requireContext(), scheduleId);
                         AlarmSchedulerHelper.cancelSnooze(requireContext(), scheduleId);
                         AlarmSchedulerHelper.onDoseTaken(requireContext(), scheduleId, pendingMedName, scheduledAtMillis);
                         new NotificationRepo(requireContext().getApplicationContext())

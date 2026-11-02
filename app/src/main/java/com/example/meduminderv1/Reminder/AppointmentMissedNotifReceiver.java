@@ -6,18 +6,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
 
-import com.example.meduminderv1.Model.UserRole;
-import com.example.meduminderv1.Notification.NotificationText;
-import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
+import com.example.meduminderv1.Reminder.Alarm.AlarmOwner;
+import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 import com.google.firebase.Timestamp;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class AppointmentMissedNotifReceiver extends BroadcastReceiver {
     private static final String TAG = "ApptMissedReceiver";
@@ -26,8 +18,8 @@ public class AppointmentMissedNotifReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        // alarm milik akun lain (atau belum ada yang login) di HP ini: abaikan
         if (!AlarmOwner.allows(intent)) return;
+
         String appointmentId = intent.getStringExtra("appointment_id");
         String extraTitle = intent.getStringExtra("title");
         final boolean alreadyPassed = intent.getBooleanExtra(EXTRA_ALREADY_PASSED, false);
@@ -57,7 +49,6 @@ public class AppointmentMissedNotifReceiver extends BroadcastReceiver {
 
             SharedPreferences pref = context.getSharedPreferences("notification_settings", Context.MODE_PRIVATE);
             if (!alreadyPassed && pref.getBoolean("repeat_reminder", false)) {
-                context.stopService(new Intent(context, AlarmRingingService.class));
                 int snoozeMinutes = SnoozeHelper.getSnoozeMinutes(context);
                 long nextTriggerMillis = System.currentTimeMillis() + snoozeMinutes * 60L * 1000L;
                 Timestamp appointmentAt = doc.getTimestamp("appointment_at");
@@ -81,53 +72,7 @@ public class AppointmentMissedNotifReceiver extends BroadcastReceiver {
                 return;
             }
 
-            doc.getReference().update("status", "terlewatkan", "updated_at", Timestamp.now())
-                    .addOnSuccessListener(unused -> {
-                        context.stopService(new Intent(context, AlarmRingingService.class));
-                        sendNotifications(db, consumerUid, appointmentId, title, pendingResult);
-                    })
-                    .addOnFailureListener(e -> {
-                        Log.e(TAG, "Gagal update status terlewatkan. id=" + appointmentId, e);
-                        pendingResult.finish();
-                    });
+            MissedNotifier.claimAppointment(context, appointmentId, pendingResult::finish);
         }).addOnFailureListener(e -> pendingResult.finish());
-    }
-
-    private void sendNotifications(FirebaseFirestore db, String consumerUid, String appointmentId,
-                                   String title, PendingResult pendingResult) {
-        final List<Task<?>> writes = new ArrayList<>();
-        final String judul = title != null ? title : "";
-
-        Map<String, Object> notifConsumer = new HashMap<>();
-        notifConsumer.put("receiver_uid", consumerUid);
-        notifConsumer.put("type", "Appointment");
-        NotificationText.apply(notifConsumer, "jadwal_terlewat_title",
-                "jadwal_appointment_anda_terlewat_msg", judul);
-        notifConsumer.put("target_role", UserRole.Consumer);
-        notifConsumer.put("reference_id", appointmentId);
-        notifConsumer.put("is_read", false);
-        notifConsumer.put("created_at", Timestamp.now());
-        writes.add(db.collection("notifications").add(notifConsumer));
-
-        db.collection("care_relationships").whereEqualTo("consumer_uid", consumerUid).get()
-                .addOnSuccessListener(query -> {
-                    for (DocumentSnapshot rel : query.getDocuments()) {
-                        String caregiverUid = rel.getString("caregiver_uid");
-                        if (caregiverUid == null) continue;
-                        Map<String, Object> n = new HashMap<>();
-                        n.put("receiver_uid", caregiverUid);
-                        n.put("type", "Appointment");
-                        NotificationText.apply(n, "consumer_melewatkan_jadwal_title",
-                                "consumer_melewatkan_appointment_msg", judul);
-                        n.put("target_role", UserRole.Caregiver);
-                        n.put("reference_id", appointmentId);
-                        n.put("consumer_uid", consumerUid);
-                        n.put("is_read", false);
-                        n.put("created_at", Timestamp.now());
-                        writes.add(db.collection("notifications").add(n));
-                    }
-                    Tasks.whenAllComplete(writes).addOnCompleteListener(t -> pendingResult.finish());
-                }).addOnFailureListener(e ->
-                        Tasks.whenAllComplete(writes).addOnCompleteListener(t -> pendingResult.finish()));
     }
 }

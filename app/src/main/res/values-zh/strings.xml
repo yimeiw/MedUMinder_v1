@@ -156,6 +156,9 @@
     <string name="caregiver_description">帮助监督 Consumer 的服药依从性。</string>
     <string name="consumer">Consumer</string>
     <string name="consumer_description">管理健康提醒。</string>
+    <string name="ganti_ke_role">切换到 %1$s</string>
+
+    <string name="simpan_profil">保存资料</string>
 
     <!-- popup edit -->
     <string name="edit">编辑</string>
@@ -737,4 +740,10 @@
     <string name="update_dibutuhkan_title">需要更新</string>
     <string name="update_dibutuhkan_msg">MedUMinder 有新版本。请更新应用后继续使用。</string>
     <string name="update_btn">更新</string>
+
+    <string name="alarmVolume">闹钟音量</string>
+    <string name="alarmVolumeHint">按手机音量键调节闹钟音量，用此滑块可进一步调小。松开即可试听。</string>
+    <string name="refill_mode_hint">补药模式：只能修改库存。</string>
+    <string name="end_date_not_set_hint">创建此日程时您未设置结束日期（可选）。</string>
+    <string name="tidak_ada_perubahan">没有任何更改</string>
 </resources>

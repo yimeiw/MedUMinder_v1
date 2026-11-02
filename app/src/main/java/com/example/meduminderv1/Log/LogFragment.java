@@ -1,19 +1,15 @@
 package com.example.meduminderv1.Log;
 
+import com.example.meduminderv1.Model.LogGenerator;
+import com.example.meduminderv1.Reminder.Alarm.AlarmRingingService;
 import com.example.meduminderv1.Util.InactiveSchedules;
 
 import com.example.meduminderv1.Util.LoadingOverlay;
 
-import android.annotation.SuppressLint;
-import android.app.AlertDialog;
 import android.content.Intent;
-import android.content.res.ColorStateList;
-import android.graphics.drawable.GradientDrawable;
-import android.media.Image;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.PopupMenu;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
@@ -21,32 +17,27 @@ import androidx.recyclerview.widget.ConcatAdapter;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
-import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Caregiver.ConsumerPickerHelper;
 import com.example.meduminderv1.Model.Appointment;
 import com.example.meduminderv1.Model.CareRelationship;
-import com.example.meduminderv1.Model.LogItem;
 import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.Model.MedicationLog;
-import com.example.meduminderv1.Model.MedicineCatalog;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationType;
@@ -54,17 +45,14 @@ import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
-import com.example.meduminderv1.Schedule.AppointmentReminderFragment;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -98,11 +86,20 @@ public class LogFragment extends Fragment {
     private static final int MAX_DAYS = 90;
     private int daysBack = DAYS_STEP;
     private LoadOlderAdapter loadOlderAdapter;
-    private View logLoading, logError;
+    private View logError;
     // spinner hanya untuk muatan pertama (per jenis riwayat / per consumer); refresh berikutnya tanpa spinner
     private com.example.meduminderv1.Util.SectionLoader firstLoader;
     private boolean loadFailed = false;
 
+    private ListenerRegistration medLogReg, apptLogReg;
+    private final Handler statusTick = new Handler(Looper.getMainLooper());
+    private final Runnable statusRunnable = new Runnable() {
+        @Override public void run() {
+            if (!isAdded()) return;
+            applyFilter();                       // status dihitung ulang dari waktu sekarang
+            statusTick.postDelayed(this, 15_000L);
+        }
+    };
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -123,7 +120,6 @@ public class LogFragment extends Fragment {
         btnTaken = view.findViewById(R.id.btnTaken);
         btnMissed = view.findViewById(R.id.btnMissed);
         btnBack = view.findViewById(R.id.btnBack);
-        logLoading = view.findViewById(R.id.logLoading);
         logError = view.findViewById(R.id.logError);
         view.findViewById(R.id.btnRetryLog).setOnClickListener(v -> reloadCurrentType());
 
@@ -283,7 +279,7 @@ public class LogFragment extends Fragment {
             rvLogs.post(this::maybeLoadOlder);
         }
     }
-    /** Hanya satu yang tampil: spinner, pesan gagal, pesan kosong, atau daftar. */
+    /** Hanya satu yang tampil: pesan gagal, pesan kosong, atau daftar (saat memuat: kosong, tanpa animasi). */
     private void updateStateViews() {
         if (rvLogs == null || firstLoader == null) return;
         boolean loading = firstLoader.isLoading();
@@ -292,7 +288,6 @@ public class LogFragment extends Fragment {
         boolean busy = !firstLoader.hasLoaded() || loading || failed;
         boolean isMed = currentType == LogType.MEDICATION;
         boolean empty = isMed ? medLog.isEmpty() : appointLog.isEmpty();
-        logLoading.setVisibility(loading ? View.VISIBLE : View.GONE);
         logError.setVisibility(failed ? View.VISIBLE : View.GONE);
         rvLogs.setVisibility(busy ? View.GONE : View.VISIBLE);
         initialMedicine.setVisibility(!busy && isMed && empty ? View.VISIBLE : View.GONE);
@@ -301,7 +296,7 @@ public class LogFragment extends Fragment {
     /** Data baru (ganti jenis / consumer): muatan berikutnya dianggap muatan pertama lagi. */
     private void resetFirstLoad() {
         if (firstLoader != null) firstLoader.release();
-        firstLoader = new com.example.meduminderv1.Util.SectionLoader(logLoading);
+        firstLoader = new com.example.meduminderv1.Util.SectionLoader(null); // tetap memuat, tapi tanpa animasi loading
         loadFailed = false;
     }
     /** Dipanggil di awal setiap load; spinner hanya muncul kalau data belum pernah tampil. */
@@ -406,8 +401,10 @@ public class LogFragment extends Fragment {
         }
     }
     private int loadToken = 0;
+
     private void loadMedicationLogs() {
         final int token = ++loadToken;
+        detachLogListeners();
         String users_id = SessionManager.getInstance().getTargetUid();
         if (users_id == null){
             loadingOlder = false;
@@ -415,56 +412,55 @@ public class LogFragment extends Fragment {
             applyFilter();
             return;
         }
+        new LogGenerator().ensureFresh(users_id);
         if (!loadingOlder) beginLoad(); // muat lebih lama cukup spinner kecil di bawah daftar
 
         Calendar startCal = Calendar.getInstance();
-        startCal.set(Calendar.HOUR_OF_DAY, 0);
-        startCal.set(Calendar.MINUTE, 0);
-        startCal.set(Calendar.SECOND, 0);
-        startCal.set(Calendar.MILLISECOND, 0);
+        startCal.set(Calendar.HOUR_OF_DAY, 0); startCal.set(Calendar.MINUTE, 0);
+        startCal.set(Calendar.SECOND, 0); startCal.set(Calendar.MILLISECOND, 0);
         startCal.add(Calendar.DAY_OF_YEAR, -(daysBack - 1));
         Timestamp startOfRange = new Timestamp(startCal.getTime());
-
         Calendar endCal = Calendar.getInstance();
-        endCal.set(Calendar.HOUR_OF_DAY, 0);
-        endCal.set(Calendar.MINUTE, 0);
-        endCal.set(Calendar.SECOND, 0);
-        endCal.set(Calendar.MILLISECOND, 0);
+        endCal.set(Calendar.HOUR_OF_DAY, 0); endCal.set(Calendar.MINUTE, 0);
+        endCal.set(Calendar.SECOND, 0); endCal.set(Calendar.MILLISECOND, 0);
         endCal.add(Calendar.DAY_OF_YEAR, 1);
         Timestamp startOfTomorrow = new Timestamp(endCal.getTime());
 
         // lewati log dari jadwal yang sudah dihapus (is_active = false)
-        InactiveSchedules.load(db, users_id, inactiveIds ->
-        db.collection("medication_logs")
-                .whereEqualTo("users_id", users_id)
-                .whereGreaterThanOrEqualTo("scheduled_at", startOfRange)
-                .whereLessThan("scheduled_at", startOfTomorrow)
-                .orderBy("scheduled_at")
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    if (!isAdded() || token != loadToken) return;
-                    allMedLog.clear();
-                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        MedicationLog log = doc.toObject(MedicationLog.class);
-                        if (log != null && !inactiveIds.contains(log.getMedication_schedules_id())) allMedLog.add(log);
-                    }
-                    loadingOlder = false;
-                    onLoadSuccess();
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("Medication Log", "Gagal ambil data", e);
-                    if (!isAdded() || token != loadToken) return;
-                    if (loadingOlder) {
-                        // hari-hari lama belum termuat: kembalikan rentang supaya tidak tertulis "sejak ..." yang salah
-                        daysBack = Math.max(DAYS_STEP, daysBack - DAYS_STEP);
+        InactiveSchedules.load(db, users_id, inactiveIds -> {
+            if (!isAdded() || token != loadToken) return;
+            medLogReg = db.collection("medication_logs")
+                    .whereEqualTo("users_id", users_id)
+                    .whereGreaterThanOrEqualTo("scheduled_at", startOfRange)
+                    .whereLessThan("scheduled_at", startOfTomorrow)
+                    .orderBy("scheduled_at")
+                    .addSnapshotListener((qs, e) -> {
+                        if (!isAdded() || token != loadToken) return;
+                        if (e != null || qs == null) {
+                            Log.e("Medication Log", "Gagal ambil data", e);
+                            if (loadingOlder) {
+                                // hari-hari lama belum termuat: kembalikan rentang supaya tidak tertulis "sejak ..." yang salah
+                                daysBack = Math.max(DAYS_STEP, daysBack - DAYS_STEP);
+                                loadingOlder = false;
+                                applyFilter();
+                            }
+                            onLoadFailure();
+                            return;
+                        }
+                        allMedLog.clear();
+                        for (DocumentSnapshot doc : qs.getDocuments()) {
+                            MedicationLog log = doc.toObject(MedicationLog.class);
+                            if (log != null && !inactiveIds.contains(log.getMedication_schedules_id())) allMedLog.add(log);
+                        }
                         loadingOlder = false;
-                        applyFilter();
-                    }
-                    onLoadFailure();
-                }));
+                        onLoadSuccess();
+                    });
+        });
     }
+
     private void loadAppointmentLogs() {
         final int token = ++loadToken;
+        detachLogListeners();
         String users_id = SessionManager.getInstance().getTargetUid();
         if (users_id == null){
             firstLoader.done();
@@ -472,17 +468,16 @@ public class LogFragment extends Fragment {
             return;
         }
         beginLoad();
-        Log.d("AUTH", users_id == null ? "NULL" : users_id);
-        db.collection("appointments")
-                .whereEqualTo("users_id", users_id)
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
+        apptLogReg = db.collection("appointments").whereEqualTo("users_id", users_id)
+                .addSnapshotListener((qs, e) -> {
                     if (!isAdded() || token != loadToken) return;
-                    Log.d("FIRESTORE", "Jumlah data: " + querySnapshot.size());
+                    if (e != null || qs == null) {
+                        Log.d("FIRESTORE", "Gagal ambil data", e);
+                        onLoadFailure();
+                        return;
+                    }
                     allAppointLog.clear();
-                    for (DocumentSnapshot doc : querySnapshot) {
-                        Log.d("FIRESTORE", doc.getId() + " => " + doc.getData());
-                        Log.d("DOC", doc.getData().toString());
+                    for (DocumentSnapshot doc : qs.getDocuments()) {
                         Appointment appointment = doc.toObject(Appointment.class);
                         if (appointment != null && appointment.getDeleted_at() == null) {
                             appointment.setDocId(doc.getId());
@@ -490,14 +485,66 @@ public class LogFragment extends Fragment {
                         }
                     }
                     onLoadSuccess();
-                    Log.d("FIRESTORE", "List size: " + medLog.size());
-                })
-                .addOnFailureListener(e -> {
-                    Log.d("FIRESTORE", "Gagal ambil data", e);
-                    if (!isAdded() || token != loadToken) return;
-                    onLoadFailure();
                 });
     }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        detachLogListeners();
+        statusTick.removeCallbacks(statusRunnable);
+    }
+//    private void loadMedicationLogs() {
+//        final int token = ++loadToken;
+//        String users_id = SessionManager.getInstance().getTargetUid();
+//        if (users_id == null){
+//            loadingOlder = false;
+//            updateFooter();
+//            initialMedicine.setVisibility(View.VISIBLE);
+//            return;
+//        }
+//
+//        Calendar startCal = Calendar.getInstance();
+//        startCal.set(Calendar.HOUR_OF_DAY, 0);
+//        startCal.set(Calendar.MINUTE, 0);
+//        startCal.set(Calendar.SECOND, 0);
+//        startCal.set(Calendar.MILLISECOND, 0);
+//        startCal.add(Calendar.DAY_OF_YEAR, -(daysBack - 1));
+//        Timestamp startOfRange = new Timestamp(startCal.getTime());
+//
+//        Calendar endCal = Calendar.getInstance();
+//        endCal.set(Calendar.HOUR_OF_DAY, 0);
+//        endCal.set(Calendar.MINUTE, 0);
+//        endCal.set(Calendar.SECOND, 0);
+//        endCal.set(Calendar.MILLISECOND, 0);
+//        endCal.add(Calendar.DAY_OF_YEAR, 1);
+//        Timestamp startOfTomorrow = new Timestamp(endCal.getTime());
+//
+//        // lewati log dari jadwal yang sudah dihapus (is_active = false)
+//        InactiveSchedules.load(db, users_id, inactiveIds ->
+//        db.collection("medication_logs")
+//                .whereEqualTo("users_id", users_id)
+//                .whereGreaterThanOrEqualTo("scheduled_at", startOfRange)
+//                .whereLessThan("scheduled_at", startOfTomorrow)
+//                .orderBy("scheduled_at")
+//                .get()
+//                .addOnSuccessListener(querySnapshot -> {
+//                    if (!isAdded() || token != loadToken) return;
+//                    allMedLog.clear();
+//                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+//                        MedicationLog log = doc.toObject(MedicationLog.class);
+//                        if (log != null && !inactiveIds.contains(log.getMedication_schedules_id())) allMedLog.add(log);
+//                    }
+//                    loadingOlder = false;
+//                    applyFilter();
+//                })
+//                .addOnFailureListener(e -> {
+//                    Log.e("Medication Log", "Gagal ambil data", e);
+//                    if (!isAdded() || token != loadToken) return;
+//                    loadingOlder = false;
+//                    updateFooter();
+//                }));
+//    }
     //passing data dari log ke reminder view
     private void showAppointmentStatusDialog(Appointment appointment) {
         LogStatus currentStatus = appointment.getStatusBasedOnDate();
@@ -564,9 +611,7 @@ public class LogFragment extends Fragment {
                     appointment.setStatus(newStatus);
                     applyFilter();
 
-                    requireContext().stopService(
-                            new Intent(requireContext(), com.example.meduminderv1.Reminder.AlarmRingingService.class)
-                    );
+                    AlarmRingingService.stopFor(requireContext(), appointment.getDocId());
 
                     if ("dihadiri".equals(newStatus)) {
                         notifyCaregiverAppointmentAttended(appointment);
@@ -686,6 +731,17 @@ public class LogFragment extends Fragment {
             loadMedicationLogs();
         } else {
             loadAppointmentLogs();
+        } statusTick.removeCallbacks(statusRunnable);
+        statusTick.postDelayed(statusRunnable, 15_000L);
+    }
+
+    private void detachLogListeners(){
+        if (medLogReg != null){
+            medLogReg.remove();
+            medLogReg = null;
+        } if (apptLogReg != null){
+            apptLogReg.remove();
+            apptLogReg = null;
         }
     }
 }

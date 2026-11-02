@@ -1,5 +1,6 @@
 package com.example.meduminderv1.Statistik;
 
+import com.example.meduminderv1.Caregiver.ConsumerPickerHelper;
 import com.example.meduminderv1.Util.LoadingOverlay;
 
 import android.Manifest;
@@ -19,20 +20,23 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
 
 import android.os.Environment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import com.github.mikephil.charting.charts.Chart;
 import com.google.android.material.button.MaterialButton;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
 import android.graphics.Color;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.RepoCallback;
@@ -53,7 +57,6 @@ import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.data.PieData;
-import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 
 import java.io.File;
@@ -88,6 +91,9 @@ public class StatistikFragment extends Fragment {
     private int currentPersentase = 0;
     private BarChart adherenceChart;
     private PieChart responseChart;
+    ConsumerPickerHelper consumerPickerHelper;
+    String targetUid;
+    int loadToken = 0;
 
     public StatistikFragment() {
         // Required empty public constructor
@@ -159,6 +165,22 @@ public class StatistikFragment extends Fragment {
         btnDownloadReport = view.findViewById(R.id.btnDownloadReport);
         tvAdherenceDescription = view.findViewById(R.id.tvAdherenceDescription);
 
+        statistikRepo = new StatistikRepo(requireContext());
+        updatePeriodButton(view);
+
+        View pickerRoot = view.findViewById(R.id.consumerPicker);
+        consumerPickerHelper = new ConsumerPickerHelper(pickerRoot, requireContext(), uid -> {
+            targetUid = uid;
+            boolean hasConsumer = uid != null;
+            if (!hasConsumer){
+                pickerRoot.setOnClickListener(v -> NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
+                showNoConsumerState();
+            } else {
+                btnDownloadReport.setEnabled(true);
+                loadStats();
+            }
+        }); consumerPickerHelper.setup();
+
         btnDownloadReport.setOnClickListener(v -> {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                 downloadReport();
@@ -172,10 +194,6 @@ public class StatistikFragment extends Fragment {
                 downloadReport();
             }
         });
-
-        statistikRepo = new StatistikRepo(requireContext());
-        updatePeriodButton(view);
-        loadStats();
 
         return view;
     }
@@ -194,16 +212,16 @@ public class StatistikFragment extends Fragment {
     }
 
     private void loadStats(){
-        String uid = com.example.meduminderv1.Auth.SessionManager.getInstance().getTargetUid();
-        if (uid == null || uid.isEmpty()) {
-            Toast.makeText(requireContext(), getString(R.string.data_pengguna_tidak_ditemukan), Toast.LENGTH_SHORT).show();
+        final String uid = targetUid;
+        if (uid == null || uid.isEmpty()){
+            showNoConsumerState();
             return;
-        }
+        } final int token = ++loadToken;
 
         statistikRepo.getAdherence(uid, selectedPeriod, new StatistikRepo.StatsCallback() {
             @Override
             public void onResult(List<StatistikRepo.DayStat> weekStats) {
-                if(!isAdded()) return;
+                if(!isAdded() || token != loadToken) return;
 
                 int totalSeharusnya = 0;
                 int totalDikonsumsi = 0;
@@ -240,7 +258,7 @@ public class StatistikFragment extends Fragment {
                 tvTotalIgnored.setText(getString(R.string.jumlah_obat, totalDiabaikan));
                 tvTotalSnooze.setText(getString(R.string.jumlah_obat, totalSnooze));
 
-                android.util.Log.d("STAT_DEBUG", "Taken=" + totalDikonsumsi + ", Ignored=" + totalDiabaikan + ", Snooze=" + totalSnooze);
+                Log.d("STAT_DEBUG", "Taken=" + totalDikonsumsi + ", Ignored=" + totalDiabaikan + ", Snooze=" + totalSnooze);
 
                 renderAdherenceChart(weekStats);
                 renderResponseAnalysis(totalDikonsumsi, totalDiabaikan, totalSnooze);
@@ -253,9 +271,26 @@ public class StatistikFragment extends Fragment {
         });
     }
 
+    private void showNoConsumerState(){
+        loadToken++;
+        currentStats = new ArrayList<>();
+        currentTotalDikonsumsi = currentTotalDiabaikan = currentTotalSnooze = currentPersentase = 0;
+
+        tvAdheranceRate.setText("0%");
+        adherenceRing.setProgress(0);
+        tvAdherenceDescription.setText(R.string.noConsumptionData);
+        tvTotalTaken.setText(getString(R.string.jumlah_obat, 0));
+        tvTotalIgnored.setText(getString(R.string.jumlah_obat, 0));
+        tvTotalSnooze.setText(getString(R.string.jumlah_obat, 0));
+        dailyChartContainer.removeAllViews();
+        responsePieContainer.removeAllViews();
+        btnDownloadReport.setEnabled(false);
+    }
+
     private void renderAdherenceChart(List<StatistikRepo.DayStat> stats) {
         dailyChartContainer.removeAllViews();
         BarChart chart = new BarChart(requireContext());
+        styleNoData(chart);
         adherenceChart = chart;
         dailyChartContainer.addView(chart, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 
@@ -344,7 +379,6 @@ public class StatistikFragment extends Fragment {
         chart.invalidate();
     }
 
-    /** Label pendek untuk sumbu X (Sen/Mon/周一, Jan/1月); label panjang tetap dipakai di tempat lain. */
     private List<String> shortChartLabels(List<StatistikRepo.DayStat> stats) {
         Locale locale = getResources().getConfiguration().getLocales().get(0);
         java.text.DateFormatSymbols symbols = java.text.DateFormatSymbols.getInstance(locale);
@@ -369,6 +403,7 @@ public class StatistikFragment extends Fragment {
 
         PieChart chart = new PieChart(requireContext());
         responseChart = chart;
+        styleNoData(chart);
 
         responsePieContainer.addView(
                 chart,
@@ -397,6 +432,7 @@ public class StatistikFragment extends Fragment {
         }
 
         if (entries.isEmpty()) {
+            chart.invalidate();
             return;
         }
 
@@ -445,9 +481,7 @@ public class StatistikFragment extends Fragment {
             return;
         }
 
-        String uid = com.example.meduminderv1.Auth.SessionManager
-                .getInstance()
-                .getTargetUid();
+        String uid = targetUid;
 
         if (uid == null || uid.isEmpty()) {
             Toast.makeText(
@@ -510,7 +544,7 @@ public class StatistikFragment extends Fragment {
 
     private void finishDownload() {
         isDownloading = false;
-        if (btnDownloadReport != null) btnDownloadReport.setEnabled(true);
+        if (btnDownloadReport != null) btnDownloadReport.setEnabled(targetUid != null);
     }
 
     @SuppressLint("StringFormatInvalid")
@@ -1143,5 +1177,10 @@ public class StatistikFragment extends Fragment {
                     public void onFailure(Exception e) {}
                 });
     }
-
+    private void styleNoData(Chart<?> chart) {
+        chart.setNoDataText(getString(R.string.noConsumptionData));
+        chart.setNoDataTextColor(MaterialColors.getColor(requireView(),
+                com.google.android.material.R.attr.colorOnSurface));
+        chart.getPaint(Chart.PAINT_INFO).setTypeface(fontRegular());
+    }
 }

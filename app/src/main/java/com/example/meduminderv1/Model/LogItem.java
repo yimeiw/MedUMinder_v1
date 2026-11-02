@@ -12,6 +12,13 @@ public class LogItem {
     private String scheduleId;
     private long scheduledAtMillis;
     private long createdAtMillis;
+    private LogStatus displayStatus;
+    public LogStatus getDisplayStatus(){
+        return displayStatus;
+    }
+    public void setDisplayStatus(LogStatus s){
+        this.displayStatus = s;
+    }
 
     public LogItem(String type,
                    String namaJadwal,

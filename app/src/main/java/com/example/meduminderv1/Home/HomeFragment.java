@@ -1,5 +1,6 @@
 package com.example.meduminderv1.Home;
 
+import com.example.meduminderv1.Model.LogGenerator;
 import com.example.meduminderv1.Util.SchedulePermission;
 
 import com.example.meduminderv1.Util.BadgeText;
@@ -8,10 +9,13 @@ import com.example.meduminderv1.Util.LoadingOverlay;
 
 import static android.content.Context.MODE_PRIVATE;
 
+import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Typeface;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -26,14 +30,12 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.RepoCallback;
-import com.example.meduminderv1.Caregiver.TodayScheduleAdapter;
 import com.example.meduminderv1.Invitation.InvitationPopupHelper;
-import com.example.meduminderv1.Model.Appointment;
 import com.example.meduminderv1.Model.LogItem;
 import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.Model.Medication;
@@ -42,11 +44,13 @@ import com.example.meduminderv1.Model.MedicationSchedules;
 import com.example.meduminderv1.Model.MedicineCatalog;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
-import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
+import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 import com.example.meduminderv1.Repo.MedicationRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
 import com.example.meduminderv1.Repo.StatistikRepo;
 import com.example.meduminderv1.Statistik.ChartMakerView;
+import com.example.meduminderv1.Util.TodayScheduleLoader;
+import com.example.meduminderv1.Util.UserTimeZone;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
@@ -95,16 +99,25 @@ public class HomeFragment extends Fragment {
     StatistikRepo statistikRepo;
     private ListenerRegistration nextScheduleListener;
     // data Home selalu "live" dari Firestore: tambah / ubah / hapus langsung tampil tanpa pindah tab
-    private ListenerRegistration todayLogsListener, todayApptListener, schedulesListener;
-    private QuerySnapshot lastNextLogs, lastTodayLogs, lastTodayAppts;
-    private int nextRenderGen = 0, todayRenderGen = 0;
-    private boolean todayApptsArrived = false;
+    private ListenerRegistration schedulesListener, medicationsListener;
+    private QuerySnapshot lastNextLogs;
+    private int nextRenderGen = 0;
     // spinner hanya saat muatan pertama halaman ini
     private com.example.meduminderv1.Util.SectionLoader nextLoader, todayLoader;
     private ListenerRegistration invitationListener; // popup undangan realtime
     private final Handler refreshHandler = new Handler(Looper.getMainLooper());
     private long displayedScheduleAtMillis = -1;
     private final Runnable refreshRunnable = this::checkNextScheduleFreshness;
+    private TodayScheduleLoader todayScheduleLoader;
+    private TodayScheduleAdapter todayScheduleAdapter;
+    private Typeface cachedRegular;
+    private Typeface fontRegular() {
+        if (cachedRegular == null) {
+            Typeface f = ResourcesCompat.getFont(requireContext(), R.font.app_font);
+            cachedRegular = f != null ? f : Typeface.DEFAULT;
+        }
+        return cachedRegular;
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -177,11 +190,20 @@ public class HomeFragment extends Fragment {
             NavHostFragment.findNavController(this)
                     .navigate(R.id.scheduleFragment);
         });
-        rvTodaySchedule.setLayoutManager(new LinearLayoutManager(requireContext()));
         nextLoader = new com.example.meduminderv1.Util.SectionLoader(
                 view.findViewById(R.id.nextLoading), haveSchedule, noSchedule);
         todayLoader = new com.example.meduminderv1.Util.SectionLoader(
                 view.findViewById(R.id.todayLoading), rvTodaySchedule, emptyTodaySchedule, btnLihatSemua);
+        rvTodaySchedule.setLayoutManager(new LinearLayoutManager(requireContext()){
+            @Override
+            public boolean canScrollVertically() {
+                return false;
+            }
+        });
+        rvTodaySchedule.setHasFixedSize(false);
+        rvTodaySchedule.setNestedScrollingEnabled(false);
+        rvTodaySchedule.setOverScrollMode(View.OVER_SCROLL_NEVER);
+
         btnLihatSemua.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
             bundle.putLong("selected_date", System.currentTimeMillis());
@@ -204,7 +226,6 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-
         InvitationPopupHelper.checkAndShow(this, authManager);
         if (invitationListener != null) invitationListener.remove();
         invitationListener = InvitationPopupHelper.listen(this, authManager);
@@ -215,11 +236,11 @@ public class HomeFragment extends Fragment {
         loadTodaySchedule();
         listenScheduleChanges();
         loadStats();
-
-        refreshHandler.postDelayed(refreshRunnable, 30_000L);
+        FirebaseUser fu = FirebaseAuth.getInstance().getCurrentUser();
+        if (fu != null) new LogGenerator().ensureFresh(fu.getUid());
     }
 
-    /** Tampilkan jumlah notif belum dibaca di ikon lonceng (realtime). */
+    // Tampilkan jumlah notif belum dibaca di ikon lonceng (realtime).
     private void checkUnreadNotif() {
         User user = authManager.getCurrentUser();
         if (user == null) return;
@@ -289,6 +310,7 @@ public class HomeFragment extends Fragment {
             haveSchedule.setVisibility(View.GONE);
             noSchedule.setVisibility(View.VISIBLE);
             nextLogId = null;
+            displayedScheduleAtMillis = -1;
             return;
         }
         DocumentSnapshot target = candidates.get(index);
@@ -309,6 +331,7 @@ public class HomeFragment extends Fragment {
             noSchedule.setVisibility(View.GONE);
             displayedScheduleAtMillis = targetLog.getEffectiveTime().toDate().getTime()
                     + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS;
+            scheduleFreshnessCheck();
             tvDay.setText(formatDayLabel(targetLog.getEffectiveTime().toDate()));
             SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
             tvTime.setText(com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(sdf.format(targetLog.getEffectiveTime().toDate())));
@@ -336,7 +359,16 @@ public class HomeFragment extends Fragment {
                     if (error != null || snap == null || !isAdded()) return;
                     if (first[0]) { first[0] = false; return; } // data awal sudah ditangani listener log
                     renderNextSchedule();
-                    renderTodaySchedule();
+                    if (todayScheduleLoader != null) todayScheduleLoader.refresh();
+                });
+        // stok berubah (mis. "Sudah diminum" dari notifikasi alarm) -> kartu jadwal berikutnya ikut diperbarui
+        if (medicationsListener != null) medicationsListener.remove();
+        boolean[] firstMeds = {true};
+        medicationsListener = db.collection("medications").whereEqualTo("users_id", firebaseUser.getUid())
+                .addSnapshotListener((snap, error) -> {
+                    if (error != null || snap == null || !isAdded()) return;
+                    if (firstMeds[0]) { firstMeds[0] = false; return; }
+                    renderNextSchedule();
                 });
     }
 
@@ -359,11 +391,21 @@ public class HomeFragment extends Fragment {
                 && target.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR);
     }
 
-    private void checkNextScheduleFreshness(){
+    private void scheduleFreshnessCheck() {
+        refreshHandler.removeCallbacks(refreshRunnable);
+        if (displayedScheduleAtMillis > 0) {
+            long wait = Math.max(500L, displayedScheduleAtMillis - System.currentTimeMillis() + 300L);
+            refreshHandler.postDelayed(refreshRunnable, Math.min(wait, 60_000L));
+        }
+    }
+
+    private void checkNextScheduleFreshness() {
         if (!isAdded()) return;
-        if (displayedScheduleAtMillis > 0 && displayedScheduleAtMillis <= System.currentTimeMillis()){
+        if (displayedScheduleAtMillis > 0 && displayedScheduleAtMillis <= System.currentTimeMillis()) {
             loadNextSchedule();
-        } refreshHandler.postDelayed(refreshRunnable, 30_000L);
+            return;
+        }
+        scheduleFreshnessCheck();
     }
     private void confirmTaken() {
         if (nextLogId == null) return;
@@ -431,7 +473,6 @@ public class HomeFragment extends Fragment {
                 });
     }
 
-    /** Selalu memanggil callback. name == null berarti jadwal/obat sudah tidak ada. */
     private void resolveMedName(String schedulesId, MedResolveCallback callback) {
         appContext();
         if (schedulesId == null || schedulesId.isEmpty()) { callback.onResolved(null, 0, null, null); return; }
@@ -474,9 +515,9 @@ public class HomeFragment extends Fragment {
     }
 
     // context aplikasi yang tetap aman dipakai walau fragment sudah ditutup
-    private android.content.Context appCtx;
-    private android.content.Context appContext() {
-        android.content.Context c = getContext();
+    private Context appCtx;
+    private Context appContext() {
+        Context c = getContext();
         if (c != null) appCtx = c.getApplicationContext();
         return appCtx;
     }
@@ -484,125 +525,24 @@ public class HomeFragment extends Fragment {
     private interface MedResolveCallback{
         void onResolved(String name, int stock, String medicationId, String medType);
     }
-
-    private void loadTodaySchedule() {
-        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (firebaseUser == null) return;
-        String uid = firebaseUser.getUid();
-        Calendar startCal = Calendar.getInstance();
-        startCal.set(Calendar.HOUR_OF_DAY, 0);
-        startCal.set(Calendar.MINUTE, 0);
-        startCal.set(Calendar.SECOND, 0);
-        startCal.set(Calendar.MILLISECOND, 0);
-        Timestamp startOfDay = new Timestamp(startCal.getTime());
-
-        Calendar endCal = (Calendar) startCal.clone();
-        endCal.add(Calendar.DAY_OF_YEAR, 1);
-        Timestamp startOfTomorrow = new Timestamp(endCal.getTime());
-
-        removeTodayListeners();
-        lastTodayLogs = null;
-        lastTodayAppts = null;
-        todayApptsArrived = false;
-        todayLogsListener = db.collection("medication_logs").whereEqualTo("users_id", uid)
-                .whereGreaterThanOrEqualTo("scheduled_at", startOfDay)
-                .whereLessThan("scheduled_at", startOfTomorrow)
-                .addSnapshotListener((medQuery, error) -> {
-                    if (!isAdded()) return;
-                    if (error != null || medQuery == null) {
-                        Log.e("HOME_TODAY_SCHEDULE", "Gagal load jadwal hari ini", error);
-                        if (todayLoader.isLoading()) { todayLoader.failed(); showTodayError(); }
-                        return;
-                    }
-                    lastTodayLogs = medQuery;
-                    renderTodaySchedule();
-                });
-        todayApptListener = db.collection("appointments")
-                .whereEqualTo("users_id", uid)
-                .whereGreaterThanOrEqualTo("appointment_at", startOfDay)
-                .whereLessThan("appointment_at", startOfTomorrow)
-                .addSnapshotListener((apptQuery, error) -> {
-                    if (!isAdded()) return;
-                    if (error != null) Log.e("HOME_TODAY_SCHEDULE", "Gagal load appointments", error);
-                    lastTodayAppts = apptQuery;
-                    todayApptsArrived = true;
-                    renderTodaySchedule();
-                });
-    }
-
-    private void removeTodayListeners() {
-        if (todayLogsListener != null) { todayLogsListener.remove(); todayLogsListener = null; }
-        if (todayApptListener != null) { todayApptListener.remove(); todayApptListener = null; }
-    }
-
-    private void renderTodaySchedule() {
-        // tunggu obat DAN appointment, supaya muatan pertama tidak tampil setengah lalu "lompat"
-        if (!isAdded() || lastTodayLogs == null || !todayApptsArrived) return;
-        final int gen = ++todayRenderGen;
-        List<LogItem> combined = new ArrayList<>();
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-        List<MedicationLog> logs = new ArrayList<>();
-        for (DocumentSnapshot doc : lastTodayLogs.getDocuments()) {
-            MedicationLog log = doc.toObject(MedicationLog.class);
-            if (log != null) logs.add(log);
-        }
-        if (logs.isEmpty()) {
-            mergeAppointments(combined, gen);
-            return;
-        }
-        int[] remaining = {logs.size()};
-        for (MedicationLog log : logs) {
-            resolveMedName(log.getMedication_schedules_id(), (medName, stock, medId, medType) -> {
-                if (!isAdded() || gen != todayRenderGen) return; // sudah ada data yang lebih baru
-                if (medName != null) { // null = jadwal/obat sudah dihapus: tidak ditampilkan
-                    String info = "";
-                    if ("PIL".equals(medType)) {
-                        info = getString(R.string.sisa_stok, stock);
-                    }
-                    combined.add(new LogItem("medicine", medName,
-                            sdf.format(log.getEffectiveTime().toDate()), info, log.getStatus(),
-                            log.getMedication_schedules_id(), log.getScheduled_at().toDate().getTime(),
-                            log.getCreated_at() != null ? log.getCreated_at().toDate().getTime() : 0));
-                }
-                remaining[0]--;
-                if (remaining[0] <= 0) mergeAppointments(combined, gen);
+    private void loadTodaySchedule(){
+        FirebaseUser u = FirebaseAuth.getInstance().getCurrentUser();
+        if (u == null) return;
+        if (todayScheduleLoader == null){
+            todayScheduleLoader = new TodayScheduleLoader(requireContext(), true, this::showToday);
+            todayScheduleLoader.setOnError(() -> {
+                if (isAdded() && todayLoader.isLoading()) { todayLoader.failed(); showTodayError(); }
             });
-        }
-    }
+        } Calendar s = Calendar.getInstance();
+        s.set(Calendar.HOUR_OF_DAY, 0);
+        s.set(Calendar.MINUTE, 0);
+        s.set(Calendar.SECOND, 0);
+        s.set(Calendar.MILLISECOND, 0);
 
-    private void mergeAppointments(List<LogItem> combined, int gen) {
-        if (!isAdded() || gen != todayRenderGen) return;
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-        if (lastTodayAppts != null) {
-            for (DocumentSnapshot doc : lastTodayAppts.getDocuments()) {
-                // ESTIMATE: appointment baru (created_at = jam server) belum dibalas server -> pakai perkiraan,
-                // bukan null (null dianggap paling lama -> appointment baru jatuh ke urutan paling bawah)
-                Appointment appt = doc.toObject(Appointment.class, DocumentSnapshot.ServerTimestampBehavior.ESTIMATE);
-                if (appt == null) continue;
-                if (appt.getDeleted_at() != null) continue;
-                combined.add(new LogItem("appointment", appt.getTitle(),
-                        sdf.format(appt.getDisplayTime().toDate()),
-                        appt.getAddress(), appt.getStatus(),
-                        doc.getId(), appt.getAppointment_at().toDate().getTime(),
-                        appt.getCreated_at() != null ? appt.getCreated_at().toDate().getTime() : 0));
-            }
-        }
-        Collections.sort(combined, (a, b) -> Long.compare(b.getCreatedAtMillis(), a.getCreatedAtMillis()));
-        todayLoader.done();
-        // dulu dipotong 3 item -> jadwal ke-4 dst tidak pernah muncul; sekarang semua jadwal hari ini tampil
-        List<LogItem> displayList = combined;
-        TodayScheduleAdapter adapter = new TodayScheduleAdapter(displayList, requireContext());
-        adapter.setOnItemClickListener(this::navigateToReminder);
-        rvTodaySchedule.setAdapter(adapter);
-        if (combined.isEmpty()){
-            showTodayEmpty();
-        } else {
-            emptyTodaySchedule.setVisibility(View.GONE);
-            rvTodaySchedule.setVisibility(View.VISIBLE);
-            btnLihatSemua.setVisibility(View.VISIBLE);
-        }
+        Calendar e = (Calendar) s.clone();
+        e.add(Calendar.DAY_OF_YEAR, 1);
+        todayScheduleLoader.start(u.getUid(), s.getTime(), e.getTime());
     }
-
     private void showTodayEmpty() {
         emptyTodaySchedule.setText(R.string.tidak_ada_jadwal_hari_ini);
         emptyTodaySchedule.setVisibility(View.VISIBLE);
@@ -626,6 +566,33 @@ public class HomeFragment extends Fragment {
         noSchedule.setVisibility(View.GONE);
     }
 
+    private void showToday(List<LogItem> combined){
+        if (!isAdded() || getContext() == null) return;
+        todayLoader.done();
+        List<LogItem> displayList = TodayScheduleLoader.pickForHome(combined, 3, true); // sudah diminum: terbaru dulu (hanya Home)
+        Log.d("HOME_TODAY", "combined=" + combined.size() + " tampil=" + displayList.size());
+        if (todayScheduleAdapter == null){
+            todayScheduleAdapter = new TodayScheduleAdapter(displayList, requireContext());
+            todayScheduleAdapter.setOnItemClickListener(this::navigateToReminder);
+            rvTodaySchedule.setAdapter(todayScheduleAdapter);
+        } else {
+            todayScheduleAdapter.setItems(displayList);
+        }
+        if (combined.isEmpty()) {
+            showTodayEmpty();
+        } else {
+            emptyTodaySchedule.setVisibility(View.GONE);
+            rvTodaySchedule.setVisibility(View.VISIBLE);
+            btnLihatSemua.setVisibility(View.VISIBLE);
+        }
+        rvTodaySchedule.post(() -> {
+            rvTodaySchedule.measure(View.MeasureSpec.makeMeasureSpec(rvTodaySchedule.getWidth(), View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.UNSPECIFIED);
+            ViewGroup.LayoutParams lp = rvTodaySchedule.getLayoutParams();
+            lp.height = rvTodaySchedule.getMeasuredHeight();
+            rvTodaySchedule.setLayoutParams(lp);
+        });
+    }
     private void navigateToReminder(LogItem item) {
         if (!isAdded()) return;
         Bundle bundle = new Bundle();
@@ -729,6 +696,7 @@ public class HomeFragment extends Fragment {
         xAxis.setAxisMaximum(labels.size() - 1);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setTextColor(itam);
+        xAxis.setTypeface(fontRegular());
         xAxis.setDrawGridLines(false);
 
         YAxis leftAxis = lineChart.getAxisLeft();
@@ -743,15 +711,18 @@ public class HomeFragment extends Fragment {
         leftAxis.setAxisMinimum(0f);
         leftAxis.setDrawGridLines(false);
         leftAxis.setTextColor(itam);
+        leftAxis.setTypeface(fontRegular());
 
         YAxis rightAxis = lineChart.getAxisRight();
         rightAxis.setEnabled(true);
         rightAxis.setAxisMinimum(0f);
         rightAxis.setAxisMaximum(100f);
         rightAxis.setGranularity(20f);
+        rightAxis.setTypeface(fontRegular());
 
         Legend legend = lineChart.getLegend();
         legend.setTextColor(itam);
+        legend.setTypeface(fontRegular());
         legend.setForm(Legend.LegendForm.LINE);
 
         lineChart.setExtraOffsets(5f, 12f, 8f, 8f);
@@ -774,7 +745,8 @@ public class HomeFragment extends Fragment {
         if (unreadListener != null) { unreadListener.remove(); unreadListener = null; }
         if (nextScheduleListener != null) { nextScheduleListener.remove(); nextScheduleListener = null; }
         if (schedulesListener != null) { schedulesListener.remove(); schedulesListener = null; }
-        removeTodayListeners();
+        if (medicationsListener != null) { medicationsListener.remove(); medicationsListener = null; }
+        if (todayScheduleLoader != null) todayScheduleLoader.stop();
     }
 
     @Override
@@ -783,5 +755,6 @@ public class HomeFragment extends Fragment {
         if (nextLoader != null) nextLoader.release();
         if (todayLoader != null) todayLoader.release();
         if (nextScheduleListener != null) nextScheduleListener.remove();
+        todayScheduleAdapter = null;
     }
 }

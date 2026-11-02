@@ -1,5 +1,6 @@
 package com.example.meduminderv1.SignUp;
 
+import com.example.meduminderv1.Util.ActivityTracker;
 import com.example.meduminderv1.Util.EmailApp;
 
 import com.example.meduminderv1.Util.LoadingOverlay;
@@ -15,7 +16,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ScrollView;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
@@ -47,7 +48,8 @@ public class SignUpActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+        // bagian atas layar berwarna gelap (navy) -> ikon jam & baterai harus terang, juga di mode terang
+        EdgeToEdge.enable(this, androidx.activity.SystemBarStyle.dark(android.graphics.Color.TRANSPARENT));
         setContentView(R.layout.activity_sign_up);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -112,7 +114,9 @@ public class SignUpActivity extends AppCompatActivity {
             @Override
             public void onSuccess(User result) {
                 LoadingOverlay.hide(SignUpActivity.this);
-                startActivity(new Intent(SignUpActivity.this, MainActivity.class));
+                Intent i = new Intent(SignUpActivity.this, MainActivity.class);
+                i.putExtra(ActivityTracker.EXTRA_TOAST, R.string.login_success);
+                startActivity(i);
                 finishAffinity();
             }
 
@@ -160,7 +164,7 @@ public class SignUpActivity extends AppCompatActivity {
 
         User user = new User();
         user.setName(nameInput.getText().toString().trim());
-        user.setEmail(emailInput.getText().toString().trim().toLowerCase());
+        user.setEmail(emailInput.getText().toString().trim().toLowerCase(java.util.Locale.ROOT));
         user.setCurrent_role("Consumer");
         user.setCaregiver_enabled(false);
         user.setAuthProvider(AuthProviderType.EMAIL);
@@ -242,30 +246,37 @@ public class SignUpActivity extends AppCompatActivity {
     private boolean validateInput(String name, String email, String password) {
         if(TextUtils.isEmpty(name)){
             nameInput.setError(getString(R.string.nama_harus_diisi));
+            nameInput.requestFocus();
             return false;
         }
         if (name.length() < 4) {
             nameInput.setError(getString(R.string.nama_minimal_4_karaker_typo));
+            nameInput.requestFocus();
             return false;
         }
         if (name.length() > 50) {
             nameInput.setError(getString(R.string.nama_maksimal_50_karakter));
+            nameInput.requestFocus();
             return false;
         }
         if (TextUtils.isEmpty(email)){
             emailInput.setError(getString(R.string.email_harus_diisi));
+            emailInput.requestFocus();
             return false;
         }
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
             emailInput.setError(getString(R.string.email_tidak_valid));
+            emailInput.requestFocus();
             return false;
         }
         if (TextUtils.isEmpty(password)){
             passwordInput.setError(getString(R.string.password_harus_diisi));
+            passwordInput.requestFocus();
             return false;
         }
         if (password.length() < 6){
             passwordInput.setError(getString(R.string.password_min_6_karakter));
+            passwordInput.requestFocus();
             return false;
         } return true;
     }

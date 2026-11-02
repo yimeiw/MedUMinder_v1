@@ -5,7 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -58,6 +58,7 @@ public class ReminderStockFragment extends Fragment {
             Bundle bundle = new Bundle();
             bundle.putString("medication_id", medicationId);
             bundle.putString("notification_id", notificationId);
+            bundle.putBoolean("refill_mode", true);
             NavHostFragment.findNavController(ReminderStockFragment.this).
                     navigate(R.id.editMedicineFragment, bundle);
         });

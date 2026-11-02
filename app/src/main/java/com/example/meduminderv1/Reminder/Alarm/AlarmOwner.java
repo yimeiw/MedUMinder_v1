@@ -1,4 +1,4 @@
-package com.example.meduminderv1.Reminder;
+package com.example.meduminderv1.Reminder.Alarm;
 
 import android.app.NotificationManager;
 import android.content.Context;
@@ -11,6 +11,7 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
+import com.example.meduminderv1.Reminder.AppointmentAlertScheduler;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
@@ -80,7 +81,7 @@ public final class AlarmOwner {
 
     // ===== daftar alarm per pemilik =====
 
-    static void rememberMedicine(Context context, String scheduleId, List<String> times) {
+    public static void rememberMedicine(Context context, String scheduleId, List<String> times) {
         String uid = currentUid();
         if (uid == null || scheduleId == null) return;
         SharedPreferences prefs = prefs(context);
@@ -90,7 +91,7 @@ public final class AlarmOwner {
         prefs.edit().putStringSet(uid, set).apply();
     }
 
-    static void rememberAppointment(Context context, String appointmentId) {
+    public static void rememberAppointment(Context context, String appointmentId) {
         String uid = currentUid();
         if (uid == null || appointmentId == null) return;
         SharedPreferences prefs = prefs(context);

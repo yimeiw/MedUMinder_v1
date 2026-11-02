@@ -1,14 +1,11 @@
 package com.example.meduminderv1.Edit;
 
 import com.example.meduminderv1.Util.DisabledField;
-
+import com.example.meduminderv1.Util.DatePickerHelper;
 import com.example.meduminderv1.Util.LoadingOverlay;
 import com.example.meduminderv1.Util.UserTimeZone;
 
-import android.app.DatePickerDialog;
-import android.app.TimePickerDialog;
-import android.content.DialogInterface;
-import android.graphics.Color;
+import android.content.Context;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
@@ -27,7 +24,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.Notification;
@@ -39,12 +36,11 @@ import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Model.CareRelationship;
 import com.example.meduminderv1.Model.LogGenerator;
-import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.Model.Medication;
 import com.example.meduminderv1.Model.MedicationSchedules;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
-import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
+import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 import com.example.meduminderv1.Reminder.StockChecker;
 import com.example.meduminderv1.Repo.MedicationRepo;
 import com.google.android.material.button.MaterialButton;
@@ -54,7 +50,6 @@ import com.google.android.material.timepicker.TimeFormat;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.WriteBatch;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -81,7 +76,7 @@ public class EditMedicineFragment extends Fragment {
     MaterialButton btnUpdateReminder;
     SessionManager sessionManager;
     User user;
-
+    private View rootView;
     private final ArrayList<TextView> timeViews = new ArrayList<>();
     private String scheduleId, medicationIdArg, notificationId, medicationId;
     private ZoneId targetZone = ZoneId.systemDefault();
@@ -93,14 +88,17 @@ public class EditMedicineFragment extends Fragment {
     private long originalEndMillis = 0;   // 0 = tanpa end date
     private String originalStock = "";
     private String medType = "";
-    // dibuka dari pengingat isi ulang (hanya medication_id): yang boleh diubah cuma stok
+    private long occurrenceAt = 0L, effectiveAt = 0L;
+    // isi ulang: yang boleh diubah cuma stok
     private boolean refillMode = false;
     private View cardDate;
+    private TextView tvEndDateHint;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_edit_medicine, container, false);
+        rootView = view;
 
         btnBack = view.findViewById(R.id.btnBack);
         namaObat = view.findViewById(R.id.namaObat);
@@ -110,7 +108,7 @@ public class EditMedicineFragment extends Fragment {
         endDateReminder = view.findViewById(R.id.endDateReminder);
         selectedCalendar = Calendar.getInstance();
         btnUpdateReminder = view.findViewById(R.id.btnUpdateReminder);
-
+        tvEndDateHint = view.findViewById(R.id.tvEndDateHint);
 
         db = FirebaseFirestore.getInstance();
         medicationRepo = new MedicationRepo(requireContext());
@@ -138,10 +136,18 @@ public class EditMedicineFragment extends Fragment {
             scheduleId = bundle.getString("medication_schedules_id");
             medicationIdArg = bundle.getString("medication_id");
             notificationId = bundle.getString("notification_id");
+            occurrenceAt = bundle.getLong("occurrence_at", 0L);
+            effectiveAt  = bundle.getLong("effective_at", 0L);
         }
 
-        refillMode = (scheduleId == null || scheduleId.isEmpty())
-                && medicationIdArg != null && !medicationIdArg.isEmpty();
+        // isi ulang: dibuka dengan tanda refill_mode, atau dari pengingat stok (hanya medication_id)
+        refillMode = (bundle != null && bundle.getBoolean("refill_mode", false))
+                || ((scheduleId == null || scheduleId.isEmpty())
+                    && medicationIdArg != null && !medicationIdArg.isEmpty());
+        if (refillMode) {
+            ((TextView) view.findViewById(R.id.tvAddReminderMed)).setText(R.string.isiUlangObat);
+            btnUpdateReminder.setText(R.string.isiUlangObat);
+        }
 
         if (scheduleId != null && !scheduleId.isEmpty()) {
             loadExistingData();
@@ -152,8 +158,10 @@ public class EditMedicineFragment extends Fragment {
         }
 
         cardDate = view.findViewById(R.id.cardDate);
-        cardDate.setOnClickListener(v ->  showEndDatePicker());
-        endDateReminder.setOnClickListener(v -> showEndDatePicker());
+        if (!refillMode) { // isi ulang: tanggal selesai tidak bisa diubah
+            cardDate.setOnClickListener(v ->  showEndDatePicker());
+            endDateReminder.setOnClickListener(v -> showEndDatePicker());
+        }
 
         btnUpdateReminder.setOnClickListener(v -> updateReminder());
         // nama obat & frekuensi selalu terkunci (Ubah maupun Isi Ulang), gaya dari satu tempat
@@ -168,25 +176,16 @@ public class EditMedicineFragment extends Fragment {
 
         return view;
     }
-
     private void showEndDatePicker() {
-        Calendar today = Calendar.getInstance();
-        Calendar init = (endDateSelected && !selectedCalendar.before(today))
-                ? (Calendar) selectedCalendar.clone() : today;
-        DatePickerDialog dialog = new DatePickerDialog(requireContext(), (dp, y, m, d) -> {
-            selectedCalendar.set(y, m, d, 23, 59, 59);
-            selectedCalendar.set(Calendar.MILLISECOND, 0);
-            endDateSelected = true;
-            endDateReminder.setText(dateFmt.format(selectedCalendar.getTime()));
-        }, init.get(Calendar.YEAR), init.get(Calendar.MONTH), init.get(Calendar.DAY_OF_MONTH));
-        dialog.getDatePicker().setMinDate(System.currentTimeMillis());
-        dialog.show();
-
-        int color = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorSecondaryFixedDim, Color.BLUE);
-        dialog.getButton(DialogInterface.BUTTON_NEGATIVE).setTextColor(color);
-        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setTextColor(color);
+        DatePickerHelper.show(requireContext(),
+                endDateSelected ? selectedCalendar : null, true, (y, m, d) -> {
+                    selectedCalendar.set(y, m, d, 23, 59, 59);
+                    selectedCalendar.set(Calendar.MILLISECOND, 0);
+                    endDateSelected = true;
+                    endDateReminder.setText(dateFmt.format(selectedCalendar.getTime()));
+                    updateEndDateHint();
+                });
     }
-
     private void resolveScheduleIdThenLoad() {
         LoadingOverlay.show(EditMedicineFragment.this);
         db.collection("medication_schedules")
@@ -221,11 +220,7 @@ public class EditMedicineFragment extends Fragment {
                     return;
                 }
                 medicationId = schedule.getMedication_id();
-                medicationId = schedule.getMedication_id();
                 targetUid = schedule.getUsers_id();
-                UserTimeZone.resolve(targetUid, zone -> {
-                    if (isAdded()) applyTargetZone(zone);
-                });
                 originalTimesOfDay = schedule.getTimes_of_day() != null
                         ? new ArrayList<>(schedule.getTimes_of_day())
                         : new ArrayList<>();
@@ -233,6 +228,11 @@ public class EditMedicineFragment extends Fragment {
                 int frequency = schedule.getFrequency() != null ? schedule.getFrequency() : 0;
                 freqMinumObat.setText(convertNumberToFrequency(frequency), false);
                 createTimeFields(frequency, schedule.getTimes_of_day());
+                UserTimeZone.resolve(targetUid, zone -> {
+                    if (!isAdded()) return;
+                    applyTargetZone(zone);
+                    applySnoozedFromLogs(zone);
+                });
 
                 if (schedule.getEnd_date() != null) {
                     originalEndMillis = schedule.getEnd_date().toDate().getTime();
@@ -240,8 +240,7 @@ public class EditMedicineFragment extends Fragment {
                     endDateSelected = true;
                     endDateReminder.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                             .format(schedule.getEnd_date().toDate()));
-                }
-
+                } updateEndDateHint();
                 loadMedicationData();
             }
 
@@ -252,9 +251,50 @@ public class EditMedicineFragment extends Fragment {
             }
         });
     }
+    private void updateEndDateHint() {
+        if (tvEndDateHint != null) tvEndDateHint.setVisibility(endDateSelected ? View.GONE : View.VISIBLE);
+    }
+    private String hhmmIn(long ms, ZoneId zone) {
+        java.time.ZonedDateTime z = java.time.Instant.ofEpochMilli(ms).atZone(zone);
+        return String.format(Locale.US, "%02d:%02d", z.getHour(), z.getMinute());
+    }
+
+    // jam yang sedang di-snooze tampil sebagai jam terbaru di form edit
+    private void applySnoozedFromLogs(ZoneId zone) {
+        if (scheduleId == null) return;
+        db.collection("medication_logs").whereEqualTo("medication_schedules_id", scheduleId).get()
+                .addOnSuccessListener(q -> {
+                    if (!isAdded()) return;
+                    long now = System.currentTimeMillis();
+                    Map<String, Long> best = new HashMap<>();   // jam asli -> snooze terbaru
+                    for (DocumentSnapshot d : q.getDocuments()) {
+                        if (!"akan datang".equals(d.getString("status"))) continue;
+                        Timestamp at = d.getTimestamp("scheduled_at");
+                        Timestamp snz = d.getTimestamp("snoozed_until");
+                        if (at == null || snz == null) continue;
+                        long until = snz.toDate().getTime();
+                        if (until <= now || until <= at.toDate().getTime()) continue;
+                        String occ = hhmmIn(at.toDate().getTime(), zone);
+                        Long prev = best.get(occ);
+                        if (prev == null || until > prev) best.put(occ, until);
+                    }
+                    for (Map.Entry<String, Long> en : best.entrySet()) {
+                        String eff = hhmmIn(en.getValue(), zone);
+                        if (eff.equals(en.getKey())) continue;
+                        for (TextView tv : timeViews) {
+                            if (!en.getKey().equals(tv.getTag())) continue;
+                            boolean dup = false;
+                            for (TextView o : timeViews) if (o != tv && eff.equals(o.getTag())) dup = true;
+                            if (!dup) { tv.setTag(eff); tv.setText(UserTimeZone.display(zone, eff)); }
+                            break;
+                        }
+                    }
+                });
+    }
 
     private void updateReminder() {
-        final android.content.Context appContext = requireContext().getApplicationContext();
+        if (refillMode) { saveRefillOnly(); return; }
+        final Context appContext = requireContext().getApplicationContext();
         if (!validateReminder()) return;
 
         if (scheduleId == null || medicationId == null) {
@@ -336,6 +376,42 @@ public class EditMedicineFragment extends Fragment {
                                 LoadingOverlay.hide(EditMedicineFragment.this);
                                 if (isAdded()) Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                             });
+                })
+                .addOnFailureListener(e -> {
+                    LoadingOverlay.hide(EditMedicineFragment.this);
+                    if (isAdded()) Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+    private void saveRefillOnly() {
+        final android.content.Context appContext = requireContext().getApplicationContext();
+        String medId = medicationId != null ? medicationId : medicationIdArg;
+        if (medId == null || medId.isEmpty()) {
+            Toast.makeText(requireContext(), getString(R.string.data_reminder_belum_lengkap), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String stok = stokObat.getText().toString().trim();
+        int value;
+        try {
+            value = Integer.parseInt(stok);
+        } catch (NumberFormatException e) {
+            stokObat.setError(getString(stok.isEmpty() ? R.string.stok_obat_wajib_diisi : R.string.stok_harus_angka));
+            return;
+        }
+        if (value <= 0) { stokObat.setError(getString(R.string.stok_harus_lebih_dari_0)); return; }
+
+        LoadingOverlay.show(EditMedicineFragment.this);
+        db.collection("medications").document(medId)
+                .update("stock.stok_obat", value, "updated_at", Timestamp.now())
+                .addOnSuccessListener(unused -> {
+                    StockChecker.check(appContext, medId);   // reset penanda "stok menipis" bila sudah cukup
+                    LoadingOverlay.hide(EditMedicineFragment.this);
+                    if (notificationId != null && !notificationId.isEmpty()) {
+                        db.collection("notifications").document(notificationId)
+                                .update("is_read", true, "updated_at", Timestamp.now());
+                    }
+                    if (!isAdded()) return;
+                    Toast.makeText(requireContext(), getString(R.string.reminder_berhasil_diperbarui), Toast.LENGTH_SHORT).show();
+                    NavHostFragment.findNavController(EditMedicineFragment.this).navigateUp();
                 })
                 .addOnFailureListener(e -> {
                     LoadingOverlay.hide(EditMedicineFragment.this);
@@ -451,9 +527,6 @@ public class EditMedicineFragment extends Fragment {
         String freq = freqMinumObat.getText().toString().trim();
         String stok = stokObat.getText().toString().trim();
 
-        if (name.isEmpty()) { namaObat.setError(getString(R.string.nama_obat_wajib_diisi)); valid = false; }
-        if (freq.isEmpty()) { freqMinumObat.setError(getString(R.string.frekuensi_minum_obat_wajib_diisi)); valid = false; }
-
         if (isLiquid()) {
             // obat cair: tidak ada stok yang perlu dicek
         } else if (stok.isEmpty()) {
@@ -501,6 +574,7 @@ public class EditMedicineFragment extends Fragment {
             @Override
             public void onSuccess(Medication medication) {
                 LoadingOverlay.hide(EditMedicineFragment.this); // data utama sudah tampil
+                applyRefillLock();
                 if (medication == null) return;
                 medType = medication.getMed_type() != null ? medication.getMed_type() : "";
                 // obat cair tidak punya stok -> kolom stok disembunyikan
@@ -568,11 +642,17 @@ public class EditMedicineFragment extends Fragment {
         applyRefillLock();
     }
 
-    /** Mode isi ulang: semua kolom dikunci & terlihat abu-abu, kecuali kolom stok. */
+    /** Mode isi ulang: semua kolom dikunci & terlihat abu-abu (DisabledField), kecuali kolom stok. */
     private void applyRefillLock() {
-        if (!refillMode) return;
+        if (!refillMode || rootView == null) return;
+        rootView.findViewById(R.id.tvRefillHint).setVisibility(View.VISIBLE);
+        freqMinumObat.setOnClickListener(null);
+        endDateReminder.setOnClickListener(null);
         DisabledField.apply(cardDate); // ikut mengunci tanggal di dalamnya (tidak pudar dua kali)
-        for (TextView tv : timeViews) DisabledField.apply(tv);
+        for (TextView tv : timeViews) {
+            tv.setOnClickListener(null);
+            DisabledField.apply(tv);
+        }
         stokObat.setEnabled(true);
         stokObat.setAlpha(1f);
     }

@@ -30,7 +30,8 @@ public final class PressFeedback {
     public static void applyTree(View root){
         if (root == null) return;
         boolean skip = root instanceof EditText || root instanceof MaterialButton
-                || root instanceof CompoundButton;
+                || root instanceof CompoundButton
+                || root instanceof com.google.android.material.slider.Slider; // slider: tanpa kotak biru saat digeser
         if (!skip && root.isClickable() && root.getForeground() == null){
             applyTo(root);
         } if (root.isClickable() && !(root instanceof EditText)) {

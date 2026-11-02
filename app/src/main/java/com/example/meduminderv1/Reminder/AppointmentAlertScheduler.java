@@ -1,11 +1,15 @@
 package com.example.meduminderv1.Reminder;
 
+import com.example.meduminderv1.Reminder.Alarm.AlarmOwner;
+
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
+
+import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 
 public class AppointmentAlertScheduler {
     // sama dengan obat: 3 menit tidak direspon -> terlewat / diulang (Repeat Until Confirmed)
@@ -48,7 +52,7 @@ public class AppointmentAlertScheduler {
         am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, appointmentAtMillis + MISSED_DELAY_MS, missedPi);
     }
 
-    private static int getPreReminderOffsetMinutes(Context context) {
+    public static int getPreReminderOffsetMinutes(Context context) {
         SharedPreferences pref = context.getSharedPreferences("notification_settings", Context.MODE_PRIVATE);
 
         if (pref.contains("appointment_minutes")) {

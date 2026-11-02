@@ -31,6 +31,8 @@
         <item name="pressedRipple">@color/biru</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimary</item>
+        <!-- latar terang -> ikon jam/baterai gelap (dulu putih di atas putih, tidak terlihat) -->
+        <item name="android:windowLightStatusBar">true</item>
         <!-- Customize your theme here. -->
 <!--        <item name="android:fontFamily">@font/inter_18pt_regular</item>-->
 <!--        <item name="fontFamily">@font/inter_18pt_regular</item>-->
@@ -67,6 +69,7 @@
         <item name="android:textAppearanceSmallPopupMenu">@style/AppText.PopupMenu.Small</item>
         <item name="textAppearanceListItem">@style/AppText.ListItem</item>
         <item name="textAppearanceListItemSmall">@style/AppText.ListItemSmall</item>
+        <item name="materialCalendarTheme">@style/AppMaterialCalendar</item>
     </style>
 
     <!-- Baris info di kartu detail notifikasi (ikon diatur dari kode) -->
@@ -120,4 +123,10 @@
         <item name="fontFamily">@font/app_font</item>
     </style>
 
+    <style name="AppMaterialCalendar" parent="ThemeOverlay.MaterialComponents.MaterialCalendar">
+        <item name="android:fontFamily">@font/app_font</item>
+        <item name="fontFamily">@font/app_font</item>
+        <item name="colorPrimary">?attr/colorSecondaryFixedDim</item>
+        <item name="colorOnPrimary">@color/white</item>
+    </style>
 </resources>

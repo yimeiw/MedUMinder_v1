@@ -9,7 +9,6 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
 
     <!-- supaya bisa membuka aplikasi email (Android 11+ package visibility) -->
@@ -85,7 +84,7 @@
             android:name=".Reminder.MedicationAlarmReceiver"
             android:exported="false" />
         <receiver
-            android:name=".Reminder.AlarmActionReceiver"
+            android:name=".Reminder.Alarm.AlarmActionReceiver"
             android:exported="false" />
         <receiver
             android:name=".Reminder.MedicationMissedNotifReceiver"
@@ -112,7 +111,7 @@
         </receiver>
 
         <service
-            android:name=".Reminder.AlarmRingingService"
+            android:name=".Reminder.Alarm.AlarmRingingService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
     </application>

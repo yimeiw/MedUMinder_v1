@@ -1,4 +1,4 @@
-package com.example.meduminderv1.Reminder;
+package com.example.meduminderv1.Reminder.Alarm;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -12,6 +12,10 @@ import android.util.Log;
 import com.example.meduminderv1.Model.Medication;
 import com.example.meduminderv1.Model.MedicationSchedules;
 import com.example.meduminderv1.Model.MedicineCatalog;
+import com.example.meduminderv1.Reminder.AppointmentAlertScheduler;
+import com.example.meduminderv1.Reminder.MedicationAlarmReceiver;
+import com.example.meduminderv1.Reminder.MedicationMissedNotifReceiver;
+import com.example.meduminderv1.Reminder.MedicationPreReminderNotifReceiver;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -27,7 +31,8 @@ public class AlarmSchedulerHelper {
     private static final String TIME_FORMAT = "HH:mm";
     private static final long DEFAULT_WINDOW_MILLIS = 7L * 24 * 60 * 60 * 1000;
     private static final long PRE_REMINDER_OFFSET_MS = 5 * 60 * 1000L;
-    public static final long MISSED_CHECK_DELAY_MS = 3 * 60 * 1000L;
+    public static final long MISSED_CHECK_DELAY_MS = 2 * 60 * 1000L;
+    public static final long MED_MISSED_DELAY_MS = 2 * 60 * 1000L;
 
     private static final long EXPIRED = -1L;
 
@@ -144,7 +149,7 @@ public class AlarmSchedulerHelper {
         intent.putExtra("scheduled_at", logScheduledAtMillis);
 
         PendingIntent pi = PendingIntent.getBroadcast(context, missedRequestCode(scheduleId, occurrenceKey, mainTrigger), intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, mainTrigger + MISSED_CHECK_DELAY_MS, pi);
+        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, mainTrigger + MED_MISSED_DELAY_MS, pi);
     }
     private static long nextTriggerMillisForTime(String timeStr, SimpleDateFormat timeFormat) {
         try {
@@ -274,7 +279,7 @@ public class AlarmSchedulerHelper {
         intent.putExtra("scheduled_at", originalScheduledAt); // tetap jam asli -> id log tetap sama
         PendingIntent pi = PendingIntent.getBroadcast(context, missedRequestCode(scheduleId, occurrenceKey, originalScheduledAt), intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, snoozeUntilMillis + MISSED_CHECK_DELAY_MS, pi);
+        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, snoozeUntilMillis + MED_MISSED_DELAY_MS, pi);
     }
 
     public static void applyAppointmentSnooze(Context context, String appointmentId, String title,
@@ -425,7 +430,7 @@ public class AlarmSchedulerHelper {
      *    yang ikut terhapus justru alarm BESOK (ini bug lama).
      */
     public static void onDoseTaken(Context context, String scheduleId, String namaObat, long scheduledAtMillis) {
-        context.stopService(new Intent(context, AlarmRingingService.class));
+        AlarmRingingService.stopFor(context, scheduleId);
         cancelSnooze(context, scheduleId);
         if (scheduledAtMillis > System.currentTimeMillis()) {
             SimpleDateFormat timeFormat = new SimpleDateFormat(TIME_FORMAT, Locale.getDefault());
@@ -469,6 +474,7 @@ public class AlarmSchedulerHelper {
     // di intent alarm), supaya kalau user baru mengedit/menonaktifkan jadwal,
     // reschedule ini otomatis ikut yang terbaru.
     public static void rescheduleNextDay(Context context, String scheduleId, String namaObat, long previousTriggerMillis) {
+        if (AlarmOwner.currentUid() == null) return;
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("medication_schedules").document(scheduleId).get()
                 .addOnSuccessListener(doc -> {

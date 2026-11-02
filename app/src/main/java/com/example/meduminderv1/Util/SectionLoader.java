@@ -16,14 +16,14 @@ public final class SectionLoader {
 
     private static final long TIMEOUT_MS = 15_000L;
 
-    private final View spinner;
+    @Nullable private final View spinner; // null = tanpa animasi loading
     private final View[] hideWhileLoading;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private boolean loading = false;
     private boolean loadedOnce = false;
     @Nullable private Runnable timeoutAction;
 
-    public SectionLoader(View spinner, View... hideWhileLoading) {
+    public SectionLoader(@Nullable View spinner, View... hideWhileLoading) {
         this.spinner = spinner;
         this.hideWhileLoading = hideWhileLoading;
     }
@@ -32,7 +32,7 @@ public final class SectionLoader {
     public void startFirstLoad(Runnable onTimeout) {
         if (loadedOnce || loading) return;
         loading = true;
-        spinner.setVisibility(View.VISIBLE);
+        if (spinner != null) spinner.setVisibility(View.VISIBLE);
         for (View v : hideWhileLoading) if (v != null) v.setVisibility(View.GONE);
         timeoutAction = () -> {
             if (!loading) return;
@@ -71,6 +71,6 @@ public final class SectionLoader {
         loading = false;
         if (timeoutAction != null) handler.removeCallbacks(timeoutAction);
         timeoutAction = null;
-        spinner.setVisibility(View.GONE);
+        if (spinner != null) spinner.setVisibility(View.GONE);
     }
 }

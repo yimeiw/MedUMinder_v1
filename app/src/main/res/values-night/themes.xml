@@ -73,6 +73,7 @@
         <item name="android:textAppearanceSmallPopupMenu">@style/AppText.PopupMenu.Small</item>
         <item name="textAppearanceListItem">@style/AppText.ListItem</item>
         <item name="textAppearanceListItemSmall">@style/AppText.ListItemSmall</item>
+        <item name="materialCalendarTheme">@style/AppMaterialCalendar</item>
     </style>
 
     <style name="MaterialButtonLog" parent="Widget.MaterialComponents.Button">

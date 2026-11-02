@@ -1,5 +1,6 @@
 package com.example.meduminderv1.Login;
 
+import com.example.meduminderv1.Util.ActivityTracker;
 import com.example.meduminderv1.Util.LoadingOverlay;
 
 import android.content.Intent;
@@ -12,7 +13,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
@@ -28,8 +29,8 @@ import com.example.meduminderv1.Callback.AuthCallback;
 import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
-import com.example.meduminderv1.SignUp.SignUpActivity;
 import com.example.meduminderv1.Util.PressFeedback;
+import com.example.meduminderv1.SignUp.SignUpActivity;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class LoginActivity extends AppCompatActivity {
@@ -44,7 +45,8 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+        // bagian atas layar berwarna gelap (navy) -> ikon jam & baterai harus terang, juga di mode terang
+        EdgeToEdge.enable(this, androidx.activity.SystemBarStyle.dark(android.graphics.Color.TRANSPARENT));
         setContentView(R.layout.activity_login);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -149,7 +151,9 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onSuccess(User result) {
                 LoadingOverlay.hide(LoginActivity.this);
-                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                Intent i = new Intent(LoginActivity.this, MainActivity.class);
+                i.putExtra(ActivityTracker.EXTRA_TOAST, R.string.login_success);
+                startActivity(i);
                 finish();
             }
 
@@ -164,14 +168,20 @@ public class LoginActivity extends AppCompatActivity {
         String email = emailInput.getText().toString().trim();
         String password = passwordInput.getText().toString().trim();
 
-        if (email.isEmpty()){
+        // semua kolom diperiksa (dulu berhenti di kolom pertama, jadi pesan "semua kolom" tidak pernah muncul)
+        if (email.isEmpty() && password.isEmpty()){
             emailInput.setError(getString(R.string.email_harus_diisi));
+            passwordInput.setError(getString(R.string.password_harus_diisi));
+            Toast.makeText(this, getString(R.string.semua_field_harus_diisi), Toast.LENGTH_SHORT).show();
+            emailInput.requestFocus();   // pesan error ikut tampil (bukan hanya ikon "!")
+            return;
+        } if (email.isEmpty()){
+            emailInput.setError(getString(R.string.email_harus_diisi));
+            emailInput.requestFocus();
             return;
         } if (password.isEmpty()){
             passwordInput.setError(getString(R.string.password_harus_diisi));
-            return;
-        } if (email.isEmpty() && password.isEmpty()){
-            Toast.makeText(this, getString(R.string.semua_field_harus_diisi), Toast.LENGTH_SHORT).show();
+            passwordInput.requestFocus();
             return;
         }
 
@@ -180,7 +190,9 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onSuccess(User result) {
                 LoadingOverlay.hide(LoginActivity.this);
-                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                Intent i = new Intent(LoginActivity.this, MainActivity.class);
+                i.putExtra(ActivityTracker.EXTRA_TOAST, R.string.login_success);
+                startActivity(i);
                 finish();
             }
 

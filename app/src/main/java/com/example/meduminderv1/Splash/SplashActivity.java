@@ -6,7 +6,6 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.app.AlarmManager;
-import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Path;
@@ -378,21 +377,42 @@ public class SplashActivity extends AppCompatActivity {
                 askExactAlarmPermission();
             });
 
+    // halaman pengaturan dibuka lewat launcher: lanjut ke Login/Home SETELAH user kembali.
+    // (dulu dibuka bersamaan dengan Login -> tertutup Login, tidak pernah terlihat, dan tidak ditanya lagi)
+    private final ActivityResultLauncher<Intent> exactAlarmLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), r -> checkSessionAndNavigate());
+
+    /** Izin alarm tepat waktu: jelaskan dulu, lalu buka pengaturannya khusus untuk MedUMinder. */
     private void askExactAlarmPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-            if (!am.canScheduleExactAlarms()) {
-                startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM));
+            if (am != null && !am.canScheduleExactAlarms()) {
+                androidx.appcompat.app.AlertDialog dialog = new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                        .setTitle(getString(R.string.izin_alarm_dibutuhkan))
+                        .setMessage(getString(R.string.izin_alarm_message))
+                        .setCancelable(false)
+                        .setPositiveButton(getString(R.string.aktifkan), (d, w) -> {
+                            Intent i = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                                    android.net.Uri.parse("package:" + getPackageName()));
+                            try {
+                                exactAlarmLauncher.launch(i);
+                            } catch (android.content.ActivityNotFoundException e) {
+                                checkSessionAndNavigate();
+                            }
+                        })
+                        .setNegativeButton(getString(R.string.nanti), (d, w) -> checkSessionAndNavigate())
+                        .create();
+                dialog.show();
+                if (dialog.getWindow() != null) dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
+                // warna tombol seperti dialog lain di app (warna bawaan tema = sama dengan latar -> tidak terlihat)
+                dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setTextColor(
+                        com.google.android.material.color.MaterialColors.getColor(this, com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
+                dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE).setTextColor(
+                        com.google.android.material.color.MaterialColors.getColor(this, com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
+                return;
             }
         }
-        askDndPermission();
-    }
-
-    private void askDndPermission() {
-        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        if (!nm.isNotificationPolicyAccessGranted()) {
-            startActivity(new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS));
-        }
+        // (izin "Jangan Ganggu" tidak diminta lagi: tidak dipakai di mana pun; alarm sudah tetap bunyi saat Jangan Ganggu)
         checkSessionAndNavigate();
     }
 

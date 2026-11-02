@@ -63,11 +63,11 @@
     <string name="time_to_consume_med">It is time to take medicine</string>
     <string name="jangan_lupa_minum_obat">Do not forget to take medication</string>
     <string name="waktunya_minum_obat">Time to take medicine</string>
-    <string name="fiveMin">5 Minute</string>
-    <string name="tenMin">10 Minute</string>
-    <string name="thirtyMin">30 Minute</string>
+    <string name="fiveMin">5 Minutes</string>
+    <string name="tenMin">10 Minutes</string>
+    <string name="thirtyMin">30 Minutes</string>
     <string name="oneHour">1 Hour</string>
-    <string name="twoHour">2 Hour</string>
+    <string name="twoHour">2 Hours</string>
     <string name="snoozeDuration">Snooze Duration</string>
     <string name="appointmentReminder">Appointment Reminder Time</string>
     <string name="remindMeBefore">Remind Me Before</string>
@@ -109,13 +109,13 @@
     <string name="total_obat_akan_datang">Total Upcoming Medication</string>
     <string name="general">General</string>
     <string name="document">Documents</string>
-    <string name="riwayat">History</string>
+    <string name="riwayat">Schedule Tracker</string>
     <string name="statistik">Statistics</string>
     <string name="list_consumer">Consumer List</string>
 
     <string name="tambah_pengingat">Add Reminder</string>
     <string name="tambah_appointment">Add Appointment</string>
-    <string name="log_jadwal">History</string>
+    <string name="log_jadwal">Schedule Tracker</string>
 
     <string name="jadwal_berikutnya">Next Schedule</string>
     <string name="stok_obat">Medicine Stock: </string>
@@ -154,6 +154,9 @@
     <string name="caregiver_description">Helps monitor Consumer adherence.</string>
     <string name="consumer">Consumer</string>
     <string name="consumer_description">Manages health reminders.</string>
+    <string name="ganti_ke_role">Switch to %1$s</string>
+
+    <string name="simpan_profil">Save Profile</string>
 
     <!-- popup edit -->
     <string name="edit">Edit</string>
@@ -173,7 +176,7 @@
     <string name="dikonsumsi">Taken</string>
 
     <!-- dropdown -->
-    <string name="riwayat_konsumsi">Consumption History</string>
+    <string name="riwayat_konsumsi">Consumption Tracker</string>
 
     <!-- item appointment log -->
     <string name="nama_appointment">Appointment Name</string>
@@ -258,7 +261,7 @@
     <string name="welcome_login">Welcome! Please Login Here</string>
     <string name="login">Login</string>
     <string name="or_login_with">Or Login with</string>
-    <string name="dont_have_account">Dont have an account yet?</string>
+    <string name="dont_have_account">Don\'t have an account yet?</string>
 
     <!-- izin -->
     <string name="izin_alarm_toast">Please enable the \"Alarm &amp; reminder\" permission first so medication notifications can appear</string>
@@ -423,7 +426,7 @@
     <string name="registrasi_berhasil_verifikasi_msg">Registration successful! Please verify your email then log in.</string>
     <string name="reminder_berhasil_dibuat">Reminder created successfully</string>
     <string name="reminder_berhasil_diperbarui">Reminder updated successfully</string>
-    <string name="riwayat_janji_temu">Appointment History</string>
+    <string name="riwayat_janji_temu">Appointment Tracker</string>
     <string name="role_caregiver_berhasil_diaktifkan">Caregiver role activated successfully.</string>
     <string name="save_appointment_btn">Save Appointment</string>
     <string name="schedule_id_tidak_ditemukan">Schedule ID not found</string>
@@ -734,4 +737,10 @@
     <string name="update_dibutuhkan_title">Update required</string>
     <string name="update_dibutuhkan_msg">A new version of MedUMinder is available. Please update the app to keep using it.</string>
     <string name="update_btn">Update</string>
+
+    <string name="alarmVolume">Alarm Volume</string>
+    <string name="alarmVolumeHint">Press your phone’s volume buttons to set the alarm volume. Use this slider to make it softer. Release to preview.</string>
+    <string name="refill_mode_hint">Refill mode: only the stock can be changed.</string>
+    <string name="end_date_not_set_hint">You did not set an end date when creating this schedule (optional).</string>
+    <string name="tidak_ada_perubahan">No changes were made</string>
 </resources>

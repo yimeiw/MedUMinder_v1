@@ -1,6 +1,6 @@
 package com.example.meduminderv1.Model;
 
-import com.example.meduminderv1.Reminder.AlarmSchedulerHelper;
+import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 import com.google.firebase.Timestamp;
 
 public class MedicationLog {
@@ -34,8 +34,7 @@ public class MedicationLog {
     @com.google.firebase.firestore.Exclude
     public Timestamp getEffectiveTime() {
         if (snoozed_until != null && scheduled_at != null
-                && snoozed_until.compareTo(scheduled_at) > 0
-                && LogStatus.fromRaw(status) != LogStatus.DIKONSUMSI) {
+                && snoozed_until.compareTo(scheduled_at) > 0 ){
             return snoozed_until;
         }
         return scheduled_at;
@@ -85,7 +84,7 @@ public class MedicationLog {
         // hitung "terlewat" dari waktu snooze kalau ada, supaya jadwal yang di-snooze
         // tidak langsung dianggap terlewat
         Timestamp effective = getEffectiveTime();
-        if (effective != null && effective.toDate().getTime() + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS < System.currentTimeMillis()) {
+        if (effective != null && effective.toDate().getTime() + AlarmSchedulerHelper.MED_MISSED_DELAY_MS < System.currentTimeMillis()) {
             return LogStatus.TERLEWATKAN;
         }
         return LogStatus.AKAN_DATANG;

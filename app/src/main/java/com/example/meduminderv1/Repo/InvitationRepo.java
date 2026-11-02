@@ -99,7 +99,7 @@ public class InvitationRepo {
             return;
         }
         db.collection("invitations")
-                .whereEqualTo("receiver_email", email.trim().toLowerCase())
+                .whereEqualTo("receiver_email", email.trim().toLowerCase(java.util.Locale.ROOT))
                 .whereEqualTo("status", InvitationStatus.Pending.name())
                 .get()
                 .addOnSuccessListener(query -> {

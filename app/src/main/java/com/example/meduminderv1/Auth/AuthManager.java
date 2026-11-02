@@ -2,6 +2,7 @@ package com.example.meduminderv1.Auth;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.util.Patterns;
 
@@ -30,7 +31,7 @@ import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
-import com.example.meduminderv1.Reminder.AlarmOwner;
+import com.example.meduminderv1.Reminder.Alarm.AlarmOwner;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
 import com.example.meduminderv1.Repo.InvitationRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
@@ -115,7 +116,7 @@ public class AuthManager {
         if (user == null){
             callback.onFailure(context.getString(R.string.data_user_tidak_boleh_kosong));
             return;
-        } String cleanEmail = user.getEmail() != null ? user.getEmail().trim().toLowerCase() : "";
+        } String cleanEmail = user.getEmail() != null ? user.getEmail().trim().toLowerCase(java.util.Locale.ROOT) : "";
         if (cleanEmail.isEmpty()){
             callback.onFailure(context.getString(R.string.email_tidak_boleh_kosong));
             return;
@@ -163,7 +164,7 @@ public class AuthManager {
         } if (password == null || password.isEmpty()){
             callback.onFailure(context.getString(R.string.password_tidak_boleh_kosong));
             return;
-        } final String cleanEmail = email.trim().toLowerCase();
+        } final String cleanEmail = email.trim().toLowerCase(java.util.Locale.ROOT);
 
         // cek status email lewat koleksi "user_emails" (bisa dibaca walau belum login).
         // Sebelumnya query ke "users" gagal karena belum login, lalu Firebase
@@ -191,7 +192,7 @@ public class AuthManager {
     public interface EmailStatusCallback { void onResult(EmailStatus status); }
 
     public void checkEmailStatus(String email, EmailStatusCallback cb){
-        final String clean = email == null ? "" : email.trim().toLowerCase();
+        final String clean = email == null ? "" : email.trim().toLowerCase(java.util.Locale.ROOT);
         if (clean.isEmpty()){
             cb.onResult(EmailStatus.NOT_REGISTERED);
             return;
@@ -245,7 +246,7 @@ public class AuthManager {
         data.put("provider", user.getAuthProvider() != null ? user.getAuthProvider().name() : AuthProviderType.EMAIL.name());
         data.put("google_email_password_capable", user.isGoogle_email_password_capable());
         FirebaseFirestore.getInstance().collection("user_emails")
-                .document(user.getEmail().trim().toLowerCase())
+                .document(user.getEmail().trim().toLowerCase(java.util.Locale.ROOT))
                 .set(data, com.google.firebase.firestore.SetOptions.merge());
     }
 
@@ -305,7 +306,7 @@ public class AuthManager {
             callback.onFailure(context.getString(R.string.format_email_tidak_valid));
             return;
         }
-        final String cleanEmail = email.trim().toLowerCase();
+        final String cleanEmail = email.trim().toLowerCase(java.util.Locale.ROOT);
 
         // kalau email blm terdaftar, email resetnya nya ga dikirim
         checkEmailStatus(cleanEmail, status -> {
@@ -433,7 +434,7 @@ public class AuthManager {
                 User user = new User();
                 user.setAuth_uid(firebaseUser.getUid());
                 user.setName(firebaseUser.getDisplayName());
-                user.setEmail(firebaseUser.getEmail().trim().toLowerCase());
+                user.setEmail(firebaseUser.getEmail().trim().toLowerCase(java.util.Locale.ROOT));
                 user.setCurrent_role("Consumer");
                 user.setCaregiver_enabled(false);
                 user.setAuthProvider(AuthProviderType.GOOGLE);
@@ -608,7 +609,7 @@ public class AuthManager {
                 lookup.put("exists", true);
                 lookup.put("provider", user.getAuthProvider() != null ? user.getAuthProvider().name() : AuthProviderType.EMAIL.name());
                 lookup.put("google_email_password_capable", user.isGoogle_email_password_capable());
-                FirebaseFirestore.getInstance().collection("user_emails").document(user.getEmail().trim().toLowerCase())
+                FirebaseFirestore.getInstance().collection("user_emails").document(user.getEmail().trim().toLowerCase(java.util.Locale.ROOT))
                         .set(lookup).addOnCompleteListener(t ->
                 firebaseUser.sendEmailVerification().addOnSuccessListener(unused -> {
                     mAuth.signOut();
@@ -897,7 +898,7 @@ public class AuthManager {
         AlarmOwner.cancelAllForUser(context, uid, () -> AccountCleanup.deleteAllUserData(uid, () -> {
             if (email != null){
                 FirebaseFirestore.getInstance().collection("user_emails")
-                        .document(email.trim().toLowerCase()).delete();
+                        .document(email.trim().toLowerCase(java.util.Locale.ROOT)).delete();
             }
             userRepository.deleteUser(uid, new RepoCallback<Void>() {
                 @Override
@@ -935,7 +936,7 @@ public class AuthManager {
         if (sender == null) {
             callback.onFailure(context.getString(R.string.data_user_tidak_ditemukan));
             return;
-        } final String email = receiverEmail.trim().toLowerCase();
+        } final String email = receiverEmail.trim().toLowerCase(java.util.Locale.ROOT);
         if (email.isEmpty()){
             callback.onFailure(context.getString(R.string.email_wajib_diisi));
             return;

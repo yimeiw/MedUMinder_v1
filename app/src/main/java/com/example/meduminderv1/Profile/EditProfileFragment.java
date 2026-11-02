@@ -1,5 +1,6 @@
 package com.example.meduminderv1.Profile;
 
+import com.example.meduminderv1.Util.ActivityTracker;
 import com.example.meduminderv1.Util.LoadingOverlay;
 
 import android.content.res.ColorStateList;
@@ -14,17 +15,19 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
+import com.example.meduminderv1.Util.Toast;
 
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.AuthCallback;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -307,7 +310,6 @@ public class EditProfileFragment extends Fragment {
         if (currentUser == null) return;
         userName.setText(currentUser.getName());
         emailUser.setText(currentUser.getEmail());
-
         updateGoogle();
     }
 

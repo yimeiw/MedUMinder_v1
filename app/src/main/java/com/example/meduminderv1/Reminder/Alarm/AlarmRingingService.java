@@ -1,4 +1,4 @@
-package com.example.meduminderv1.Reminder;
+package com.example.meduminderv1.Reminder.Alarm;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -22,6 +22,7 @@ import androidx.core.content.ContextCompat;
 
 import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Reminder.ReminderMessage;
 import com.example.meduminderv1.Util.AppLanguage;
 
 import java.io.IOException;
@@ -32,8 +33,80 @@ public class AlarmRingingService extends Service {
 
     private MediaPlayer mediaPlayer;
     private int originalAlarmVolume = -1;
-    private static final float ALARM_VOLUME_RATIO = 0.6f;
+    private static final long RING_LIMIT_MS = 3 * 60 * 1000L;
+    private final android.os.Handler ringHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private static final float ALARM_VOLUME_RATIO = 0.4f;   // hanya batas minimum biar tetap terdengar alarmnya
+    private final Runnable stopRunnable = () -> {
+        cancelWaitingNotifications();
+        stopForeground(Service.STOP_FOREGROUND_REMOVE);
+        stopSelf();
+    };
 
+    /**
+     * Alarm yang masih menunggu dijawab (bisa lebih dari satu kalau jamnya sama, misalnya obat A & B jam 22.30).
+     * Kunci = schedule_id. Bunyi baru berhenti kalau daftar ini sudah kosong.
+     */
+    private static class Waiting {
+        final String scheduleId, namaObat; final long scheduledAt; final boolean isAppointment;
+        Waiting(String scheduleId, String namaObat, long scheduledAt, boolean isAppointment) {
+            this.scheduleId = scheduleId; this.namaObat = namaObat;
+            this.scheduledAt = scheduledAt; this.isAppointment = isAppointment;
+        }
+    }
+    private final java.util.LinkedHashMap<String, Waiting> waiting = new java.util.LinkedHashMap<>();
+    private int foregroundId = 0;
+    @Nullable private static AlarmRingingService running;
+
+    /**
+     * Hentikan bunyi untuk SATU jadwal saja (dikonsumsi / tunda / terlewat / dihapus).
+     * Kalau masih ada jadwal lain yang berbunyi di jam yang sama, alarm itu tetap berbunyi.
+     */
+    public static void stopFor(Context context, @Nullable String scheduleId) {
+        if (scheduleId == null) {
+            context.stopService(new Intent(context, AlarmRingingService.class));
+            return;
+        }
+        Runnable r = () -> {
+            AlarmRingingService s = running;
+            if (s != null) s.finishOne(scheduleId);
+        };
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) r.run();
+        else new android.os.Handler(android.os.Looper.getMainLooper()).post(r);
+    }
+
+    private void finishOne(String scheduleId) {
+        Waiting removed = waiting.remove(scheduleId);
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        if (waiting.isEmpty()) {
+            stopForeground(Service.STOP_FOREGROUND_REMOVE);
+            if (nm != null && removed != null) nm.cancel(safeId(scheduleId));
+            stopSelf();
+            return;
+        }
+        if (removed == null) return;
+        int removedId = safeId(scheduleId);
+        if (removedId == foregroundId) {
+            // notifikasi utama milik jadwal yang sudah selesai -> pindahkan ke jadwal yang masih menunggu
+            Waiting next = null;
+            for (Waiting w : waiting.values()) next = w;   // yang paling baru
+            foregroundId = safeId(next.scheduleId);
+            startForeground(foregroundId,
+                    buildNotification(next.scheduleId, next.namaObat, next.scheduledAt, next.isAppointment));
+        }
+        if (nm != null) nm.cancel(removedId);
+    }
+
+    private void cancelWaitingNotifications() {
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        if (nm != null) for (String id : waiting.keySet()) if (safeId(id) != foregroundId) nm.cancel(safeId(id));
+        waiting.clear();
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        running = this;
+    }
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
@@ -42,38 +115,37 @@ public class AlarmRingingService extends Service {
             return START_NOT_STICKY;
         }
 
-        String scheduleId =
-                intent.getStringExtra("schedule_id");
+        String scheduleId = intent.getStringExtra("schedule_id");
 
-        String namaObat =
-                intent.getStringExtra("nama_obat");
+        String namaObat = intent.getStringExtra("nama_obat");
 
         // Ambil ringtone dari Intent terlebih dahulu.
-        String soundUri =
-                intent.getStringExtra("sound_uri");
+        String soundUri = intent.getStringExtra("sound_uri");
 
         // Kalau tidak dikirim dari Intent, ambil ringtone
         // yang disimpan di notification_settings.
         SharedPreferences pref = getSharedPreferences(
-                "notification_settings",
-                MODE_PRIVATE
+                "notification_settings", MODE_PRIVATE
         );
 
         if (soundUri == null || soundUri.isEmpty()) {
-            soundUri = pref.getString(
-                    "ringtone_uri",
-                    null
-            );
+            soundUri = pref.getString("ringtone_uri", null);
         }
 
         long scheduledAt = intent.getLongExtra("scheduled_at", 0L);
         String type = intent.getStringExtra("type");
         boolean isAppointment = "appointment".equals(type);
 
-        startForeground(safeId(scheduleId),
+        // jadwal lain yang sudah berbunyi tetap ada di daftar (notifikasinya tetap tampil)
+        waiting.remove(scheduleId);
+        waiting.put(scheduleId, new Waiting(scheduleId, namaObat, scheduledAt, isAppointment));
+        foregroundId = safeId(scheduleId);
+        startForeground(foregroundId,
                 buildNotification(scheduleId, namaObat, scheduledAt, isAppointment)
         );
         startLoopingSound(soundUri);
+        ringHandler.removeCallbacks(stopRunnable);
+        ringHandler.postDelayed(stopRunnable, RING_LIMIT_MS);
 
         return START_STICKY;
     }
@@ -89,8 +161,7 @@ public class AlarmRingingService extends Service {
             mediaPlayer = null;
         }
 
-        Uri soundUri = soundUriExtra != null
-                        ? Uri.parse(soundUriExtra) : null;
+        Uri soundUri = soundUriExtra != null ? Uri.parse(soundUriExtra) : null;
 
         if (soundUri == null) {
             soundUri = RingtoneManager.getActualDefaultRingtoneUri(
@@ -110,6 +181,8 @@ public class AlarmRingingService extends Service {
                         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                         .build();
         mediaPlayer.setAudioAttributes(attributes);
+        float v = AlarmVolume.scalar(this);
+        mediaPlayer.setVolume(v, v);
 
         try {
             mediaPlayer.setDataSource(this, soundUri);
@@ -309,6 +382,9 @@ public class AlarmRingingService extends Service {
             mediaPlayer = null;
         }
         restoreAlarmVolume();
+        ringHandler.removeCallbacks(stopRunnable);
+        cancelWaitingNotifications();
+        if (running == this) running = null;
         super.onDestroy();
     }
 
