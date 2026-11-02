@@ -5,7 +5,6 @@ import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.Util.ActivityTracker;
 import com.example.meduminderv1.Util.LoadingOverlay;
 
-import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -23,7 +22,6 @@ import com.example.meduminderv1.Util.Toast;
 import com.example.meduminderv1.Auth.AuthManager;
 import com.example.meduminderv1.Callback.AuthCallback;
 import com.example.meduminderv1.R;
-import com.example.meduminderv1.SignUp.SignUpActivity;
 import com.google.android.material.button.MaterialButton;
 
 
@@ -72,30 +70,44 @@ public class DeleteAccountFragment extends Fragment {
         });
 
         btnDeleteAcc.setOnClickListener(v -> {
+            if (!btnDeleteAcc.isEnabled()) return; // cegah tekan dua kali
             String password = etPassword.getText().toString().trim();
-            LoadingOverlay.show(DeleteAccountFragment.this);
-            authManager.deleteAccount(requireActivity(), password, new AuthCallback<Void>() {
+            if (password.isEmpty()) {
+                etPassword.setError(getString(R.string.password_tidak_boleh_kosong));
+                etPassword.requestFocus();
+                return;
+            }
+            final android.content.Context appContext = requireContext().getApplicationContext();
+            setBusy(true);
+            // pesan jelas (bukan "Memuat"): dulu terlihat seperti sedang masuk, padahal sedang menghapus
+            LoadingOverlay.show(DeleteAccountFragment.this, getString(R.string.konfirmasi_identitas_title));
+            final String deletingText = getString(R.string.menghapus_akun_loading);
+            authManager.deleteAccount(requireActivity(), password, () -> {
+                // identitas sudah dipastikan -> sekarang benar-benar menghapus
+                if (getActivity() != null) LoadingOverlay.show(getActivity(), deletingText);
+            }, new AuthCallback<Void>() {
                 @Override
                 public void onSuccess(Void result) {
                     LoadingOverlay.hide(DeleteAccountFragment.this);
-                    if (getActivity() == null) return; // akun sudah terhapus; halaman sudah ditutup
-                    Toast.makeText(requireContext(), getString(R.string.akun_berhasil_dihapus), Toast.LENGTH_SHORT).show();
-                    Intent i = new Intent(requireContext(), SignUpActivity.class);
-                    i.putExtra(ActivityTracker.EXTRA_TOAST, R.string.akun_berhasil_dihapus);
-                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(i);
-                    requireActivity().finish();
+                    DeleteAccountResult.onDeleted(appContext);
+                    if (getActivity() != null) getActivity().finish();
                 }
 
                 @Override
                 public void onFailure(String message) {
                     LoadingOverlay.hide(DeleteAccountFragment.this);
-                    if (!isAdded()) return;
-                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                    if (isAdded()) setBusy(false);
+                    DeleteAccountResult.onFailed(DeleteAccountFragment.this, appContext, message);
                 }
             });
         });
 
         return view;
+    }
+
+    private void setBusy(boolean busy) {
+        btnDeleteAcc.setEnabled(!busy);
+        btnCancel.setEnabled(!busy);
+        etPassword.setEnabled(!busy);
     }
 }

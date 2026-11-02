@@ -6,35 +6,23 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
 
-import com.example.meduminderv1.Model.UserRole;
-import com.example.meduminderv1.Notification.NotificationText;
-import com.example.meduminderv1.Notification.NotificationType;
-import com.example.meduminderv1.Notification.PushNotifier;
-import com.example.meduminderv1.Reminder.Alarm.AlarmGuard;
+import com.example.meduminderv1.Reminder.Alarm.AlarmOwner;
+import com.example.meduminderv1.Reminder.Alarm.AlarmRingingService;
 import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
-import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.Timestamp;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class MedicationMissedNotifReceiver extends BroadcastReceiver {
     private static final String TAG = "MedMissedReceiver";
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (AlarmGuard.shouldIgnore(intent)) return;
+        if (!AlarmOwner.allows(intent)) return;
 
         String scheduleId = intent.getStringExtra("schedule_id");
         String namaObat = intent.getStringExtra("nama_obat");
@@ -61,10 +49,12 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
             }
 
             String consumerUid = doc.getString("users_id");
-            if (consumerUid == null) { pendingResult.finish(); return; }
+            // jadwal milik akun lain di HP ini: jangan diproses
+            if (consumerUid == null || !AlarmOwner.isCurrentUser(consumerUid)) { pendingResult.finish(); return; }
 
             SharedPreferences pref = context.getSharedPreferences("notification_settings", Context.MODE_PRIVATE);
             if (pref.getBoolean("repeat_reminder", false)) {
+                AlarmRingingService.stopFor(context, scheduleId);
                 int snoozeMinutes = pref.getInt("snooze_minutes", 5);
                 long nextTriggerMillis = System.currentTimeMillis() + snoozeMinutes * 60L * 1000L;
                 doc.getReference().update(
@@ -82,69 +72,14 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
                 return;
             }
 
-            doc.getReference().update("status", "terlewatkan", "updated_at", Timestamp.now())
-                    .addOnSuccessListener(unused ->
-                            sendNotifications(context, db, consumerUid, logId, namaObat, pendingResult))
-                    .addOnFailureListener(e -> {
-                        Log.e(TAG, "Gagal update status terlewatkan. logId=" + logId, e);
-                        pendingResult.finish();
-                    });
+            // tandai terlewat + kirim notifikasi lewat MissedNotifier (sama seperti appointment & HP caregiver):
+            // satu transaksi, jadi notifikasi tidak terkirim dua kali walau HP caregiver juga memeriksa
+            AlarmRingingService.stopFor(context, scheduleId);
+            MissedNotifier.claimAndNotify(context, logId, pendingResult::finish);
         }).addOnFailureListener(e -> {
             Log.e(TAG, "Gagal mengambil medication log. logId=" + logId, e);
             pendingResult.finish();
         });
-    }
-
-    private void sendNotifications(Context context, FirebaseFirestore db, String consumerUid,
-                                   String logId, String namaObat, PendingResult pendingResult) {
-        db.collection("users").document(consumerUid).get().addOnSuccessListener(userDoc -> {
-            String name = userDoc.exists() ? userDoc.getString("name") : null;
-            final String consumerName = name != null ? name : "Consumer";
-            final String obat = namaObat != null ? namaObat : "";
-            final List<Task<?>> writes = new ArrayList<>();
-
-            // notifikasi untuk consumer: id dibuat dulu supaya bisa ditampilkan seketika sebagai notifikasi sistem
-            DocumentReference ref = db.collection("notifications").document();
-            Map<String, Object> notifConsumer = new HashMap<>();
-            notifConsumer.put("notification_id", ref.getId());
-            notifConsumer.put("receiver_uid", consumerUid);
-            notifConsumer.put("type", NotificationType.Medicine);
-            NotificationText.apply(notifConsumer, "jadwal_terlewat_title", "jadwal_obat_anda_terlewat_msg", obat);
-            notifConsumer.put("target_role", UserRole.Consumer);
-            notifConsumer.put("reference_id", logId);
-            notifConsumer.put("is_read", false);
-            notifConsumer.put("created_at", Timestamp.now());
-            writes.add(ref.set(notifConsumer));
-
-            // hanya tampil di HP milik consumer itu sendiri
-            if (consumerUid.equals(AlarmGuard.currentUid())) {
-                PushNotifier.postLocal(context, ref.getId(), "jadwal_terlewat_title",
-                        "jadwal_obat_anda_terlewat_msg", Collections.singletonList(obat));
-            }
-
-            db.collection("care_relationships").whereEqualTo("consumer_uid", consumerUid).get()
-                    .addOnSuccessListener(query -> {
-                        for (DocumentSnapshot relation : query.getDocuments()) {
-                            String caregiverUid = relation.getString("caregiver_uid");
-                            if (caregiverUid == null) continue;
-                            Map<String, Object> n = new HashMap<>();
-                            n.put("receiver_uid", caregiverUid);
-                            n.put("type", NotificationType.Medicine);
-                            NotificationText.apply(n, "consumer_melewatkan_jadwal_title",
-                                    "consumer_melewatkan_jadwal_obat_msg", consumerName, obat);
-                            n.put("target_role", UserRole.Caregiver);
-                            n.put("reference_id", logId);
-                            n.put("consumer_uid", consumerUid);
-                            n.put("consumer_name", consumerName);
-                            n.put("is_read", false);
-                            n.put("created_at", Timestamp.now());
-                            writes.add(db.collection("notifications").add(n));
-                        }
-                        Tasks.whenAllComplete(writes).addOnCompleteListener(t -> pendingResult.finish());
-                    })
-                    .addOnFailureListener(e ->
-                            Tasks.whenAllComplete(writes).addOnCompleteListener(t -> pendingResult.finish()));
-        }).addOnFailureListener(e -> pendingResult.finish());
     }
 
     private String buildLogId(String scheduleId, long scheduledAtMillis) {

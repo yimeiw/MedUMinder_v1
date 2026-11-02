@@ -7,7 +7,7 @@ import android.os.Build;
 import android.util.Log;
 
 import com.example.meduminderv1.Notification.NotificationText;
-import com.example.meduminderv1.Reminder.Alarm.AlarmGuard;
+import com.example.meduminderv1.Reminder.Alarm.AlarmOwner;
 import com.example.meduminderv1.Reminder.Alarm.AlarmRingingService;
 import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 import com.google.firebase.Timestamp;
@@ -26,13 +26,36 @@ public class MedicationAlarmReceiver extends BroadcastReceiver {
                         + " type=" + intent.getStringExtra("type")
                         + " trigger=" + intent.getLongExtra("trigger_at", 0L)
         );
-        if (AlarmGuard.shouldIgnore(intent)) {
+        // alarm milik akun lain (atau belum ada yang login) di HP ini: jangan bunyi
+        if (!AlarmOwner.allows(intent)) {
             context.stopService(new Intent(context, AlarmRingingService.class));
             return;
         }
 
         String scheduleId = intent.getStringExtra("schedule_id");
         if (scheduleId == null || scheduleId.isEmpty()) return;   // alarm rusak: jangan crash di background
+        if (AlarmOwner.hasOwner(intent)) {
+            handle(context, intent, scheduleId);
+            return;
+        }
+        // alarm lama (dipasang sebelum ada cap pemilik): cek dulu pemilik jadwalnya
+        String collection = "appointment".equals(intent.getStringExtra("type")) ? "appointments" : "medication_schedules";
+        final PendingResult pendingResult = goAsync();
+        FirebaseFirestore.getInstance().collection(collection).document(scheduleId).get()
+                .addOnCompleteListener(task -> {
+                    String owner = task.isSuccessful() && task.getResult() != null
+                            ? task.getResult().getString("users_id") : null;
+                    // kalau gagal cek (offline), tetap bunyi supaya jadwal sendiri tidak terlewat
+                    if (owner == null || AlarmOwner.isCurrentUser(owner)) {
+                        handle(context, intent, scheduleId);
+                    } else {
+                        Log.d("ALARM_TRACE", "Alarm milik akun lain dilewati. scheduleId=" + scheduleId);
+                    }
+                    pendingResult.finish();
+                });
+    }
+
+    private void handle(Context context, Intent intent, String scheduleId) {
         String namaObat = intent.getStringExtra("nama_obat");
         String soundUri = intent.getStringExtra("sound");
         long scheduledAt = intent.getLongExtra("scheduled_at", System.currentTimeMillis());

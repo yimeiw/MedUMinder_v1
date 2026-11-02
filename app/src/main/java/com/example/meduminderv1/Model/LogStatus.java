@@ -38,7 +38,7 @@ public enum LogStatus {
         // membandingkan status), BUKAN teks yang dilihat user — jadi sengaja
         // tetap Bahasa Indonesia dan tidak perlu ikut berubah saat bahasa
         // aplikasi diganti. Yang perlu ikut berubah bahasa itu displayLabel().
-        String normalized = value.trim().toLowerCase().replace('_', ' ');
+        String normalized = value.trim().toLowerCase(java.util.Locale.ROOT).replace('_', ' ');
 
         switch (normalized) {
             case "akan datang":

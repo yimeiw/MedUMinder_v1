@@ -1,5 +1,6 @@
 package com.example.meduminderv1.Edit;
 
+import com.example.meduminderv1.Util.DisabledField;
 import com.example.meduminderv1.Util.DatePickerHelper;
 import com.example.meduminderv1.Util.LoadingOverlay;
 import com.example.meduminderv1.Util.UserTimeZone;
@@ -88,7 +89,9 @@ public class EditMedicineFragment extends Fragment {
     private String originalStock = "";
     private String medType = "";
     private long occurrenceAt = 0L, effectiveAt = 0L;
+    // isi ulang: yang boleh diubah cuma stok
     private boolean refillMode = false;
+    private View cardDate;
     private TextView tvEndDateHint;
 
     @Override
@@ -130,23 +133,20 @@ public class EditMedicineFragment extends Fragment {
 
         Bundle bundle = getArguments();
         if (bundle != null) {
-            refillMode = (bundle != null && bundle.getBoolean("refill_mode", false))
-                    || (medicationIdArg != null && !medicationIdArg.isEmpty()
-                    && (scheduleId == null || scheduleId.isEmpty()));
-            if (refillMode) {
-                ((TextView) view.findViewById(R.id.tvAddReminderMed)).setText(R.string.isiUlangObat);
-                btnUpdateReminder.setText(R.string.isiUlangObat);
-            } if (!refillMode) {
-                view.findViewById(R.id.cardDate).setOnClickListener(v -> showEndDatePicker());
-                endDateReminder.setOnClickListener(v -> showEndDatePicker());
-            } else {
-                view.findViewById(R.id.cardDate).setAlpha(0.6f);
-            }
             scheduleId = bundle.getString("medication_schedules_id");
             medicationIdArg = bundle.getString("medication_id");
             notificationId = bundle.getString("notification_id");
             occurrenceAt = bundle.getLong("occurrence_at", 0L);
             effectiveAt  = bundle.getLong("effective_at", 0L);
+        }
+
+        // isi ulang: dibuka dengan tanda refill_mode, atau dari pengingat stok (hanya medication_id)
+        refillMode = (bundle != null && bundle.getBoolean("refill_mode", false))
+                || ((scheduleId == null || scheduleId.isEmpty())
+                    && medicationIdArg != null && !medicationIdArg.isEmpty());
+        if (refillMode) {
+            ((TextView) view.findViewById(R.id.tvAddReminderMed)).setText(R.string.isiUlangObat);
+            btnUpdateReminder.setText(R.string.isiUlangObat);
         }
 
         if (scheduleId != null && !scheduleId.isEmpty()) {
@@ -157,11 +157,21 @@ public class EditMedicineFragment extends Fragment {
             Toast.makeText(requireContext(), getString(R.string.data_reminder_tidak_ditemukan), Toast.LENGTH_SHORT).show();
         }
 
-        view.findViewById(R.id.cardDate).setOnClickListener(v ->  showEndDatePicker());
-        endDateReminder.setOnClickListener(v -> showEndDatePicker());
+        cardDate = view.findViewById(R.id.cardDate);
+        if (!refillMode) { // isi ulang: tanggal selesai tidak bisa diubah
+            cardDate.setOnClickListener(v ->  showEndDatePicker());
+            endDateReminder.setOnClickListener(v -> showEndDatePicker());
+        }
 
         btnUpdateReminder.setOnClickListener(v -> updateReminder());
-
+        // nama obat & frekuensi selalu terkunci (Ubah maupun Isi Ulang), gaya dari satu tempat
+        DisabledField.apply(namaObat);
+        DisabledField.apply(freqMinumObat);
+        if (refillMode) {
+            // isi ulang: kolom tetap terlihat terkunci, tanpa pesan "tidak dapat diubah" (gone = tanpa celah)
+            view.findViewById(R.id.namaObatLockedHint).setVisibility(View.GONE);
+            view.findViewById(R.id.freqLockedHint).setVisibility(View.GONE);
+        }
         applyRefillLock();
 
         return view;
@@ -209,7 +219,6 @@ public class EditMedicineFragment extends Fragment {
                     Toast.makeText(requireContext(), getString(R.string.jadwal_tidak_ditemukan), Toast.LENGTH_SHORT).show();
                     return;
                 }
-                medicationId = schedule.getMedication_id();
                 medicationId = schedule.getMedication_id();
                 targetUid = schedule.getUsers_id();
                 originalTimesOfDay = schedule.getTimes_of_day() != null
@@ -626,16 +635,26 @@ public class EditMedicineFragment extends Fragment {
 
             tvTime.setOnClickListener(v -> showTimePicker(tvTime));
 
-            if (refillMode) {
-                tvTime.setOnClickListener(null);
-                tvTime.setClickable(false);
-                tvTime.setAlpha(0.6f);
-            }
-
             timeReminder.addView(label);
             timeReminder.addView(tvTime);
             timeViews.add(tvTime);
-        } applyRefillLock();
+        }
+        applyRefillLock();
+    }
+
+    /** Mode isi ulang: semua kolom dikunci & terlihat abu-abu (DisabledField), kecuali kolom stok. */
+    private void applyRefillLock() {
+        if (!refillMode || rootView == null) return;
+        rootView.findViewById(R.id.tvRefillHint).setVisibility(View.VISIBLE);
+        freqMinumObat.setOnClickListener(null);
+        endDateReminder.setOnClickListener(null);
+        DisabledField.apply(cardDate); // ikut mengunci tanggal di dalamnya (tidak pudar dua kali)
+        for (TextView tv : timeViews) {
+            tv.setOnClickListener(null);
+            DisabledField.apply(tv);
+        }
+        stokObat.setEnabled(true);
+        stokObat.setAlpha(1f);
     }
 
     private void showTimePicker(TextView selectedView) {
@@ -708,26 +727,5 @@ public class EditMedicineFragment extends Fragment {
                 tv.setText(UserTimeZone.display(zone, (String) tv.getTag()));
             }
         }
-    }
-    private void applyRefillLock(){
-        if (!refillMode || rootView == null) return;
-        rootView.findViewById(R.id.tvRefillHint).setVisibility(View.VISIBLE);
-        namaObat.setEnabled(false);
-        freqMinumObat.setEnabled(false);
-        freqMinumObat.setOnClickListener(null);
-
-        for (TextView tv : timeViews){
-            tv.setOnClickListener(null);
-            tv.setClickable(false);
-            tv.setEnabled(false);
-            tv.setAlpha(0.6f);
-        } View card = rootView.findViewById(R.id.cardDate);
-        card.setOnClickListener(null);
-        card.setClickable(false);
-        card.setEnabled(false);
-        card.setAlpha(0.6f);
-        endDateReminder.setOnClickListener(null);
-        endDateReminder.setClickable(false);
-        stokObat.setEnabled(true);
     }
 }

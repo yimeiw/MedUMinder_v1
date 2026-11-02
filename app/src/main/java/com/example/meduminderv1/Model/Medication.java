@@ -10,6 +10,8 @@ public class Medication {
     private String users_id;
     private String catalog_id;
     private String custom_medicine_name;
+    // id obat pribadi di users/{users_id}/customMedicines (null = obat dari katalog resmi)
+    private String custom_medicine_id;
     private Boolean is_active;
     private Map<String, Object> stock;
     private String med_type;
@@ -43,6 +45,15 @@ public class Medication {
     }
     public String getCustom_medicine_name() {
         return custom_medicine_name;
+    }
+    public String getCustom_medicine_id() {
+        return custom_medicine_id;
+    }
+    public void setCustom_medicine_name(String custom_medicine_name) {
+        this.custom_medicine_name = custom_medicine_name;
+    }
+    public void setCustom_medicine_id(String custom_medicine_id) {
+        this.custom_medicine_id = custom_medicine_id;
     }
     public Boolean getIs_active() {
         return is_active;

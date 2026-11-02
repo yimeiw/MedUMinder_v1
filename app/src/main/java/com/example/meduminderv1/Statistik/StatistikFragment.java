@@ -57,7 +57,6 @@ import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.data.PieData;
-import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 
 import java.io.File;
@@ -83,7 +82,6 @@ public class StatistikFragment extends Fragment {
     private FrameLayout dailyChartContainer;
     private FrameLayout responsePieContainer;
     private Button btnDownloadReport;
-    // cegah unduh dobel kalau tombol ditekan berulang kali
     private boolean isDownloading = false;
     private TextView tvAdherenceDescription;
     private List<StatistikRepo.DayStat> currentStats = new ArrayList<>();

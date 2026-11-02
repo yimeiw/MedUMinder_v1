@@ -53,7 +53,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginTop="10dp">
+            android:paddingTop="10dp"
+            android:paddingBottom="24dp">
+            <!-- padding (bukan margin): ScrollView tidak menghitung margin, jadi teks paling bawah terpotong -->
 
             <!-- NADA DERING -->
             <TextView
@@ -135,7 +137,10 @@
                     app:trackColorActive="?attr/colorSecondaryFixedDim"
                     app:trackColorInactive="?attr/appOutline"
                     app:thumbColor="?attr/colorSecondaryFixedDim"
-                    app:haloColor="?attr/colorSecondaryFixedDim"/>
+                    android:background="@null"
+                    app:labelBehavior="gone"
+                    app:haloRadius="0dp"
+                    app:haloColor="@android:color/transparent"/>
             </LinearLayout>
 
                 <LinearLayout
@@ -256,7 +261,7 @@
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="14sp"/>
 
-                    <!-- Ingatkan Saya Sebelum -->
+                    <!-- Ingatkan Saya Sebelum (foreground transparan: tanpa kotak biru saat ditekan) -->
                     <LinearLayout
                         android:id="@+id/boxAppointmentReminder"
                         android:layout_width="match_parent"
@@ -265,6 +270,7 @@
                         android:gravity="center_vertical"
                         android:background="@drawable/border"
                         android:paddingHorizontal="20dp"
+                        android:foreground="@android:color/transparent"
                         android:clickable="true"
                         android:focusable="true">
 
@@ -321,6 +327,7 @@
                         android:gravity="center_vertical"
                         android:background="@drawable/border"
                         android:paddingHorizontal="20dp"
+                        android:foreground="@android:color/transparent"
                         android:clickable="true"
                         android:focusable="true">
 

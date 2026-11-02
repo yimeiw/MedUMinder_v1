@@ -29,6 +29,7 @@ import com.example.meduminderv1.Callback.AuthCallback;
 import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Util.PressFeedback;
 import com.example.meduminderv1.SignUp.SignUpActivity;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -44,13 +45,16 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+        // bagian atas layar berwarna gelap (navy) -> ikon jam & baterai harus terang, juga di mode terang
+        EdgeToEdge.enable(this, androidx.activity.SystemBarStyle.dark(android.graphics.Color.TRANSPARENT));
         setContentView(R.layout.activity_login);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, Math.max(systemBars.bottom, ime.bottom));
             return insets;
         });
+        PressFeedback.applyTree(findViewById(androidx.appcompat.R.id.content));
 
         login = findViewById(R.id.login_button);
         signUpButton = findViewById(R.id.sign_up);
@@ -61,17 +65,12 @@ public class LoginActivity extends AppCompatActivity {
 
         ScrollView loginScroll = findViewById(R.id.login_scroll);
 
-        passwordInput.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                loginScroll.postDelayed(() -> {
-                    Rect rect = new Rect();
-                    passwordInput.getDrawingRect(rect);
-                    loginScroll.offsetDescendantRectToMyCoords(passwordInput, rect);
-
-                    loginScroll.smoothScrollTo(0, rect.bottom);
-                }, 300);
-            }
-        });
+        for (EditText input : new EditText[]{emailInput, passwordInput}) {
+            input.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) loginScroll.postDelayed(() -> scrollIntoView(loginScroll, v), 300);
+            });
+            input.setOnClickListener(v -> loginScroll.postDelayed(() -> scrollIntoView(loginScroll, v), 300));
+        }
 
         passwordInput.setCompoundDrawablesWithIntrinsicBounds(
                 0, 0, R.drawable.ic_visibility_off, 0
@@ -169,14 +168,20 @@ public class LoginActivity extends AppCompatActivity {
         String email = emailInput.getText().toString().trim();
         String password = passwordInput.getText().toString().trim();
 
-        if (email.isEmpty()){
+        // semua kolom diperiksa (dulu berhenti di kolom pertama, jadi pesan "semua kolom" tidak pernah muncul)
+        if (email.isEmpty() && password.isEmpty()){
             emailInput.setError(getString(R.string.email_harus_diisi));
+            passwordInput.setError(getString(R.string.password_harus_diisi));
+            Toast.makeText(this, getString(R.string.semua_field_harus_diisi), Toast.LENGTH_SHORT).show();
+            emailInput.requestFocus();   // pesan error ikut tampil (bukan hanya ikon "!")
+            return;
+        } if (email.isEmpty()){
+            emailInput.setError(getString(R.string.email_harus_diisi));
+            emailInput.requestFocus();
             return;
         } if (password.isEmpty()){
             passwordInput.setError(getString(R.string.password_harus_diisi));
-            return;
-        } if (email.isEmpty() && password.isEmpty()){
-            Toast.makeText(this, getString(R.string.semua_field_harus_diisi), Toast.LENGTH_SHORT).show();
+            passwordInput.requestFocus();
             return;
         }
 
@@ -211,5 +216,22 @@ public class LoginActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private void scrollIntoView(ScrollView scroll, android.view.View field) {
+        Rect rect = new Rect();
+        field.getDrawingRect(rect);
+        scroll.offsetDescendantRectToMyCoords(field, rect);
+        int margin = (int) (24 * getResources().getDisplayMetrics().density);
+        int visibleBottom = scroll.getScrollY() + scroll.getHeight() - scroll.getPaddingBottom();
+        if (rect.bottom + margin > visibleBottom) {
+            scroll.smoothScrollBy(0, rect.bottom + margin - visibleBottom);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        com.example.meduminderv1.Util.UpdateGate.check(this); // versi terlalu lama -> minta update
     }
 }

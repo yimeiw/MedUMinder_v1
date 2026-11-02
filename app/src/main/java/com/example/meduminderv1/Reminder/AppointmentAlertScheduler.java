@@ -1,5 +1,7 @@
 package com.example.meduminderv1.Reminder;
 
+import com.example.meduminderv1.Reminder.Alarm.AlarmOwner;
+
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -27,6 +29,7 @@ public class AppointmentAlertScheduler {
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (am == null) return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms()) return;
+        AlarmOwner.rememberAppointment(context, appointmentId);
 
         int preOffsetMinutes = getPreReminderOffsetMinutes(context);
         long preoffsetMs = preOffsetMinutes * 60 * 1000L;
@@ -36,18 +39,20 @@ public class AppointmentAlertScheduler {
             preIntent.putExtra("appointment_id", appointmentId);
             preIntent.putExtra("title", title);
             preIntent.putExtra("offset_minutes", preOffsetMinutes);
+            AlarmOwner.stamp(preIntent);
             PendingIntent prePi = PendingIntent.getBroadcast(context, (appointmentId + "_pre").hashCode(), preIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, preTrigger, prePi);
         } Intent missedIntent = new Intent(context, AppointmentMissedNotifReceiver.class);
         missedIntent.putExtra("appointment_id", appointmentId);
         missedIntent.putExtra("title", title);
+        AlarmOwner.stamp(missedIntent);
         PendingIntent missedPi = PendingIntent.getBroadcast(context, (appointmentId + "_missed").hashCode(), missedIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, appointmentAtMillis + MISSED_DELAY_MS, missedPi);
     }
 
-    private static int getPreReminderOffsetMinutes(Context context) {
+    public static int getPreReminderOffsetMinutes(Context context) {
         SharedPreferences pref = context.getSharedPreferences("notification_settings", Context.MODE_PRIVATE);
 
         if (pref.contains("appointment_minutes")) {
@@ -72,6 +77,7 @@ public class AppointmentAlertScheduler {
         Intent missedIntent = new Intent(context, AppointmentMissedNotifReceiver.class);
         missedIntent.putExtra("appointment_id", appointmentId);
         missedIntent.putExtra("title", title);
+        AlarmOwner.stamp(missedIntent);
         PendingIntent missedPi = PendingIntent.getBroadcast(context, (appointmentId + "_missed").hashCode(), missedIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newBaseMillis + MISSED_DELAY_MS, missedPi);

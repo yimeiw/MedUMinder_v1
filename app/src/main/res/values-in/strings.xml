@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">MedUMinder</string>
     <string name="sign_up_here"><u>Sign Up here!</u></string>
-    <string name="reset_password">Forgot password?</string>
+    <string name="reset_password"><u>Forgot password?</u></string>
     <string name="login_here"><u>Login here!</u></string>
     <string name="title_activity_login">LoginActivity</string>
     <string name="prompt_email">Email</string>
@@ -718,6 +718,32 @@
     <string name="push_channel_penting_desc">Jadwal terlewat, pengingat dari caregiver, undangan, dan pengingat isi ulang obat</string>
     <string name="push_channel_aktivitas">Aktivitas consumer</string>
     <string name="push_channel_aktivitas_desc">Saat consumer minum obat atau menghadiri janji temu</string>
+    <string name="akun_sudah_dihapus">Akun ini sudah dihapus. Silakan daftar lagi untuk memakai MedUMinder.</string>
+    <string name="konfirmasi_identitas_title">Pastikan ini Anda untuk menghapus akun</string>
+    <string name="konfirmasi_google_hapus_msg">Pilih akun Google Anda sekali lagi. Google mungkin menulis bahwa Anda sedang masuk (sign in): itu hanya untuk memastikan ini Anda, Anda tidak akan masuk lagi. Setelah itu akun Anda dihapus.</string>
+    <string name="lanjutkan_btn">Lanjutkan</string>
+    <string name="pilih_akun_google_sama">Pilih akun Google yang sama dengan yang Anda pakai di MedUMinder.</string>
+    <string name="hapus_akun_belum_selesai">Akun belum berhasil dihapus. Periksa internet Anda lalu coba lagi.</string>
+    <string name="nama_gagal_disimpan">Nama belum tersimpan. Silakan coba lagi.</string>
+    <string name="role_berhasil_diganti">Sekarang Anda memakai peran %1$s.</string>
+    <string name="role_gagal_diganti">Peran belum berhasil diganti. Silakan coba lagi.</string>
+    <string name="simpan_profil_btn">Simpan</string>
+    <string name="menghapus_akun_loading">Menghapus akun Anda…</string>
+    <string name="home_gagal_dimuat">Jadwal belum bisa dimuat. Periksa koneksi internet Anda.</string>
+    <string name="buang_perubahan_title">Buang perubahan?</string>
+    <string name="buang_perubahan_msg">Perubahan Anda belum disimpan.</string>
+    <string name="buang_btn">Buang</string>
+    <string name="lanjut_edit_btn">Lanjut mengedit</string>
+    <string name="riwayat_gagal_dimuat">Riwayat belum bisa dimuat. Periksa koneksi internet Anda.</string>
+    <string name="coba_lagi_btn">Coba lagi</string>
+    <string name="salin_btn">Salin</string>
+    <string name="email_disalin">Email disalin</string>
+    <string name="email_terkirim_cek_spam">Kami sudah mengirim email. Kalau tidak ada, coba cek folder Spam.</string>
+    <string name="kirim_ulang">Kirim ulang</string>
+    <string name="kirim_ulang_tunggu">Kirim ulang (%1$d)</string>
+    <string name="update_dibutuhkan_title">Perlu update</string>
+    <string name="update_dibutuhkan_msg">Versi baru MedUMinder sudah tersedia. Silakan update aplikasi agar bisa terus digunakan.</string>
+    <string name="update_btn">Update</string>
 
     <string name="alarmVolume">Volume Alarm</string>
     <string name="alarmVolumeHint">Tekan tombol volume HP untuk mengatur volume alarm. Gunakan slider ini untuk memperkecilnya. Lepas untuk mencoba suaranya.</string>

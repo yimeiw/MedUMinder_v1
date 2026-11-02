@@ -30,6 +30,11 @@ public class LoadOlderAdapter extends RecyclerView.Adapter<LoadOlderAdapter.View
     public void setState(State state, long sinceMillis, int maxDays) {
         boolean wasShown = this.state != State.HIDDEN;
         boolean isShown = state != State.HIDDEN;
+        // sedang memuat yang lebih lama: tampilan tetap seperti sebelumnya (tanggal tidak lompat dulu)
+        if (state == State.LOADING && wasShown) {
+            this.state = state;
+            return;
+        }
         this.state = state;
         this.sinceMillis = sinceMillis;
         this.maxDays = maxDays;
@@ -87,17 +92,13 @@ public class LoadOlderAdapter extends RecyclerView.Adapter<LoadOlderAdapter.View
         Locale locale = c.getResources().getConfiguration().getLocales().get(0);
         String since = new SimpleDateFormat("EEEE, dd MMM yyyy", locale).format(new Date(sinceMillis));
 
-        holder.spinner.setVisibility(state == State.LOADING ? View.VISIBLE : View.GONE);
-        if (state == State.LOADING) {
-            holder.title.setText(R.string.riwayat_memuat_lebih_lama);
-            holder.subtitle.setVisibility(View.GONE);
-        } else {
-            holder.title.setText(c.getString(R.string.riwayat_sejak, since));
-            holder.subtitle.setVisibility(View.VISIBLE);
-            holder.subtitle.setText(state == State.END
-                    ? c.getString(R.string.riwayat_sudah_semua, maxDays)
-                    : c.getString(R.string.riwayat_gulir_untuk_lebih_lama));
-        }
+        // saat memuat yang lebih lama: tetap memuat, tapi tanpa animasi (teks tetap sama, tidak berkedip)
+        holder.spinner.setVisibility(View.GONE);
+        holder.title.setText(c.getString(R.string.riwayat_sejak, since));
+        holder.subtitle.setVisibility(View.VISIBLE);
+        holder.subtitle.setText(state == State.END
+                ? c.getString(R.string.riwayat_sudah_semua, maxDays)
+                : c.getString(R.string.riwayat_gulir_untuk_lebih_lama));
     }
 
     @Override

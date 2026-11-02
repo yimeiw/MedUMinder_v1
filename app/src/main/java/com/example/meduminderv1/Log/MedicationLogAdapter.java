@@ -71,7 +71,7 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
         if (namaObatCache.containsKey(medication_schedules_id)){
             holder.namaObatLog.setText(namaObatCache.get(medication_schedules_id));
         } else {
-            holder.namaObatLog.setText(context.getString(R.string.loading));
+            holder.namaObatLog.setText(""); // nama menyusul setelah dimuat (tanpa tulisan "Loading...")
         }
 
         if (stockCache.containsKey(medication_schedules_id)) {

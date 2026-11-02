@@ -140,6 +140,37 @@
         android:visibility="gone"
         />
 
+    <!-- gagal memuat: pesan singkat + coba lagi -->
+    <LinearLayout
+        android:id="@+id/logError"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/riwayat_gagal_dimuat"
+            android:textColor="?attr/colorOnSurface"
+            android:gravity="center_horizontal"
+            android:textSize="16sp"
+            />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRetryLog"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            style="@style/MaterialButtonLog"
+            app:backgroundTint="@color/biru"
+            android:textAllCaps="false"
+            android:textSize="12sp"
+            android:text="@string/coba_lagi_btn" />
+    </LinearLayout>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvLogs"
         android:layout_weight="1"

@@ -31,8 +31,7 @@ import com.example.meduminderv1.Notification.Notification;
 import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.R;
-import com.example.meduminderv1.Reminder.Alarm.AlarmCanceller;
-import com.example.meduminderv1.Reminder.Alarm.AlarmRingingService;
+import com.example.meduminderv1.Reminder.Alarm.AlarmOwner;
 import com.example.meduminderv1.Repo.CareRelationshipRepo;
 import com.example.meduminderv1.Repo.InvitationRepo;
 import com.example.meduminderv1.Repo.NotificationRepo;
@@ -73,7 +72,8 @@ public class AuthManager {
     private final InvitationRepo invitationRepo;
     private final NotificationRepo notificationRepo;
     private final CareRelationshipRepo relationshipRepo;
-    private interface SimpleCallback { void onDone(); }
+    // dipanggil sekali saat hapus akun benar-benar mulai (setelah identitas dipastikan)
+    private Runnable pendingDeleteStarted;
 
     public AuthManager(Context context){
         this.context = context.getApplicationContext();
@@ -116,7 +116,7 @@ public class AuthManager {
         if (user == null){
             callback.onFailure(context.getString(R.string.data_user_tidak_boleh_kosong));
             return;
-        } String cleanEmail = user.getEmail() != null ? user.getEmail().trim().toLowerCase() : "";
+        } String cleanEmail = user.getEmail() != null ? user.getEmail().trim().toLowerCase(java.util.Locale.ROOT) : "";
         if (cleanEmail.isEmpty()){
             callback.onFailure(context.getString(R.string.email_tidak_boleh_kosong));
             return;
@@ -164,7 +164,7 @@ public class AuthManager {
         } if (password == null || password.isEmpty()){
             callback.onFailure(context.getString(R.string.password_tidak_boleh_kosong));
             return;
-        } final String cleanEmail = email.trim().toLowerCase();
+        } final String cleanEmail = email.trim().toLowerCase(java.util.Locale.ROOT);
 
         // cek status email lewat koleksi "user_emails" (bisa dibaca walau belum login).
         // Sebelumnya query ke "users" gagal karena belum login, lalu Firebase
@@ -192,7 +192,7 @@ public class AuthManager {
     public interface EmailStatusCallback { void onResult(EmailStatus status); }
 
     public void checkEmailStatus(String email, EmailStatusCallback cb){
-        final String clean = email == null ? "" : email.trim().toLowerCase();
+        final String clean = email == null ? "" : email.trim().toLowerCase(java.util.Locale.ROOT);
         if (clean.isEmpty()){
             cb.onResult(EmailStatus.NOT_REGISTERED);
             return;
@@ -246,7 +246,7 @@ public class AuthManager {
         data.put("provider", user.getAuthProvider() != null ? user.getAuthProvider().name() : AuthProviderType.EMAIL.name());
         data.put("google_email_password_capable", user.isGoogle_email_password_capable());
         FirebaseFirestore.getInstance().collection("user_emails")
-                .document(user.getEmail().trim().toLowerCase())
+                .document(user.getEmail().trim().toLowerCase(java.util.Locale.ROOT))
                 .set(data, com.google.firebase.firestore.SetOptions.merge());
     }
 
@@ -265,6 +265,7 @@ public class AuthManager {
                 } userRepository.getUserbyUid(firebaseUser.getUid(), new RepoCallback<User>() {
                     @Override
                     public void onSuccess(User result) {
+                        if (rejectIfDeleted(result, callback)) return;
                         sessionManager.saveUser(result);
                         syncEmailLookup(result); // isi data untuk akun lama
                         callback.onSuccess(result);
@@ -274,9 +275,10 @@ public class AuthManager {
                     public void onFailure(Exception e) {
                         mAuth.signOut();
                         sessionManager.clearSession();
+                        // login masih ada tapi profil sudah tidak ada = akun sudah dihapus
                         callback.onFailure(e instanceof FirebaseFirestoreException
                                 ? friendlyError(e)
-                                : context.getString(R.string.user_tidak_ditemukan));
+                                : context.getString(R.string.akun_sudah_dihapus));
                     }
                 });
             }).addOnFailureListener(e -> {
@@ -304,7 +306,7 @@ public class AuthManager {
             callback.onFailure(context.getString(R.string.format_email_tidak_valid));
             return;
         }
-        final String cleanEmail = email.trim().toLowerCase();
+        final String cleanEmail = email.trim().toLowerCase(java.util.Locale.ROOT);
 
         // kalau email blm terdaftar, email resetnya nya ga dikirim
         checkEmailStatus(cleanEmail, status -> {
@@ -413,6 +415,7 @@ public class AuthManager {
         userRepository.getUserbyUid(firebaseUser.getUid(), new RepoCallback<User>() {
             @Override
             public void onSuccess(User result) {
+                if (rejectIfDeleted(result, callback)) return;
                 sessionManager.saveUser(result);
                 syncEmailLookup(result);
                 callback.onSuccess(result);
@@ -420,11 +423,18 @@ public class AuthManager {
 
             @Override
             public void onFailure(Exception e) {
+                // gagal baca karena koneksi/izin: JANGAN buat profil baru (bisa menimpa profil lama)
+                if (e instanceof FirebaseFirestoreException) {
+                    mAuth.signOut();
+                    sessionManager.clearSession();
+                    callback.onFailure(friendlyError(e));
+                    return;
+                }
                 // User Google baru, belum ada datanya di database — buat profil baru
                 User user = new User();
                 user.setAuth_uid(firebaseUser.getUid());
                 user.setName(firebaseUser.getDisplayName());
-                user.setEmail(firebaseUser.getEmail().trim().toLowerCase());
+                user.setEmail(firebaseUser.getEmail().trim().toLowerCase(java.util.Locale.ROOT));
                 user.setCurrent_role("Consumer");
                 user.setCaregiver_enabled(false);
                 user.setAuthProvider(AuthProviderType.GOOGLE);
@@ -542,6 +552,7 @@ public class AuthManager {
         userRepository.getUserbyUid(firebaseUser.getUid(), new RepoCallback<User>() {
             @Override
             public void onSuccess(User result) {
+                if (rejectIfDeleted(result, callback)) return;
                 sessionManager.saveUser(result);
                 syncEmailLookup(result); // isi data untuk akun lama yang auto-login
                 callback.onSuccess(result);
@@ -549,10 +560,24 @@ public class AuthManager {
 
             @Override
             public void onFailure(Exception e) {
-                callback.onFailure(e.getMessage());
+                // profil sudah tidak ada (akun dihapus): keluarkan sesi lama supaya tidak "setengah login"
+                if (!(e instanceof FirebaseFirestoreException)) {
+                    mAuth.signOut();
+                    sessionManager.clearSession();
+                }
+                callback.onFailure(friendlyError(e));
             }
         });
     }
+    /** Akun yang ditandai terhapus tidak boleh login: keluarkan sesi dan beri pesan yang jelas. */
+    private boolean rejectIfDeleted(User user, AuthCallback<User> callback) {
+        if (user != null && user.getDeleted_at() == null) return false;
+        mAuth.signOut();
+        sessionManager.clearSession();
+        callback.onFailure(context.getString(R.string.akun_sudah_dihapus));
+        return true;
+    }
+
     private void updateUserProfile(User user, AuthCallback<Void> callback) {
         user.setUpdated_at(Timestamp.now());
         userRepository.updateUser(user, new RepoCallback<Void>(){
@@ -584,7 +609,7 @@ public class AuthManager {
                 lookup.put("exists", true);
                 lookup.put("provider", user.getAuthProvider() != null ? user.getAuthProvider().name() : AuthProviderType.EMAIL.name());
                 lookup.put("google_email_password_capable", user.isGoogle_email_password_capable());
-                FirebaseFirestore.getInstance().collection("user_emails").document(user.getEmail().trim().toLowerCase())
+                FirebaseFirestore.getInstance().collection("user_emails").document(user.getEmail().trim().toLowerCase(java.util.Locale.ROOT))
                         .set(lookup).addOnCompleteListener(t ->
                 firebaseUser.sendEmailVerification().addOnSuccessListener(unused -> {
                     mAuth.signOut();
@@ -639,7 +664,7 @@ public class AuthManager {
 
             @Override
             public void onFailure(Exception e) {
-                callback.onFailure(e.getMessage());
+                callback.onFailure(friendlyError(e));
             }
         });
     }
@@ -654,30 +679,29 @@ public class AuthManager {
 
     public void logout(Context context, AuthCallback<Void> callback){
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
-        if (firebaseUser == null){
-            context.stopService(new Intent(context, AlarmRingingService.class));
-            sessionManager.clearSession();
-            callback.onSuccess(null);
-            return;
-        } final String uid = firebaseUser.getUid();
-
-        //batalkan alarm dulu, selagi user masih login
-        AlarmCanceller.cancelAllForUser(context, uid, () -> {
+        String uid = firebaseUser != null ? firebaseUser.getUid() : null;
+        // batalkan semua alarm milik akun ini dulu (selagi masih login), supaya
+        // tidak bunyi untuk akun lain yang nanti login di HP ini
+        AlarmOwner.cancelAllForUser(this.context, uid, () -> {
             mAuth.signOut();
             sessionManager.clearSession();
-            ClearCredentialStateRequest request = new ClearCredentialStateRequest();
-            credentialManager.clearCredentialStateAsync(request, null, Runnable::run, new CredentialManagerCallback<Void, ClearCredentialException>() {
-                @Override
-                public void onResult(Void unused) {
-                    callback.onSuccess(null);
-                }
+            clearCredentialState(callback);
+        });
+    }
 
-                @Override
-                public void onError(@NonNull ClearCredentialException e) {
-                    Log.e("LOGOUT", "Clear credential gagal", e);
-                    callback.onSuccess(null);
-                }
-            });
+    private void clearCredentialState(AuthCallback<Void> callback) {
+        ClearCredentialStateRequest request = new ClearCredentialStateRequest();
+        credentialManager.clearCredentialStateAsync(request, null, Runnable::run, new CredentialManagerCallback<Void, ClearCredentialException>() {
+            @Override
+            public void onResult(Void unused) {
+                callback.onSuccess(null);
+            }
+
+            @Override
+            public void onError(@NonNull ClearCredentialException e) {
+                Log.e("LOGOUT", "Clear credential gagal", e);
+                callback.onSuccess(null);
+            }
         });
     }
 
@@ -691,12 +715,17 @@ public class AuthManager {
         userRepository.updateRole(firebaseUser.getUid(), role, new RepoCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
+                // consumer tidak memantau orang lain; caregiver memilih consumer lagi di home-nya
+                if (role == UserRole.Consumer) sessionManager.setActiveConsumerUid(null);
+                // langsung perbarui sesi, supaya semua halaman yang membaca sesi ikut role baru
+                User current = sessionManager.getUser();
+                if (current != null) current.setCurrent_role(role.name());
                 loadUserProfile(firebaseUser.getUid(), callback);
             }
 
             @Override
             public void onFailure(Exception e) {
-                callback.onFailure(e.getMessage());
+                callback.onFailure(friendlyError(e));
             }
         });
     }
@@ -729,8 +758,8 @@ public class AuthManager {
         if (firebaseUser == null){
             callback.onFailure(context.getString(R.string.user_belum_login));
             return;
-        } final String finalName = newName.trim();
-        if (finalName.length() <= 3){
+        } final String finalName = newName == null ? "" : newName.trim();
+        if (finalName.length() < 4){
             callback.onFailure(context.getString(R.string.nama_minimal));
             return;
         } UserProfileChangeRequest profileChangeRequest = new UserProfileChangeRequest.Builder().setDisplayName(finalName).build();
@@ -750,32 +779,45 @@ public class AuthManager {
 
                 @Override
                 public void onFailure(String message) {
-                    callback.onFailure(message);
+                    callback.onFailure(context.getString(R.string.nama_gagal_disimpan));
                 }
             });
-        }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+        }).addOnFailureListener(e -> callback.onFailure(e instanceof FirebaseNetworkException
+                ? friendlyError(e) : context.getString(R.string.nama_gagal_disimpan)));
     }
 
+    /**
+     * Hapus akun: konfirmasi identitas dulu (password atau pilih akun Google lagi),
+     * lalu hapus semua data, lalu akun login-nya, lalu bersihkan sesi di HP.
+     * Kalau password == null dan akun memakai Google, pemilih akun Google langsung dibuka.
+     */
     public void deleteAccount(@Nullable Activity activity, @Nullable String password, AuthCallback<Void> callback){
+        deleteAccount(activity, password, null, callback);
+    }
+
+    /** onIdentityConfirmed: dipanggil saat identitas sudah dipastikan dan penghapusan benar-benar dimulai. */
+    public void deleteAccount(@Nullable Activity activity, @Nullable String password,
+                              @Nullable Runnable onIdentityConfirmed, AuthCallback<Void> callback){
+        pendingDeleteStarted = onIdentityConfirmed;
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null){
             callback.onFailure(context.getString(R.string.user_belum_login));
             return;
-        } User user = sessionManager.getUser();
-        if (user == null){
-            callback.onFailure(context.getString(R.string.data_user_tidak_ditemukan));
-            return;
-        } switch (user.getAuthProvider()){
-            case EMAIL:
-                reauthenticateEmail(password, callback);
-                break;
-            case GOOGLE:
-                reauthenticateGoogle(activity, callback);
-                break;
-            default:
-                callback.onFailure(context.getString(R.string.provider_tidak_didukung));
-                break;
         }
+        if (password != null) {
+            reauthenticateEmail(password, callback);
+        } else if (hasGoogleProvider() && activity != null) {
+            reauthenticateGoogle(activity, callback);
+        } else {
+            callback.onFailure(context.getString(R.string.password_tidak_boleh_kosong));
+        }
+    }
+
+    /** true kalau akun dihapus lewat konfirmasi Google (bukan password). */
+    public boolean deletesWithGoogle(){
+        User user = sessionManager.getUser();
+        if (user != null && user.getAuthProvider() == AuthProviderType.EMAIL) return false;
+        return hasGoogleProvider();
     }
 
     private void reauthenticateGoogle(Activity activity, AuthCallback<Void> callback) {
@@ -797,18 +839,31 @@ public class AuthManager {
 
     private void handleGoogleReauthentication(GetCredentialResponse response, AuthCallback<Void> callback) {
         Credential credential = response.getCredential();
-        if (!(credential instanceof  CustomCredential)){
-            callback.onFailure(context.getString(R.string.credential_tidak_valid));
+        if (!(credential instanceof CustomCredential)
+                || !GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL.equals(credential.getType())){
+            callback.onFailure(context.getString(R.string.google_credential_tidak_valid));
             return;
-        } CustomCredential customCredential = (CustomCredential) credential;
+        }
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser == null) {
+            callback.onFailure(context.getString(R.string.user_belum_login));
+            return;
+        }
         try {
-            GoogleIdTokenCredential googleIdTokenCredential = GoogleIdTokenCredential.createFrom(customCredential.getData());
+            GoogleIdTokenCredential googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.getData());
+            String chosenEmail = googleIdTokenCredential.getId();
+            if (firebaseUser.getEmail() != null && !firebaseUser.getEmail().equalsIgnoreCase(chosenEmail)) {
+                callback.onFailure(context.getString(R.string.pilih_akun_google_sama));
+                return;
+            }
             AuthCredential authCredential = GoogleAuthProvider.getCredential(googleIdTokenCredential.getIdToken(), null);
-            FirebaseUser firebaseUser = mAuth.getCurrentUser();
             firebaseUser.reauthenticate(authCredential).addOnSuccessListener(unused -> performDelete(callback))
-                    .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+                    .addOnFailureListener(e -> callback.onFailure(
+                            e instanceof FirebaseAuthInvalidUserException || e instanceof FirebaseAuthInvalidCredentialsException
+                                    ? context.getString(R.string.pilih_akun_google_sama)
+                                    : friendlyError(e)));
         } catch (Exception e){
-            callback.onFailure(e.getMessage());
+            callback.onFailure(context.getString(R.string.google_credential_tidak_valid));
         }
     }
 
@@ -822,58 +877,53 @@ public class AuthManager {
             return;
         } AuthCredential credential = EmailAuthProvider.getCredential(firebaseUser.getEmail(), password);
         firebaseUser.reauthenticate(credential).addOnSuccessListener(unused -> performDelete(callback))
-                .addOnFailureListener(e -> callback.onFailure(context.getString(R.string.password_salah)));
+                .addOnFailureListener(e -> callback.onFailure(e instanceof FirebaseNetworkException
+                        ? friendlyError(e) : context.getString(R.string.password_salah)));
     }
 
     private void performDelete(AuthCallback<Void> callback) {
+        Runnable started = pendingDeleteStarted;
+        pendingDeleteStarted = null;
+        if (started != null) started.run();
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
-        User user = sessionManager.getUser();
-        if (firebaseUser == null || user == null){
+        if (firebaseUser == null){
             callback.onFailure(context.getString(R.string.user_tidak_ditemukan));
             return;
         }
-        String uid = user.getAuth_uid();
+        String uid = firebaseUser.getUid();
+        User user = sessionManager.getUser();
+        String email = user != null && user.getEmail() != null ? user.getEmail() : firebaseUser.getEmail();
 
-        cleanupRelationshipsForUser(uid, () -> {
-            if (user.getEmail() != null){
+        // 1) alarm di HP ini, 2) semua data akun, 3) profil, 4) akun login, 5) sesi di HP
+        AlarmOwner.cancelAllForUser(context, uid, () -> AccountCleanup.deleteAllUserData(uid, () -> {
+            if (email != null){
                 FirebaseFirestore.getInstance().collection("user_emails")
-                        .document(user.getEmail().trim().toLowerCase()).delete();
+                        .document(email.trim().toLowerCase(java.util.Locale.ROOT)).delete();
             }
             userRepository.deleteUser(uid, new RepoCallback<Void>() {
                 @Override
                 public void onSuccess(Void result) {
                     firebaseUser.delete().addOnSuccessListener(unused -> {
+                        mAuth.signOut();
                         sessionManager.clearSession();
-                        callback.onSuccess(null);
-                    }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+                        clearCredentialState(callback);
+                    }).addOnFailureListener(e -> {
+                        // profil sudah terhapus -> akun ini tetap tidak bisa dipakai login lagi;
+                        // keluarkan sesi supaya tidak "setengah login"
+                        Log.e("DELETE_ACCOUNT", "Gagal hapus akun login", e);
+                        mAuth.signOut();
+                        sessionManager.clearSession();
+                        callback.onFailure(context.getString(R.string.hapus_akun_belum_selesai));
+                    });
                 }
 
                 @Override
                 public void onFailure(Exception e) {
-                    callback.onFailure(e.getMessage());
+                    Log.e("DELETE_ACCOUNT", "Gagal hapus profil", e);
+                    callback.onFailure(context.getString(R.string.hapus_akun_belum_selesai));
                 }
             });
-        });
-    }
-    private void cleanupRelationshipsForUser(String uid, SimpleCallback onDone) {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("care_relationships").whereEqualTo("consumer_uid", uid).get()
-                .addOnCompleteListener(t1 -> {
-                    if (t1.isSuccessful()) {
-                        for (com.google.firebase.firestore.DocumentSnapshot doc : t1.getResult()) {
-                            doc.getReference().delete();
-                        }
-                    }
-                    db.collection("care_relationships").whereEqualTo("caregiver_uid", uid).get()
-                            .addOnCompleteListener(t2 -> {
-                                if (t2.isSuccessful()) {
-                                    for (com.google.firebase.firestore.DocumentSnapshot doc : t2.getResult()) {
-                                        doc.getReference().delete();
-                                    }
-                                }
-                                onDone.onDone();
-                            });
-                });
+        }));
     }
 
     //invitation & notification
@@ -886,7 +936,7 @@ public class AuthManager {
         if (sender == null) {
             callback.onFailure(context.getString(R.string.data_user_tidak_ditemukan));
             return;
-        } final String email = receiverEmail.trim().toLowerCase();
+        } final String email = receiverEmail.trim().toLowerCase(java.util.Locale.ROOT);
         if (email.isEmpty()){
             callback.onFailure(context.getString(R.string.email_wajib_diisi));
             return;

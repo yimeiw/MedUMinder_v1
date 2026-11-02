@@ -36,7 +36,8 @@ public class TodayScheduleLoader {
     private final Context ctx;
     private final boolean stockOnlyForPill;
     private final Listener listener;
-    private ListenerRegistration medReg, apptReg;
+    private Runnable onError;
+    private ListenerRegistration medReg, apptReg, medsReg;
     private List<DocumentSnapshot> medDocs = new ArrayList<>();
     private List<DocumentSnapshot> apptDocs = new ArrayList<>();
     private boolean medReady, apptReady;
@@ -55,6 +56,17 @@ public class TodayScheduleLoader {
         this.listener = listener;
     }
 
+    /** Dipanggil (sekali per kegagalan) kalau data hari ini gagal dimuat, supaya layar bisa menampilkan pesan. */
+    public void setOnError(Runnable onError) {
+        this.onError = onError;
+    }
+
+    /** Jadwal diubah / dihapus: nama & stok dibaca ulang (cache dikosongkan), daftar dibangun ulang. */
+    public void refresh() {
+        synchronized (cache) { cache.clear(); }
+        rebuild();
+    }
+
     public void start(String uid, Date from, Date to) {
         stop();
         if (uid == null) { listener.onChanged(new ArrayList<>()); return; }
@@ -64,15 +76,23 @@ public class TodayScheduleLoader {
                 .whereGreaterThanOrEqualTo("scheduled_at", a)
                 .whereLessThan("scheduled_at", b)
                 .addSnapshotListener((q, e) -> {
-                    if (e != null) { Log.e(TAG, "listener medication_logs gagal", e); return; }
+                    if (e != null) { Log.e(TAG, "listener medication_logs gagal", e); if (onError != null) onError.run(); return; }
                     if (q == null) return;
                     medDocs = q.getDocuments(); medReady = true; rebuild();
+                });
+        // stok / nama obat berubah (mis. diminum lewat notifikasi, atau diedit) -> baca ulang, bukan angka lama
+        final boolean[] firstMeds = {true};
+        medsReg = db.collection("medications").whereEqualTo("users_id", uid)
+                .addSnapshotListener((q, e) -> {
+                    if (e != null || q == null) return;
+                    if (firstMeds[0]) { firstMeds[0] = false; return; }
+                    refresh();
                 });
         apptReg = db.collection("appointments").whereEqualTo("users_id", uid)
                 .whereGreaterThanOrEqualTo("appointment_at", a)
                 .whereLessThan("appointment_at", b)
                 .addSnapshotListener((q, e) -> {
-                    if (e != null) { Log.e(TAG, "listener appointments gagal", e); return; }
+                    if (e != null) { Log.e(TAG, "listener appointments gagal", e); if (onError != null) onError.run(); return; }
                     if (q == null) return;
                     apptDocs = q.getDocuments(); apptReady = true; rebuild();
                 });
@@ -83,6 +103,7 @@ public class TodayScheduleLoader {
         medReady = apptReady = false;
         if (medReg != null) { medReg.remove(); medReg = null; }
         if (apptReg != null) { apptReg.remove(); apptReg = null; }
+        if (medsReg != null) { medsReg.remove(); medsReg = null; }
     }
 
     private void rebuild() {
@@ -193,17 +214,28 @@ public class TodayScheduleLoader {
     }
 
     public static List<LogItem> pickForHome(List<LogItem> all, int max) {
-        List<LogItem> upcoming = new ArrayList<>(), rest = new ArrayList<>();
+        return pickForHome(all, max, false);
+    }
+
+    /**
+     * @param takenNewestFirst true (Home consumer): yang sudah diminum diurutkan dari jam terbaru ke terlama,
+     *                         diletakkan setelah upcoming & lainnya. false: urutan lama (semua sesuai jam).
+     */
+    public static List<LogItem> pickForHome(List<LogItem> all, int max, boolean takenNewestFirst) {
+        List<LogItem> upcoming = new ArrayList<>(), rest = new ArrayList<>(), taken = new ArrayList<>();
         for (LogItem i : all){
             if (i.getDisplayStatus() == LogStatus.AKAN_DATANG) upcoming.add(i);
+            else if (takenNewestFirst && i.getDisplayStatus() == LogStatus.DIKONSUMSI) taken.add(i);
             else rest.add(i);
         }
         Comparator<LogItem> byTime = (a, b) -> a.getTime().compareTo(b.getTime());
         Collections.sort(upcoming, byTime);
         Collections.sort(rest, byTime);
+        Collections.sort(taken, Collections.reverseOrder(byTime));
 
         List<LogItem> result = new ArrayList<>(upcoming); //prioritas yang statusnya upcoming
         result.addAll(rest); //sisanya sesuai urutan jam
+        result.addAll(taken); //yang sudah diminum: terbaru dulu
         return new ArrayList<>(result.subList(0, Math.min(max, result.size())));
     }
 }

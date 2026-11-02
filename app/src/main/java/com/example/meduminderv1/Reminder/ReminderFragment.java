@@ -281,6 +281,8 @@ public class ReminderFragment extends Fragment {
     }
 
     private void deleteSingleLogEntry() {
+        // halaman ini sendiri yang menghapus & menutup halaman: listener jangan ikut menutup
+        removeWatchers();
         if (!isAdded()) return;
         if (scheduleId == null || scheduledAt <= 0L) {
             Toast.makeText(requireContext(), getString(R.string.schedule_id_tidak_ditemukan), Toast.LENGTH_SHORT).show();
@@ -427,6 +429,8 @@ public class ReminderFragment extends Fragment {
     }
 
     private void deleteMedicationSchedule() {
+        // halaman ini sendiri yang menghapus & menutup halaman: listener jangan ikut menutup
+        removeWatchers();
         if (!isAdded()) return;
         if (scheduleId == null || scheduleId.isEmpty()) {
             Toast.makeText(requireContext(), getString(R.string.schedule_id_tidak_ditemukan), Toast.LENGTH_SHORT).show();
@@ -474,6 +478,8 @@ public class ReminderFragment extends Fragment {
                 });
     }
     private void deleteAppointment() {
+        // halaman ini sendiri yang menghapus & menutup halaman: listener jangan ikut menutup
+        removeWatchers();
         if (!isAdded()) return;
         if (scheduleId == null || scheduleId.isEmpty()) {
             Toast.makeText(requireContext(), getString(R.string.appointment_id_tidak_ditemukan), Toast.LENGTH_SHORT).show();
@@ -640,6 +646,17 @@ public class ReminderFragment extends Fragment {
             });
         });
     }
+
+    /** Jadwal ini sudah dihapus (di halaman lain / HP lain): tutup halaman ini. */
+    private void closeBecauseDeleted() {
+        removeWatchers();
+        if (!isResumed()) return;
+        androidx.navigation.NavController nav = NavHostFragment.findNavController(this);
+        if (nav.getCurrentDestination() != null && nav.getCurrentDestination().getId() == R.id.reminderFragment) {
+            nav.navigateUp();
+        }
+    }
+
     private void markAsTaken() {
         if (!isAdded()) return;
         if (scheduleId == null || scheduleId.isEmpty()) {
@@ -807,9 +824,7 @@ public class ReminderFragment extends Fragment {
     }
 
     private void stopRingingAlarm() {
-        requireContext().stopService(
-                new android.content.Intent(requireContext(), AlarmRingingService.class)
-        );
+        AlarmRingingService.stopFor(requireContext(), scheduleId);   // hanya jadwal ini
     }
 
     private void deleteFutureMedicationLogs(String scheduleId) {
@@ -952,7 +967,17 @@ public class ReminderFragment extends Fragment {
             watchLog();
             scheduleReg = db.collection("medication_schedules").document(scheduleId)
                     .addSnapshotListener((snap, e) -> {
-                        if (!alive() || e != null || snap == null || !snap.exists()) return;
+                        if (!alive() || e != null || snap == null) return;
+                        if (!snap.exists() || snap.get("deleted_at") != null) { closeBecauseDeleted(); return; }
+                        String medId = snap.getString("medication_id");
+                        if (medId != null) {
+                            new com.example.meduminderv1.Repo.MedicationRepo(requireContext())
+                                    .resolveMedicationName(medId, name -> {
+                                        if (!alive() || name == null) return;
+                                        namaObat = name;          // nama obat diubah -> ikut berubah di sini
+                                        namaObatConfirmReminder.setText(name);
+                                    });
+                        }
                         List<String> times = readTimes(snap);
                         if (times.isEmpty()) return;
 
@@ -1041,7 +1066,8 @@ public class ReminderFragment extends Fragment {
     private void watchAppointment() {
         removeWatchers();
         apptReg = db.collection("appointments").document(scheduleId).addSnapshotListener((doc, e) -> {
-            if (!alive() || e != null || doc == null || !doc.exists()) return;
+            if (!alive() || e != null || doc == null) return;
+            if (!doc.exists() || doc.get("deleted_at") != null) { closeBecauseDeleted(); return; }
             Appointment a = doc.toObject(Appointment.class);
             if (a == null || a.getAppointment_at() == null) return;
 

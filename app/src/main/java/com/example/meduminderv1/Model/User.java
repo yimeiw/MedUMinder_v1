@@ -112,7 +112,13 @@ public class User {
     }
     @Exclude
     public UserRole getCurrentRole(){
-        return UserRole.valueOf(current_role);
+        // data rusak/kosong jangan bikin app crash saat login: anggap Consumer
+        if (current_role != null) {
+            try {
+                return UserRole.valueOf(current_role);
+            } catch (IllegalArgumentException ignored) { }
+        }
+        return UserRole.Consumer;
     }
     public boolean isGoogle_email_password_capable() {
         return google_email_password_capable;

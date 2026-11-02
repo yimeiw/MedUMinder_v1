@@ -277,7 +277,6 @@ public class NotificationSettingsFragment extends Fragment {
         dialog.show();
         if (dialog.getWindow() != null){
             dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
         }
@@ -560,19 +559,19 @@ public class NotificationSettingsFragment extends Fragment {
             );
 
             // snooze duration
-            String savedSnooze = pref.getString(
-                    KEY_SNOOZE_DURATION, getString(R.string.fiveMin)
-            );
+            // label dari angka yang tersimpan (bukan teks lama), supaya ikut bahasa & ejaan terbaru
+            int snoozeMin = com.example.meduminderv1.Reminder.SnoozeHelper.getSnoozeMinutes(requireContext());
+            String savedSnooze = getString(snoozeMin == 30 ? R.string.thirtyMin
+                    : snoozeMin == 10 ? R.string.tenMin : R.string.fiveMin);
 
             dropdownSnoozeDuration.setText(
                     savedSnooze, false
             );
 
             // appointment reminder
-            String savedAppointment = pref.getString(
-                    KEY_APPOINTMENT_REMINDER,
-                    getString(R.string.thirtyMin)
-            );
+            int apptMin = com.example.meduminderv1.Reminder.AppointmentAlertScheduler.getPreReminderOffsetMinutes(requireContext());
+            String savedAppointment = getString(apptMin == 120 ? R.string.twoHour
+                    : apptMin == 60 ? R.string.oneHour : R.string.thirtyMin);
 
             dropdownAppointmentReminder.setText(
                     savedAppointment, false

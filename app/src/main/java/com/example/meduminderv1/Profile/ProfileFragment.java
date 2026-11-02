@@ -89,6 +89,7 @@ public class ProfileFragment extends Fragment {
         curr_role = view.findViewById(R.id.curr_role);
         name_input = view.findViewById(R.id.name_input);
         email_input = view.findViewById(R.id.email_input);
+        com.example.meduminderv1.Util.FullEmail.attach(email_input); // email panjang: tekan untuk lihat lengkap
         btnAktivasi = view.findViewById(R.id.btnAktivasi);
         imgAktivasi = view.findViewById(R.id.imgAktivasi);
         txtAktivasi = view.findViewById(R.id.txtAktivasi);
@@ -144,7 +145,7 @@ public class ProfileFragment extends Fragment {
         });
 
         btnAktivasi.setOnClickListener(v -> {
-            if (!user.isCaregiver_enabled()){
+            if (user != null && !user.isCaregiver_enabled()){
                 showEnableCaregiver(false);
             } else {
                 return;
@@ -209,7 +210,9 @@ public class ProfileFragment extends Fragment {
 
                         adherencePercent.setText(percent + "%");
                         adherenceRing.setProgress(percent);
-                        adherenceDesc.setText(getAdherenceDescription(percent));
+                        // belum ada jadwal minggu ini: bukan "kepatuhan sangat rendah", tapi "belum ada data"
+                        adherenceDesc.setText(totalSeharusnya == 0
+                                ? getString(R.string.noConsumptionData) : getAdherenceDescription(percent));
                     }
 
                     @Override
@@ -293,10 +296,9 @@ public class ProfileFragment extends Fragment {
         });
         AlertDialog dialog = builder.create();
         dialog.show();
+        // dialog daftar ini tidak punya tombol OK/Batal: getButton() = null -> dulu app crash di sini
         if (dialog.getWindow() != null){
             dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
         }
     }
 
@@ -330,11 +332,14 @@ public class ProfileFragment extends Fragment {
     }
 
     private void switchRole(UserRole targetRole) {
+        final android.content.Context appContext = requireContext().getApplicationContext();
         LoadingOverlay.show(ProfileFragment.this);
         authManager.switchRole(targetRole, new AuthCallback<User>() {
             @Override
             public void onSuccess(User result) {
                 LoadingOverlay.hide(ProfileFragment.this);
+                // pesan pakai context aplikasi: MainActivity langsung pindah ke Home role baru
+                Toast.makeText(appContext, appContext.getString(R.string.role_berhasil_diganti, formatRole(targetRole)), Toast.LENGTH_SHORT).show();
                 if (!isAdded()) return;
                 bindUser(result);
             }
@@ -343,7 +348,7 @@ public class ProfileFragment extends Fragment {
             public void onFailure(String message) {
                 LoadingOverlay.hide(ProfileFragment.this);
                 if (!isAdded()) return;
-                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), getString(R.string.role_gagal_diganti), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -410,7 +415,7 @@ public class ProfileFragment extends Fragment {
         setUpCaregiverButton();
 
         boolean isConsumer = user.getCurrentRole() == UserRole.Consumer;
-        tvSwitchRole.setText(getString(R.string.ganti_ke_role, isConsumer ? "Caregvier" : "Consumer"));
+        tvSwitchRole.setText(getString(R.string.ganti_ke_role, formatRole(isConsumer ? UserRole.Caregiver : UserRole.Consumer)));
         txtListRelation.setText(
                 isConsumer ? getString(R.string.caregiverList) : getString(R.string.consumerList)
         );

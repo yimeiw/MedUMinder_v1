@@ -81,6 +81,8 @@
                         android:paddingHorizontal="20dp"
                         android:paddingVertical="18dp"
                         android:hint="@string/masukkan_nama_obat"
+                        android:inputType="text"
+                        android:imeOptions="actionDone"
                         android:textSize="12sp"
                         android:textColorHint="@color/placeholder"
                         android:textColor="?attr/colorOnSurface"/>

@@ -7,7 +7,7 @@ import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Notification.NotificationText;
 import com.example.meduminderv1.Notification.NotificationType;
 import com.example.meduminderv1.Notification.PushNotifier;
-import com.example.meduminderv1.Reminder.Alarm.AlarmGuard;
+import com.example.meduminderv1.Reminder.Alarm.AlarmOwner;
 import com.example.meduminderv1.Repo.MedicationRepo;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -98,7 +98,7 @@ public final class MissedNotifier {
             nc.put("is_read", false);
             nc.put("created_at", Timestamp.now());
             writes.add(cRef.set(nc));
-            if (consumerUid.equals(AlarmGuard.currentUid())) {
+            if (consumerUid.equals(AlarmOwner.currentUid())) {
                 PushNotifier.postLocal(app, cRef.getId(), "jadwal_terlewat_title", cMsg,
                         Collections.singletonList(item));
             }
@@ -126,7 +126,7 @@ public final class MissedNotifier {
                                 n.put("is_read", false);
                                 n.put("created_at", Timestamp.now());
                                 writes.add(gRef.set(n));
-                                if (cg.equals(AlarmGuard.currentUid())) {
+                                if (cg.equals(AlarmOwner.currentUid())) {
                                     PushNotifier.postLocal(app, gRef.getId(), "consumer_melewatkan_jadwal_title",
                                             gMsg, args);
                                 }

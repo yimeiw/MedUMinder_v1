@@ -226,6 +226,21 @@
                     android:paddingHorizontal="12dp"
                     android:paddingTop="10dp"/>
 
+                <!-- memuat pertama kali (gaya sama dengan spinner LoadingOverlay) -->
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:id="@+id/nextLoading"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginVertical="20dp"
+                    android:indeterminate="true"
+                    android:contentDescription="@string/loading"
+                    app:indicatorSize="32dp"
+                    app:trackThickness="4dp"
+                    app:indicatorColor="?attr/colorSecondaryFixedDim"
+                    app:trackColor="@android:color/transparent"
+                    android:visibility="visible"/>
+
                 <!--                ada jadwal-->
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -339,7 +354,7 @@
                     android:orientation="vertical"
                     android:gravity="center"
                     android:paddingVertical="20dp"
-                    android:visibility="visible">
+                    android:visibility="gone">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -414,6 +429,21 @@
                     </LinearLayout>
 
                 </LinearLayout>
+                <!-- memuat pertama kali (gaya sama dengan spinner LoadingOverlay) -->
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:id="@+id/todayLoading"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginVertical="20dp"
+                    android:indeterminate="true"
+                    android:contentDescription="@string/loading"
+                    app:indicatorSize="32dp"
+                    app:trackThickness="4dp"
+                    app:indicatorColor="?attr/colorSecondaryFixedDim"
+                    app:trackColor="@android:color/transparent"
+                    android:visibility="visible"/>
+
                 <!--            list jadwal-->
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvTodaySchedule"
@@ -432,7 +462,7 @@
                     android:layout_marginTop="10dp"
                     android:text="@string/tidak_ada_jadwal_hari_ini"
                     android:gravity="center"
-                    android:visibility="visible"/>
+                    android:visibility="gone"/>
             </LinearLayout>
 
             <View

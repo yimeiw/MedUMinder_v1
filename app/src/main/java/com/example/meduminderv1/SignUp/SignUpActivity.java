@@ -33,6 +33,7 @@ import com.example.meduminderv1.MainActivity;
 import com.example.meduminderv1.Model.AuthProviderType;
 import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.R;
+import com.example.meduminderv1.Util.PressFeedback;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.Timestamp;
 
@@ -47,13 +48,16 @@ public class SignUpActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+        // bagian atas layar berwarna gelap (navy) -> ikon jam & baterai harus terang, juga di mode terang
+        EdgeToEdge.enable(this, androidx.activity.SystemBarStyle.dark(android.graphics.Color.TRANSPARENT));
         setContentView(R.layout.activity_sign_up);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, Math.max(systemBars.bottom, ime.bottom));
             return insets;
         });
+        PressFeedback.applyTree(findViewById(androidx.appcompat.R.id.content));
 
         signUp = findViewById(R.id.signup_button);
         googleBtn = findViewById(R.id.google_provider);
@@ -63,17 +67,12 @@ public class SignUpActivity extends AppCompatActivity {
         ScrollView signupScroll = findViewById(R.id.signup_scroll);
         passwordInput = findViewById(R.id.password_input);
 
-        passwordInput.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                signupScroll.postDelayed(() -> {
-                    Rect rect = new Rect();
-                    passwordInput.getDrawingRect(rect);
-                    signupScroll.offsetDescendantRectToMyCoords(passwordInput, rect);
-
-                    signupScroll.smoothScrollTo(0, rect.bottom);
-                }, 300);
-            }
-        });
+        for (EditText input : new EditText[]{nameInput, emailInput, passwordInput}) {
+            input.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) signupScroll.postDelayed(() -> scrollIntoView(signupScroll, v), 300);
+            });
+            input.setOnClickListener(v -> signupScroll.postDelayed(() -> scrollIntoView(signupScroll, v), 300));
+        }
 
         passwordInput.setCompoundDrawablesWithIntrinsicBounds(
                 0, 0, R.drawable.ic_visibility_off, 0
@@ -165,14 +164,14 @@ public class SignUpActivity extends AppCompatActivity {
 
         User user = new User();
         user.setName(nameInput.getText().toString().trim());
-        user.setEmail(emailInput.getText().toString().trim().toLowerCase());
+        user.setEmail(emailInput.getText().toString().trim().toLowerCase(java.util.Locale.ROOT));
         user.setCurrent_role("Consumer");
         user.setCaregiver_enabled(false);
         user.setAuthProvider(AuthProviderType.EMAIL);
 
         user.setPreferred_language(preferredLanguage);
 
-        user.setTimezone("Asia/Jakarta");
+        user.setTimezone(com.example.meduminderv1.Util.UserTimeZone.deviceId());
         user.setCreated_at(Timestamp.now());
         user.setUpdated_at(Timestamp.now());
         user.setDeleted_at(null);
@@ -247,32 +246,49 @@ public class SignUpActivity extends AppCompatActivity {
     private boolean validateInput(String name, String email, String password) {
         if(TextUtils.isEmpty(name)){
             nameInput.setError(getString(R.string.nama_harus_diisi));
+            nameInput.requestFocus();
             return false;
         }
         if (name.length() < 4) {
             nameInput.setError(getString(R.string.nama_minimal_4_karaker_typo));
+            nameInput.requestFocus();
             return false;
         }
         if (name.length() > 50) {
             nameInput.setError(getString(R.string.nama_maksimal_50_karakter));
+            nameInput.requestFocus();
             return false;
         }
         if (TextUtils.isEmpty(email)){
             emailInput.setError(getString(R.string.email_harus_diisi));
+            emailInput.requestFocus();
             return false;
         }
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
             emailInput.setError(getString(R.string.email_tidak_valid));
+            emailInput.requestFocus();
             return false;
         }
         if (TextUtils.isEmpty(password)){
             passwordInput.setError(getString(R.string.password_harus_diisi));
+            passwordInput.requestFocus();
             return false;
         }
         if (password.length() < 6){
             passwordInput.setError(getString(R.string.password_min_6_karakter));
+            passwordInput.requestFocus();
             return false;
         } return true;
     }
 
+    private void scrollIntoView(ScrollView scroll, android.view.View field) {
+        Rect rect = new Rect();
+        field.getDrawingRect(rect);
+        scroll.offsetDescendantRectToMyCoords(field, rect);
+        int margin = (int) (24 * getResources().getDisplayMetrics().density);
+        int visibleBottom = scroll.getScrollY() + scroll.getHeight() - scroll.getPaddingBottom();
+        if (rect.bottom + margin > visibleBottom) {
+            scroll.smoothScrollBy(0, rect.bottom + margin - visibleBottom);
+        }
+    }
 }

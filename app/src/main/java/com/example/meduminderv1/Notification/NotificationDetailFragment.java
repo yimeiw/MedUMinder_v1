@@ -229,27 +229,10 @@ public class NotificationDetailFragment extends Fragment {
     }
 
     private Locale getAppLocale() {
-        String language = AppCompatDelegate
-                .getApplicationLocales()
-                .toLanguageTags();
-
-        if ("id".equals(language)) {
-            return new Locale("id", "ID");
-        } else if ("zh".equals(language)) {
-            return Locale.SIMPLIFIED_CHINESE;
-        } else if ("en".equals(language)) {
-            return Locale.ENGLISH;
-        }
-
-        String deviceLanguage = Locale.getDefault().getLanguage();
-
-        if ("in".equals(deviceLanguage) || "id".equals(deviceLanguage)) {
-            return new Locale("id", "ID");
-        } else if ("zh".equals(deviceLanguage)) {
-            return Locale.SIMPLIFIED_CHINESE;
-        } else {
-            return Locale.ENGLISH;
-        }
+        String language = com.example.meduminderv1.Util.AppLanguage.current(requireContext());
+        if ("id".equals(language)) return new Locale("id", "ID");
+        if ("zh".equals(language)) return Locale.SIMPLIFIED_CHINESE;
+        return Locale.ENGLISH;
     }
 
     /** Waktu lengkap, mis. "Senin, 29 Sep 2026 • 08:00". */
@@ -707,7 +690,7 @@ public class NotificationDetailFragment extends Fragment {
                             tvScheduleDayTime.setText(dayFormat.format(scheduleDate) + " • " + com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(timeFormat.format(scheduleDate)));
                         }
                         tvStockInfo.setVisibility(View.VISIBLE);
-                        tvStockInfo.setText(getString(R.string.sisa_stok_obat_label) + finalStock);
+                        tvStockInfo.setText(getString(R.string.sisa_stok, finalStock));
                     };
                     if (med != null && med.getCustom_medicine_name() != null){
                         tvScheduleName.setText(getString(R.string.obat_label_colon) + " " + med.getCustom_medicine_name());
@@ -1120,7 +1103,7 @@ public class NotificationDetailFragment extends Fragment {
                     @Override public void onSuccess(Void result) {
                         LoadingOverlay.hide(NotificationDetailFragment.this);
                         if (!isAdded()) return;
-                        requireContext().stopService(new Intent(requireContext(), AlarmRingingService.class));
+                        AlarmRingingService.stopFor(requireContext(), scheduleId);
                         AlarmSchedulerHelper.cancelSnooze(requireContext(), scheduleId);
                         AlarmSchedulerHelper.onDoseTaken(requireContext(), scheduleId, pendingMedName, scheduledAtMillis);
                         new NotificationRepo(requireContext().getApplicationContext())

@@ -97,7 +97,7 @@ public final class SnoozeHelper {
         final int minutes = getSnoozeMinutes(app);
         final String name = itemName != null ? itemName : "";
 
-        app.stopService(new Intent(app, AlarmRingingService.class));   // bunyi berhenti seketika
+        AlarmRingingService.stopFor(app, scheduleId);   // bunyi jadwal ini berhenti seketika (jadwal lain tetap)
 
         final FirebaseFirestore db = FirebaseFirestore.getInstance();
         final DocumentReference ref = isAppointment

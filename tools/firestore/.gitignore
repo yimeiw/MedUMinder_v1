@@ -1,0 +1,10 @@
+node_modules/
+*.csv
+# never keep service account keys here
+*service-account*.json
+*-firebase-adminsdk-*.json
+private-candidates.json
+test-medicines-report.json
+option-a-plan.json
+firestore-debug.log
+orphan-report.json
