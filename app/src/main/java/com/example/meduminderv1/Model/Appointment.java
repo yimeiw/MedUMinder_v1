@@ -82,6 +82,12 @@ public class Appointment {
         if (stored == LogStatus.DIKONSUMSI) {
             return stored;
         }
+        // tombol Tidak Hadir di alarm: langsung terlewat, walau 2 menitnya belum lewat.
+        // Jamnya masih di depan = data lama yang sudah dipindah jamnya, jadi tetap akan datang
+        if (stored == LogStatus.TERLEWATKAN && appointment_at != null
+                && appointment_at.toDate().getTime() <= System.currentTimeMillis()) {
+            return stored;
+        }
 
         if (appointment_at != null && appointment_at.toDate().getTime() + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS < System.currentTimeMillis()) {
             return LogStatus.TERLEWATKAN;

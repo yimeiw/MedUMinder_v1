@@ -12,7 +12,7 @@ import android.os.Build;
 import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 
 public class AppointmentAlertScheduler {
-    // sama dengan obat: 3 menit tidak direspon -> terlewat / diulang (Repeat Until Confirmed)
+    // 2 menit tidak direspon -> terlewat (appointment tidak ikut Repeat Until Confirmed)
     private static final long MISSED_DELAY_MS = AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS;
     public static void scheduleAlerts(Context context, String appointmentId, String title, long appointmentAtMillis){
         // appointment yang waktunya SUDAH lewat saat disimpan -> langsung tandai terlewat + kirim notifikasi.
@@ -22,7 +22,6 @@ public class AppointmentAlertScheduler {
             Intent missedNow = new Intent(context, AppointmentMissedNotifReceiver.class);
             missedNow.putExtra("appointment_id", appointmentId);
             missedNow.putExtra("title", title);
-            missedNow.putExtra(AppointmentMissedNotifReceiver.EXTRA_ALREADY_PASSED, true);
             context.sendBroadcast(missedNow);
             return;
         }

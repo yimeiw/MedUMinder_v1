@@ -65,7 +65,7 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
                         "updated_at", Timestamp.now()
                 ).addOnSuccessListener(unused -> {
                     // caregiver cukup diberi tahu sekali per dosis, bukan di setiap pengulangan
-                    if (firstRepeat) SnoozeHelper.notifyCaregiversNoResponse(consumerUid, scheduleId, namaObat, false);
+                    if (firstRepeat) SnoozeHelper.notifyCaregiversNoResponse(consumerUid, scheduleId, namaObat);
                     AlarmSchedulerHelper.scheduleRepeatAlarm(context, scheduleId, namaObat,
                             scheduledAtMillis, nextTriggerMillis);
                     pendingResult.finish();

@@ -195,7 +195,10 @@ public class ReminderFragment extends Fragment {
             PopupMenu popupMenu = new PopupMenu(requireContext(), btnOption);
             popupMenu.getMenuInflater().inflate(R.menu.medicine_edit_menu, popupMenu.getMenu());
 
-            boolean canEditSchedule = LogStatus.fromRaw(currentStatus) == LogStatus.AKAN_DATANG;
+            // appointment: cek jamnya juga, status dari daftar bisa masih "akan datang" padahal sudah terlewat
+            boolean appointmentPassed = isAppointment
+                    && scheduledAt + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS < System.currentTimeMillis();
+            boolean canEditSchedule = LogStatus.fromRaw(currentStatus) == LogStatus.AKAN_DATANG && !appointmentPassed;
             popupMenu.getMenu().findItem(R.id.editMedicine).setVisible(canEditSchedule);
 
             popupMenu.setOnMenuItemClickListener(menuItem -> {
@@ -1045,7 +1048,9 @@ public class ReminderFragment extends Fragment {
         long wait = atMillis - System.currentTimeMillis() + 300L;
         if (wait <= 0) return;
         tick.postDelayed(() -> {
-            if (alive() && lastLog != null) updateStatusUI(lastLog.getStatusBasedOnDate());
+            if (!alive()) return;
+            if (lastLog != null) updateStatusUI(lastLog.getStatusBasedOnDate());
+            else if (lastAppointment != null) updateStatusUI(lastAppointment.getStatusBasedOnDate());
         }, wait);
     }
 
@@ -1063,6 +1068,8 @@ public class ReminderFragment extends Fragment {
     }
 
     // ---------- APPOINTMENT ----------
+    private Appointment lastAppointment;
+
     private void watchAppointment() {
         removeWatchers();
         apptReg = db.collection("appointments").document(scheduleId).addSnapshotListener((doc, e) -> {
@@ -1070,6 +1077,7 @@ public class ReminderFragment extends Fragment {
             if (!doc.exists() || doc.get("deleted_at") != null) { closeBecauseDeleted(); return; }
             Appointment a = doc.toObject(Appointment.class);
             if (a == null || a.getAppointment_at() == null) return;
+            lastAppointment = a;
 
             namaObat = a.getTitle();
             namaObatConfirmReminder.setText(namaObat);

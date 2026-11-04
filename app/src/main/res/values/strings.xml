@@ -72,6 +72,7 @@
     <string name="appointmentReminder">Appointment Reminder Time</string>
     <string name="remindMeBefore">Remind Me Before</string>
     <string name="remindUntilConfirm">Repeat Reminder Until Confirmed</string>
+    <string name="remindUntilConfirmHint">For medicine only. Appointments ring once.</string>
     <string name="jenisObat">Medicine Type</string>
     <string name="obatPil">Pill</string>
     <string name="obatCair">Liquid</string>

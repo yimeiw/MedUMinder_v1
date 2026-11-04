@@ -73,6 +73,7 @@
     <string name="appointmentReminder">预约提醒时间</string>
     <string name="remindMeBefore">提前提醒我</string>
     <string name="remindUntilConfirm">重复提醒直到确认</string>
+    <string name="remindUntilConfirmHint">仅适用于药物。预约只响一次。</string>
 
     <string name="jenisObat">药物类型</string>
     <string name="obatPil">药片</string>

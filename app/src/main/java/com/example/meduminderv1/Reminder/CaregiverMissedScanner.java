@@ -44,8 +44,11 @@ public final class CaregiverMissedScanner {
     //Consumer: cek jadwal milik sendiri (tanpa tenggang).
     public static void scanOwn(Context context, String uid, Runnable onDone) {
         SharedPreferences p = context.getSharedPreferences("notification_settings", Context.MODE_PRIVATE);
-        if (p.getBoolean("repeat_reminder", true)) { if (onDone != null) onDone.run(); return; } // diulang, bukan terlewat
-        scanUser(context, FirebaseFirestore.getInstance(), uid, 0L, onDone != null ? onDone : () -> { });
+        Runnable done = onDone != null ? onDone : () -> { };
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        // obat diulang, bukan terlewat. Appointment tidak pernah diulang, jadi tetap diperiksa
+        if (p.getBoolean("repeat_reminder", true)) { scanAppointments(context, db, uid, 0L, done); return; }
+        scanUser(context, db, uid, 0L, done);
     }
 
     private static void scanUser(Context ctx, FirebaseFirestore db, String uid, long grace, Runnable done) {

@@ -73,6 +73,7 @@
     <string name="appointmentReminder">Waktu Pengingat Janji Temu</string>
     <string name="remindMeBefore">Ingatkan Saya Sebelum</string>
     <string name="remindUntilConfirm">Pengingat Berulang Hingga Konfirmasi</string>
+    <string name="remindUntilConfirmHint">Hanya untuk obat. Appointment berbunyi sekali.</string>
 
     <string name="jenisObat">Jenis Obat</string>
     <string name="obatPil">Pil</string>

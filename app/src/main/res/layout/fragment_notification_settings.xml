@@ -242,6 +242,15 @@
                             android:text=""
                             android:checked="false"/>
                     </LinearLayout>
+                    <TextView
+                        android:id="@+id/tvRepeatHint"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="4dp"
+                        android:text="@string/remindUntilConfirmHint"
+                        android:textColor="?attr/colorOnSurface"
+                        android:alpha="0.6"
+                        android:textSize="12sp"/>
                 </LinearLayout>
 
                 <LinearLayout

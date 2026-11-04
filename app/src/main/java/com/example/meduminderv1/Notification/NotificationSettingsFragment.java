@@ -48,7 +48,7 @@ public class NotificationSettingsFragment extends Fragment {
     private AutoCompleteTextView dropdownRingtone, dropdownReminderMessage,
             dropdownSnoozeDuration, dropdownAppointmentReminder, dropdownRefillReminder;
     private SwitchCompat switchRepeatReminder;
-    private View layoutReminderMessage, layoutAppointmentReminder, layoutRepeatReminder, layoutRefillReminder;
+    private View layoutReminderMessage, layoutAppointmentReminder, layoutRepeatReminder, tvRepeatHint, layoutRefillReminder;
     private SharedPreferences pref;
     private Ringtone previewRingtone;
     private static final String PREF_NAME = "notification_settings";
@@ -105,6 +105,7 @@ public class NotificationSettingsFragment extends Fragment {
         layoutReminderMessage = view.findViewById(R.id.layoutReminderMessage);
         layoutAppointmentReminder = view.findViewById(R.id.layoutAppointmentReminder);
         layoutRepeatReminder = view.findViewById(R.id.layoutRepeatReminder);
+        tvRepeatHint = view.findViewById(R.id.tvRepeatHint);
         dropdownRefillReminder = view.findViewById(R.id.dropdownRefillReminder);
         layoutRefillReminder = view.findViewById(R.id.layoutRefillReminder);
         sliderVolume = view.findViewById(R.id.sliderVolume);
@@ -607,11 +608,13 @@ public class NotificationSettingsFragment extends Fragment {
             layoutReminderMessage.setVisibility(View.GONE);
             layoutAppointmentReminder.setVisibility(View.GONE);
             layoutRepeatReminder.setVisibility(View.GONE);
+            tvRepeatHint.setVisibility(View.GONE);
             layoutRefillReminder.setVisibility(View.GONE);
         } else {
             layoutReminderMessage.setVisibility(View.VISIBLE);
             layoutAppointmentReminder.setVisibility(View.VISIBLE);
             layoutRepeatReminder.setVisibility(View.VISIBLE);
+            tvRepeatHint.setVisibility(View.VISIBLE);
             layoutRefillReminder.setVisibility(View.VISIBLE);
         }
     }

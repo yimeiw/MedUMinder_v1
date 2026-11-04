@@ -176,11 +176,9 @@ public final class SnoozeHelper {
     }
 
     /** Repeat Until Confirmed: consumer belum merespon alarm -> caregiver diberi tahu (pemanggil menjaga sekali per dosis). */
-    public static void notifyCaregiversNoResponse(String consumerUid, String scheduleId, @Nullable String itemName,
-                                                  boolean isAppointment) {
+    public static void notifyCaregiversNoResponse(String consumerUid, String scheduleId, @Nullable String itemName) {
         if (consumerUid == null) return;
         final String name = itemName != null ? itemName : "";
-        final String type = isAppointment ? "Appointment" : "Medicine";
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("users").document(consumerUid).get().addOnSuccessListener(userDoc -> {
             String consumerName = userDoc.exists() && userDoc.getString("name") != null
@@ -190,7 +188,7 @@ public final class SnoozeHelper {
                         for (DocumentSnapshot rel : query.getDocuments()) {
                             String caregiverUid = rel.getString("caregiver_uid");
                             if (caregiverUid == null) continue;
-                            Map<String, Object> n = baseNotif(caregiverUid, consumerUid, type, scheduleId, isAppointment);
+                            Map<String, Object> n = baseNotif(caregiverUid, consumerUid, "Medicine", scheduleId, false);
                             NotificationText.apply(n, "consumer_belum_merespon_title",
                                     "consumer_belum_merespon_msg", consumerName, name);
                             n.put("consumer_uid", consumerUid);
