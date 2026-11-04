@@ -82,6 +82,7 @@ public class LogFragment extends Fragment {
     private enum LogType { MEDICATION, APPOINTMENT }
     private FilterType currentFilter = FilterType.ALL;
     private LogType currentType = LogType.MEDICATION;
+    private boolean typeChosen = false;
     private static final int DAYS_STEP = 7;
     private static final int MAX_DAYS = 90;
     private int daysBack = DAYS_STEP;
@@ -167,7 +168,9 @@ public class LogFragment extends Fragment {
         setupTypeDropdown();
         Bundle args = getArguments();
         boolean openAppointment = args != null && args.getBoolean("open_appointment_tab", false);
-        currentType = openAppointment ? LogType.APPOINTMENT : LogType.MEDICATION;
+        // balik dari halaman detail: tetap di riwayat yang terakhir dibuka
+        if (!typeChosen) currentType = openAppointment ? LogType.APPOINTMENT : LogType.MEDICATION;
+        typeChosen = true;
         showCurrentType();
 
         return view;
@@ -426,7 +429,7 @@ public class LogFragment extends Fragment {
         endCal.add(Calendar.DAY_OF_YEAR, 1);
         Timestamp startOfTomorrow = new Timestamp(endCal.getTime());
 
-        // lewati log dari jadwal yang sudah dihapus (is_active = false)
+        // lewati log dari jadwal yang sudah dihapus (jadwal yang selesai tetap tampil)
         InactiveSchedules.load(db, users_id, inactiveIds -> {
             if (!isAdded() || token != loadToken) return;
             medLogReg = db.collection("medication_logs")

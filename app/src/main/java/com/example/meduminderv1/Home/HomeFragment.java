@@ -37,6 +37,7 @@ import com.example.meduminderv1.Auth.SessionManager;
 import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Invitation.InvitationPopupHelper;
 import com.example.meduminderv1.Model.LogItem;
+import com.example.meduminderv1.Model.Appointment;
 import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.Model.Medication;
 import com.example.meduminderv1.Model.MedicationLog;
@@ -99,7 +100,8 @@ public class HomeFragment extends Fragment {
     StatistikRepo statistikRepo;
     private ListenerRegistration nextScheduleListener;
     // data Home selalu "live" dari Firestore: tambah / ubah / hapus langsung tampil tanpa pindah tab
-    private ListenerRegistration schedulesListener, medicationsListener;
+    private ListenerRegistration schedulesListener, medicationsListener, appointmentsListener;
+    private QuerySnapshot lastAppointments;
     private QuerySnapshot lastNextLogs;
     private int nextRenderGen = 0;
     // spinner hanya saat muatan pertama halaman ini
@@ -282,6 +284,13 @@ public class HomeFragment extends Fragment {
                     lastNextLogs = query;
                     renderNextSchedule();
                 });
+        if (appointmentsListener != null) appointmentsListener.remove();
+        appointmentsListener = db.collection("appointments").whereEqualTo("users_id", uid)
+                .addSnapshotListener((snap, error) -> {
+                    if (error != null || snap == null || !isAdded()) return;
+                    lastAppointments = snap;
+                    renderNextSchedule();
+                });
     }
 
     /** Pilih jadwal terdekat yang jadwal/obatnya masih ada (yang sudah dihapus dilewati). */
@@ -300,11 +309,17 @@ public class HomeFragment extends Fragment {
         }
         Collections.sort(candidates, (a, b) -> a.toObject(MedicationLog.class).getEffectiveTime()
                 .compareTo(b.toObject(MedicationLog.class).getEffectiveTime()));
-        showFirstValidNext(candidates, 0, gen);
+        showFirstValidNext(candidates, 0, gen, NextAppointment.pick(lastAppointments, nowMs));
     }
 
-    private void showFirstValidNext(List<DocumentSnapshot> candidates, int index, int gen) {
+    private void showFirstValidNext(List<DocumentSnapshot> candidates, int index, int gen, Appointment appointment) {
         if (!isAdded() || gen != nextRenderGen) return; // sudah ada data yang lebih baru
+        // appointment lebih dulu dari obat berikutnya -> appointment yang tampil di kartu
+        if (appointment != null && (index >= candidates.size() || appointment.getDisplayTime().compareTo(
+                candidates.get(index).toObject(MedicationLog.class).getEffectiveTime()) <= 0)) {
+            showNextAppointment(appointment);
+            return;
+        }
         if (index >= candidates.size()){
             nextLoader.done();
             haveSchedule.setVisibility(View.GONE);
@@ -318,7 +333,7 @@ public class HomeFragment extends Fragment {
         resolveMedName(targetLog.getMedication_schedules_id(), (medName, stock, medId, medType) -> {
             if (!isAdded() || gen != nextRenderGen) return;
             if (medName == null) { // jadwal/obat sudah dihapus -> coba jadwal berikutnya
-                showFirstValidNext(candidates, index + 1, gen);
+                showFirstValidNext(candidates, index + 1, gen, appointment);
                 return;
             }
             nextLoader.done();
@@ -327,6 +342,7 @@ public class HomeFragment extends Fragment {
             nextScheduledAtMillis = targetLog.getScheduled_at().toDate().getTime();
             nextMedId = medId;
             btnKonfirmasi.setEnabled(true);
+            btnKonfirmasi.setText(R.string.sudah_dikonsumsi);
             haveSchedule.setVisibility(View.VISIBLE);
             noSchedule.setVisibility(View.GONE);
             displayedScheduleAtMillis = targetLog.getEffectiveTime().toDate().getTime()
@@ -345,6 +361,35 @@ public class HomeFragment extends Fragment {
                 tvTotalStok.setText(String.valueOf(stock));
             }
             btnKonfirmasi.setOnClickListener(v -> confirmTaken());
+        });
+    }
+
+    /** Kartu untuk appointment: tanpa stok, tombol membuka halaman appointment (Hadir / Tunda ada di sana). */
+    private void showNextAppointment(Appointment appointment) {
+        nextLoader.done();
+        nextLogId = null;
+        Date time = appointment.getDisplayTime().toDate();
+        haveSchedule.setVisibility(View.VISIBLE);
+        noSchedule.setVisibility(View.GONE);
+        displayedScheduleAtMillis = time.getTime() + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS;
+        scheduleFreshnessCheck();
+        tvDay.setText(formatDayLabel(time));
+        tvTime.setText(com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(
+                new SimpleDateFormat("HH:mm", Locale.getDefault()).format(time)));
+        tvtitleCard.setText(appointment.getTitle());
+        tvStokObat.setVisibility(View.GONE);
+        tvTotalStok.setVisibility(View.GONE);
+        btnKonfirmasi.setEnabled(true);
+        btnKonfirmasi.setText(R.string.selengkapnya);
+        btnKonfirmasi.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putString("medication_schedules_id", appointment.getDocId());
+            bundle.putString("nama_obat", appointment.getTitle());
+            bundle.putLong("scheduled_at", appointment.getAppointment_at().toDate().getTime());
+            bundle.putString("status", appointment.getStatus());
+            bundle.putString("type", "appointment");
+            bundle.putString("source", "schedule");
+            NavHostFragment.findNavController(this).navigate(R.id.reminderFragment, bundle);
         });
     }
 
@@ -746,6 +791,7 @@ public class HomeFragment extends Fragment {
         if (nextScheduleListener != null) { nextScheduleListener.remove(); nextScheduleListener = null; }
         if (schedulesListener != null) { schedulesListener.remove(); schedulesListener = null; }
         if (medicationsListener != null) { medicationsListener.remove(); medicationsListener = null; }
+        if (appointmentsListener != null) { appointmentsListener.remove(); appointmentsListener = null; }
         if (todayScheduleLoader != null) todayScheduleLoader.stop();
     }
 

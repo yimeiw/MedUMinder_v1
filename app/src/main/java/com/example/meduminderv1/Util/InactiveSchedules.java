@@ -17,7 +17,11 @@ public final class InactiveSchedules {
                 .get()
                 .addOnSuccessListener(snap -> {
                     Set<String> ids = new HashSet<>();
-                    for (DocumentSnapshot doc : snap.getDocuments()) ids.add(doc.getId());
+                    // hanya yang dihapus user. Jadwal yang sudah lewat end_date juga is_active = false,
+                    // tapi riwayatnya harus tetap ada (LogGenerator yang mematikannya)
+                    for (DocumentSnapshot doc : snap.getDocuments()) {
+                        if (doc.get("deleted_at") != null) ids.add(doc.getId());
+                    }
                     callback.accept(ids);
                 })
                 .addOnFailureListener(e -> callback.accept(new HashSet<>()));

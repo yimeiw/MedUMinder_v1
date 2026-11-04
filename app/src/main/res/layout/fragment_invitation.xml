@@ -7,11 +7,17 @@
     android:layout_height="match_parent"
     tools:context=".Profile.InvitationFragment">
 
+    <!-- bisa digulir: saat keyboard terbuka kolom email tidak terpotong -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="none">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_margin="20dp">
+        android:padding="20dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -118,5 +124,6 @@
         </LinearLayout>
 
     </LinearLayout>
+    </ScrollView>
 
 </RelativeLayout>

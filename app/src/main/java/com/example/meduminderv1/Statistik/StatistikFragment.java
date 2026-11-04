@@ -111,7 +111,9 @@ public class StatistikFragment extends Fragment {
 
     private Typeface fontBold() {
         if (cachedBold == null) {
-            cachedBold = Typeface.create(fontRegular(), Typeface.BOLD);
+            // langsung file bold-nya: di HP yang memakai font sendiri, create() bisa jatuh ke font HP
+            Typeface f = ResourcesCompat.getFont(requireContext(), R.font.inter_18pt_bold);
+            cachedBold = f != null ? f : Typeface.create(fontRegular(), Typeface.BOLD);
         }
         return cachedBold;
     }

@@ -488,6 +488,8 @@
     <string name="pengingat_ditunda_menit">Reminder snoozed for %1$d minutes</string>
     <string name="pengingat_ditunda_title">Reminder Snoozed</string>
     <string name="pengingat_x_ditunda_msg">Reminder for %1$s has been snoozed.</string>
+    <string name="consumer_belum_merespon_title">Consumer Has Not Responded</string>
+    <string name="consumer_belum_merespon_msg">%1$s has not responded to the reminder for %2$s yet. It will repeat until confirmed.</string>
     <string name="consumer_menunda_pengingat_title">Consumer Snoozed a Reminder</string>
     <string name="consumer_menunda_pengingat_msg">%1$s snoozed the reminder for %2$s.</string>
     <string name="data_jadwal_obat_tidak_ditemukan">Medication schedule data not found</string>

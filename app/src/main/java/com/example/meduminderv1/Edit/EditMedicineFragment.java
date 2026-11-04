@@ -403,7 +403,7 @@ public class EditMedicineFragment extends Fragment {
         db.collection("medications").document(medId)
                 .update("stock.stok_obat", value, "updated_at", Timestamp.now())
                 .addOnSuccessListener(unused -> {
-                    StockChecker.check(appContext, medId);   // reset penanda "stok menipis" bila sudah cukup
+                    StockChecker.checkAfterRefill(appContext, medId);   // cukup: penanda di-reset, masih kurang: diingatkan lagi
                     LoadingOverlay.hide(EditMedicineFragment.this);
                     if (notificationId != null && !notificationId.isEmpty()) {
                         db.collection("notifications").document(notificationId)

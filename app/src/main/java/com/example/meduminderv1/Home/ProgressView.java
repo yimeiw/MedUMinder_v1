@@ -41,11 +41,18 @@ public class ProgressView extends View {
 
         textPaint.setColor(itam);
         textPaint.setTextAlign(Paint.Align.CENTER);
-        textPaint.setFakeBoldText(true);
+        // digambar sendiri, jadi tidak ikut font tema: tanpa ini memakai font bawaan HP
+        android.graphics.Typeface font = androidx.core.content.res.ResourcesCompat.getFont(getContext(), R.font.inter_18pt_bold);
+        if (font != null) textPaint.setTypeface(font);
+        else textPaint.setFakeBoldText(true);
     }
 
     public void setProgress(int percent) {
         this.progress = Math.max(0, Math.min(100, percent));
+        invalidate();
+    }
+    public void setTextColor(int color) {
+        textPaint.setColor(color);
         invalidate();
     }
     public void setProgressColor(int color) {

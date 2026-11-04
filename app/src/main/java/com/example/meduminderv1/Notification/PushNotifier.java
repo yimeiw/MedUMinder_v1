@@ -41,6 +41,7 @@ public final class PushNotifier {
 
     private static final Set<String> ALERT_KEYS = new HashSet<>(Arrays.asList(
             "consumer_melewatkan_jadwal_title",
+            "consumer_belum_merespon_title",
             "pengingat_dari_caregiver_title",
             "isi_ulang_obat_x_title",
             "stok_habis_title",

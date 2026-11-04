@@ -493,6 +493,8 @@
     <string name="pengingat_ditunda_menit">Pengingat ditunda %1$d menit</string>
     <string name="pengingat_ditunda_title">Pengingat Ditunda</string>
     <string name="pengingat_x_ditunda_msg">Pengingat %1$s ditunda.</string>
+    <string name="consumer_belum_merespon_title">Consumer Belum Merespon</string>
+    <string name="consumer_belum_merespon_msg">%1$s belum merespon pengingat %2$s. Pengingat akan diulang sampai dikonfirmasi.</string>
     <string name="consumer_menunda_pengingat_title">Consumer Menunda Pengingat</string>
     <string name="consumer_menunda_pengingat_msg">%1$s menunda pengingat %2$s.</string>
     <string name="data_jadwal_obat_tidak_ditemukan">Data jadwal obat tidak ditemukan</string>

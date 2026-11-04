@@ -32,6 +32,7 @@ import com.example.meduminderv1.Callback.RepoCallback;
 import com.example.meduminderv1.Caregiver.ConsumerPickerHelper;
 import com.example.meduminderv1.Caregiver.DrawerConsumerAdapter;
 import com.example.meduminderv1.Invitation.InvitationPopupHelper;
+import com.example.meduminderv1.Model.Appointment;
 import com.example.meduminderv1.Model.CareRelationship;
 import com.example.meduminderv1.Model.LogItem;
 import com.example.meduminderv1.Model.LogStatus;
@@ -98,6 +99,8 @@ public class CaregiverHomeFragment extends Fragment {
     private String nextScheduleMedName;
     private String nextScheduleId;
     private ListenerRegistration nextScheduleListener;
+    private ListenerRegistration appointmentsListener;
+    private com.google.firebase.firestore.QuerySnapshot lastAppointments;
     private ListenerRegistration invitationListener; // popup undangan realtime
     private Timestamp nextScheduleScheduledAt;
     String targetUid;
@@ -191,7 +194,7 @@ public class CaregiverHomeFragment extends Fragment {
             if (uid == null){
                 pickerRoot.setOnClickListener(v ->  NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
                 // belum punya consumer: tidak ada yang dimuat -> tampilkan keadaan kosong biasa
-                loadNextSchedule(null);
+                listenNextAppointment(null);
                 todayLoader.done();
                 showTodayEmpty();
                 return;
@@ -216,7 +219,7 @@ public class CaregiverHomeFragment extends Fragment {
             drawerConsumerAdapter.setActiveUid(uid);
         } if (consumerPicker != null){
             consumerPicker.syncSelectedConsumer(uid);
-        } loadNextSchedule(uid);
+        } listenNextAppointment(uid);
         loadTodaySchedule(uid);
         loadAdherenceAndStats(uid);
         checkUnreadNotif();   // ganti consumer -> angka notif ikut ganti
@@ -262,6 +265,37 @@ public class CaregiverHomeFragment extends Fragment {
             bundle.putString("relationship_role", "Consumer");
             NavHostFragment.findNavController(this).navigate(R.id.invitationFragment, bundle);
         });
+    }
+
+    /** Appointment dibaca dulu, lalu kartu dimuat; berubah -> kartu dihitung ulang. */
+    private void listenNextAppointment(String consumerUid) {
+        if (appointmentsListener != null) { appointmentsListener.remove(); appointmentsListener = null; }
+        lastAppointments = null;
+        if (consumerUid == null || consumerUid.isEmpty()) { loadNextSchedule(consumerUid); return; }
+        appointmentsListener = db.collection("appointments").whereEqualTo("users_id", consumerUid)
+                .addSnapshotListener((snap, error) -> {
+                    if (!isAdded()) return;
+                    if (error != null) Log.e("NEXT_SCHEDULE", "Gagal mengambil appointment", error);
+                    else lastAppointments = snap;
+                    loadNextSchedule(consumerUid);
+                });
+    }
+
+    /** Kartu untuk appointment: tanpa stok & tanpa tombol ingatkan (tombol itu khusus obat). */
+    private void showNextAppointment(Appointment appointment) {
+        haveSchedule.setVisibility(View.VISIBLE);
+        noSchedule.setVisibility(View.GONE);
+        nextScheduleId = null;
+        nextScheduleScheduledAt = null;
+        nextScheduleMedName = null;
+        Date time = appointment.getDisplayTime().toDate();
+        tvDay.setText(formatDayLabel(time));
+        tvTime.setText(com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(
+                new SimpleDateFormat("HH:mm", Locale.getDefault()).format(time)));
+        tvtitleCard.setText(appointment.getTitle());
+        tvStokNext.setVisibility(View.GONE);
+        btnRemindConsumer.setVisibility(View.GONE);
+        btnRemindConsumer.setOnClickListener(null);
     }
 
     private void loadNextSchedule(String consumerUid){
@@ -318,6 +352,11 @@ public class CaregiverHomeFragment extends Fragment {
                         if (targetLog == null || eff.compareTo(targetLog.getEffectiveTime()) < 0){
                             targetLog = log;
                         }
+                    } Appointment appointment = NextAppointment.pick(lastAppointments, nowMs);
+                    if (appointment != null && (targetLog == null
+                            || appointment.getDisplayTime().compareTo(targetLog.getEffectiveTime()) <= 0)) {
+                        showNextAppointment(appointment);
+                        return;
                     } if (targetLog == null){ //tidak ada schedule yang valid
                         if (!isAdded()) return;
                         haveSchedule.setVisibility(View.GONE);
@@ -339,6 +378,8 @@ public class CaregiverHomeFragment extends Fragment {
                         return;
                     } haveSchedule.setVisibility(View.VISIBLE);
                     noSchedule.setVisibility(View.GONE);
+                    tvStokNext.setVisibility(View.VISIBLE);
+                    btnRemindConsumer.setVisibility(View.VISIBLE);
                     nextScheduleId = targetLog.getMedication_schedules_id();
                     nextScheduleScheduledAt = scheduledAt;
                     Date scheduleDate = targetLog.getEffectiveTime().toDate();
@@ -655,6 +696,7 @@ public class CaregiverHomeFragment extends Fragment {
         if (nextLoader != null) nextLoader.release();
         if (todayLoader != null) todayLoader.release();
         if (nextScheduleListener != null) nextScheduleListener.remove();
+        if (appointmentsListener != null) { appointmentsListener.remove(); appointmentsListener = null; }
         if (todayScheduleLoader != null) todayScheduleLoader.stop();
     }
 }

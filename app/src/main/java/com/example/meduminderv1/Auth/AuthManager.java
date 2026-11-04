@@ -1256,7 +1256,9 @@ public class AuthManager {
         notif.setInvitation_id(invitation.getInvitation_id());
         notif.setType(NotificationType.Invitation);
         notif.setMessage(accepted ? context.getString(R.string.undangan_diterima) : context.getString(R.string.undangan_ditolak));
-        NotificationText.apply(notif, null, accepted ? "undangan_diterima" : "undangan_ditolak");
+        notif.setTitle(context.getString(accepted ? R.string.undangan_diterima_title : R.string.undangan_ditolak_title));
+        NotificationText.apply(notif, accepted ? "undangan_diterima_title" : "undangan_ditolak_title",
+                accepted ? "undangan_diterima" : "undangan_ditolak");
         notif.setTarget_role(otherRole(invitation.getInvite_role()).name());
         notif.setIs_read(false);
         notificationRepo.createNotification(notif, new RepoCallback<Void>() {

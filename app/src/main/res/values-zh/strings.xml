@@ -491,6 +491,8 @@
     <string name="pengingat_ditunda_menit">提醒已推迟 %1$d 分钟</string>
     <string name="pengingat_ditunda_title">提醒已推迟</string>
     <string name="pengingat_x_ditunda_msg">%1$s 的提醒已被推迟。</string>
+    <string name="consumer_belum_merespon_title">Consumer 尚未回应</string>
+    <string name="consumer_belum_merespon_msg">%1$s 尚未回应 %2$s 的提醒。提醒将重复，直到确认。</string>
     <string name="consumer_menunda_pengingat_title">Consumer 推迟了提醒</string>
     <string name="consumer_menunda_pengingat_msg">%1$s 推迟了 %2$s 的提醒。</string>
     <string name="data_jadwal_obat_tidak_ditemukan">未找到用药安排数据</string>

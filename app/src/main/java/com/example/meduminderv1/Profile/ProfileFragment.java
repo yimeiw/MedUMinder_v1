@@ -174,6 +174,9 @@ public class ProfileFragment extends Fragment {
         adherenceDesc = view.findViewById(R.id.adherenceDesc);
         adherencePercent = view.findViewById(R.id.adherencePercent);
         adherenceRing = view.findViewById(R.id.adherenceRing);
+        // kartu Profile berwarna gelap: warna teks bawaan ring tidak terlihat di sini
+        adherenceRing.setTextColor(com.google.android.material.color.MaterialColors.getColor(
+                adherenceRing, com.google.android.material.R.attr.colorPrimaryFixed));
 
         statistikRepo = new StatistikRepo(requireContext());
         loadAdherence();

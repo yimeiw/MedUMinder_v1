@@ -175,6 +175,34 @@ public final class SnoozeHelper {
         }).addOnFailureListener(e -> Log.e(TAG, "Gagal ambil data jadwal untuk notif snooze", e));
     }
 
+    /** Repeat Until Confirmed: consumer belum merespon alarm -> caregiver diberi tahu (pemanggil menjaga sekali per dosis). */
+    public static void notifyCaregiversNoResponse(String consumerUid, String scheduleId, @Nullable String itemName,
+                                                  boolean isAppointment) {
+        if (consumerUid == null) return;
+        final String name = itemName != null ? itemName : "";
+        final String type = isAppointment ? "Appointment" : "Medicine";
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("users").document(consumerUid).get().addOnSuccessListener(userDoc -> {
+            String consumerName = userDoc.exists() && userDoc.getString("name") != null
+                    ? userDoc.getString("name") : "Consumer";
+            db.collection("care_relationships").whereEqualTo("consumer_uid", consumerUid).get()
+                    .addOnSuccessListener(query -> {
+                        for (DocumentSnapshot rel : query.getDocuments()) {
+                            String caregiverUid = rel.getString("caregiver_uid");
+                            if (caregiverUid == null) continue;
+                            Map<String, Object> n = baseNotif(caregiverUid, consumerUid, type, scheduleId, isAppointment);
+                            NotificationText.apply(n, "consumer_belum_merespon_title",
+                                    "consumer_belum_merespon_msg", consumerName, name);
+                            n.put("consumer_uid", consumerUid);
+                            n.put("consumer_name", consumerName);
+                            n.put("target_role", UserRole.Caregiver.name());
+                            addNotif(db, n);
+                        }
+                    })
+                    .addOnFailureListener(e -> Log.e(TAG, "Gagal ambil caregiver", e));
+        }).addOnFailureListener(e -> Log.e(TAG, "Gagal ambil nama consumer", e));
+    }
+
     private static Map<String, Object> baseNotif(String receiverUid, String senderUid, String type,
                                                  String scheduleId, boolean isAppointment) {
         Map<String, Object> n = new HashMap<>();

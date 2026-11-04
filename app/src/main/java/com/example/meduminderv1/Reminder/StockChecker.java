@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * - "low": stok cukup untuk <= N hari (N dipilih user di Pengaturan Notifikasi, default 3)
  * - "out": stok 0
  * Tiap keadaan hanya dikirim sekali (disimpan di stock.refill_alert), lalu di-reset
- * saat stok diisi ulang di atas batas. Kalau stok sudah cukup sampai tanggal akhir jadwal,
+ * saat stok diisi ulang di atas batas. Isi ulang yang masih di bawah batas mengirim pengingat lagi. Kalau stok sudah cukup sampai tanggal akhir jadwal,
  * tidak ada pengingat.
  */
 public final class StockChecker {
@@ -57,7 +57,16 @@ public final class StockChecker {
         check(context, medicationId, null);
     }
 
+    /** Sehabis isi ulang: kalau stok masih di bawah batas, pengingat dikirim lagi walau sudah pernah terkirim. */
+    public static void checkAfterRefill(Context context, String medicationId) {
+        check(context, medicationId, null, true);
+    }
+
     public static void check(Context context, String medicationId, @Nullable Runnable done) {
+        check(context, medicationId, done, false);
+    }
+
+    private static void check(Context context, String medicationId, @Nullable Runnable done, boolean resend) {
         Runnable finish = done != null ? done : () -> { };
         if (medicationId == null || medicationId.isEmpty()) { finish.run(); return; }
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -82,7 +91,7 @@ public final class StockChecker {
                                     int refillDays = n != null && n > 0 ? n.intValue() : DEFAULT_REFILL_DAYS;
                                     String ownerName = userSnap.getString("name");
                                     evaluate(db, medRef, sched, refillDays, ownerUid,
-                                            ownerName != null ? ownerName : "", finish);
+                                            ownerName != null ? ownerName : "", resend, finish);
                                 })
                                 .addOnFailureListener(e -> finish.run());
                     })
@@ -115,7 +124,7 @@ public final class StockChecker {
     }
 
     private static void evaluate(FirebaseFirestore db, DocumentReference medRef, DocumentSnapshot sched,
-                                 int refillDays, String ownerUid, String ownerName, Runnable finish) {
+                                 int refillDays, String ownerUid, String ownerName, boolean resend, Runnable finish) {
         Long freqL = sched.getLong("frequency");
         int perDay = freqL != null && freqL > 0 ? freqL.intValue() : 1;
         long remainingDoses = remainingDoses(sched, perDay);
@@ -138,7 +147,7 @@ public final class StockChecker {
                 if (current != null) tx.update(medRef, ALERT_FIELD, FieldValue.delete());
                 return null;
             }
-            if (state.equals(current)) return null;
+            if (state.equals(current) && !resend) return null;
             tx.update(medRef, ALERT_FIELD, state);
             return new int[]{ OUT.equals(state) ? 1 : 0, stock };
         }).addOnSuccessListener(result -> {

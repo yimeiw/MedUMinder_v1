@@ -64,6 +64,9 @@ public final class NotificationText {
 
     public static String title(Context c, Notification n) {
         int id = resId(c, n.getTitle_key());
+        // notifikasi lama belum punya judul: tetap tampil "Undangan Diterima/Ditolak", bukan "Undangan"
+        if (id == 0 && "undangan_diterima".equals(n.getMessage_key())) id = resId(c, "undangan_diterima_title");
+        if (id == 0 && "undangan_ditolak".equals(n.getMessage_key())) id = resId(c, "undangan_ditolak_title");
         if (id == 0) return n.getTitle();
 
         List<Object> args = new ArrayList<>();

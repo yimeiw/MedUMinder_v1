@@ -585,7 +585,7 @@ public class NotificationSettingsFragment extends Fragment {
 
             // repeat reminder
             boolean repeatReminder = pref.getBoolean(
-                    KEY_REPEAT_REMINDER, false
+                    KEY_REPEAT_REMINDER, true
             );
 
             switchRepeatReminder.setChecked(

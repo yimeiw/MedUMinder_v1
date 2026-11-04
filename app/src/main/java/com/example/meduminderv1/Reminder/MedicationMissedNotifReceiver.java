@@ -53,15 +53,19 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
             if (consumerUid == null || !AlarmOwner.isCurrentUser(consumerUid)) { pendingResult.finish(); return; }
 
             SharedPreferences pref = context.getSharedPreferences("notification_settings", Context.MODE_PRIVATE);
-            if (pref.getBoolean("repeat_reminder", false)) {
+            if (pref.getBoolean("repeat_reminder", true)) {
                 AlarmRingingService.stopFor(context, scheduleId);
                 int snoozeMinutes = pref.getInt("snooze_minutes", 5);
                 long nextTriggerMillis = System.currentTimeMillis() + snoozeMinutes * 60L * 1000L;
+                boolean firstRepeat = !Boolean.TRUE.equals(doc.getBoolean("repeat_notified"));
                 doc.getReference().update(
                         "status", "akan datang",
                         "snoozed_until", new Timestamp(new java.util.Date(nextTriggerMillis)),
+                        "repeat_notified", true,
                         "updated_at", Timestamp.now()
                 ).addOnSuccessListener(unused -> {
+                    // caregiver cukup diberi tahu sekali per dosis, bukan di setiap pengulangan
+                    if (firstRepeat) SnoozeHelper.notifyCaregiversNoResponse(consumerUid, scheduleId, namaObat, false);
                     AlarmSchedulerHelper.scheduleRepeatAlarm(context, scheduleId, namaObat,
                             scheduledAtMillis, nextTriggerMillis);
                     pendingResult.finish();
