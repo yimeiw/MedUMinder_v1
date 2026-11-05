@@ -273,6 +273,7 @@ public class EditAppointmentFragment extends Fragment {
                     Notification notifToCaregiver = new Notification();
                     notifToCaregiver.setReceiver_uid(caregiverUid);
                     notifToCaregiver.setSender_uid(actorUid);
+                    notifToCaregiver.setConsumer_uid(targetUid);
                     notifToCaregiver.setType(NotificationType.Appointment);
                     notifToCaregiver.setTitle(caregiverNotifTitle);
                     notifToCaregiver.setMessage(isForSelf ? caregiverNotifMsgSelf : caregiverNotifMsgOther);
@@ -297,14 +298,6 @@ public class EditAppointmentFragment extends Fragment {
             @Override
             public void onFailure(Exception e) { }
         });
-    }
-
-    /** Hanya warna tombol OK/Batal di dialog tanggal (desain kalender tetap bawaan). */
-    private void styleDateDialogButtons(DatePickerDialog dialog) {
-        int color = com.google.android.material.color.MaterialColors.getColor(
-                requireContext(), com.google.android.material.R.attr.colorSecondaryFixedDim, android.graphics.Color.BLUE);
-        dialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(color);
-        dialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setTextColor(color);
     }
 
     private String formatTime(int hour, int minute) {

@@ -136,7 +136,7 @@ public final class SnoozeHelper {
         }).addOnFailureListener(e -> Log.e(TAG, "Gagal ambil data jadwal untuk notif snooze", e));
     }
 
-    /** Repeat Until Confirmed: consumer belum merespon alarm -> caregiver diberi tahu (pemanggil menjaga sekali per dosis). */
+    //Repeat Until Confirmed: consumer belum merespon alarm -> caregiver diberi tahu (pemanggil menjaga sekali per dosis)
     public static void notifyCaregiversNoResponse(String consumerUid, String scheduleId, @Nullable String itemName) {
         if (consumerUid == null) return;
         final String name = itemName != null ? itemName : "";

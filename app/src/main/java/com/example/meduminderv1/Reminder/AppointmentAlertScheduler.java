@@ -59,12 +59,6 @@ public class AppointmentAlertScheduler {
         if ("2 jam".equalsIgnoreCase(saved)) return 120;
         return 30;
     }
-
-    /**
-     * pindahkan cek "appointment terlewat" ke (waktu snooze + 5 menit).
-     * Sebelumnya cek ini tetap di (jam asli + 5 menit) = PAS jam snooze kalau ditunda 5 menit,
-     * dan receiver-nya mematikan bunyi alarm -> alarm snooze "tidak keluar".
-     */
     public static void rescheduleMissed(Context context, String appointmentId, String title, long newBaseMillis) {
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (am == null) return;

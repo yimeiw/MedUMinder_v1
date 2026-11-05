@@ -2,12 +2,17 @@ package com.example.meduminderv1.Invitation;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
+
 import com.example.meduminderv1.Util.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.LifecycleEventObserver;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.meduminderv1.Auth.AuthManager;
@@ -19,6 +24,7 @@ import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.R;
 import com.example.meduminderv1.Util.LoadingOverlay;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.firebase.firestore.ListenerRegistration;
 
 public class InvitationPopupHelper {
 
@@ -40,7 +46,7 @@ public class InvitationPopupHelper {
             public void onFailure(String message) {  }
         });
     }
-    public static com.google.firebase.firestore.ListenerRegistration listen(Fragment fragment, AuthManager authManager) {
+    public static ListenerRegistration listen(Fragment fragment, AuthManager authManager) {
         User user = authManager.getCurrentUser();
         if (user == null || user.getAuth_uid() == null) return null;
         return com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("invitations")
@@ -62,7 +68,7 @@ public class InvitationPopupHelper {
         if (!fragment.isAdded() || fragment.getView() == null || fragment.getActivity() == null) return;
         if (currentDialog != null && currentDialog.isShowing()) return;
 
-        final androidx.fragment.app.FragmentActivity activity = fragment.requireActivity();
+        final FragmentActivity activity = fragment.requireActivity();
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(activity);
         builder.setTitle(activity.getString(R.string.undangan_baru_title))
                 .setMessage(activity.getString(R.string.sender_mengundang_anda_msg,
@@ -77,7 +83,7 @@ public class InvitationPopupHelper {
         dialog.setOnDismissListener(d -> currentDialog = null);
 
         fragment.getViewLifecycleOwner().getLifecycle().addObserver(
-                (androidx.lifecycle.LifecycleEventObserver) (owner, event) -> {
+                (LifecycleEventObserver) (owner, event) -> {
                     if (event == androidx.lifecycle.Lifecycle.Event.ON_DESTROY && dialog.isShowing()) {
                         dialog.dismiss();
                     }
@@ -175,13 +181,13 @@ public class InvitationPopupHelper {
     private static void openNotificationPage(androidx.fragment.app.FragmentActivity activity) {
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) return;
         try {
-            androidx.navigation.NavController nav =
-                    androidx.navigation.Navigation.findNavController(activity, R.id.nav_host_fragment);
+            NavController nav =
+                    Navigation.findNavController(activity, R.id.nav_host_fragment);
             if (nav.getCurrentDestination() != null
                     && nav.getCurrentDestination().getId() == R.id.notificationFragment) return;
             nav.navigate(R.id.notificationFragment);
         } catch (Exception e) {
-            android.util.Log.e("InvitationPopup", "Gagal buka halaman notifikasi", e);
+            Log.e("InvitationPopup", "Gagal buka halaman notifikasi", e);
         }
     }
 }

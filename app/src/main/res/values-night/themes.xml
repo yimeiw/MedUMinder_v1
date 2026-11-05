@@ -94,4 +94,8 @@
         <item name="android:fontFamily">@font/app_font</item>
         <item name="fontFamily">@font/app_font</item>
     </style>
+
+    <style name="AppPopupMenu" parent="Widget.MaterialComponents.PopupMenu">
+        <item name="android:popupBackground">@drawable/border_wp</item>
+    </style>
 </resources>

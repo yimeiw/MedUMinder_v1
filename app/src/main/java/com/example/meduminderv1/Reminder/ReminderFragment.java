@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -191,7 +192,7 @@ public class ReminderFragment extends Fragment {
 
         btnOption.setOnClickListener(v -> {
             Log.d("REMINDER_FRAGMENT", "titik-3 diklik, buka popup menu");
-            PopupMenu popupMenu = new PopupMenu(requireContext(), btnOption);
+            PopupMenu popupMenu = new PopupMenu(requireContext(), btnOption, Gravity.END, 0, R.style.AppPopupMenu);
             popupMenu.getMenuInflater().inflate(R.menu.medicine_edit_menu, popupMenu.getMenu());
 
             boolean appointmentPassed = isAppointment
@@ -619,7 +620,7 @@ public class ReminderFragment extends Fragment {
         });
     }
 
-    /** Jadwal ini sudah dihapus (di halaman lain / HP lain): tutup halaman ini. */
+    // Jadwal ini sudah dihapus (di halaman lain / HP lain): tutup halaman ini
     private void closeBecauseDeleted() {
         removeWatchers();
         if (!isResumed()) return;

@@ -120,7 +120,7 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         TextView namaObatLog, sisaStokLog, currStatus, scheduledAt, tvWaktu, tvStok;
-        View shadowLog, capsuleMedicineLog;
+        View capsuleMedicineLog;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
 
@@ -182,9 +182,6 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
         TypedValue typedValue = new TypedValue();
         context.getTheme().resolveAttribute(colorAttr, typedValue, true);
         return typedValue.data;
-    }
-    private int dpToPx(float dp) {
-        return (int) (dp * context.getResources().getDisplayMetrics().density);
     }
     private void loadNamaObat(String medication_schedules_id, ViewHolder holder) {
         db.collection("medication_schedules").document(medication_schedules_id)

@@ -160,8 +160,6 @@ public class NotificationDetailFragment extends Fragment {
         configureAction();
     }
 
-    /** Baris detail muncul sendiri begitu teksnya diisi, dan kartu detail hanya tampil
-     *  kalau ada minimal satu baris yang terlihat. */
     private void setupDetailRows() {
         TextView[] rows = {tvScheduleName, tvScheduleDayTime, tvStockInfo};
         for (TextView row : rows) {
@@ -232,8 +230,6 @@ public class NotificationDetailFragment extends Fragment {
         if ("zh".equals(language)) return Locale.SIMPLIFIED_CHINESE;
         return Locale.ENGLISH;
     }
-
-    /** Waktu lengkap, mis. "Senin, 29 Sep 2026 • 08:00". */
     private String formatFullTime(com.google.firebase.Timestamp ts) {
         if (ts == null) return "";
         Locale locale = getAppLocale();
@@ -696,7 +692,7 @@ public class NotificationDetailFragment extends Fragment {
         }).addOnFailureListener(e -> { if (isAdded()) hideDetailCard(); });
     }
 
-    /** Cek status log dulu. Kalau sudah "dikonsumsi", tombol aksi disembunyikan. */
+    // Cek status log dulu. Kalau sudah "dikonsumsi", tombol aksi disembunyikan.
     private void checkLogThenShowReminderButtons() {
         layoutButton.setVisibility(View.GONE);
         if (isCaregiverViewing()) return;
@@ -738,7 +734,9 @@ public class NotificationDetailFragment extends Fragment {
     private static final java.util.Set<String> NO_REMIND_TITLE_KEYS = new java.util.HashSet<>(java.util.Arrays.asList(
             "pengingat_terkirim_title",
             "consumer_sudah_minum_obat",
-            "consumer_sudah_menghadiri_appointment"));
+            "consumer_sudah_menghadiri_appointment",
+            "jadwal_obat_diperbarui_title",
+            "jadwal_appointment_diperbarui_title"));
 
     private void checkCanRemind(java.util.function.Consumer<Boolean> result) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -776,11 +774,6 @@ public class NotificationDetailFragment extends Fragment {
                 .addOnFailureListener(e -> result.accept(false));
     }
 
-    /**
-     * Pengingat dari caregiver ikut membawa data jadwal dari notifikasi yang sedang dibuka
-     * (jenis, reference_id = log/jadwal/appointment, waktu), supaya halaman detail-nya
-     * bisa menampilkan obat/appointment yang dimaksud. Dulu kosong -> detail tidak muncul.
-     */
     private void copyScheduleContext(Notification target) {
         NotificationType type = notification.getType() == NotificationType.Appointment
                 ? NotificationType.Appointment : NotificationType.Medicine;
@@ -1165,7 +1158,6 @@ public class NotificationDetailFragment extends Fragment {
         return scheduleId + "_" + date + "_" + cleanTime;
     }
 
-    /** Tampilkan data jadwal yang tersimpan saat notifikasi dibuat. false = tidak ada snapshot. */
     private boolean renderScheduleSnapshot(boolean isAppointment) {
         String detail = NotificationText.snapshotDetail(requireContext(), notification, isAppointment);
         if (detail == null) return false;

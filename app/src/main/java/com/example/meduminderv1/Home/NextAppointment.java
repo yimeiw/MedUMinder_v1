@@ -7,7 +7,6 @@ import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
-/** Appointment terdekat yang belum dijawab, untuk kartu Jadwal Berikutnya (consumer & caregiver). */
 final class NextAppointment {
     private NextAppointment() {}
 

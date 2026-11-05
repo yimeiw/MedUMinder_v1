@@ -13,11 +13,6 @@ import com.example.meduminderv1.R;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
-/**
- * Email panjang dipotong "..." di layar. Supaya tetap bisa dibaca:
- * - tekan  -> dialog kecil berisi email lengkap (+ tombol Salin)
- * - tekan lama -> langsung disalin
- */
 public final class FullEmail {
     private FullEmail() {}
 

@@ -140,7 +140,4 @@ public class AppointmentLogAdapter extends RecyclerView.Adapter<AppointmentLogAd
         return typedValue.data;
     }
 
-    private int dpToPx(float dp) {
-        return (int) (dp * context.getResources().getDisplayMetrics().density);
-    }
 }

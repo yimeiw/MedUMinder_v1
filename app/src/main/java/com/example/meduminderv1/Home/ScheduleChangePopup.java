@@ -26,11 +26,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Popup di Home saat jadwal diubah oleh orang lain (caregiver -> consumer, consumer -> caregiver).
- * Setelah satu popup, perubahan 30 menit berikutnya tidak memunculkan popup lagi
- * (tetap ada di daftar notifikasi), jadi beberapa perubahan sekaligus dihitung satu popup.
- */
 final class ScheduleChangePopup {
     private static final String TAG = "ScheduleChangePopup";
     private static final String PREFS = "schedule_change_popup";

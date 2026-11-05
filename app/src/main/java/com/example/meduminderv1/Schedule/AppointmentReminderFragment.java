@@ -330,11 +330,4 @@ public class AppointmentReminderFragment extends Fragment {
             public void onFailure(Exception e) { }
         });
     }
-
-    private void styleDateDialogButtons(DatePickerDialog dialog) {
-        int color = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorSecondaryFixedDim,
-                android.graphics.Color.BLUE);
-        dialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(color);
-        dialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setTextColor(color);
-    }
 }

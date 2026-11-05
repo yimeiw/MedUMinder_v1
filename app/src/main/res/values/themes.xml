@@ -129,4 +129,8 @@
         <item name="colorPrimary">?attr/colorSecondaryFixedDim</item>
         <item name="colorOnPrimary">@color/white</item>
     </style>
+
+    <style name="AppPopupMenu" parent="Widget.MaterialComponents.PopupMenu">
+        <item name="android:popupBackground">@drawable/border_wp</item>
+    </style>
 </resources>

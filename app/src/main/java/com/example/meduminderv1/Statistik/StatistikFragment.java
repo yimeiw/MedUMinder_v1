@@ -484,7 +484,6 @@ public class StatistikFragment extends Fragment {
         }
     }
 
-    /** Judul sumbu: MPAndroidChart tidak punya, jadi ditumpuk di atas grafik. */
     private void addAxisTitles(int color) {
         TextView xTitle = axisTitle(xAxisTitle(), color);
         dailyChartContainer.addView(xTitle, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
@@ -665,7 +664,7 @@ public class StatistikFragment extends Fragment {
         return false;
     }
 
-    /** Bulanan / tahunan: pilih periode dari bulan/tahun akun terdaftar sampai sekarang (terbaru di atas). */
+    // Bulanan / tahunan: pilih periode dari bulan/tahun akun terdaftar sampai sekarang (terbaru di atas)
     private void showReportPeriodPicker(String uid, String consumerName, long registeredAt) {
         if (!isAdded()) return;
         final String period = selectedPeriod;
@@ -729,7 +728,7 @@ public class StatistikFragment extends Fragment {
         });
     }
 
-    /** PDF digambar dari field current*: dipinjam sebentar untuk periode pilihan, tampilan layar tidak berubah. */
+    //PDF digambar dari field current: dipinjam sebentar untuk periode pilihan, tampilan layar tidak berubah
     private void generateWithMedicines(String uid, String consumerName, String period, long anchorMillis,
                                        List<StatistikRepo.DayStat> stats) {
         statistikRepo.getTakenMedicines(uid, period, anchorMillis, taken -> {
@@ -859,13 +858,6 @@ public class StatistikFragment extends Fragment {
         paint.setTextAlign(android.graphics.Paint.Align.CENTER);
         paint.setTypeface(fontBold());
         paint.setTextSize(18);
-//
-//        canvas1.drawText(
-//                currentPersentase + "%",
-//                pageWidth / 2f,
-//                y,
-//                paint
-//        );
 
         y += 30;
 
@@ -1157,7 +1149,7 @@ public class StatistikFragment extends Fragment {
         c.drawText(percent + "%", left + size / 2f, textY, p);
     }
 
-    /** Grafik batang kepatuhan 0-100%: sumbu 0/25/50/75/100, label X pendek, nilai di atas batang. */
+    // BarChart kepatuhan 0-100%: sumbu 0/25/50/75/100, label X pendek, nilai di atas bar
     private void drawPdfBarChart(Canvas c, float x, float y, float w, float h) {
         android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
         List<StatistikRepo.DayStat> stats = currentStats != null ? currentStats : new ArrayList<>();

@@ -27,12 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Setiap alarm di HP ini dicap dengan uid pemiliknya.
- * - Alarm hanya boleh bunyi kalau pemiliknya yang sedang login (1 HP bisa dipakai 2 akun).
- * - Daftar alarm per pemilik disimpan di HP, supaya saat logout / ganti akun / hapus akun
- *   semua alarm milik akun itu bisa dibatalkan tanpa perlu internet.
- */
+//alarm bunyi selama usernya lagi login dan semua alarm dari akun itu bisa dibatalkan tanpa perlu internet
 public final class AlarmOwner {
 
     public static final String EXTRA_OWNER_UID = "owner_uid";
@@ -51,17 +46,12 @@ public final class AlarmOwner {
         return user != null ? user.getUid() : null;
     }
 
-    /** Cap uid pemilik (user yang sedang login) ke intent alarm. */
+    //Cap uid pemilik (user yang sedang login) ke intent alarm.
     public static void stamp(Intent intent) {
         String uid = currentUid();
         if (uid != null && !intent.hasExtra(EXTRA_OWNER_UID)) intent.putExtra(EXTRA_OWNER_UID, uid);
     }
 
-    /**
-     * true kalau alarm ini boleh jalan: ada user login dan alarm bukan milik akun lain.
-     * Alarm lama (sebelum ada cap) dianggap milik user yang login; pemeriksaan tambahan
-     * lewat data Firestore dilakukan di receiver masing-masing.
-     */
     public static boolean allows(Intent intent) {
         String uid = currentUid();
         if (uid == null) return false;
@@ -73,7 +63,7 @@ public final class AlarmOwner {
         return intent.getStringExtra(EXTRA_OWNER_UID) != null;
     }
 
-    /** true kalau data jadwal (users_id) milik user yang sedang login. */
+    // true kalau data jadwal (users_id) milik user yang sedang login
     public static boolean isCurrentUser(@Nullable String usersId) {
         String uid = currentUid();
         return uid != null && uid.equals(usersId);
@@ -112,7 +102,7 @@ public final class AlarmOwner {
         }
     }
 
-    /** Batalkan alarm yang tercatat di HP untuk uid ini (tanpa internet). */
+    // Batalkan alarm yang tercatat di HP untuk uid ini (tanpa internet)
     private static void cancelRemembered(Context context, String uid) {
         SharedPreferences prefs = prefs(context);
         Set<String> set = prefs.getStringSet(uid, null);
@@ -143,12 +133,6 @@ public final class AlarmOwner {
         AppointmentAlertScheduler.cancelAlerts(context, appointmentId);
     }
 
-    /**
-     * Dipanggil saat logout / hapus akun, SEBELUM sign out (data Firestore masih bisa dibaca).
-     * Batalkan semua alarm milik uid ini: dari daftar di HP + dari data Firestore (untuk alarm
-     * lama yang belum tercatat), matikan alarm yang sedang bunyi, dan hapus notifikasi di layar.
-     * onDone selalu dipanggil (paling lama beberapa detik, walau offline).
-     */
     public static void cancelAllForUser(Context context, @Nullable String uid, Runnable onDone) {
         Context app = context.getApplicationContext();
         app.stopService(new Intent(app, AlarmRingingService.class));

@@ -4,10 +4,6 @@ import android.graphics.Rect;
 import android.view.TouchDelegate;
 import android.view.View;
 
-/**
- * Perbesar area tekan sebuah tombol kecil (mis. panah kembali 30x26dp) tanpa mengubah tampilannya.
- * Minimal 48x48dp supaya mudah ditekan, terutama untuk pengguna lanjut usia.
- */
 public final class TouchTarget {
     private TouchTarget() {}
 

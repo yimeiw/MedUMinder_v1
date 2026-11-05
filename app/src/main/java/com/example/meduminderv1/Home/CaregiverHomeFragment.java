@@ -264,7 +264,6 @@ public class CaregiverHomeFragment extends Fragment {
         });
     }
 
-    /** Appointment dibaca dulu, lalu kartu dimuat; berubah -> kartu dihitung ulang. */
     private void listenNextAppointment(String consumerUid) {
         if (appointmentsListener != null) { appointmentsListener.remove(); appointmentsListener = null; }
         lastAppointments = null;
@@ -278,7 +277,6 @@ public class CaregiverHomeFragment extends Fragment {
                 });
     }
 
-    /** Kartu untuk appointment: tanpa stok & tanpa tombol ingatkan (tombol itu khusus obat). */
     private void showNextAppointment(Appointment appointment) {
         haveSchedule.setVisibility(View.VISIBLE);
         noSchedule.setVisibility(View.GONE);
@@ -476,7 +474,6 @@ public class CaregiverHomeFragment extends Fragment {
         });
     }
 
-    /** Selalu memanggil callback. name == null berarti jadwal/obat sudah tidak ada. */
     private void resolveMedName(String schedulesId, MedResolveCallback callback) {
         appContext();
         if (schedulesId == null || schedulesId.isEmpty()) { callback.onResolved(null, 0, null); return; }
@@ -566,7 +563,6 @@ public class CaregiverHomeFragment extends Fragment {
         btnLihatSemua.setVisibility(View.GONE);
     }
 
-    /** Gagal / terlalu lama memuat: pesan singkat, bukan spinner selamanya. */
     private void showTodayError() {
         if (!isAdded()) return;
         rvTodaySchedule.setVisibility(View.GONE);

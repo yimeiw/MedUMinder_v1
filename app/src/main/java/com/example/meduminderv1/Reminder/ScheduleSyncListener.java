@@ -15,15 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Selama app terbuka, pantau jadwal obat & appointment milik user ini.
- * Kalau caregiver menambah / mengubah / menghapus jadwal dari HP-nya, alarm di HP consumer
- * langsung ikut diperbarui (jam lama dibatalkan, jam baru dipasang), jadi tetap bunyi
- * tepat di jam yang diinput tanpa harus menunggu app dibuka ulang atau tengah malam.
- *
- * Perubahan yang dibuat dari HP ini sendiri (hasPendingWrites) dilewati, karena halaman
- * tambah/ubah sudah memasang alarmnya.
- */
 public final class ScheduleSyncListener {
 
     private ScheduleSyncListener() {}

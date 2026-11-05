@@ -468,7 +468,6 @@ public class MedicineReminderFragment extends Fragment {
     }
 
     private interface ResolvedMedicine {
-        /** r[0] = catalog_id (obat resmi), r[1] = id obat pribadi, r[2] = nama yang ditampilkan */
         void onResolved(String[] r);
     }
 
@@ -476,10 +475,6 @@ public class MedicineReminderFragment extends Fragment {
         void onFailed(String message);
     }
 
-    /**
-     * Tentukan obat yang dipakai: nama sama dengan katalog resmi -> pakai yang resmi;
-     * sama dengan obat pribadi -> pakai yang itu; selain itu -> buat obat pribadi baru (bukan ke katalog bersama).
-     */
     private void resolveMedicine(String typedName, String ownerUid, ResolvedMedicine onResolved, ResolveFailed onFailed) {
         if (!officialByKey.isEmpty()) {
             onResolved.onResolved(pickMedicine(typedName, ownerUid));
@@ -517,7 +512,7 @@ public class MedicineReminderFragment extends Fragment {
         return requireContext().getApplicationContext().getString(resId);
     }
 
-    /** Obat pribadi milik orang yang dipilih (diri sendiri / consumer yang dirawat). */
+    // Obat pribadi milik orang yang dipilih (diri sendiri / consumer yang dirawat)
     private void loadPrivateMedicines(String ownerUid) {
         privateOwnerUid = ownerUid;
         privateByKey.clear();
@@ -538,7 +533,7 @@ public class MedicineReminderFragment extends Fragment {
         });
     }
 
-    /** Satu daftar: obat resmi + obat pribadi yang namanya tidak sama dengan obat resmi (tidak dobel). */
+    //Satu daftar: obat resmi + obat pribadi yang namanya tidak sama dengan obat resmi (tidak dobel)
     private void rebuildMedList() {
         medList.clear();
         for (String[] official : officialByKey.values()) medList.add(official[1]);
@@ -775,14 +770,6 @@ public class MedicineReminderFragment extends Fragment {
             @Override
             public void onFailure(Exception e) {}
         });
-    }
-
-    /** Hanya warna tombol OK/Batal di dialog tanggal (desain kalender tetap bawaan). */
-    private void styleDateDialogButtons(DatePickerDialog dialog) {
-        int color = com.google.android.material.color.MaterialColors.getColor(
-                requireContext(), com.google.android.material.R.attr.colorSecondaryFixedDim, android.graphics.Color.BLUE);
-        dialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(color);
-        dialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setTextColor(color);
     }
 
     private void applyTargetZone(ZoneId zone) {

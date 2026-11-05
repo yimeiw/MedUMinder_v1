@@ -7,7 +7,6 @@ import com.example.meduminderv1.Util.Toast;
 
 import com.example.meduminderv1.R;
 
-/** Buka aplikasi email bawaan HP (inbox), dipakai setelah daftar & lupa password. */
 public final class EmailApp {
     private EmailApp() {}
 

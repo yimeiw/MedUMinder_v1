@@ -294,7 +294,6 @@ public class HomeFragment extends Fragment {
                 });
     }
 
-    /** Pilih jadwal terdekat yang jadwal/obatnya masih ada (yang sudah dihapus dilewati). */
     private void renderNextSchedule() {
         if (lastNextLogs == null || !isAdded()) return;
         final int gen = ++nextRenderGen;
@@ -364,7 +363,6 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    /** Kartu untuk appointment: tanpa stok, tombol membuka halaman appointment (Hadir / Tunda ada di sana). */
     private void showNextAppointment(Appointment appointment) {
         nextLoader.done();
         nextLogId = null;
@@ -392,8 +390,6 @@ public class HomeFragment extends Fragment {
             NavHostFragment.findNavController(this).navigate(R.id.reminderFragment, bundle);
         });
     }
-
-    /** Jadwal diubah / dihapus (termasuk dari HP caregiver) -> tampilan Home ikut diperbarui. */
     private void listenScheduleChanges() {
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         if (firebaseUser == null) return;
@@ -590,8 +586,6 @@ public class HomeFragment extends Fragment {
         rvTodaySchedule.setVisibility(View.GONE);
         btnLihatSemua.setVisibility(View.GONE);
     }
-
-    /** Gagal / terlalu lama memuat: pesan singkat, bukan spinner selamanya. */
     private void showTodayError() {
         if (!isAdded()) return;
         rvTodaySchedule.setVisibility(View.GONE);

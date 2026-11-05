@@ -43,10 +43,6 @@ public final class PressFeedback {
         }
     }
 
-    /**
-     * Tombol kecil (mis. panah kembali 30dp) diberi area sentuh tak terlihat minimal 48dp.
-     * Hanya memakai ruang kosong di sekitarnya: sentuhan pada view lain tetap ke view itu.
-     */
     private static void expandTouchTarget(View v) {
         if (v.getTag(R.id.touch_target_expanded) != null) return;
         v.setTag(R.id.touch_target_expanded, Boolean.TRUE);
@@ -78,7 +74,6 @@ public final class PressFeedback {
         multi.put(v, new TouchDelegate(area, v));
     }
 
-    /** Satu parent bisa punya beberapa tombol kecil: TouchDelegate bawaan hanya mendukung satu. */
     private static final class MultiTouchDelegate extends TouchDelegate {
         private final List<View> views = new ArrayList<>();
         private final List<TouchDelegate> delegates = new ArrayList<>();

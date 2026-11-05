@@ -12,12 +12,10 @@ import com.example.meduminderv1.SignUp.SignUpActivity;
 import com.example.meduminderv1.Util.ActivityTracker;
 import com.google.firebase.auth.FirebaseAuth;
 
-/** Langkah setelah hapus akun selesai / gagal, dipakai halaman Edit Profil & Hapus Akun. */
 final class DeleteAccountResult {
 
     private DeleteAccountResult() {}
 
-    /** Akun terhapus: buka halaman Daftar; pesan "akun berhasil dihapus" tampil SEKALI di halaman itu. */
     static void onDeleted(Context appContext) {
         Intent intent = new Intent(appContext, SignUpActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

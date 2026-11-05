@@ -78,13 +78,6 @@ public class LogGenerator {
                         .addOnFailureListener(e -> Log.e(TAG, "Gagal load jadwal", e)));
     }
 
-    public void ensureLogsGenerated(MedicationSchedules schedule, String scheduleId) {
-        if (schedule.getTimes_of_day() == null || schedule.getTimes_of_day().isEmpty()) return;
-        ensureLogsGenerated(schedule.getUsers_id(), scheduleId,
-                new ArrayList<>(schedule.getTimes_of_day()),
-                schedule.getStart_date(), schedule.getEnd_date());
-    }
-
     public void ensureLogsGenerated(String userId, String scheduleId, ArrayList<String> timesOfDay,
                                     Timestamp startDate, Timestamp endDate) {
         if (timesOfDay == null || timesOfDay.isEmpty()) return;

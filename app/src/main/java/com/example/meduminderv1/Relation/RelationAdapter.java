@@ -133,10 +133,6 @@ public class RelationAdapter extends RecyclerView.Adapter<RelationAdapter.ViewHo
         });
     }
 
-    /**
-     * Kabari KEDUA pihak bahwa hubungan dihapus.
-     * isViewingCaregiver = true -> yang menghapus adalah consumer (sedang melihat daftar caregiver-nya).
-     */
     private void notifyRelationRemoved(String partnerUid, String partnerName) {
         User me = SessionManager.getInstance().getUser();
         if (me == null || partnerUid == null) return;

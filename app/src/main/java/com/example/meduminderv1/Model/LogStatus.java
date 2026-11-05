@@ -53,11 +53,6 @@ public enum LogStatus {
         }
     }
 
-    /**
-     * Warna status yang sudah jadi (bukan id resource). Dikonsumsi/terlewat mengikuti tema
-     * (light/dark), jadi harus di-resolve lewat attr; sebelumnya id attr ini dikirim ke
-     * ContextCompat.getColor() dan bikin crash (Resources$NotFoundException).
-     */
     public int resolveColor(Context context) {
         switch (this) {
             case DIKONSUMSI:

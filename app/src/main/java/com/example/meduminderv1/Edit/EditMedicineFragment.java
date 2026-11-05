@@ -68,7 +68,6 @@ public class EditMedicineFragment extends Fragment {
     AutoCompleteTextView freqMinumObat;
     EditText stokObat, namaObat;
     TextView endDateReminder;
-    private final SimpleDateFormat dateFmt = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
     LinearLayout timeReminder;
     FirebaseFirestore db;
     MedicationRepo medicationRepo;
@@ -76,14 +75,15 @@ public class EditMedicineFragment extends Fragment {
     MaterialButton btnUpdateReminder;
     SessionManager sessionManager;
     User user;
+    NotificationRepo notificationRepo;
+    CareRelationshipRepo careRelationshipRepo;
     private View rootView;
     private final ArrayList<TextView> timeViews = new ArrayList<>();
     private String scheduleId, medicationIdArg, notificationId, medicationId;
     private ZoneId targetZone = ZoneId.systemDefault();
     private boolean endDateSelected = false;
+    private final SimpleDateFormat dateFmt = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
     private List<String> originalTimesOfDay = new ArrayList<>();
-    NotificationRepo notificationRepo;
-    CareRelationshipRepo careRelationshipRepo;
     private String targetUid;
     private long originalEndMillis = 0;
     private String originalStock = "";
@@ -472,6 +472,7 @@ public class EditMedicineFragment extends Fragment {
                     Notification n = new Notification();
                     n.setReceiver_uid(caregiverUid);
                     n.setSender_uid(actorUid);
+                    n.setConsumer_uid(targetUid);
                     n.setType(NotificationType.Medicine);
                     n.setTarget_role(UserRole.Caregiver.name());
                     n.setTitle(title);
@@ -631,7 +632,7 @@ public class EditMedicineFragment extends Fragment {
         applyRefillLock();
     }
 
-    /** Mode isi ulang: semua kolom dikunci & terlihat abu-abu (DisabledField), kecuali kolom stok. */
+    //mode refill stok, hanya stok yang bisa diedit
     private void applyRefillLock() {
         if (!refillMode || rootView == null) return;
         rootView.findViewById(R.id.tvRefillHint).setVisibility(View.VISIBLE);

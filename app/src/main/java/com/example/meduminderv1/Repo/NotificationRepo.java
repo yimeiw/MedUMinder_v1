@@ -74,30 +74,9 @@ public class NotificationRepo {
                     callback.onFailure(e);
                 });
     }
-
-    public void createStockNotification(String receiverUid, String medicationId, String medicineName, RepoCallback<Void> callback) {
-        createSingleStockNotification(receiverUid, medicationId, medicineName, callback);
-    }
-
-    private void createSingleStockNotification(String receiverUid, String medicationId, String medicineName, RepoCallback<Void> callback) {
-        Notification notification = new Notification();
-        notification.setReceiver_uid(receiverUid);
-        notification.setSender_uid(null);
-        notification.setReference_id(medicationId);
-        notification.setInvitation_id(null);
-        NotificationText.apply(notification, "isi_ulang_obat_x_title", "stok_hampir_habis",
-                medicineName != null ? medicineName : "");
-        notification.setType(NotificationType.Stock);
-        notification.setTarget_role(UserRole.Consumer.name());
-        notification.setIs_read(false);
-        notification.setCreated_at(Timestamp.now());
-
-        createNotification(notification, callback);
-    }
-
     private static final String INVITE_PREFIX = "invite_";
 
-    /** Notif "undangan baru" yang dibuat dari dokumen invitations (tanpa dokumen notifikasi asli). */
+    //Notif "undangan baru" yang dibuat dari dokumen invitations (tanpa dokumen notifikasi asli).
     @Nullable
     private Notification inviteNotification(DocumentSnapshot doc) {
         Invitation inv = doc.toObject(Invitation.class);
@@ -159,30 +138,6 @@ public class NotificationRepo {
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
     }
-    public void countUnread(String userUid, UserRole role, RepoCallback<Integer> callback) {
-        countUnread(userUid, role, null, callback);
-    }
-
-    public void countUnread(String userUid, UserRole role, @Nullable String consumerFilter, RepoCallback<Integer> callback) {
-        db.collection("notifications")
-                .whereEqualTo("receiver_uid", userUid)
-                .get()
-                .addOnSuccessListener(snapshot -> {
-                    int count = 0;
-                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                        Notification notification = doc.toObject(Notification.class);
-                        if (notification == null || notification.isIs_read()) {
-                            continue;
-                        } UserRole effectiveRole = notification.getTargetRoleEnum();
-                        if (effectiveRole != null && effectiveRole != role) continue;
-                        if (role == UserRole.Caregiver && consumerFilter != null
-                                && !belongsToConsumer(notification, consumerFilter)) continue;
-                        count++;
-                    }
-                    callback.onSuccess(count);
-                })
-                .addOnFailureListener(callback::onFailure);
-    }
     public void deleteNotif(String notificationId, RepoCallback<Void> callback) {
         db.collection("notifications").document(notificationId).delete()
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
@@ -210,7 +165,7 @@ public class NotificationRepo {
         @Override public void onFailure(Exception e) { }
     };
 
-    /** Konfirmasi untuk consumer sendiri: "Anda sudah minum X". */
+    //Konfirmasi untuk consumer sendiri: "Anda sudah minum X".
     public void notifyConsumerMedicineTaken(String consumerUid, String logId, @Nullable String namaObat) {
         if (consumerUid == null) return;
         Notification notif = new Notification();
@@ -225,7 +180,7 @@ public class NotificationRepo {
         createNotification(notif, IGNORE);
     }
 
-    /** Konfirmasi untuk consumer sendiri: "Anda sudah menghadiri X". */
+    //Konfirmasi untuk consumer sendiri: "Anda sudah menghadiri X"
     public void notifyConsumerAppointmentAttended(String consumerUid, String appointmentId, @Nullable String title) {
         if (consumerUid == null) return;
         Notification notif = new Notification();
@@ -303,14 +258,6 @@ public class NotificationRepo {
                     }).addOnFailureListener(e -> { if (callback != null) callback.onFailure(e); });
         }).addOnFailureListener(e -> { if (callback != null) callback.onFailure(e); });
     }
-    public ListenerRegistration listenNotification(String uid, UserRole role, NotificationListListener callback) {
-        return listenNotification(uid, role, null, callback);
-    }
-
-    /**
-     * @param consumerFilter khusus caregiver: uid consumer yang sedang dipilih.
-     *                       null = tampilkan semua (dipakai untuk mode consumer).
-     */
     public ListenerRegistration listenNotification(String uid, UserRole role, @Nullable String consumerFilter,
                                                    NotificationListListener callback) {
         List<Notification> fromNotif = new ArrayList<>();

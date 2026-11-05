@@ -390,17 +390,6 @@ public class AlarmSchedulerHelper {
         onDoseTaken(context, scheduleId, null, scheduledAtMillis);
     }
 
-    /**
-     * dipanggil setiap kali obat ditandai "dikonsumsi" (dari Home, halaman reminder,
-     * notifikasi, atau tombol di notifikasi HP).
-     *
-     * 1) Matikan alarm yang sedang bunyi + batalkan alarm snooze.
-     * 2) Kalau obat diminum SEBELUM jamnya -> batalkan alarm jam itu (supaya tidak bunyi lagi),
-     *    lalu pasang alarm BESOK di jam yang sama.
-     * 3) Kalau jamnya SUDAH lewat -> JANGAN batalkan apa-apa lagi. Alarm jam itu sudah bunyi dan
-     *    sudah otomatis memasang alarm besok dengan "kunci" yang sama. Kalau dibatalkan,
-     *    yang ikut terhapus justru alarm BESOK (ini bug lama).
-     */
     public static void onDoseTaken(Context context, String scheduleId, String namaObat, long scheduledAtMillis) {
         AlarmRingingService.stopFor(context, scheduleId);
         cancelSnooze(context, scheduleId);

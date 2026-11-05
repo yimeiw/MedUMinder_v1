@@ -24,10 +24,9 @@ public class CareRelationshipRepo {
                 .limit(1).get().addOnSuccessListener(query -> callback.onSuccess(!query.isEmpty()))
                 .addOnFailureListener(callback::onFailure);
     }
-    /**
-     * care_links/{consumerUid}_{caregiverUid}: salinan kecil relasi dengan id yang bisa ditebak,
-     * supaya aturan database bisa memeriksa "apakah X caregiver dari Y" (mis. untuk obat pribadi).
-     */
+//     care_links/{consumerUid}_{caregiverUid}: salinan kecil relasi dengan id yang bisa ditebak,
+//     supaya aturan database bisa memeriksa "apakah X caregiver dari Y" (mis. untuk obat pribadi)
+
     public static String linkId(String consumerUid, String caregiverUid) {
         return consumerUid + "_" + caregiverUid;
     }

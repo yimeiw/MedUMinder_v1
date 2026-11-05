@@ -8,11 +8,7 @@ import androidx.core.os.LocaleListCompat;
 
 import java.util.Locale;
 
-/**
- * Bahasa app hanya boleh salah satu dari: "en", "id", "zh".
- * Apa pun yang lain (mis. bahasa HP Italia "it-IT", atau "en-US") dinormalkan,
- * dan kalau tidak didukung selalu kembali ke bahasa Inggris.
- */
+//semua bahasa selain yang ada di pilihan (eng, ind, ch) akan diset jadi eng
 public final class AppLanguage {
 
     private static final String PREFS = "language";
@@ -21,7 +17,6 @@ public final class AppLanguage {
 
     private AppLanguage() {}
 
-    /** "en-US" -> "en", "in"/"id-ID" -> "id", "zh-Hans-CN" -> "zh", lainnya -> "en". */
     public static String normalize(String tag) {
         if (tag == null) return DEFAULT;
         String t = tag.trim().toLowerCase(Locale.ROOT);
@@ -38,10 +33,6 @@ public final class AppLanguage {
         AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(clean));
     }
 
-    /**
-     * Dipanggil setiap app dibuka: pastikan bahasa app = bahasa tersimpan yang didukung.
-     * Kalau sistem sempat memberi bahasa lain (mis. Italia), dikembalikan ke pilihan user / Inggris.
-     */
     public static void ensureApplied(Context context) {
         String wanted = current(context);
         String active = AppCompatDelegate.getApplicationLocales().toLanguageTags();

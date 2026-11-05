@@ -26,15 +26,6 @@ public class LogItem {
                    String informasiJadwal,
                    String status,
                    String scheduleId,
-                   long scheduledAtMillis){
-        this(type, namaJadwal, time, informasiJadwal, status, scheduleId, scheduledAtMillis, 0L);
-    }
-    public LogItem(String type,
-                   String namaJadwal,
-                   String time,
-                   String informasiJadwal,
-                   String status,
-                   String scheduleId,
                    long scheduledAtMillis,
                    long createdAtMillis){
 

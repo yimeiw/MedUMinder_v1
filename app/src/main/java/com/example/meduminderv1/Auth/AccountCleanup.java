@@ -11,12 +11,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Hapus SEMUA data milik satu akun di Firestore (jadwal, obat, obat pribadi, log, appointment, notifikasi,
- * undangan, relasi). Dipanggil saat hapus akun, sebelum akun login (Firebase Auth) dihapus,
- * karena setelah itu aturan database tidak mengizinkan penghapusan lagi.
- * onDone selalu dipanggil; data yang gagal dihapus dicatat di log saja.
- */
+//penghapusan semua data milik satu akun di firestore
 final class AccountCleanup {
 
     private static final String TAG = "AccountCleanup";

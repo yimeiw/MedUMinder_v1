@@ -16,13 +16,7 @@ import com.example.meduminderv1.Model.User;
 import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.R;
 
-/**
- * Sebelum user menambah jadwal obat / appointment, pastikan izin yang dibutuhkan alarm sudah aktif:
- * - Notifikasi (Android 13+)
- * - Alarm & pengingat / exact alarm (Android 12+)
- * Tanpa izin ini alarm tidak bisa dipasang sama sekali, jadi jadwal tidak boleh diinput dulu.
- * Caregiver dilewati: alarm jadwal consumer berbunyi di HP consumer, bukan di HP caregiver.
- */
+//izin alarm harus aktif, biar alarm bisa dipasang berlaku untuk consumer
 public final class SchedulePermission {
 
     private SchedulePermission() {}

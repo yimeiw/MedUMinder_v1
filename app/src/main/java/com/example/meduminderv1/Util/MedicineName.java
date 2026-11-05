@@ -5,11 +5,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
 
-/**
- * Aturan nama obat yang SAMA di app dan di skrip migrasi (tools/firestore):
- * - key: spasi depan/belakang dibuang, spasi ganda jadi satu, huruf kecil -> untuk membandingkan
- * - docId: SHA-1 dari key -> id obat pribadi, jadi nama yang sama selalu dokumen yang sama (tidak dobel)
- */
 public final class MedicineName {
     private MedicineName() {}
 

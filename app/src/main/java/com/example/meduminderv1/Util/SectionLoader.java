@@ -6,12 +6,6 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 
-/**
- * Spinner untuk satu bagian layar (mis. "Jadwal hari ini") saat data PERTAMA dimuat.
- * - Hanya tampil di muatan pertama; pembaruan live berikutnya tidak memunculkannya lagi (tidak berkedip).
- * - Selama memuat, isi & pesan kosong disembunyikan, jadi tidak pernah tampil bersamaan.
- * - Kalau terlalu lama, berhenti dan memanggil onTimeout (tidak memuat selamanya).
- */
 public final class SectionLoader {
 
     private static final long TIMEOUT_MS = 15_000L;
@@ -42,13 +36,13 @@ public final class SectionLoader {
         handler.postDelayed(timeoutAction, TIMEOUT_MS);
     }
 
-    /** Data (atau kosong) sudah datang: sembunyikan spinner. Aman dipanggil berkali-kali. */
+    // Data (atau kosong) sudah datang: sembunyikan spinner. Aman dipanggil berkali-kali
     public void done() {
         loadedOnce = true;
         stop();
     }
 
-    /** Gagal memuat: sembunyikan spinner (pemanggil menampilkan pesan error). */
+    // Gagal memuat: sembunyikan spinner (pemanggil menampilkan pesan error)
     public void failed() {
         stop();
     }
@@ -57,12 +51,12 @@ public final class SectionLoader {
         return loading;
     }
 
-    /** true kalau data sudah pernah datang (done() pernah dipanggil). */
+    //true kalau data sudah pernah datang (done() pernah dipanggil)
     public boolean hasLoaded() {
         return loadedOnce;
     }
 
-    /** Dipanggil saat tampilan dihancurkan. */
+    //Dipanggil saat tampilan dihancurkan
     public void release() {
         stop();
     }

@@ -11,10 +11,7 @@ import androidx.core.graphics.ColorUtils;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.MaterialColors;
 
-/**
- * Satu-satunya tempat gaya kolom terkunci (dipakai mode Ubah dan mode Isi Ulang supaya selalu sama).
- * Kolom terlihat abu-abu tapi teks tetap terbaca, dan tidak bisa ditekan / membuka keyboard.
- */
+//dipake untuk refill stock mode only, semuanya field warna abu seperti kolom terkunci kecuali stock
 public final class DisabledField {
     private DisabledField() {}
 
@@ -22,7 +19,6 @@ public final class DisabledField {
     private static final float GREY_OVERLAY = 0.08f;
     private static final float CORNER_DP = 20f;
 
-    /** Kunci kolom beserta isinya. Pudar hanya di kolom luar, supaya teks di dalamnya tidak pudar dua kali. */
     public static void apply(View field) {
         if (field == null) return;
         disable(field);

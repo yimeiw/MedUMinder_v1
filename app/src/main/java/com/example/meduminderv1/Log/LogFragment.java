@@ -277,7 +277,6 @@ public class LogFragment extends Fragment {
             rvLogs.post(this::maybeLoadOlder);
         }
     }
-    /** Hanya satu yang tampil: pesan gagal, pesan kosong, atau daftar (saat memuat: kosong, tanpa animasi). */
     private void updateStateViews() {
         if (rvLogs == null || firstLoader == null) return;
         boolean loading = firstLoader.isLoading();
@@ -290,13 +289,11 @@ public class LogFragment extends Fragment {
         initialMedicine.setVisibility(!busy && isMed && empty ? View.VISIBLE : View.GONE);
         initialAppoint.setVisibility(!busy && !isMed && empty ? View.VISIBLE : View.GONE);
     }
-    /** Data baru (ganti jenis / consumer): muatan berikutnya dianggap muatan pertama lagi. */
     private void resetFirstLoad() {
         if (firstLoader != null) firstLoader.release();
         firstLoader = new com.example.meduminderv1.Util.SectionLoader(null);
         loadFailed = false;
     }
-    /** Dipanggil di awal setiap load; spinner hanya muncul kalau data belum pernah tampil. */
     private void beginLoad() {
         firstLoader.startFirstLoad(() -> {
             loadFailed = true;
@@ -310,7 +307,6 @@ public class LogFragment extends Fragment {
         firstLoader.done();
         applyFilter();
     }
-    /** Gagal saat muatan pertama -> pesan + Coba lagi. Gagal saat refresh -> data lama tetap tampil. */
     private void onLoadFailure() {
         if (!firstLoader.isLoading()) return;
         firstLoader.failed();
@@ -487,124 +483,6 @@ public class LogFragment extends Fragment {
         super.onPause();
         detachLogListeners();
         statusTick.removeCallbacks(statusRunnable);
-    }
-    private void showAppointmentStatusDialog(Appointment appointment) {
-        LogStatus currentStatus = appointment.getStatusBasedOnDate();
-
-        if (currentStatus == LogStatus.DIKONSUMSI) {
-            android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(requireContext())
-                    .setTitle(appointment.getTitle())
-                    .setMessage(getString(R.string.appointment_sudah_ditandai_dihadiri_msg))
-                    .setPositiveButton(getString(R.string.tutup_btn), null)
-                    .setNegativeButton(getString(R.string.batalkan_status), (d, which) -> {
-                        updateAppointmentStatus(appointment, "akan datang");
-                    })
-                    .create();
-
-            dialog.setOnShowListener(d -> {
-                dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
-                        .setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
-                dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
-                        .setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
-            });
-
-            dialog.show();
-            return;
-        }
-
-        String message = (currentStatus == LogStatus.TERLEWATKAN)
-                ? getString(R.string.appointment_lewat_konfirmasi_msg)
-                : getString(R.string.konfirmasi_hadir_appointment_msg);
-
-        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(requireContext())
-                .setTitle(appointment.getTitle())
-                .setMessage(message)
-                .setPositiveButton(getString(R.string.sudah_hadir_btn), (d, which) -> {
-                    updateAppointmentStatus(appointment, "dihadiri");
-                })
-                .setNegativeButton(getString(R.string.cancel), null)
-                .create();
-
-        dialog.setOnShowListener(d -> {
-            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
-                    .setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
-            dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
-                    .setTextColor(com.google.android.material.color.MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
-            dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-        });
-
-        dialog.show();
-    }
-    private void updateAppointmentStatus(Appointment appointment, String newStatus) {
-        if (appointment.getDocId() == null) return;
-
-        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
-        LoadingOverlay.show(LogFragment.this);
-        db.collection("appointments").document(appointment.getDocId())
-                .update(
-                        "status", newStatus,
-                        "updated_at", com.google.firebase.firestore.FieldValue.serverTimestamp(),
-                        "updated_by", uid
-                )
-                .addOnSuccessListener(unused -> {
-                    LoadingOverlay.hide(LogFragment.this);
-                    if (!isAdded()) return;
-                    appointment.setStatus(newStatus);
-                    applyFilter();
-
-                    AlarmRingingService.stopFor(requireContext(), appointment.getDocId());
-
-                    if ("dihadiri".equals(newStatus)) {
-                        notifyCaregiverAppointmentAttended(appointment);
-                    }
-
-                    Toast.makeText(requireContext(), getString(R.string.status_berhasil_diperbarui), Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    LoadingOverlay.hide(LogFragment.this);
-                    if (isAdded()) Toast.makeText(requireContext(), getString(R.string.gagal_update_status_msg) + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
-    }
-
-    private void notifyCaregiverAppointmentAttended(Appointment appointment) {
-        String consumerUid = appointment.getUsers_id();
-        if (consumerUid == null) return;
-        if (getContext() != null) {
-            new NotificationRepo(getContext().getApplicationContext())
-                    .notifyConsumerAppointmentAttended(consumerUid, appointment.getDocId(), appointment.getTitle());
-        }
-
-        db.collection("users").document(consumerUid).get().addOnSuccessListener(userDoc -> {
-            String consumerName = userDoc.exists() ? userDoc.getString("name") : "Consumer";
-
-            careRelationshipRepo.getCaregiverForConsumer(consumerUid, new RepoCallback<List<CareRelationship>>() {
-                @Override
-                public void onSuccess(List<CareRelationship> relations) {
-                    for (CareRelationship relation : relations) {
-                        Notification notif = new Notification();
-                        notif.setReceiver_uid(relation.getCaregiver_uid());
-                        notif.setSender_uid(consumerUid);
-                        notif.setType(NotificationType.Appointment);
-                        NotificationText.apply(notif, "consumer_sudah_menghadiri_appointment",
-                                "consumer_telah_menghadiri_appointment",
-                                consumerName != null ? consumerName : "Consumer",
-                                appointment.getTitle() != null ? appointment.getTitle() : "");
-                        notif.setReference_id(appointment.getDocId());
-                        notif.setConsumer_name(consumerName);
-                        notif.setConsumer_uid(consumerUid);
-                        notif.setTarget_role(UserRole.Caregiver.name());
-                        notif.setIs_read(false);
-                        notificationRepo.createNotification(notif, new RepoCallback<Void>() {
-                            @Override public void onSuccess(Void result) { }
-                            @Override public void onFailure(Exception e) { }
-                        });
-                    }
-                }
-                @Override
-                public void onFailure(Exception e) { }
-            });
-        });
     }
 
     private void navigateToReminder(MedicationLog log, String namaObat) {

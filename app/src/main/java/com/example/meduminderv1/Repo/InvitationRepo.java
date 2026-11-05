@@ -87,11 +87,9 @@ public class InvitationRepo {
                     callback.onSuccess(invitation);
                 }).addOnFailureListener(callback::onFailure);
     }
-    /**
-     * Undangan ke email yang BELUM punya akun disimpan dengan receiver_uid = null.
-     * Setelah orang itu daftar/login, isi receiver_uid-nya supaya undangan muncul di
-     * halaman notifikasi, detail, dan badge (semuanya mencari berdasarkan receiver_uid).
-     */
+     //Undangan ke email yang BELUM punya akun disimpan dengan receiver_uid = null.
+     //Setelah orang itu daftar/login, isi receiver_uid-nya supaya undangan muncul di
+     //halaman notifikasi, detail, dan badge (semuanya mencari berdasarkan receiver_uid).
     public void claimInvitationsByEmail(String uid, String email, Runnable onDone){
         if (uid == null || email == null || email.trim().isEmpty()) {
             if (onDone != null) onDone.run();
@@ -119,15 +117,6 @@ public class InvitationRepo {
                     batch.commit().addOnCompleteListener(t -> { if (onDone != null) onDone.run(); });
                 })
                 .addOnFailureListener(e -> { if (onDone != null) onDone.run(); });
-    }
-
-    public void linkReceiver(String invitationId, String receiverUid, RepoCallback<Void> callback){
-        Map<String, Object> update = new HashMap<>();
-        update.put("receiver_uid", receiverUid);
-        update.put("updated_at", Timestamp.now());
-        db.collection("invitations").document(invitationId).update(update)
-                .addOnSuccessListener(unused -> callback.onSuccess(null))
-                .addOnFailureListener(callback::onFailure);
     }
 
     public static class InvitationNotFoundException extends Exception{

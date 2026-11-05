@@ -102,13 +102,7 @@ public class AuthManager {
         } return false;
     }
 
-    public AuthProviderType getPrimaryProvider(){
-        User user = sessionManager.getUser();
-        if (user == null){
-            return null;
-        } return user.getAuthProvider();
-    }
-
+// email
     public void registerWithEmail(User user, String password, AuthCallback<User> callback){
         if (user == null){
             callback.onFailure(context.getString(R.string.data_user_tidak_boleh_kosong));
@@ -282,7 +276,7 @@ public class AuthManager {
             }
         });
     }
-
+//reset pass
     public void resetPassword(String email, AuthCallback<Void> callback){
         if (email == null || email.trim().isEmpty()){
             callback.onFailure(context.getString(R.string.email_tidak_boleh_kosong));
@@ -314,7 +308,7 @@ public class AuthManager {
                     }
                 });
     }
-
+//google
     public void loginWithGoogle(Activity activity, AuthCallback<User> callback){
         startGoogleSignIn(activity, callback);
     }
@@ -336,7 +330,6 @@ public class AuthManager {
                     }
                 });
     }
-    /** Pesan error Google sign-in yang ramah & sudah diterjemahkan (bukan pesan mentah bahasa Inggris). */
     private String googleErrorMessage(GetCredentialException e) {
         if (e instanceof androidx.credentials.exceptions.GetCredentialCancellationException) {
             return context.getString(R.string.login_google_dibatalkan);
@@ -546,7 +539,6 @@ public class AuthManager {
             }
         });
     }
-    /** Akun yang ditandai terhapus tidak boleh login: keluarkan sesi dan beri pesan yang jelas. */
     private boolean rejectIfDeleted(User user, AuthCallback<User> callback) {
         if (user != null && user.getDeleted_at() == null) return false;
         mAuth.signOut();
@@ -754,16 +746,6 @@ public class AuthManager {
                 ? friendlyError(e) : context.getString(R.string.nama_gagal_disimpan)));
     }
 
-    /**
-     * Hapus akun: konfirmasi identitas dulu (password atau pilih akun Google lagi),
-     * lalu hapus semua data, lalu akun login-nya, lalu bersihkan sesi di HP.
-     * Kalau password == null dan akun memakai Google, pemilih akun Google langsung dibuka.
-     */
-    public void deleteAccount(@Nullable Activity activity, @Nullable String password, AuthCallback<Void> callback){
-        deleteAccount(activity, password, null, callback);
-    }
-
-    /** onIdentityConfirmed: dipanggil saat identitas sudah dipastikan dan penghapusan benar-benar dimulai. */
     public void deleteAccount(@Nullable Activity activity, @Nullable String password,
                               @Nullable Runnable onIdentityConfirmed, AuthCallback<Void> callback){
         pendingDeleteStarted = onIdentityConfirmed;
@@ -781,7 +763,6 @@ public class AuthManager {
         }
     }
 
-    /** true kalau akun dihapus lewat konfirmasi Google (bukan password). */
     public boolean deletesWithGoogle(){
         User user = sessionManager.getUser();
         if (user != null && user.getAuthProvider() == AuthProviderType.EMAIL) return false;
@@ -890,7 +871,7 @@ public class AuthManager {
             });
         }));
     }
-
+//invitation
     public void sendInvitation(String receiverEmail, UserRole relationshipRole, InvitationCallback callback){
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null){
@@ -1188,24 +1169,6 @@ public class AuthManager {
             }
         });
     }
-
-    public void linkAndRespondInvitation(String invitationId, boolean accept, AuthCallback<User> callback){
-        FirebaseUser firebaseUser = mAuth.getCurrentUser();
-        if (firebaseUser == null){
-            callback.onFailure(context.getString(R.string.user_belum_login));
-            return;
-        } invitationRepo.linkReceiver(invitationId, firebaseUser.getUid(), new RepoCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
-                respondToInvitation(invitationId, accept, callback);
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                callback.onFailure(e.getMessage());
-            }
-        });
-    }
     private void notifySender(Invitation invitation, boolean accepted) {
         Notification notif = new Notification();
         notif.setReceiver_uid(invitation.getSender_uid());
@@ -1253,28 +1216,6 @@ public class AuthManager {
             @Override
             public void onFailure(Exception e) {
                 callback.onFailure(e.getMessage());
-            }
-        });
-    }
-    public void loadNotification(AuthCallback<List<Notification>> callback){
-        FirebaseUser firebaseUser = mAuth.getCurrentUser();
-        if (firebaseUser == null){
-            callback.onFailure(context.getString(R.string.user_belum_login));
-            return;
-        } User user = sessionManager.getUser();
-        if (user == null){
-            callback.onFailure(context.getString(R.string.user_tidak_ditemukan));
-            return;
-        }
-        notificationRepo.loadNotification(firebaseUser.getUid(), user.getCurrentRole(), new RepoCallback<List<Notification>>() {
-            @Override
-            public void onSuccess(List<Notification> result) {
-                callback.onSuccess(result);
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-
             }
         });
     }
@@ -1343,28 +1284,6 @@ public class AuthManager {
         notificationRepo.markAsRead(notifId, new RepoCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                callback.onSuccess(result);
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                callback.onFailure(e.getMessage());
-            }
-        });
-    }
-    public void unreadNotif(AuthCallback<Integer> callback){
-        FirebaseUser firebaseUser = mAuth.getCurrentUser();
-        if (firebaseUser == null){
-            callback.onFailure(context.getString(R.string.user_belum_login));
-            return;
-        } User user = sessionManager.getUser();
-        if (user == null){
-            callback.onFailure(context.getString(R.string.user_tidak_ditemukan));
-            return;
-        }
-            notificationRepo.countUnread(firebaseUser.getUid(), user.getCurrentRole(), new RepoCallback<Integer>() {
-            @Override
-            public void onSuccess(Integer result) {
                 callback.onSuccess(result);
             }
 

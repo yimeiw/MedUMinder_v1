@@ -139,12 +139,6 @@ public final class LoadingOverlay {
         else HANDLER.post(remove);
     }
 
-    public static boolean isShowing(Activity activity) {
-        if (activity == null) return false;
-        ViewGroup root = activity.findViewById(android.R.id.content);
-        return root != null && root.findViewById(OVERLAY_ID) != null;
-    }
-
     private static void scheduleSafetyHide(Activity activity) {
         HANDLER.removeCallbacksAndMessages(SAFETY_TOKEN);
         HANDLER.postAtTime(() -> hide(activity), SAFETY_TOKEN,

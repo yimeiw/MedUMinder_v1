@@ -173,12 +173,6 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         StockCheckWorker.schedule(this);
     }
 
-    /**
-     * Android 15+ menggambar app sampai ke balik status bar & garis gestur bawah. Atas: selalu diberi jarak.
-     * Bawah: navbar menjaga jaraknya sendiri;
-     * saat navbar disembunyikan, isi halaman diberi jarak bawah (garis gestur / keyboard) supaya tidak tertutup.
-     * Android 14 ke bawah: sistem sudah mengatur ini, jadi tidak diubah.
-     */
     private void setupBottomInsets() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return;
         View root = findViewById(R.id.main);

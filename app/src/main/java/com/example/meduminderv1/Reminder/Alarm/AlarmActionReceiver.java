@@ -44,22 +44,14 @@ public class AlarmActionReceiver extends BroadcastReceiver {
             return;
         }
 
-        /*
-         * ============================================================
-         * OBAT DIKONSUMSI
-         * ============================================================
-         */
+        //OBAT DIKONSUMSI
         if ("ACTION_TAKEN".equals(action)) {
             PendingResult pendingResult = goAsync();
             AlarmSchedulerHelper.cancelSnooze(context, scheduleId);
             AlarmSchedulerHelper.onDoseTaken(context, scheduleId, namaObat, scheduledAtMillis);
             markAsTaken(context, scheduleId, scheduledAtMillis, pendingResult);
 
-            /*
-             * ============================================================
-             * SNOOZE
-             * ============================================================
-             */
+            //SNOOZE
         } else if ("ACTION_SNOOZE".equals(action)) {
             PendingResult pendingResult = goAsync();
             boolean isAppointment = "appointment".equals(intent.getStringExtra("type"));

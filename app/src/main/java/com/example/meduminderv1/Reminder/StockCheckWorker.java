@@ -22,7 +22,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-/** Tiap pagi (±08:00) cek stok obat user & consumer yang dirawat, lalu kirim pengingat isi ulang. */
+// Tiap pagi (±08:00) cek stok obat user & consumer yang dirawat, lalu kirim pengingat isi ulang
 public class StockCheckWorker extends Worker {
     private static final String WORK_NAME = "daily_stock_check";
     private static final int CHECK_HOUR = 8;

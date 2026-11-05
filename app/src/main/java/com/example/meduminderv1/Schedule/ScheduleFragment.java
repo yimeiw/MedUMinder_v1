@@ -150,7 +150,6 @@ public class ScheduleFragment extends Fragment {
         if (loader != null) loader.stop();
     }
 
-    private int loadToken = 0;
     private View loadingState;
 
     private void showLoading() {

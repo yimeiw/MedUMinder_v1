@@ -23,15 +23,13 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Cek stok obat (PIL) dan kirim pengingat isi ulang.
- *
- * - "low": stok cukup untuk <= N hari (N dipilih user di Pengaturan Notifikasi, default 3)
- * - "out": stok 0
- * Tiap keadaan hanya dikirim sekali (disimpan di stock.refill_alert), lalu di-reset
- * saat stok diisi ulang di atas batas. Isi ulang yang masih di bawah batas mengirim pengingat lagi. Kalau stok sudah cukup sampai tanggal akhir jadwal,
- * tidak ada pengingat.
- */
+// Cek stok obat (PIL) dan kirim pengingat isi ulang.
+// - "low": stok cukup untuk <= N hari (N dipilih user di Pengaturan Notifikasi, default 3)
+// - "out": stok 0
+// Tiap keadaan hanya dikirim sekali (disimpan di stock.refill_alert), lalu di-reset
+// saat stok diisi ulang di atas batas. Isi ulang yang masih di bawah batas mengirim pengingat lagi. Kalau stok sudah cukup sampai tanggal akhir jadwal,
+// tidak ada pengingat.
+
 public final class StockChecker {
     private static final String TAG = "StockChecker";
 
@@ -57,7 +55,7 @@ public final class StockChecker {
         check(context, medicationId, null);
     }
 
-    /** Sehabis isi ulang: kalau stok masih di bawah batas, pengingat dikirim lagi walau sudah pernah terkirim. */
+    //Sehabis isi ulang: kalau stok masih di bawah batas, pengingat dikirim lagi walau sudah pernah terkirim
     public static void checkAfterRefill(Context context, String medicationId) {
         check(context, medicationId, null, true);
     }
@@ -99,7 +97,7 @@ public final class StockChecker {
         }).addOnFailureListener(e -> finish.run());
     }
 
-    /** Cek semua obat milik uid (dipakai worker harian & saat pengaturan diubah). */
+    // Cek semua obat milik uid (dipakai worker harian & saat pengaturan diubah)
     public static void checkAllForUser(Context context, String uid, @Nullable Runnable done) {
         Runnable finish = done != null ? done : () -> { };
         FirebaseFirestore.getInstance().collection("medications")
@@ -160,7 +158,7 @@ public final class StockChecker {
         });
     }
 
-    /** Sisa dosis sampai tanggal akhir jadwal. Tanpa tanggal akhir = tak terbatas. */
+    //Sisa dosis sampai tanggal akhir jadwal. Tanpa tanggal akhir = tak terbatas
     private static long remainingDoses(DocumentSnapshot sched, int perDay) {
         Timestamp end = sched.getTimestamp("end_date");
         if (end == null) return Long.MAX_VALUE;

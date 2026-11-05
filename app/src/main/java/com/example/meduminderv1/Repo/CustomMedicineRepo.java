@@ -12,11 +12,11 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Obat pribadi: users/{uid}/customMedicines/{docId}.
- * Hanya pemilik (yang minum obat) dan caregiver-nya yang boleh membaca/menulis (lihat firestore.rules).
- * Katalog resmi (medicine_catalog) tidak pernah ditulis app lagi.
- */
+
+// Obat pribadi: users/{uid}/customMedicines/{docId}.
+// Hanya pemilik (yang minum obat) dan caregiver-nya yang boleh membaca/menulis (lihat firestore.rules).
+// Katalog resmi (medicine_catalog) tidak pernah ditulis app lagi.
+
 public class CustomMedicineRepo {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -25,7 +25,7 @@ public class CustomMedicineRepo {
         return db.collection("users").document(ownerUid).collection("customMedicines");
     }
 
-    /** Semua obat pribadi pemilik, key nama -> {id, nama tampilan}. */
+    // Semua obat pribadi pemilik, key nama -> {id, nama tampilan}
     public void load(String ownerUid, RepoCallback<Map<String, String[]>> callback) {
         col(ownerUid).get().addOnSuccessListener(query -> {
             Map<String, String[]> byKey = new LinkedHashMap<>();
@@ -38,11 +38,11 @@ public class CustomMedicineRepo {
         }).addOnFailureListener(callback::onFailure);
     }
 
-    /**
-     * Simpan nama sebagai obat pribadi dan kembalikan id-nya langsung.
-     * Tidak menunggu server: saat offline tulisan diantre Firestore, dan id-nya pasti sama
-     * (dari nama), jadi menyimpan nama yang sama dua kali tidak membuat dobel.
-     */
+
+//Simpan nama sebagai obat pribadi dan kembalikan id-nya langsung.
+//Tidak menunggu server: saat offline tulisan diantre Firestore, dan id-nya pasti sama
+//(dari nama), jadi menyimpan nama yang sama dua kali tidak membuat dobel.
+
     public String save(String ownerUid, String displayName, String createdBy, boolean isNew) {
         String id = MedicineName.docId(displayName);
         Map<String, Object> data = new HashMap<>();

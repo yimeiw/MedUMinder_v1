@@ -28,7 +28,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TodayScheduleLoader {
     private static final String TAG = "TodayLoader";
-
     public interface Listener { void onChanged(List<LogItem> items); }
     private static class Info { boolean hidden; String name; int stock; String type; }
     private interface InfoCb { void done(Info i); }
@@ -56,12 +55,12 @@ public class TodayScheduleLoader {
         this.listener = listener;
     }
 
-    /** Dipanggil (sekali per kegagalan) kalau data hari ini gagal dimuat, supaya layar bisa menampilkan pesan. */
+    //Dipanggil (sekali per kegagalan) kalau data hari ini gagal dimuat, supaya layar bisa menampilkan pesan
     public void setOnError(Runnable onError) {
         this.onError = onError;
     }
 
-    /** Jadwal diubah / dihapus: nama & stok dibaca ulang (cache dikosongkan), daftar dibangun ulang. */
+    // Jadwal diubah / dihapus: nama & stok dibaca ulang (cache dikosongkan), daftar dibangun ulang
     public void refresh() {
         synchronized (cache) { cache.clear(); }
         rebuild();

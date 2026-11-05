@@ -26,11 +26,6 @@ public class MedicationLog {
         this.snoozed_until = snoozed_until;
     }
 
-    /**
-     * waktu yang harus DITAMPILKAN.
-     * Kalau jadwal sudah di-snooze (snoozed_until lebih lambat dari scheduled_at),
-     * pakai waktu snooze. Kalau tidak, pakai scheduled_at biasa.
-     */
     @com.google.firebase.firestore.Exclude
     public Timestamp getEffectiveTime() {
         if (snoozed_until != null && scheduled_at != null

@@ -11,13 +11,6 @@ import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-/**
- * Pasang ulang semua alarm milik user yang sedang login saat:
- * - HP selesai restart (alarm AlarmManager hilang saat restart)
- * - app di-update
- * - jam / zona waktu HP diubah (supaya tetap bunyi di jam yang diinput)
- * - izin "Alarm & pengingat" baru diberikan (sebelumnya alarm tidak bisa dipasang sama sekali)
- */
 public class BootReceiver extends BroadcastReceiver {
 
     private static final long FINISH_AFTER_MS = 9_000L;

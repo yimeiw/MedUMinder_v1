@@ -42,10 +42,6 @@ public class AlarmRingingService extends Service {
         stopSelf();
     };
 
-    /**
-     * Alarm yang masih menunggu dijawab (bisa lebih dari satu kalau jamnya sama, misalnya obat A & B jam 22.30).
-     * Kunci = schedule_id. Bunyi baru berhenti kalau daftar ini sudah kosong.
-     */
     private static class Waiting {
         final String scheduleId, namaObat; final long scheduledAt; final boolean isAppointment;
         Waiting(String scheduleId, String namaObat, long scheduledAt, boolean isAppointment) {
@@ -57,10 +53,6 @@ public class AlarmRingingService extends Service {
     private int foregroundId = 0;
     @Nullable private static AlarmRingingService running;
 
-    /**
-     * Hentikan bunyi untuk SATU jadwal saja (dikonsumsi / tunda / terlewat / dihapus).
-     * Kalau masih ada jadwal lain yang berbunyi di jam yang sama, alarm itu tetap berbunyi.
-     */
     public static void stopFor(Context context, @Nullable String scheduleId) {
         if (scheduleId == null) {
             context.stopService(new Intent(context, AlarmRingingService.class));
@@ -250,9 +242,7 @@ public class AlarmRingingService extends Service {
 
         NotificationCompat.Builder builder;
 
-        /*
-         * APPOINTMENT
-         */
+        //APPOINTMENT
         if (isAppointment) {
             Intent attendedIntent = new Intent(
                             this, AlarmActionReceiver.class)

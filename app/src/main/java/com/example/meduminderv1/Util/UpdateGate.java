@@ -15,12 +15,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.lang.ref.WeakReference;
 
-/**
- * "Perlu update": versi minimum diatur di Firestore app_config/android
- *   min_version_code (angka, mis. 2)  -> versi di bawah ini diminta update dan tidak bisa lanjut
- *   update_url (teks, opsional)       -> link update; kosong = halaman app di Play Store
- * Tidak ada dokumen / offline / gagal baca -> app tetap jalan seperti biasa (tidak pernah mengunci karena error).
- */
 public final class UpdateGate {
     private UpdateGate() {}
 

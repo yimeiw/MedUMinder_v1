@@ -111,7 +111,7 @@ public class ForgotPasswordFragment extends Fragment {
         });
     }
 
-    /** Setelah terkirim: tombol jadi "Kirim ulang (60)" lalu hitung mundur, baru bisa ditekan lagi. */
+    // Setelah terkirim: tombol jadi "Kirim ulang (60)" lalu hitung mundur, baru bisa ditekan lagi.
     private void updateSendButton() {
         handler.removeCallbacks(tick);
         if (btnKirim == null || !isAdded()) return;

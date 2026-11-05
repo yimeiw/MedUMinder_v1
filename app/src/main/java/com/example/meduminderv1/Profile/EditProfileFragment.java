@@ -112,7 +112,6 @@ public class EditProfileFragment extends Fragment {
                 });
     }
 
-    /** Akun Google: jelaskan singkat, lalu pilih akun Google lagi dan hapus otomatis. */
     private void confirmGoogleThenDelete() {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
         builder.setTitle(getString(R.string.konfirmasi_identitas_title))
@@ -153,15 +152,11 @@ public class EditProfileFragment extends Fragment {
         });
     }
 
-    /** true kalau nama di kolom berbeda dengan yang tersimpan. */
+    // true kalau nama di kolom berbeda dengan yang tersimpan.
     private boolean hasUnsavedName() {
         return currentUser != null && !userName.getText().toString().trim().equals(currentUser.getName());
     }
 
-    /**
-     * Simpan nama kalau berubah. Hanya dipanggil dari tombol Simpan.
-     * Nama tidak valid -> pesan di kolom, tidak disimpan.
-     */
     private void saveName() {
         if (currentUser == null || isUpdatingName || !hasUnsavedName()) return;
         String newName = userName.getText().toString().trim();
@@ -199,13 +194,13 @@ public class EditProfileFragment extends Fragment {
         });
     }
 
-    /** Simpan aktif hanya kalau ada perubahan dan tidak sedang menyimpan (cegah tekan dua kali). */
+    // Simpan aktif hanya kalau ada perubahan dan tidak sedang menyimpan (cegah tekan dua kali)
     private void updateSaveButton() {
         if (btnSaveProfile == null) return;
         btnSaveProfile.setEnabled(!isUpdatingName && hasUnsavedName());
     }
 
-    /** Kembali: tidak pernah menyimpan. Ada perubahan -> tanya dulu buang atau lanjut mengedit. */
+    //Kembali: tidak pernah menyimpan. Ada perubahan -> tanya dulu buang atau lanjut mengedit
     private void leavePage() {
         hideKeyboard();
         if (isUpdatingName) return;
