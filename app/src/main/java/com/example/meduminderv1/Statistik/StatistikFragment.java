@@ -859,13 +859,13 @@ public class StatistikFragment extends Fragment {
         paint.setTextAlign(android.graphics.Paint.Align.CENTER);
         paint.setTypeface(fontBold());
         paint.setTextSize(18);
-
-        canvas1.drawText(
-                currentPersentase + "%",
-                pageWidth / 2f,
-                y,
-                paint
-        );
+//
+//        canvas1.drawText(
+//                currentPersentase + "%",
+//                pageWidth / 2f,
+//                y,
+//                paint
+//        );
 
         y += 30;
 
