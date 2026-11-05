@@ -41,7 +41,6 @@ public class ScheduleFragment extends Fragment {
     ImageButton btnAddReminder, btnAddAppoint;
     MaterialButton btnMed, btnAppoint;
     MaterialButtonToggleGroup toggleGroup;
-    //CalendarView calendarView;
     RecyclerView rvSchedule;
     TextView emptyState;
     FirebaseFirestore db;
@@ -58,7 +57,6 @@ public class ScheduleFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_schedule, container, false);
 
         btnAddReminder = view.findViewById(R.id.btnAddReminder);
@@ -98,7 +96,6 @@ public class ScheduleFragment extends Fragment {
             if (!isChecked) return;
             currType = (checkId == R.id.btnMedicine) ? Type.Medication : Type.Appointment;
             updateToggleColors(view);
-            //loadScheduleForDate();
             renderFiltered();
         });
 
@@ -153,85 +150,6 @@ public class ScheduleFragment extends Fragment {
         if (loader != null) loader.stop();
     }
 
-//    private void loadScheduleForDate() {
-//        // nomor muat: hasil dari muat lama (ganti tanggal/tab cepat) diabaikan
-//        final int token = ++loadToken;
-//        showLoading();
-//        String uid = SessionManager.getInstance().getTargetUid();
-//        if (uid == null){
-//            showEmpty(token);
-//            return;
-//        }
-//
-//        Calendar startCal = (Calendar) selectedDate.clone();
-//        startCal.set(Calendar.HOUR_OF_DAY, 0);
-//        startCal.set(Calendar.MINUTE, 0);
-//        startCal.set(Calendar.SECOND, 0);
-//        startCal.set(Calendar.MILLISECOND, 0);
-//        Timestamp startofDay = new Timestamp(startCal.getTime());
-//
-//        Calendar endCal = (Calendar) startCal.clone();
-//        endCal.add(Calendar.DAY_OF_YEAR, 1);
-//        Timestamp startOfNextDay = new Timestamp(endCal.getTime());
-//
-//        List<LogItem> result = new ArrayList<>();
-//        if (currType == Type.Medication){
-//            // lewati log dari jadwal yang sudah dihapus (is_active = false)
-//            InactiveSchedules.load(db, uid, inactiveIds ->
-//            db.collection("medication_logs").whereEqualTo("users_id", uid)
-//                    .whereGreaterThanOrEqualTo("scheduled_at", startofDay)
-//                    .whereLessThan("scheduled_at", startOfNextDay).orderBy("scheduled_at")
-//                    .get().addOnSuccessListener(query ->{
-//                        if (!isAdded()) return;
-//                        List<DocumentSnapshot> docs = new ArrayList<>();
-//                        for (DocumentSnapshot d : query.getDocuments()) {
-//                            if (!inactiveIds.contains(d.getString("medication_schedules_id"))) docs.add(d);
-//                        }
-//                        if (docs.isEmpty()){
-//                            showEmpty(token);
-//                            return;
-//                        } int[] remaining = {docs.size()};
-//                        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-//                        for (DocumentSnapshot doc : docs){
-//                            MedicationLog log = doc.toObject(MedicationLog.class);
-//                            if (log == null){
-//                                remaining[0]--;
-//                                continue;
-//                            }
-//                            resolveMedName(log.getMedication_schedules_id(), (medName, stock) -> {
-//                                if (!isAdded()) return;
-//                                Date shown = log.getEffectiveTime() != null ?
-//                                        log.getEffectiveTime().toDate() : log.getScheduled_at().toDate();
-//                                LogItem item = new LogItem("medicine", medName, sdf.format(shown),
-//                                        getString(R.string.sisa_stok, stock), log.getStatus(),
-//                                        log.getMedication_schedules_id(), log.getScheduled_at().toDate().getTime());
-//                                result.add(item);
-//                                remaining[0]--;
-//                                if (remaining[0] <= 0){
-//                                    showResult(result, token);
-//                                }
-//                            });
-//                        }
-//                        if (remaining[0] <= 0) showResult(result, token); // semua log null
-//                    }).addOnFailureListener(e -> showEmpty(token)));
-//        } else {
-//            db.collection("appointments").whereEqualTo("users_id", uid)
-//                    .whereGreaterThanOrEqualTo("appointment_at", startofDay)
-//                    .whereLessThan("appointment_at", startOfNextDay).get().addOnSuccessListener(query -> {
-//                        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-//                        for (DocumentSnapshot doc : query.getDocuments()){
-//                            Appointment appoint = doc.toObject(Appointment.class);
-//                            if (appoint == null) continue;
-//                            if (appoint.getDeleted_at() != null) continue;
-//                            LogItem item = new LogItem("appointment", appoint.getTitle(), sdf.format(appoint.getDisplayTime().toDate()),
-//                                    appoint.getAddress(), appoint.getStatus(),
-//                                    doc.getId(), appoint.getAppointment_at().toDate().getTime());
-//                            result.add(item);
-//                        } showResult(result, token);
-//                    }).addOnFailureListener(e -> showEmpty(token));
-//        }
-//    }
-
     private int loadToken = 0;
     private View loadingState;
 
@@ -241,16 +159,6 @@ public class ScheduleFragment extends Fragment {
         rvSchedule.setVisibility(View.GONE);
         emptyState.setVisibility(View.GONE);
     }
-//
-//    private void showResult(List<LogItem> result, int token) {
-//        if (token != loadToken) return;
-//        showResult(result);
-//    }
-//
-//    private void showEmpty(int token) {
-//        if (token != loadToken) return;
-//        showEmpty();
-//    }
 
     private void showResult(List<LogItem> result) {
         if (!isAdded()) return;
@@ -266,7 +174,6 @@ public class ScheduleFragment extends Fragment {
         rvSchedule.setAdapter(adapter);
     }
 
-    // buka Reminder view dari Calendar. source="schedule" -> tombol titik tiga (edit/hapus) ditampilkan.
     private void navigateToReminder(LogItem item) {
         if (item.getScheduleId() == null) return;
 
@@ -291,40 +198,6 @@ public class ScheduleFragment extends Fragment {
         emptyState.setVisibility(View.VISIBLE);
         rvSchedule.setVisibility(View.GONE);
     }
-//    private interface MedResolveCallback { void onResolved(String name, int stock); }
-//    private void resolveMedName(String schedulesId, MedResolveCallback callback) {
-//        db.collection("medication_schedules").document(schedulesId).get()
-//                .addOnSuccessListener(scheduleSnap -> {
-//                    MedicationSchedules schedule = scheduleSnap.toObject(MedicationSchedules.class);
-//                    if (schedule == null || schedule.getMedication_id() == null || schedule.getMedication_id().isEmpty()) {
-//                        callback.onResolved("Obat", 0); return;
-//                    }
-//                    db.collection("medications").document(schedule.getMedication_id()).get()
-//                            .addOnSuccessListener(medSnap -> {
-//                                Medication med = medSnap.toObject(Medication.class);
-//                                int stock = 0;
-//                                if (med != null && med.getStock() != null && med.getStock().get("stok_obat") != null) {
-//                                    Object so = med.getStock().get("stok_obat"); stock = so instanceof Number ? ((Number) so).intValue() : 0;
-//                                }
-//                                int finalStock = stock;
-//                                if (med != null && med.getCustom_medicine_name() != null) {
-//                                    callback.onResolved(med.getCustom_medicine_name(), finalStock);
-//                                } else if (med != null && med.getCatalog_id() != null && !med.getCatalog_id().isEmpty()) {
-//                                    db.collection("medicine_catalog").document(med.getCatalog_id()).get()
-//                                            .addOnSuccessListener(catSnap -> {
-//                                                MedicineCatalog cat = catSnap.toObject(MedicineCatalog.class);
-//                                                callback.onResolved(cat != null ? cat.getNama_obat() : "Obat", finalStock);
-//                                            })
-//                                            .addOnFailureListener(e -> callback.onResolved("Obat", finalStock));
-//                                } else {
-//                                    callback.onResolved("Obat", finalStock);
-//                                }
-//                            })
-//                            // gagal ambil data -> tetap selesai (pakai nama default) supaya loading tidak macet
-//                            .addOnFailureListener(e -> callback.onResolved("Obat", 0));
-//                })
-//                .addOnFailureListener(e -> callback.onResolved("Obat", 0));
-//    }
 
     private void updateToggleColors(View root) {
         int activeColor = MaterialColors.getColor(root, com.google.android.material.R.attr.colorSecondaryFixedDim);

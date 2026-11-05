@@ -41,7 +41,7 @@ public final class UpdateGate {
             return PackageInfoCompat.getLongVersionCode(
                     activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0));
         } catch (PackageManager.NameNotFoundException e) {
-            return Long.MAX_VALUE; // tidak tahu versinya: jangan kunci
+            return Long.MAX_VALUE;
         }
     }
 
@@ -73,6 +73,5 @@ public final class UpdateGate {
             activity.startActivity(new Intent(Intent.ACTION_VIEW,
                     Uri.parse("https://play.google.com/store/apps/details?id=" + pkg)));
         }
-        // dialog tertutup setelah tombol ditekan; saat kembali ke app, onResume memeriksa lagi
     }
 }

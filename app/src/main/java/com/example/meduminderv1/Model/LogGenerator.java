@@ -25,7 +25,7 @@ import java.util.Set;
 
 public class LogGenerator {
     private static final String TAG = "LogGenerator";
-    private static final int DAYS_AHEAD = 14;          // jendela jika tanpa end_date
+    private static final int DAYS_AHEAD = 14;
     private static final int BATCH_LIMIT = 400;
     private static final long THROTTLE_MS = 2 * 60 * 1000L;
     private static final Map<String, Long> LAST_RUN = new HashMap<>();
@@ -53,7 +53,6 @@ public class LogGenerator {
         generateForAllActiveSchedules(userId, null);
     }
 
-    //pastikan log ada sampai tanggal ini
     public void generateForAllActiveSchedules(String userId, LocalDate horizon) {
         if (userId == null) return;
         UserTimeZone.resolve(userId, zone ->
@@ -94,7 +93,6 @@ public class LogGenerator {
                 loadExistingAndWrite(userId, scheduleId, timesOfDay, start, endDate, zone, null));
     }
 
-    //diapkai saat edit jadwal jadi, log yang sudah tdk sesuai diganti dan log baru dibuat dalam satu batch
     public void replaceFutureLogs(String userId, String scheduleId, ArrayList<String> timesOfDay,
                                   Timestamp startDate, Timestamp endDate) {
         if (scheduleId == null || timesOfDay == null || timesOfDay.isEmpty()) return;
@@ -157,7 +155,7 @@ public class LogGenerator {
         }
         Log.d(TAG, "sync " + scheduleId + ": diinginkan=" + desired.size()
                 + " ada=" + existing.size() + " hapus=" + toDelete.size());
-        if (desired.isEmpty()) return;   // jangan hapus apa pun tanpa pengganti
+        if (desired.isEmpty()) return;
 
         WriteBatch batch = db.batch();
         int n = 0;
@@ -192,7 +190,7 @@ public class LogGenerator {
                 String t = norm(raw);
                 if (t == null) continue;
                 Timestamp ts = toTimestamp(d, t, zone);
-                if (ts != null) out.put(buildLogId(scheduleId, d, t), ts);   // jam yang sudah lewat TETAP dibuat
+                if (ts != null) out.put(buildLogId(scheduleId, d, t), ts);
             }
         }
         return out;
@@ -205,7 +203,7 @@ public class LogGenerator {
         log.put("medication_schedules_id", scheduleId);
         log.put("scheduled_at", ts);
         log.put("status", past ? "terlewatkan" : "akan datang");
-        if (past) log.put("missed_notified", true);   // sudah lewat saat dibuat: tidak perlu notifikasi
+        if (past) log.put("missed_notified", true);
         log.put("created_at", Timestamp.now());
         return log;
     }

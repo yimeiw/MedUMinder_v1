@@ -72,7 +72,6 @@ public final class SchedulePermission {
         try {
             c.startActivity(intent);
         } catch (ActivityNotFoundException e) {
-            // HP tertentu tidak punya halaman izin khusus -> buka info aplikasi
             Intent fallback = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                     Uri.parse("package:" + c.getPackageName())).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             try { c.startActivity(fallback); } catch (ActivityNotFoundException ignored) { }

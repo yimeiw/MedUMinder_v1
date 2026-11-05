@@ -27,7 +27,6 @@ final class DeleteAccountResult {
 
     static void onFailed(Fragment fragment, Context appContext, String message) {
         Toast.makeText(appContext, message, Toast.LENGTH_LONG).show();
-        // sesi sudah dikeluarkan (hapus akun setengah jalan): jangan biarkan tetap di dalam app
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
             openLogin(appContext);
             if (fragment.getActivity() != null) fragment.getActivity().finish();

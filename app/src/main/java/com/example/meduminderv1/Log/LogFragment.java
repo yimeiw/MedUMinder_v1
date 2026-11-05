@@ -67,10 +67,8 @@ public class LogFragment extends Fragment {
     private RecyclerView rvLogs;
     ConsumerPickerHelper consumerPickerHelper;
     String targetUid;
-    //List semua data dari firestore
     private List<MedicationLog> allMedLog = new ArrayList<>();
     private List<Appointment> allAppointLog = new ArrayList<>();
-    //List hasil filter
     private List<MedicationLog> medLog = new ArrayList<>();
     private List<Appointment> appointLog = new ArrayList<>();
     private MedicationLogAdapter medAdapter;
@@ -88,7 +86,6 @@ public class LogFragment extends Fragment {
     private int daysBack = DAYS_STEP;
     private LoadOlderAdapter loadOlderAdapter;
     private View logError;
-    // spinner hanya untuk muatan pertama (per jenis riwayat / per consumer); refresh berikutnya tanpa spinner
     private com.example.meduminderv1.Util.SectionLoader firstLoader;
     private boolean loadFailed = false;
 
@@ -97,7 +94,7 @@ public class LogFragment extends Fragment {
     private final Runnable statusRunnable = new Runnable() {
         @Override public void run() {
             if (!isAdded()) return;
-            applyFilter();                       // status dihitung ulang dari waktu sekarang
+            applyFilter();
             statusTick.postDelayed(this, 15_000L);
         }
     };
@@ -168,7 +165,6 @@ public class LogFragment extends Fragment {
         setupTypeDropdown();
         Bundle args = getArguments();
         boolean openAppointment = args != null && args.getBoolean("open_appointment_tab", false);
-        // balik dari halaman detail: tetap di riwayat yang terakhir dibuka
         if (!typeChosen) currentType = openAppointment ? LogType.APPOINTMENT : LogType.MEDICATION;
         typeChosen = true;
         showCurrentType();
@@ -221,7 +217,6 @@ public class LogFragment extends Fragment {
     private int dpToPx(int dp) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, getResources().getDisplayMetrics());
     }
-    //state button kalau dipilih
     private void selectButton(MaterialButton selected) {
         MaterialButton[] buttons = { btnAll, btnRemaining, btnTaken, btnMissed };
         for (MaterialButton button : buttons) {
@@ -287,7 +282,6 @@ public class LogFragment extends Fragment {
         if (rvLogs == null || firstLoader == null) return;
         boolean loading = firstLoader.isLoading();
         boolean failed = !loading && loadFailed;
-        // daftar / pesan kosong hanya setelah data benar-benar datang (bukan sebelum muatan dimulai)
         boolean busy = !firstLoader.hasLoaded() || loading || failed;
         boolean isMed = currentType == LogType.MEDICATION;
         boolean empty = isMed ? medLog.isEmpty() : appointLog.isEmpty();
@@ -299,13 +293,12 @@ public class LogFragment extends Fragment {
     /** Data baru (ganti jenis / consumer): muatan berikutnya dianggap muatan pertama lagi. */
     private void resetFirstLoad() {
         if (firstLoader != null) firstLoader.release();
-        firstLoader = new com.example.meduminderv1.Util.SectionLoader(null); // tetap memuat, tapi tanpa animasi loading
+        firstLoader = new com.example.meduminderv1.Util.SectionLoader(null);
         loadFailed = false;
     }
     /** Dipanggil di awal setiap load; spinner hanya muncul kalau data belum pernah tampil. */
     private void beginLoad() {
         firstLoader.startFirstLoad(() -> {
-            // terlalu lama: berhenti memuat, tampilkan pesan + Coba lagi
             loadFailed = true;
             updateStateViews();
         });
@@ -416,7 +409,7 @@ public class LogFragment extends Fragment {
             return;
         }
         new LogGenerator().ensureFresh(users_id);
-        if (!loadingOlder) beginLoad(); // muat lebih lama cukup spinner kecil di bawah daftar
+        if (!loadingOlder) beginLoad();
 
         Calendar startCal = Calendar.getInstance();
         startCal.set(Calendar.HOUR_OF_DAY, 0); startCal.set(Calendar.MINUTE, 0);
@@ -429,7 +422,6 @@ public class LogFragment extends Fragment {
         endCal.add(Calendar.DAY_OF_YEAR, 1);
         Timestamp startOfTomorrow = new Timestamp(endCal.getTime());
 
-        // lewati log dari jadwal yang sudah dihapus (jadwal yang selesai tetap tampil)
         InactiveSchedules.load(db, users_id, inactiveIds -> {
             if (!isAdded() || token != loadToken) return;
             medLogReg = db.collection("medication_logs")
@@ -442,7 +434,6 @@ public class LogFragment extends Fragment {
                         if (e != null || qs == null) {
                             Log.e("Medication Log", "Gagal ambil data", e);
                             if (loadingOlder) {
-                                // hari-hari lama belum termuat: kembalikan rentang supaya tidak tertulis "sejak ..." yang salah
                                 daysBack = Math.max(DAYS_STEP, daysBack - DAYS_STEP);
                                 loadingOlder = false;
                                 applyFilter();
@@ -497,58 +488,6 @@ public class LogFragment extends Fragment {
         detachLogListeners();
         statusTick.removeCallbacks(statusRunnable);
     }
-//    private void loadMedicationLogs() {
-//        final int token = ++loadToken;
-//        String users_id = SessionManager.getInstance().getTargetUid();
-//        if (users_id == null){
-//            loadingOlder = false;
-//            updateFooter();
-//            initialMedicine.setVisibility(View.VISIBLE);
-//            return;
-//        }
-//
-//        Calendar startCal = Calendar.getInstance();
-//        startCal.set(Calendar.HOUR_OF_DAY, 0);
-//        startCal.set(Calendar.MINUTE, 0);
-//        startCal.set(Calendar.SECOND, 0);
-//        startCal.set(Calendar.MILLISECOND, 0);
-//        startCal.add(Calendar.DAY_OF_YEAR, -(daysBack - 1));
-//        Timestamp startOfRange = new Timestamp(startCal.getTime());
-//
-//        Calendar endCal = Calendar.getInstance();
-//        endCal.set(Calendar.HOUR_OF_DAY, 0);
-//        endCal.set(Calendar.MINUTE, 0);
-//        endCal.set(Calendar.SECOND, 0);
-//        endCal.set(Calendar.MILLISECOND, 0);
-//        endCal.add(Calendar.DAY_OF_YEAR, 1);
-//        Timestamp startOfTomorrow = new Timestamp(endCal.getTime());
-//
-//        // lewati log dari jadwal yang sudah dihapus (is_active = false)
-//        InactiveSchedules.load(db, users_id, inactiveIds ->
-//        db.collection("medication_logs")
-//                .whereEqualTo("users_id", users_id)
-//                .whereGreaterThanOrEqualTo("scheduled_at", startOfRange)
-//                .whereLessThan("scheduled_at", startOfTomorrow)
-//                .orderBy("scheduled_at")
-//                .get()
-//                .addOnSuccessListener(querySnapshot -> {
-//                    if (!isAdded() || token != loadToken) return;
-//                    allMedLog.clear();
-//                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-//                        MedicationLog log = doc.toObject(MedicationLog.class);
-//                        if (log != null && !inactiveIds.contains(log.getMedication_schedules_id())) allMedLog.add(log);
-//                    }
-//                    loadingOlder = false;
-//                    applyFilter();
-//                })
-//                .addOnFailureListener(e -> {
-//                    Log.e("Medication Log", "Gagal ambil data", e);
-//                    if (!isAdded() || token != loadToken) return;
-//                    loadingOlder = false;
-//                    updateFooter();
-//                }));
-//    }
-    //passing data dari log ke reminder view
     private void showAppointmentStatusDialog(Appointment appointment) {
         LogStatus currentStatus = appointment.getStatusBasedOnDate();
 

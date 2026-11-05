@@ -25,7 +25,7 @@ public class AppCalendarView  extends LinearLayout {
     public interface OnDateChangeListener{
         void onSelectedDayChange(AppCalendarView view, int year, int month, int dayOfMonth);
     }
-    private final Calendar shown = Calendar.getInstance(); //bulan yg tampil
+    private final Calendar shown = Calendar.getInstance();
     private final Calendar selected = Calendar.getInstance();
     private OnDateChangeListener listener;
     private final TextView title;
@@ -54,7 +54,6 @@ public class AppCalendarView  extends LinearLayout {
                 == Configuration.UI_MODE_NIGHT_YES;
         cOnAccent = night ? Color.parseColor("#15181C") : Color.WHITE;
 
-        // header: ‹  Bulan Tahun  ›
         LinearLayout header = new LinearLayout(c);
         header.setGravity(Gravity.CENTER_VERTICAL);
         TextView prev = label("‹", 24, true);
@@ -67,7 +66,6 @@ public class AppCalendarView  extends LinearLayout {
         header.addView(next, new LayoutParams(dp(44), dp(44)));
         addView(header);
 
-        // nama hari
         LinearLayout week = new LinearLayout(c);
         String[] names = DateFormatSymbols.getInstance(locale).getShortWeekdays();
         int first = shown.getFirstDayOfWeek();
@@ -134,7 +132,7 @@ public class AppCalendarView  extends LinearLayout {
                     dc.set(year, month, day);
                     if (dc.getTimeInMillis() < minMillis) {
                         tv.setAlpha(0.3f);
-                        row.addView(tv, cell());   // kolom tetap terisi, tapi tidak bisa diklik
+                        row.addView(tv, cell());
                         continue;
                     }
                     tv.setOnClickListener(v -> {

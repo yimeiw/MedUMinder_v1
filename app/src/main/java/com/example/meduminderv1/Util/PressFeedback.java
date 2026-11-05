@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class PressFeedback {
-    // area sentuh minimal (pedoman aksesibilitas Android), tampilan tidak berubah
     private static final int MIN_TOUCH_DP = 48;
 
     private PressFeedback(){}
@@ -31,7 +30,7 @@ public final class PressFeedback {
         if (root == null) return;
         boolean skip = root instanceof EditText || root instanceof MaterialButton
                 || root instanceof CompoundButton
-                || root instanceof com.google.android.material.slider.Slider; // slider: tanpa kotak biru saat digeser
+                || root instanceof com.google.android.material.slider.Slider;
         if (!skip && root.isClickable() && root.getForeground() == null){
             applyTo(root);
         } if (root.isClickable() && !(root instanceof EditText)) {
@@ -51,7 +50,6 @@ public final class PressFeedback {
     private static void expandTouchTarget(View v) {
         if (v.getTag(R.id.touch_target_expanded) != null) return;
         v.setTag(R.id.touch_target_expanded, Boolean.TRUE);
-        // dihitung ulang setiap kali ukuran/posisi view berubah (belum di-layout = ukuran 0)
         v.addOnLayoutChangeListener((view, l, t, r, b, ol, ot, or, ob) -> updateTouchArea(view));
         if (v.isLaidOut()) updateTouchArea(v);
     }
@@ -75,7 +73,7 @@ public final class PressFeedback {
             multi = new MultiTouchDelegate(parent);
             parent.setTouchDelegate(multi);
         } else {
-            return; // sudah ada pengaturan khusus, jangan diganggu
+            return;
         }
         multi.put(v, new TouchDelegate(area, v));
     }
@@ -103,7 +101,6 @@ public final class PressFeedback {
         public boolean onTouchEvent(@NonNull MotionEvent event) {
             for (int i = 0; i < delegates.size(); i++) {
                 View v = views.get(i);
-                // tombol yang dimatikan / disembunyikan tidak boleh merespons
                 if (!v.isEnabled() || v.getVisibility() != View.VISIBLE) continue;
                 MotionEvent copy = MotionEvent.obtain(event);
                 boolean handled = delegates.get(i).onTouchEvent(copy);

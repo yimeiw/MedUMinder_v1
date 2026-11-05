@@ -19,7 +19,7 @@ public class ProgressView extends View {
     private final Paint progressPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF rectF = new RectF();
-    private int progress = 0; // 0-100
+    private int progress = 0;
     private float strokeWidth = 50f;
 
     public ProgressView(Context context) { super(context); init(); }
@@ -31,7 +31,6 @@ public class ProgressView extends View {
     private void init() {
         bgPaint.setStyle(Paint.Style.STROKE);
         bgPaint.setStrokeWidth(strokeWidth);
-        // bgPaint.setColor(MaterialColors.getColor(this, R.attr.progressTrack, Color.parseColor("#E0E0E0")));
         bgPaint.setColor(abu);
 
         progressPaint.setStyle(Paint.Style.STROKE);
@@ -41,7 +40,6 @@ public class ProgressView extends View {
 
         textPaint.setColor(itam);
         textPaint.setTextAlign(Paint.Align.CENTER);
-        // digambar sendiri, jadi tidak ikut font tema: tanpa ini memakai font bawaan HP
         android.graphics.Typeface font = androidx.core.content.res.ResourcesCompat.getFont(getContext(), R.font.inter_18pt_bold);
         if (font != null) textPaint.setTypeface(font);
         else textPaint.setFakeBoldText(true);

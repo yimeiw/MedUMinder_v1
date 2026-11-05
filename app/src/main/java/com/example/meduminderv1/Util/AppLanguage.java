@@ -25,7 +25,6 @@ public final class AppLanguage {
     public static String normalize(String tag) {
         if (tag == null) return DEFAULT;
         String t = tag.trim().toLowerCase(Locale.ROOT);
-        // daftar locale bisa berisi beberapa bahasa ("it,en"): pakai yang pertama
         int comma = t.indexOf(',');
         if (comma >= 0) t = t.substring(0, comma);
         if (t.startsWith("zh")) return "zh";

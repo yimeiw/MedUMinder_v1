@@ -40,7 +40,6 @@ public class InvitationFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_invitation, container, false);
         btnBack = view.findViewById(R.id.btnBack);
         tvHeaderInvite = view.findViewById(R.id.tvHeaderInvite);
@@ -115,10 +114,10 @@ public class InvitationFragment extends Fragment {
             @Override
             public void onSuccess(boolean registered) {
                 LoadingOverlay.hide(InvitationFragment.this);
-                if (registered){ // jika user sudah terdaftar
+                if (registered){
                     if (!isAdded()) return;
                     Toast.makeText(requireContext(), getString(R.string.invitation_berhasil_dikirim), Toast.LENGTH_SHORT).show();
-                    goHome(); // langsung ke Home, bukan balik ke halaman sebelumnya
+                    goHome();
                 } else {
                     if (!isAdded()) return;
                     showShareDialog(email);

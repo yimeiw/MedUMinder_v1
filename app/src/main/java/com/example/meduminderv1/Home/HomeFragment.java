@@ -39,6 +39,7 @@ import com.example.meduminderv1.Invitation.InvitationPopupHelper;
 import com.example.meduminderv1.Model.LogItem;
 import com.example.meduminderv1.Model.Appointment;
 import com.example.meduminderv1.Model.LogStatus;
+import com.example.meduminderv1.Model.UserRole;
 import com.example.meduminderv1.Model.Medication;
 import com.example.meduminderv1.Model.MedicationLog;
 import com.example.meduminderv1.Model.MedicationSchedules;
@@ -82,8 +83,8 @@ import java.util.Locale;
 public class HomeFragment extends Fragment {
     TextView tvGreeting, tvtitleCard, tvTime, tvDay, tvStokObat, tvTotalStok, btnLihatSemua, emptyTodaySchedule;
     ImageButton btnNotif;
-    TextView tvNotifBadge;                          // angka jumlah notif belum dibaca
-    private ListenerRegistration unreadListener;    // realtime jumlah notif
+    TextView tvNotifBadge;
+    private ListenerRegistration unreadListener;
     ImageButton btnProfile;
     MaterialButton addNoSchedule, btnKonfirmasi;
     RecyclerView rvTodaySchedule;
@@ -94,19 +95,18 @@ public class HomeFragment extends Fragment {
     MedicationRepo medicationRepo;
     private String nextLogId;
     private String nextMedId;
-    private String nextScheduleIdForAlarm;   // untuk mematikan alarm saat dikonfirmasi
+    private String nextScheduleIdForAlarm;
     private long nextScheduledAtMillis = -1;
     LineChart lineChart;
     StatistikRepo statistikRepo;
     private ListenerRegistration nextScheduleListener;
-    // data Home selalu "live" dari Firestore: tambah / ubah / hapus langsung tampil tanpa pindah tab
     private ListenerRegistration schedulesListener, medicationsListener, appointmentsListener;
     private QuerySnapshot lastAppointments;
     private QuerySnapshot lastNextLogs;
     private int nextRenderGen = 0;
-    // spinner hanya saat muatan pertama halaman ini
     private com.example.meduminderv1.Util.SectionLoader nextLoader, todayLoader;
-    private ListenerRegistration invitationListener; // popup undangan realtime
+    private ListenerRegistration invitationListener;
+    private ListenerRegistration scheduleChangeListener;
     private final Handler refreshHandler = new Handler(Looper.getMainLooper());
     private long displayedScheduleAtMillis = -1;
     private final Runnable refreshRunnable = this::checkNextScheduleFreshness;
@@ -124,7 +124,6 @@ public class HomeFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
         tvGreeting = view.findViewById(R.id.greeting);
@@ -231,6 +230,9 @@ public class HomeFragment extends Fragment {
         InvitationPopupHelper.checkAndShow(this, authManager);
         if (invitationListener != null) invitationListener.remove();
         invitationListener = InvitationPopupHelper.listen(this, authManager);
+        FirebaseUser me = FirebaseAuth.getInstance().getCurrentUser();
+        if (scheduleChangeListener != null) scheduleChangeListener.remove();
+        scheduleChangeListener = me != null ? ScheduleChangePopup.listen(this, me.getUid(), UserRole.Consumer) : null;
         checkUnreadNotif();
         nextLoader.startFirstLoad(this::showNextError);
         todayLoader.startFirstLoad(this::showTodayError);
@@ -242,7 +244,6 @@ public class HomeFragment extends Fragment {
         if (fu != null) new LogGenerator().ensureFresh(fu.getUid());
     }
 
-    // Tampilkan jumlah notif belum dibaca di ikon lonceng (realtime).
     private void checkUnreadNotif() {
         User user = authManager.getCurrentUser();
         if (user == null) return;
@@ -313,8 +314,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void showFirstValidNext(List<DocumentSnapshot> candidates, int index, int gen, Appointment appointment) {
-        if (!isAdded() || gen != nextRenderGen) return; // sudah ada data yang lebih baru
-        // appointment lebih dulu dari obat berikutnya -> appointment yang tampil di kartu
+        if (!isAdded() || gen != nextRenderGen) return;
         if (appointment != null && (index >= candidates.size() || appointment.getDisplayTime().compareTo(
                 candidates.get(index).toObject(MedicationLog.class).getEffectiveTime()) <= 0)) {
             showNextAppointment(appointment);
@@ -332,7 +332,7 @@ public class HomeFragment extends Fragment {
         MedicationLog targetLog = target.toObject(MedicationLog.class);
         resolveMedName(targetLog.getMedication_schedules_id(), (medName, stock, medId, medType) -> {
             if (!isAdded() || gen != nextRenderGen) return;
-            if (medName == null) { // jadwal/obat sudah dihapus -> coba jadwal berikutnya
+            if (medName == null) {
                 showFirstValidNext(candidates, index + 1, gen, appointment);
                 return;
             }
@@ -402,11 +402,10 @@ public class HomeFragment extends Fragment {
         schedulesListener = db.collection("medication_schedules").whereEqualTo("users_id", firebaseUser.getUid())
                 .addSnapshotListener((snap, error) -> {
                     if (error != null || snap == null || !isAdded()) return;
-                    if (first[0]) { first[0] = false; return; } // data awal sudah ditangani listener log
+                    if (first[0]) { first[0] = false; return; }
                     renderNextSchedule();
                     if (todayScheduleLoader != null) todayScheduleLoader.refresh();
                 });
-        // stok berubah (mis. "Sudah diminum" dari notifikasi alarm) -> kartu jadwal berikutnya ikut diperbarui
         if (medicationsListener != null) medicationsListener.remove();
         boolean[] firstMeds = {true};
         medicationsListener = db.collection("medications").whereEqualTo("users_id", firebaseUser.getUid())
@@ -477,7 +476,6 @@ public class HomeFragment extends Fragment {
                         @Override
                         public void onSuccess(Void result) {
                             LoadingOverlay.hide(HomeFragment.this);
-                            //matikan alarm yang sedang bunyi + batalkan snooze/alarm jam itu
                             if (isAdded() && schedId != null) {
                                 AlarmSchedulerHelper.onDoseTaken(requireContext(), schedId, medName, schedAt);
                             } User currentUser = SessionManager.getInstance().getUser();
@@ -524,7 +522,6 @@ public class HomeFragment extends Fragment {
         db.collection("medication_schedules").document(schedulesId).get()
                 .addOnSuccessListener(scheduleSnap -> {
                     MedicationSchedules schedule = scheduleSnap.toObject(MedicationSchedules.class);
-                    // jadwal yang sudah dihapus tidak ditampilkan lagi di Home
                     if (schedule != null && schedule.getDeleted_at() != null) { callback.onResolved(null, 0, null, null); return; }
                     String medId = schedule != null ? schedule.getMedication_id() : null;
                     if (medId == null || medId.isEmpty()) { callback.onResolved(null, 0, null, null); return; }
@@ -559,7 +556,6 @@ public class HomeFragment extends Fragment {
                 .addOnFailureListener(e -> callback.onResolved(null, 0, null, null));
     }
 
-    // context aplikasi yang tetap aman dipakai walau fragment sudah ditutup
     private Context appCtx;
     private Context appContext() {
         Context c = getContext();
@@ -606,7 +602,6 @@ public class HomeFragment extends Fragment {
 
     private void showNextError() {
         if (!isAdded()) return;
-        // kartu tidak menampilkan "belum ada jadwal" (bisa salah); pesan error ada di bagian Jadwal Hari Ini
         haveSchedule.setVisibility(View.GONE);
         noSchedule.setVisibility(View.GONE);
     }
@@ -614,7 +609,7 @@ public class HomeFragment extends Fragment {
     private void showToday(List<LogItem> combined){
         if (!isAdded() || getContext() == null) return;
         todayLoader.done();
-        List<LogItem> displayList = TodayScheduleLoader.pickForHome(combined, 3, true); // sudah diminum: terbaru dulu (hanya Home)
+        List<LogItem> displayList = TodayScheduleLoader.pickForHome(combined, 3, true);
         Log.d("HOME_TODAY", "combined=" + combined.size() + " tampil=" + displayList.size());
         if (todayScheduleAdapter == null){
             todayScheduleAdapter = new TodayScheduleAdapter(displayList, requireContext());
@@ -696,7 +691,6 @@ public class HomeFragment extends Fragment {
         dsSeharusnya.setDrawValues(false);
         dsSeharusnya.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 
-        // dosis dikonsumsi
         LineDataSet dsDikonsumsi = new LineDataSet(dikonsumsi, getString(R.string.dosis_dikonsumsi));
 
         dsDikonsumsi.setColor(requireContext().getColor(R.color.green));
@@ -710,7 +704,6 @@ public class HomeFragment extends Fragment {
         dsDikonsumsi.setDrawValues(false);
         dsDikonsumsi.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 
-        // persentase kepatuhan
         LineDataSet dsPersentase = new LineDataSet(persentase, getString(R.string.persentaseKepatuhan));
         dsPersentase.setColor(requireContext().getColor(R.color.merah));
         dsPersentase.setCircleColor(requireContext().getColor(R.color.merah));
@@ -787,6 +780,7 @@ public class HomeFragment extends Fragment {
         super.onPause();
         refreshHandler.removeCallbacks(refreshRunnable);
         if (invitationListener != null) { invitationListener.remove(); invitationListener = null; }
+        if (scheduleChangeListener != null) { scheduleChangeListener.remove(); scheduleChangeListener = null; }
         if (unreadListener != null) { unreadListener.remove(); unreadListener = null; }
         if (nextScheduleListener != null) { nextScheduleListener.remove(); nextScheduleListener = null; }
         if (schedulesListener != null) { schedulesListener.remove(); schedulesListener = null; }

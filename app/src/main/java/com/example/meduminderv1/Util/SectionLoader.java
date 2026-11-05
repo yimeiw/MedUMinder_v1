@@ -16,7 +16,7 @@ public final class SectionLoader {
 
     private static final long TIMEOUT_MS = 15_000L;
 
-    @Nullable private final View spinner; // null = tanpa animasi loading
+    @Nullable private final View spinner;
     private final View[] hideWhileLoading;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private boolean loading = false;

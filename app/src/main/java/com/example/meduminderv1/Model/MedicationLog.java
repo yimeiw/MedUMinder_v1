@@ -16,7 +16,7 @@ public class MedicationLog {
     }
     private Timestamp created_at;
     private Long snooze_count;
-    private Timestamp snoozed_until; // waktu baru setelah di-snooze
+    private Timestamp snoozed_until;
 
     public Timestamp getSnoozed_until() {
         return snoozed_until;
@@ -81,8 +81,6 @@ public class MedicationLog {
             return stored;
         }
 
-        // hitung "terlewat" dari waktu snooze kalau ada, supaya jadwal yang di-snooze
-        // tidak langsung dianggap terlewat
         Timestamp effective = getEffectiveTime();
         if (effective != null && effective.toDate().getTime() + AlarmSchedulerHelper.MED_MISSED_DELAY_MS < System.currentTimeMillis()) {
             return LogStatus.TERLEWATKAN;

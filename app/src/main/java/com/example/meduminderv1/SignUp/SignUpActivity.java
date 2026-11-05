@@ -48,7 +48,6 @@ public class SignUpActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // bagian atas layar berwarna gelap (navy) -> ikon jam & baterai harus terang, juga di mode terang
         EdgeToEdge.enable(this, androidx.activity.SystemBarStyle.dark(android.graphics.Color.TRANSPARENT));
         setContentView(R.layout.activity_sign_up);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -194,8 +193,6 @@ public class SignUpActivity extends AppCompatActivity {
                         .setMessage(getString(R.string.akun_berhasil_dibuat_verifikasi_msg, result.getEmail()))
                         .setCancelable(false)
                         .setPositiveButton(getString(R.string.buka_email_btn), (dialog, which) -> {
-                            // pindah ke login DULU, baru buka email di atasnya.
-                            // (dulu email dibuka duluan lalu tertutup halaman login)
                             goToLogin(result.getEmail());
                             EmailApp.open(getApplicationContext());
                         }).setNegativeButton(getString(R.string.nanti), (dialog, which) -> goToLogin(result.getEmail()));

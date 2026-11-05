@@ -24,7 +24,6 @@ import com.google.android.material.progressindicator.CircularProgressIndicator;
 
 public final class LoadingOverlay {
     private static final int OVERLAY_ID = R.id.app_loading_overlay;
-    // pengaman: kalau ada jalur yang lupa hide(), overlay tetap hilang sendiri
     private static final long SAFETY_TIMEOUT_MS = 30_000L;
     private static final Handler HANDLER = new Handler(Looper.getMainLooper());
     private static final Object SAFETY_TOKEN = new Object();

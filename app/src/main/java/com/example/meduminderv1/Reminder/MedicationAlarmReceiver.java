@@ -26,26 +26,23 @@ public class MedicationAlarmReceiver extends BroadcastReceiver {
                         + " type=" + intent.getStringExtra("type")
                         + " trigger=" + intent.getLongExtra("trigger_at", 0L)
         );
-        // alarm milik akun lain (atau belum ada yang login) di HP ini: jangan bunyi
         if (!AlarmOwner.allows(intent)) {
             context.stopService(new Intent(context, AlarmRingingService.class));
             return;
         }
 
         String scheduleId = intent.getStringExtra("schedule_id");
-        if (scheduleId == null || scheduleId.isEmpty()) return;   // alarm rusak: jangan crash di background
+        if (scheduleId == null || scheduleId.isEmpty()) return;
         if (AlarmOwner.hasOwner(intent)) {
             handle(context, intent, scheduleId);
             return;
         }
-        // alarm lama (dipasang sebelum ada cap pemilik): cek dulu pemilik jadwalnya
         String collection = "appointment".equals(intent.getStringExtra("type")) ? "appointments" : "medication_schedules";
         final PendingResult pendingResult = goAsync();
         FirebaseFirestore.getInstance().collection(collection).document(scheduleId).get()
                 .addOnCompleteListener(task -> {
                     String owner = task.isSuccessful() && task.getResult() != null
                             ? task.getResult().getString("users_id") : null;
-                    // kalau gagal cek (offline), tetap bunyi supaya jadwal sendiri tidak terlewat
                     if (owner == null || AlarmOwner.isCurrentUser(owner)) {
                         handle(context, intent, scheduleId);
                     } else {
@@ -62,14 +59,6 @@ public class MedicationAlarmReceiver extends BroadcastReceiver {
         String type = intent.getStringExtra("type");
         long triggerAt = intent.getLongExtra("trigger_at", System.currentTimeMillis());
 
-        // rescheduleNextDay sekarang cuma butuh 4 argumen -- versi baru
-        // AlarmSchedulerHelper mengambil ulang data schedule (is_active,
-        // end_date) langsung dari Firestore, bukan dari occurrenceIndex/
-        // endMillis lama yang dititipkan di intent alarm (itu sudah tidak
-        // dikirim lagi sejak alarm dikunci berdasarkan jam, bukan nomor urut).
-        // FIX: nama extra salah ketik. Yang dikirim AlarmSchedulerHelper adalah "is_snooze_alarm",
-        // tapi di sini dibaca "is_snoozed_alarm" -> selalu false -> alarm snooze ikut
-        // membuat alarm "besok" di jam snooze (jadwal jadi kacau).
         boolean isSnoozed = intent.getBooleanExtra("is_snooze_alarm", false);
         if ("medicine".equals(type)){
             if (!isSnoozed){
@@ -116,7 +105,7 @@ public class MedicationAlarmReceiver extends BroadcastReceiver {
             if (!isAppointment) {
                 notif.put("scheduled_at", new Timestamp(new java.util.Date(scheduledAtMillis)));
             }
-            notif.put("target_role", "Consumer");   // notif ini hanya untuk consumer
+            notif.put("target_role", "Consumer");
             notif.put("is_read", false);
             notif.put("created_at", Timestamp.now());
             db.collection("notifications").add(notif);

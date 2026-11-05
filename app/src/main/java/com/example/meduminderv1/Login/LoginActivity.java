@@ -45,7 +45,6 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // bagian atas layar berwarna gelap (navy) -> ikon jam & baterai harus terang, juga di mode terang
         EdgeToEdge.enable(this, androidx.activity.SystemBarStyle.dark(android.graphics.Color.TRANSPARENT));
         setContentView(R.layout.activity_login);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -108,12 +107,10 @@ public class LoginActivity extends AppCompatActivity {
 
         forgotPassword.setOnClickListener(v -> {
             String currentEmail = emailInput.getText().toString().trim();
-            // kalau input email kosong / formatnya belum benar -> langsung buka halaman lupa password
             if (currentEmail.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(currentEmail).matches()){
                 startActivity(new Intent(LoginActivity.this, ForgotPasswordActivity.class));
                 return;
             }
-            // kalau email sudah diisi, cek dulu. Kalau belum terdaftar -> toast, jangan buka halaman
             forgotPassword.setEnabled(false);
             LoadingOverlay.show(LoginActivity.this);
             authManager.checkEmailStatus(currentEmail, status -> {
@@ -168,12 +165,11 @@ public class LoginActivity extends AppCompatActivity {
         String email = emailInput.getText().toString().trim();
         String password = passwordInput.getText().toString().trim();
 
-        // semua kolom diperiksa (dulu berhenti di kolom pertama, jadi pesan "semua kolom" tidak pernah muncul)
         if (email.isEmpty() && password.isEmpty()){
             emailInput.setError(getString(R.string.email_harus_diisi));
             passwordInput.setError(getString(R.string.password_harus_diisi));
             Toast.makeText(this, getString(R.string.semua_field_harus_diisi), Toast.LENGTH_SHORT).show();
-            emailInput.requestFocus();   // pesan error ikut tampil (bukan hanya ikon "!")
+            emailInput.requestFocus();
             return;
         } if (email.isEmpty()){
             emailInput.setError(getString(R.string.email_harus_diisi));
@@ -232,6 +228,6 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        com.example.meduminderv1.Util.UpdateGate.check(this); // versi terlalu lama -> minta update
+        com.example.meduminderv1.Util.UpdateGate.check(this);
     }
 }

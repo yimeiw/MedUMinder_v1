@@ -93,7 +93,6 @@ public class MedicineReminderFragment extends Fragment {
     SessionManager sessionManager;
     MedicationRepo medicationRepo;
     NotificationRepo notificationRepo;
-    // daftar obat = katalog resmi + obat pribadi milik targetUid (key nama -> {id, nama})
     private final ArrayList<String> medList = new ArrayList<>();
     private final Map<String, String[]> officialByKey = new HashMap<>();
     private final Map<String, String[]> privateByKey = new HashMap<>();
@@ -107,9 +106,6 @@ public class MedicineReminderFragment extends Fragment {
     private Runnable debounceRunnable;
     String targetUid;
     private ZoneId targetZone = ZoneId.systemDefault();
-    // FIX TC-MED-CON-005 / TC-MED-CON-006: nilai stok yang sudah divalidasi
-    // (angka valid & > 0) disimpan di sini oleh validateReminder(), supaya
-    // saveReminder() tidak perlu parse ulang tanpa pengecekan.
     private int validatedStock = 0;
 
     @Override
@@ -254,7 +250,6 @@ public class MedicineReminderFragment extends Fragment {
         });
 
         db.collection("medicine_catalog").orderBy("nama_obat").get().addOnSuccessListener(query -> {
-            // halaman sudah ditutup sebelum data selesai dimuat
             if (!isAdded() || getView() == null) return;
             officialByKey.clear();
             for (DocumentSnapshot doc : query) {
@@ -268,7 +263,6 @@ public class MedicineReminderFragment extends Fragment {
             namaObat.setDropDownVerticalOffset(20);
         });
 
-        // tombol centang (Done) di keyboard: selesai mengetik -> tutup daftar saran & keyboard
         namaObat.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId != android.view.inputmethod.EditorInfo.IME_ACTION_DONE) return false;
             if (debounceRunnable != null) debounceHandler.removeCallbacks(debounceRunnable);
@@ -323,7 +317,7 @@ public class MedicineReminderFragment extends Fragment {
 
         freqMinumObat.setOnItemClickListener((parent, view1, position, id) -> {
             String selected = parent.getItemAtPosition(position).toString();
-            freqMinumObat.setError(null);   // sudah dipilih: tanda "!" lama dihapus
+            freqMinumObat.setError(null);
             int frequency = convertFrequencyToNumber(selected);
             createTimeFields(frequency);
             freqMinumObat.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
@@ -336,24 +330,6 @@ public class MedicineReminderFragment extends Fragment {
             isDropdownOpen = false;
         });
 
-//        endDateReminder.setOnClickListener(v -> {
-//            Calendar today = Calendar.getInstance();
-//
-//            DatePickerDialog dialog = new DatePickerDialog(requireContext(), (view1, year, month, day) -> {
-//                selectedCalendar.set(Calendar.YEAR, year);
-//                selectedCalendar.set(Calendar.MONTH, month);
-//                selectedCalendar.set(Calendar.DAY_OF_MONTH, day);
-//                selectedCalendar.set(Calendar.HOUR_OF_DAY, 23);
-//                selectedCalendar.set(Calendar.MINUTE, 59);
-//                selectedCalendar.set(Calendar.SECOND, 59);
-//                endDateSelected = true;
-//                endDateReminder.setText(day + "/" + (month + 1) + "/" + year);
-//            }, today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH)
-//            );
-//            dialog.getDatePicker().setMinDate(System.currentTimeMillis());
-//            dialog.show();
-//            styleDateDialogButtons(dialog);
-//        });
         endDateReminder.setOnClickListener(v ->
                 DatePickerHelper.show(requireContext(),
                         endDateSelected ? selectedCalendar : null, true, (y, m, d) -> {
@@ -382,7 +358,6 @@ public class MedicineReminderFragment extends Fragment {
     }
 
     private void saveReminder() {
-        // dipakai di callback Firestore: alarm tetap terjadwal walau user sudah keluar halaman
         final Context appContext = requireContext().getApplicationContext();
         if (targetUid == null){
             Toast.makeText(requireContext(), getString(R.string.pilih_consumer_dahulu), Toast.LENGTH_SHORT).show();
@@ -399,7 +374,6 @@ public class MedicineReminderFragment extends Fragment {
             btnSaveReminder.setEnabled(true);
             return;
         }
-        // izin bisa saja dimatikan saat halaman ini terbuka: jangan simpan jadwal tanpa alarm
         if (!SchedulePermission.ensure(requireContext())) {
             btnSaveReminder.setEnabled(true);
             return;
@@ -448,9 +422,7 @@ public class MedicineReminderFragment extends Fragment {
                                     startDate,
                                     endDate
                             );
-                            // result = scheduleId dari Firestore
                             long endMillis = (endDate != null) ? endDate.toDate().getTime() : 0;
-                            // alarm hanya di HP pemilik jadwal (HP consumer memasang sendiri lewat ScheduleSyncListener)
                             if (ownerUid.equals(user.getAuth_uid())) {
                                 AlarmSchedulerHelper.scheduleAll(
                                         appContext,
@@ -465,7 +437,7 @@ public class MedicineReminderFragment extends Fragment {
 
                             StockChecker.check(appContext, medicationId);
                             Toast.makeText(appContext, appContext.getString(R.string.reminder_berhasil_dibuat), Toast.LENGTH_SHORT).show();
-                            if (!isAdded()) return; // sudah keluar dari halaman
+                            if (!isAdded()) return;
                             clearFields();
                             LoadingOverlay.hide(MedicineReminderFragment.this);
                             btnSaveReminder.setEnabled(true);
@@ -513,7 +485,6 @@ public class MedicineReminderFragment extends Fragment {
             onResolved.onResolved(pickMedicine(typedName, ownerUid));
             return;
         }
-        // katalog belum termuat (mis. koneksi lambat): muat dulu, jangan sampai obat resmi tersimpan sebagai pribadi
         db.collection("medicine_catalog").get().addOnSuccessListener(query -> {
             for (DocumentSnapshot doc : query) {
                 String obat = doc.getString("nama_obat");
@@ -688,7 +659,6 @@ public class MedicineReminderFragment extends Fragment {
                 }
             }
         }
-        // dulu hanya ikon "!" tanpa kata-kata: sebutkan masalah pertama dengan jelas
         if (!valid) {
             CharSequence first = namaObat.getError() != null ? namaObat.getError()
                     : freqMinumObat.getError() != null ? freqMinumObat.getError() : stokObat.getError();
@@ -737,7 +707,6 @@ public class MedicineReminderFragment extends Fragment {
         notif.setIs_new_schedule(true);
         notif.setType(NotificationType.Medicine);
         final String actorName = user.getName() != null ? user.getName() : "";
-        // simpan KODE kalimat, bukan kalimat jadi -> ikut bahasa si pembaca
         if (isForSelf) {
             NotificationText.apply(notif, "jadwal_obat_baru_title",
                     "anda_menambahkan_jadwal_minum_obat_msg", medName);
@@ -751,7 +720,6 @@ public class MedicineReminderFragment extends Fragment {
             @Override public void onSuccess(Void result) { }
             @Override public void onFailure(Exception e) { }
         });
-        //aktivitas caregiver sendiri
         if (!isForSelf){
             Notification selfNotif = new Notification();
             selfNotif.setReceiver_uid(user.getAuth_uid());
@@ -762,7 +730,7 @@ public class MedicineReminderFragment extends Fragment {
             NotificationText.apply(selfNotif, "jadwal_obat_ditambahkan_title",
                     "anda_menambahkan_jadwal_obat_consumer_msg", medName);
             selfNotif.setTarget_role(UserRole.Caregiver.name());
-            selfNotif.setConsumer_uid(targetUid);   // notif ini tentang consumer mana
+            selfNotif.setConsumer_uid(targetUid);
             selfNotif.setIs_read(false);
             notificationRepo.createNotification(selfNotif, new RepoCallback<Void>() {
                 @Override
@@ -772,12 +740,11 @@ public class MedicineReminderFragment extends Fragment {
                 public void onFailure(Exception e) {}
             });
         }
-        //untuk caregiver
         String actourUid = user.getAuth_uid(),
                 targetUidFinal = targetUid;
         final String cgMsgKey = isForSelf
-                ? "consumer_menambahkan_jadwal_obat_msg"          // consumer menambah untuk dirinya
-                : "caregiver_lain_menambahkan_jadwal_obat_msg";   // caregiver lain yang menambah
+                ? "consumer_menambahkan_jadwal_obat_msg"
+                : "caregiver_lain_menambahkan_jadwal_obat_msg";
         new CareRelationshipRepo().getCaregiverForConsumer(targetUidFinal, new RepoCallback<List<CareRelationship>>() {
             @Override
             public void onSuccess(List<CareRelationship> result) {
@@ -792,7 +759,7 @@ public class MedicineReminderFragment extends Fragment {
                     cgNotif.setIs_new_schedule(true);
                     cgNotif.setType(NotificationType.Medicine);
                     cgNotif.setTarget_role(UserRole.Caregiver.name());
-                    cgNotif.setConsumer_uid(targetUidFinal);   // notif ini tentang consumer mana
+                    cgNotif.setConsumer_uid(targetUidFinal);
                     NotificationText.apply(cgNotif, "jadwal_obat_baru_title", cgMsgKey, actorName, medName);
                     cgNotif.setIs_read(false);
                     notificationRepo.createNotification(cgNotif, new RepoCallback<Void>() {
@@ -812,7 +779,6 @@ public class MedicineReminderFragment extends Fragment {
 
     /** Hanya warna tombol OK/Batal di dialog tanggal (desain kalender tetap bawaan). */
     private void styleDateDialogButtons(DatePickerDialog dialog) {
-        // biru di light mode, biru muda di dark mode
         int color = com.google.android.material.color.MaterialColors.getColor(
                 requireContext(), com.google.android.material.R.attr.colorSecondaryFixedDim, android.graphics.Color.BLUE);
         dialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(color);

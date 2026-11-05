@@ -17,10 +17,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public final class CaregiverMissedScanner {
     private static final long LOOKBACK_MS = 2L * 24 * 60 * 60 * 1000;
-    private static final long CAREGIVER_GRACE_MS = 60_000L;   // beri consumer 1 menit dulu
+    private static final long CAREGIVER_GRACE_MS = 60_000L;
     private CaregiverMissedScanner() {}
 
-    //Caregiver: cek semua consumer yang dirawat.
     public static void scan(Context context, String caregiverUid, Runnable onDone) {
         final Runnable done = onDone != null ? onDone : () -> { };
         final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -41,12 +40,10 @@ public final class CaregiverMissedScanner {
                 .addOnFailureListener(e -> done.run());
     }
 
-    //Consumer: cek jadwal milik sendiri (tanpa tenggang).
     public static void scanOwn(Context context, String uid, Runnable onDone) {
         SharedPreferences p = context.getSharedPreferences("notification_settings", Context.MODE_PRIVATE);
         Runnable done = onDone != null ? onDone : () -> { };
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        // obat diulang, bukan terlewat. Appointment tidak pernah diulang, jadi tetap diperiksa
         if (p.getBoolean("repeat_reminder", true)) { scanAppointments(context, db, uid, 0L, done); return; }
         scanUser(context, db, uid, 0L, done);
     }

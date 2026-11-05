@@ -20,7 +20,6 @@ import com.google.firebase.auth.FirebaseUser;
  */
 public class BootReceiver extends BroadcastReceiver {
 
-    // cukup lama untuk query Firestore selesai, tapi masih di bawah batas goAsync (~10 detik)
     private static final long FINISH_AFTER_MS = 9_000L;
 
     @Override
@@ -33,7 +32,7 @@ public class BootReceiver extends BroadcastReceiver {
                 && !AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED.equals(action)) return;
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) return;   // belum login: tidak ada alarm yang perlu dipasang
+        if (user == null) return;
 
         final PendingResult pendingResult = goAsync();
         AlarmSchedulerHelper.rescheduleAllActiveForUser(context.getApplicationContext(), user.getUid());

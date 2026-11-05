@@ -16,9 +16,8 @@ public class Appointment {
     private Timestamp created_at;
     private Timestamp updated_at;
     private Timestamp deleted_at;
-    private Timestamp snoozed_until; // waktu baru setelah di-snooze
+    private Timestamp snoozed_until;
 
-    //waktu yg ditampilkan (pake yg snooze kalau ad snooze)
     @com.google.firebase.firestore.Exclude
     public Timestamp getDisplayTime() {
         if (snoozed_until != null && appointment_at != null && snoozed_until.compareTo(appointment_at) > 0) {
@@ -82,8 +81,6 @@ public class Appointment {
         if (stored == LogStatus.DIKONSUMSI) {
             return stored;
         }
-        // tombol Tidak Hadir di alarm: langsung terlewat, walau 2 menitnya belum lewat.
-        // Jamnya masih di depan = data lama yang sudah dipindah jamnya, jadi tetap akan datang
         if (stored == LogStatus.TERLEWATKAN && appointment_at != null
                 && appointment_at.toDate().getTime() <= System.currentTimeMillis()) {
             return stored;

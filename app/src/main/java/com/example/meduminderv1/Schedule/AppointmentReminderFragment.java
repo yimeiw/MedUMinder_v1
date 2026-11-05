@@ -72,7 +72,6 @@ public class AppointmentReminderFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View viewF = inflater.inflate(R.layout.fragment_appointment_reminder, container, false);
 
         btnBack = viewF.findViewById(R.id.btnBack);
@@ -145,7 +144,6 @@ public class AppointmentReminderFragment extends Fragment {
         });
 
         btnSaveAppoint.setOnClickListener(v -> {
-            // izin bisa saja dimatikan saat halaman ini terbuka
             if (!SchedulePermission.ensure(requireContext())) return;
             btnSaveAppoint.setEnabled(false);
             saveAppointment();
@@ -186,7 +184,6 @@ public class AppointmentReminderFragment extends Fragment {
     }
 
     private void saveAppointment() {
-        // dipakai di callback Firestore: alarm tetap terjadwal walau user sudah keluar halaman
         final Context appContext = requireContext().getApplicationContext();
         if (targetUid == null){
             Toast.makeText(requireContext(), getString(R.string.pilih_consumer_dahulu), Toast.LENGTH_SHORT).show();
@@ -238,7 +235,6 @@ public class AppointmentReminderFragment extends Fragment {
         LoadingOverlay.show(AppointmentReminderFragment.this);
         db.collection("appointments").add(appointment).addOnSuccessListener(documentReference -> {
             boolean isForSelf = targetUid.equals(uid);
-            // nama orang yang menambahkan (consumer atau caregiver)
             User actor = SessionManager.getInstance().getUser();
             final String actorName = (actor != null && actor.getName() != null && !actor.getName().isEmpty())
                     ? actor.getName() : (isForSelf ? "Consumer" : "Caregiver");
@@ -266,20 +262,16 @@ public class AppointmentReminderFragment extends Fragment {
                 NotificationText.apply(selfNotif, "appointment_ditambahkan_title",
                         "anda_menambahkan_jadwal_appointment_consumer_msg", nameAppoint);
                 selfNotif.setTarget_role(UserRole.Caregiver.name());
-                selfNotif.setConsumer_uid(targetUid);   // notif ini tentang consumer mana
+                selfNotif.setConsumer_uid(targetUid);
                 selfNotif.setIs_read(false);
                 notificationRepo.createNotification(selfNotif, new RepoCallback<Void>() {
                     @Override public void onSuccess(Void result) { }
                     @Override public void onFailure(Exception e) { }
                 });
             }
-            // notif ke SEMUA caregiver consumer ini (kecuali yang menambahkan)
             notifyCaregiversAppointmentAdded(targetUid, uid, isForSelf, actorName,
                     nameAppoint, documentReference.getId());
 
-            // alarm hanya dipasang di HP pemilik jadwal. Kalau caregiver yang menambah,
-            // HP consumer memasangnya sendiri (ScheduleSyncListener / saat app dibuka).
-            // Appointment yang sudah lewat tetap langsung dicek "terlewat".
             long apptMillis = selectedCalendar.getTimeInMillis();
             if (isForSelf || apptMillis <= System.currentTimeMillis()) {
                 AppointmentAlertScheduler.scheduleAlerts(appContext, documentReference.getId(), nameAppoint, apptMillis);
@@ -294,7 +286,7 @@ public class AppointmentReminderFragment extends Fragment {
                 );
             }
 
-            if (!isAdded()) return; // sudah keluar dari halaman
+            if (!isAdded()) return;
             LoadingOverlay.hide(AppointmentReminderFragment.this);
             NavHostFragment.findNavController(this).navigateUp();
         }).addOnFailureListener(e -> {
@@ -307,12 +299,10 @@ public class AppointmentReminderFragment extends Fragment {
 
     private void notifyCaregiversAppointmentAdded(String consumerUid, String actorUid, boolean isForSelf,
                                                   String actorName, String nameAppoint, String appointmentId) {
-        // semua data sudah disiapkan di sini; callback di bawah TIDAK memakai getString()/isAdded(),
-        // jadi tetap jalan walaupun halaman sudah ditutup (navigateUp).
         final NotificationRepo repo = notificationRepo;
         final String msgKey = isForSelf
-                ? "x_menambahkan_jadwal_appointment_msg"                 // consumer menambah untuk dirinya
-                : "x_menambahkan_jadwal_appointment_consumer_anda_msg";  // caregiver lain yang menambah
+                ? "x_menambahkan_jadwal_appointment_msg"
+                : "x_menambahkan_jadwal_appointment_consumer_anda_msg";
 
         new CareRelationshipRepo().getCaregiverForConsumer(consumerUid, new RepoCallback<List<CareRelationship>>() {
             @Override
@@ -327,7 +317,7 @@ public class AppointmentReminderFragment extends Fragment {
                     cgNotif.setReference_id(appointmentId);
                     cgNotif.setType(NotificationType.Appointment);
                     cgNotif.setTarget_role(UserRole.Caregiver.name());
-                    cgNotif.setConsumer_uid(consumerUid);   // notif ini tentang consumer mana
+                    cgNotif.setConsumer_uid(consumerUid);
                     cgNotif.setIs_read(false);
                     NotificationText.apply(cgNotif, "jadwal_appointment_baru_title", msgKey, actorName, nameAppoint);
                     repo.createNotification(cgNotif, new RepoCallback<Void>() {
@@ -342,7 +332,6 @@ public class AppointmentReminderFragment extends Fragment {
     }
 
     private void styleDateDialogButtons(DatePickerDialog dialog) {
-        // biru di light mode, biru muda di dark mode
         int color = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorSecondaryFixedDim,
                 android.graphics.Color.BLUE);
         dialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(color);

@@ -44,8 +44,6 @@ public class LanguageFragment extends Fragment {
     }
 
     private String resolveCurrentLanguage() {
-        // dulu memakai tag mentah ("en-US", "it"...) -> tidak cocok dengan "en" dan
-        // halaman ini salah menampilkan bahasa aktif. Sekarang selalu en / id / zh.
         return AppLanguage.current(requireContext());
     }
 

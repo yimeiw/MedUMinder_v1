@@ -85,11 +85,10 @@ public class EditMedicineFragment extends Fragment {
     NotificationRepo notificationRepo;
     CareRelationshipRepo careRelationshipRepo;
     private String targetUid;
-    private long originalEndMillis = 0;   // 0 = tanpa end date
+    private long originalEndMillis = 0;
     private String originalStock = "";
     private String medType = "";
     private long occurrenceAt = 0L, effectiveAt = 0L;
-    // isi ulang: yang boleh diubah cuma stok
     private boolean refillMode = false;
     private View cardDate;
     private TextView tvEndDateHint;
@@ -140,7 +139,6 @@ public class EditMedicineFragment extends Fragment {
             effectiveAt  = bundle.getLong("effective_at", 0L);
         }
 
-        // isi ulang: dibuka dengan tanda refill_mode, atau dari pengingat stok (hanya medication_id)
         refillMode = (bundle != null && bundle.getBoolean("refill_mode", false))
                 || ((scheduleId == null || scheduleId.isEmpty())
                     && medicationIdArg != null && !medicationIdArg.isEmpty());
@@ -158,17 +156,15 @@ public class EditMedicineFragment extends Fragment {
         }
 
         cardDate = view.findViewById(R.id.cardDate);
-        if (!refillMode) { // isi ulang: tanggal selesai tidak bisa diubah
+        if (!refillMode) {
             cardDate.setOnClickListener(v ->  showEndDatePicker());
             endDateReminder.setOnClickListener(v -> showEndDatePicker());
         }
 
         btnUpdateReminder.setOnClickListener(v -> updateReminder());
-        // nama obat & frekuensi selalu terkunci (Ubah maupun Isi Ulang), gaya dari satu tempat
         DisabledField.apply(namaObat);
         DisabledField.apply(freqMinumObat);
         if (refillMode) {
-            // isi ulang: kolom tetap terlihat terkunci, tanpa pesan "tidak dapat diubah" (gone = tanpa celah)
             view.findViewById(R.id.namaObatLockedHint).setVisibility(View.GONE);
             view.findViewById(R.id.freqLockedHint).setVisibility(View.GONE);
         }
@@ -201,7 +197,7 @@ public class EditMedicineFragment extends Fragment {
                         return;
                     }
                     scheduleId = querySnapshot.getDocuments().get(0).getId();
-                    loadExistingData(); // lanjut pakai alur yang sudah ada
+                    loadExistingData();
                 })
                 .addOnFailureListener(e -> {
                     LoadingOverlay.hide(EditMedicineFragment.this);
@@ -259,14 +255,13 @@ public class EditMedicineFragment extends Fragment {
         return String.format(Locale.US, "%02d:%02d", z.getHour(), z.getMinute());
     }
 
-    // jam yang sedang di-snooze tampil sebagai jam terbaru di form edit
     private void applySnoozedFromLogs(ZoneId zone) {
         if (scheduleId == null) return;
         db.collection("medication_logs").whereEqualTo("medication_schedules_id", scheduleId).get()
                 .addOnSuccessListener(q -> {
                     if (!isAdded()) return;
                     long now = System.currentTimeMillis();
-                    Map<String, Long> best = new HashMap<>();   // jam asli -> snooze terbaru
+                    Map<String, Long> best = new HashMap<>();
                     for (DocumentSnapshot d : q.getDocuments()) {
                         if (!"akan datang".equals(d.getString("status"))) continue;
                         Timestamp at = d.getTimestamp("scheduled_at");
@@ -344,17 +339,14 @@ public class EditMedicineFragment extends Fragment {
                     db.collection("medications").document(medicationId)
                             .update(medUpdate)
                             .addOnSuccessListener(unused2 -> {
-                                // alarm tetap dijadwal ulang walau user sudah keluar halaman
                                 AlarmSchedulerHelper.cancelAll(appContext, scheduleId, originalTimesOfDay);
                                 AlarmSchedulerHelper.cancelSnooze(appContext, scheduleId);
 
                                 long endMillis = (endDate != null) ? endDate.toDate().getTime() : 0;
-                                // alarm hanya di HP pemilik jadwal (HP consumer memperbarui sendiri lewat ScheduleSyncListener)
                                 if (user.getAuth_uid().equals(targetUid)) {
                                     AlarmSchedulerHelper.scheduleAll(appContext, scheduleId, medName, times, endMillis);
                                 }
                                 new LogGenerator().replaceFutureLogs(targetUid, scheduleId, times, now, endDate);
-                                // stok/frekuensi bisa berubah (mis. habis isi ulang) -> cek ulang pengingat isi ulang
                                 StockChecker.check(appContext, medicationId);
 
                                 LoadingOverlay.hide(EditMedicineFragment.this);
@@ -403,7 +395,7 @@ public class EditMedicineFragment extends Fragment {
         db.collection("medications").document(medId)
                 .update("stock.stok_obat", value, "updated_at", Timestamp.now())
                 .addOnSuccessListener(unused -> {
-                    StockChecker.checkAfterRefill(appContext, medId);   // cukup: penanda di-reset, masih kurang: diingatkan lagi
+                    StockChecker.checkAfterRefill(appContext, medId);
                     LoadingOverlay.hide(EditMedicineFragment.this);
                     if (notificationId != null && !notificationId.isEmpty()) {
                         db.collection("notifications").document(notificationId)
@@ -469,7 +461,6 @@ public class EditMedicineFragment extends Fragment {
             }
         });
 
-        // Notifikasi ke caregiver lain (selain yang mengedit)
         careRelationshipRepo.getCaregiverForConsumer(targetUid, new RepoCallback<List<CareRelationship>>() {
             @Override
             public void onSuccess(List<CareRelationship> relations) {
@@ -528,7 +519,6 @@ public class EditMedicineFragment extends Fragment {
         String stok = stokObat.getText().toString().trim();
 
         if (isLiquid()) {
-            // obat cair: tidak ada stok yang perlu dicek
         } else if (stok.isEmpty()) {
             stokObat.setError(getString(R.string.stok_obat_wajib_diisi));
             valid = false;
@@ -573,11 +563,10 @@ public class EditMedicineFragment extends Fragment {
         medicationRepo.getMedicationById(medicationId, new RepoCallback<Medication>() {
             @Override
             public void onSuccess(Medication medication) {
-                LoadingOverlay.hide(EditMedicineFragment.this); // data utama sudah tampil
+                LoadingOverlay.hide(EditMedicineFragment.this);
                 applyRefillLock();
                 if (medication == null) return;
                 medType = medication.getMed_type() != null ? medication.getMed_type() : "";
-                // obat cair tidak punya stok -> kolom stok disembunyikan
                 ((View) stokObat.getParent()).setVisibility(isLiquid() ? View.GONE : View.VISIBLE);
 
                 if (medication.getStock() != null && medication.getStock().get("stok_obat") != null) {
@@ -648,7 +637,7 @@ public class EditMedicineFragment extends Fragment {
         rootView.findViewById(R.id.tvRefillHint).setVisibility(View.VISIBLE);
         freqMinumObat.setOnClickListener(null);
         endDateReminder.setOnClickListener(null);
-        DisabledField.apply(cardDate); // ikut mengunci tanggal di dalamnya (tidak pudar dua kali)
+        DisabledField.apply(cardDate);
         for (TextView tv : timeViews) {
             tv.setOnClickListener(null);
             DisabledField.apply(tv);

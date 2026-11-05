@@ -71,7 +71,7 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
         if (namaObatCache.containsKey(medication_schedules_id)){
             holder.namaObatLog.setText(namaObatCache.get(medication_schedules_id));
         } else {
-            holder.namaObatLog.setText(""); // nama menyusul setelah dimuat (tanpa tulisan "Loading...")
+            holder.namaObatLog.setText("");
         }
 
         if (stockCache.containsKey(medication_schedules_id)) {
@@ -95,7 +95,6 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
         holder.currStatus.setText(statusLog.displayLabel(context, false));
         if (medicationLog.getScheduled_at() != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("EEEE, dd MMM - HH:mm", Locale.getDefault());
-            // tampilkan waktu setelah snooze (kalau ada)
             String dateTimeText = sdf.format(medicationLog.getEffectiveTime().toDate());
             holder.scheduledAt.setText(dateTimeText);
         }
@@ -137,22 +136,21 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
     private void applyStatusColor(ViewHolder holder, LogStatus status) {
         int colorAttr;
 
-        //tentukan attr theme(warna) berdasarkan status
         if (status == null) {
-            colorAttr = com.google.android.material.R.attr.colorPrimaryFixed; //putih
+            colorAttr = com.google.android.material.R.attr.colorPrimaryFixed;
         } else {
             switch (status) {
                 case DIKONSUMSI:
-                    colorAttr = com.google.android.material.R.attr.colorTertiaryFixed; //hijau
+                    colorAttr = com.google.android.material.R.attr.colorTertiaryFixed;
                     break;
                 case TERLEWATKAN:
-                    colorAttr = com.google.android.material.R.attr.colorTertiaryFixedDim; //merah
+                    colorAttr = com.google.android.material.R.attr.colorTertiaryFixedDim;
                     break;
                 case AKAN_DATANG:
-                    colorAttr = com.google.android.material.R.attr.colorSecondaryFixed; //abu
+                    colorAttr = com.google.android.material.R.attr.colorSecondaryFixed;
                     break;
                 default:
-                    colorAttr = com.google.android.material.R.attr.colorPrimaryFixed; //putih
+                    colorAttr = com.google.android.material.R.attr.colorPrimaryFixed;
                     break;
             }
         }
@@ -163,7 +161,6 @@ public class MedicationLogAdapter extends RecyclerView.Adapter<MedicationLogAdap
         holder.tvWaktu.setTextColor(getColorFromAttr(context, com.google.android.material.R.attr.colorOnSurface));
         holder.scheduledAt.setTextColor(getColorFromAttr(context, com.google.android.material.R.attr.colorOnSurface));
 
-        //ambil warna asli dari attr theme
         int color = getColorFromAttr(context, colorAttr);
 
         holder.currStatus.setBackgroundTintList(ColorStateList.valueOf(color));

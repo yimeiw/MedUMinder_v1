@@ -49,7 +49,6 @@ public class UserRepository {
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     Log.d("USER_REPO", "Result size = " + queryDocumentSnapshots.size());
                     if (queryDocumentSnapshots.isEmpty()){
-                        //user belum terdaftar tapi bukan error
                         callback.onSuccess(null);
                         return;
                      } User user = queryDocumentSnapshots.getDocuments().get(0).toObject(User.class);
@@ -76,7 +75,6 @@ public class UserRepository {
                 }).addOnFailureListener(callback::onFailure);
     }
 
-    //untuk role
     public void updateRole(String uid, UserRole role, RepoCallback<Void> callback){
         Map<String, Object> update = new HashMap<>();
         update.put("current_role", role.name());

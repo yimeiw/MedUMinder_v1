@@ -30,7 +30,6 @@ public class MedicationRepo {
     public interface MedNameCallback{
         void onResolved(String name);
     }
-    //med
     public void saveMedication(Medication medication, RepoCallback<String> callback){
         DocumentReference doc = db.collection("medications").document();
         doc.set(medication).addOnSuccessListener(unused -> callback.onSuccess(doc.getId()))
@@ -69,7 +68,6 @@ public class MedicationRepo {
                     callback.onSuccess(schedule);
                 }).addOnFailureListener(callback::onFailure);
     }
-    //med schedule
     public void saveMedSchedule(MedicationSchedules schedules, RepoCallback<String> callback){
         DocumentReference doc = db.collection("medication_schedules").document();
         doc.set(schedules).addOnSuccessListener(unused -> callback.onSuccess(doc.getId()))
@@ -112,7 +110,6 @@ public class MedicationRepo {
                             .document(medicationId)
                             .update("stock.stok_obat", updatedStock)
                             .addOnSuccessListener(unused -> {
-                                // pengingat isi ulang (hampir habis / habis) dicek di StockChecker
                                 StockChecker.check(context, medicationId);
                                 callback.onSuccess(null);
                             }).addOnFailureListener(callback::onFailure);

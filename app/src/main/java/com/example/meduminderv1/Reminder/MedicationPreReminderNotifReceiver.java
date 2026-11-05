@@ -17,7 +17,6 @@ import java.util.Map;
 public class MedicationPreReminderNotifReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-        // alarm milik akun lain (atau belum ada yang login) di HP ini: abaikan
         if (!AlarmOwner.allows(intent)) return;
         String scheduleId = intent.getStringExtra("schedule_id");
         String namaObat = intent.getStringExtra("nama_obat");

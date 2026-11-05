@@ -98,18 +98,6 @@ public class EditAppointmentFragment extends Fragment {
             loadExistingData();
         }
 
-//        tvDate.setOnClickListener(v -> {
-//            DatePickerDialog dialog = new DatePickerDialog(requireContext(), (dp, year, month, day) -> {
-//                selectedCalendar.set(Calendar.YEAR, year);
-//                selectedCalendar.set(Calendar.MONTH, month);
-//                selectedCalendar.set(Calendar.DAY_OF_MONTH, day);
-//                tvDate.setText(day + "/" + (month + 1) + "/" + year);
-//                isDatePicked = true;
-//            }, selectedCalendar.get(Calendar.YEAR), selectedCalendar.get(Calendar.MONTH), selectedCalendar.get(Calendar.DAY_OF_MONTH));
-//            dialog.getDatePicker().setMinDate(System.currentTimeMillis());
-//            dialog.show();
-//            styleDateDialogButtons(dialog);
-//        });
         tvDate.setOnClickListener(v ->
                 DatePickerHelper.show(requireContext(), selectedCalendar, true, (y, m, d) -> {
                     selectedCalendar.set(Calendar.YEAR, y);
@@ -216,12 +204,10 @@ public class EditAppointmentFragment extends Fragment {
                 )
                 .addOnSuccessListener(unused -> {
                     LoadingOverlay.hide(EditAppointmentFragment.this);
-                    // alarm tetap dijadwal ulang walau user sudah keluar halaman
                     AlarmSchedulerHelper.cancelAppointment(appContext, appointmentId);
                     AlarmSchedulerHelper.cancelSnooze(appContext, appointmentId);
                     AppointmentAlertScheduler.cancelAlerts(appContext, appointmentId);
 
-                    // alarm hanya di HP pemilik jadwal (HP consumer memperbarui sendiri lewat ScheduleSyncListener)
                     boolean ownSchedule = uid.equals(targetUid);
                     long apptMillis = appointmentAt.toDate().getTime();
                     if (ownSchedule) {
@@ -269,7 +255,6 @@ public class EditAppointmentFragment extends Fragment {
             notifToConsumer.setSnapshot_name(title);
             notifToConsumer.setSnapshot_at(appointmentAt);
             notifToConsumer.setTarget_role(UserRole.Consumer.name());
-            // simpan id appointment, supaya halaman detail tahu appointment mana yang diperbarui
             notifToConsumer.setReference_id(appointmentId);
             notifToConsumer.setIs_read(false);
             notificationRepo.createNotification(notifToConsumer, new RepoCallback<Void>() {
@@ -316,7 +301,6 @@ public class EditAppointmentFragment extends Fragment {
 
     /** Hanya warna tombol OK/Batal di dialog tanggal (desain kalender tetap bawaan). */
     private void styleDateDialogButtons(DatePickerDialog dialog) {
-        // biru di light mode, biru muda di dark mode
         int color = com.google.android.material.color.MaterialColors.getColor(
                 requireContext(), com.google.android.material.R.attr.colorSecondaryFixedDim, android.graphics.Color.BLUE);
         dialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(color);

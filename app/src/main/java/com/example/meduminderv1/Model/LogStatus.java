@@ -23,21 +23,6 @@ public enum LogStatus {
     public static LogStatus fromRaw(String value) {
         if (value == null) return UNKNOWN;
 
-        // sebelumnya cuma trim().toLowerCase() lalu dicocokkan ke string
-        // ber-spasi ("akan datang"). Tapi beberapa tempat di app (MainActivity,
-        // LogFragment.navigateToReminder) ngirim value.name() dari enum ini
-        // sendiri, misalnya "AKAN_DATANG" — hasil toLowerCase()-nya jadi
-        // "akan_datang" (underscore), yang TIDAK match "akan datang" (spasi),
-        // sehingga selalu jatuh ke default -> UNKNOWN. Ini bikin status di
-        // ReminderFragment kadang keliatan kosong padahal harusnya "Akan Datang".
-        // Normalisasi underscore -> spasi di sini biar kedua bentuk sama-sama
-        // kebaca dengan benar, tanpa perlu ubah semua caller satu-satu.
-        //
-        // CATATAN: nilai "akan datang" / "dikonsumsi" / "terlewatkan" di
-        // sini itu nilai INTERNAL (disimpan di database & dipakai untuk
-        // membandingkan status), BUKAN teks yang dilihat user — jadi sengaja
-        // tetap Bahasa Indonesia dan tidak perlu ikut berubah saat bahasa
-        // aplikasi diganti. Yang perlu ikut berubah bahasa itu displayLabel().
         String normalized = value.trim().toLowerCase(java.util.Locale.ROOT).replace('_', ' ');
 
         switch (normalized) {

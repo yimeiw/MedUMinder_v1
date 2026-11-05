@@ -35,7 +35,7 @@ public class AlarmRingingService extends Service {
     private int originalAlarmVolume = -1;
     private static final long RING_LIMIT_MS = 3 * 60 * 1000L;
     private final android.os.Handler ringHandler = new android.os.Handler(android.os.Looper.getMainLooper());
-    private static final float ALARM_VOLUME_RATIO = 0.4f;   // hanya batas minimum biar tetap terdengar alarmnya
+    private static final float ALARM_VOLUME_RATIO = 0.4f;
     private final Runnable stopRunnable = () -> {
         cancelWaitingNotifications();
         stopForeground(Service.STOP_FOREGROUND_REMOVE);
@@ -86,9 +86,8 @@ public class AlarmRingingService extends Service {
         if (removed == null) return;
         int removedId = safeId(scheduleId);
         if (removedId == foregroundId) {
-            // notifikasi utama milik jadwal yang sudah selesai -> pindahkan ke jadwal yang masih menunggu
             Waiting next = null;
-            for (Waiting w : waiting.values()) next = w;   // yang paling baru
+            for (Waiting w : waiting.values()) next = w;
             foregroundId = safeId(next.scheduleId);
             startForeground(foregroundId,
                     buildNotification(next.scheduleId, next.namaObat, next.scheduledAt, next.isAppointment));
@@ -119,11 +118,8 @@ public class AlarmRingingService extends Service {
 
         String namaObat = intent.getStringExtra("nama_obat");
 
-        // Ambil ringtone dari Intent terlebih dahulu.
         String soundUri = intent.getStringExtra("sound_uri");
 
-        // Kalau tidak dikirim dari Intent, ambil ringtone
-        // yang disimpan di notification_settings.
         SharedPreferences pref = getSharedPreferences(
                 "notification_settings", MODE_PRIVATE
         );
@@ -136,7 +132,6 @@ public class AlarmRingingService extends Service {
         String type = intent.getStringExtra("type");
         boolean isAppointment = "appointment".equals(type);
 
-        // jadwal lain yang sudah berbunyi tetap ada di daftar (notifikasinya tetap tampil)
         waiting.remove(scheduleId);
         waiting.put(scheduleId, new Waiting(scheduleId, namaObat, scheduledAt, isAppointment));
         foregroundId = safeId(scheduleId);
@@ -151,8 +146,6 @@ public class AlarmRingingService extends Service {
     }
 
     private void startLoopingSound(String soundUriExtra) {
-        // kalau alarm baru datang saat alarm lama masih bunyi, matikan pemutar lama dulu.
-        // Sebelumnya pemutar lama ditinggal -> bunyinya tidak bisa dimatikan / dobel.
         if (mediaPlayer != null) {
             try {
                 if (mediaPlayer.isPlaying()) mediaPlayer.stop();
@@ -292,7 +285,7 @@ public class AlarmRingingService extends Service {
                     .setContentIntent(contentPending)
                     .addAction(0, lang.getString(R.string.alarm_btn_dihadiri), attendedPending)
                     .addAction(0, lang.getString(R.string.alarm_btn_tidak_dihadiri), missedPending);
-        } else { //med
+        } else {
             Intent takenIntent = new Intent(this, AlarmActionReceiver.class)
                             .setAction("ACTION_TAKEN")
                             .putExtra("schedule_id", scheduleId)

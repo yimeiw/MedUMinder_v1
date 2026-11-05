@@ -31,10 +31,10 @@ public class Notification {
     private String title_key;
     private String message_key;
     private List<String> message_args;
-    private List<String> change_items;      // contoh: "times|08:00, 12:00", "stock|30", "end|25/09/2026", "end_removed"
+    private List<String> change_items;
     private Integer snapshot_frequency;
     private List<String> snapshot_times;
-    private Timestamp snapshot_at;          // untuk appointment
+    private Timestamp snapshot_at;
 
     public String getTitle_key() { return title_key; }
     public void setTitle_key(String v) { this.title_key = v; }

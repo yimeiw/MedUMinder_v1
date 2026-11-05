@@ -216,10 +216,6 @@ public class AlarmSchedulerHelper {
         scheduleSingleAlarm(context, appointmentId, appointmentId, title, triggerMillis, triggerMillis, "0", "appointment");
     }
 
-    // dulu cancelAll cuma cancel alarm UTAMA (MedicationAlarmReceiver),
-    // pre-reminder & missed-check-nya nggak ikut dibatalin -> nyisa alarm liar
-    // tiap kali user edit jadwal. Sekarang minta list JAM LAMA (bukan cuma count),
-    // dan cancel ketiga jenis alarm per jam lama itu lewat cancelOccurrence().
     public static void cancelAll(Context context, String scheduleId, List<String> oldTimesOfDay) {
         if (oldTimesOfDay == null) return;
         for (String oldTime : oldTimesOfDay) {
@@ -276,7 +272,7 @@ public class AlarmSchedulerHelper {
         intent.putExtra("schedule_id", scheduleId);
         intent.putExtra("nama_obat", namaObat);
         AlarmOwner.stamp(intent);
-        intent.putExtra("scheduled_at", originalScheduledAt); // tetap jam asli -> id log tetap sama
+        intent.putExtra("scheduled_at", originalScheduledAt);
         PendingIntent pi = PendingIntent.getBroadcast(context, missedRequestCode(scheduleId, occurrenceKey, originalScheduledAt), intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, snoozeUntilMillis + MED_MISSED_DELAY_MS, pi);
@@ -285,7 +281,7 @@ public class AlarmSchedulerHelper {
     public static void applyAppointmentSnooze(Context context, String appointmentId, String title,
                                               long originalAt, long snoozeUntilMillis) {
         if (originalAt > System.currentTimeMillis()) {
-            cancelAppointment(context, appointmentId); // jangan bunyi di jam lama
+            cancelAppointment(context, appointmentId);
         }
         AppointmentAlertScheduler.rescheduleMissed(context, appointmentId, title, snoozeUntilMillis);
     }
@@ -310,19 +306,9 @@ public class AlarmSchedulerHelper {
         }
     }
 
-    // dulu query cuma filter is_active == true, tanpa peduli end_date.
-    // Akibatnya schedule yang end_date-nya sudah lewat (tapi is_active masih
-    // true karena belum ada job yang mematikannya) tetap ikut ke-reschedule
-    // tiap kali fungsi ini dipanggil (mis. saat permission exact alarm baru
-    // di-grant) -> alarm yang harusnya sudah "mati" nongol lagi.
-    //
-    // Firestore compound query tidak bisa langsung mengekspresikan
-    // "end_date == null OR end_date > now" dalam satu query, jadi di sini
-    // dipecah jadi 2 query terpisah lalu digabung.
     public static void rescheduleAllActiveForUser(Context context, String uid) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // Query 1: schedule tanpa end_date (masih berlaku selamanya).
         db.collection("medication_schedules")
                 .whereEqualTo("users_id", uid)
                 .whereEqualTo("is_active", true)
@@ -331,7 +317,6 @@ public class AlarmSchedulerHelper {
                 .addOnSuccessListener(query -> rescheduleDocs(context, query.getDocuments()))
                 .addOnFailureListener(e -> Log.e("ALARM", "Gagal ambil schedule tanpa end_date untuk uid=" + uid, e));
 
-        // Query 2: schedule dengan end_date yang masih di masa depan.
         db.collection("medication_schedules")
                 .whereEqualTo("users_id", uid)
                 .whereEqualTo("is_active", true)
@@ -340,14 +325,7 @@ public class AlarmSchedulerHelper {
                 .addOnSuccessListener(query -> rescheduleDocs(context, query.getDocuments()))
                 .addOnFailureListener(e -> Log.e("ALARM", "Gagal ambil schedule aktif untuk uid=" + uid, e));
 
-        // Appointment yang akan datang juga dipasang ulang (dulu hilang setelah HP restart)
         rescheduleUpcomingAppointments(context, uid);
-
-        // Catatan: schedule dengan is_active == true TAPI end_date sudah lewat
-        // sengaja TIDAK diambil di sini -> tidak akan direschedule lagi.
-        // Idealnya ada job terpisah (mis. dipanggil dari MedicationMissedNotifReceiver
-        // atau worker harian) yang men-set is_active = false begitu end_date lewat,
-        // supaya data di Firestore juga konsisten (bukan cuma alarm-nya yang berhenti).
     }
 
     private static void rescheduleUpcomingAppointments(Context context, String uid) {
@@ -360,7 +338,6 @@ public class AlarmSchedulerHelper {
                         if (doc.get("deleted_at") != null) continue;
                         String status = doc.getString("status");
                         if ("dihadiri".equals(status) || "dibatalkan".equals(status)) continue;
-                        // yang sedang ditunda tidak disentuh: alarm tundanya sudah dipasang sendiri
                         if (doc.get("snoozed_until") != null) continue;
                         Timestamp at = doc.getTimestamp("appointment_at");
                         if (at == null) continue;
@@ -385,7 +362,6 @@ public class AlarmSchedulerHelper {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         String medId = schedules.getMedication_id();
         if (medId == null || medId.isEmpty()) {
-            // jadwal tanpa data obat: alarm tetap dijadwalkan dengan nama default
             scheduleAll(context, scheduleId, "Obat", schedules);
             return;
         }
@@ -406,10 +382,6 @@ public class AlarmSchedulerHelper {
         });
     }
 
-    // Dipertahankan supaya file lain (misalnya BootReceiver) yang masih
-    // memanggil nama method ini tidak error. Cuma "meneruskan" ke method
-    // resolveNamaObatThenSchedule yang sudah ada, jadi tetap ikut jalur
-    // penjadwalan yang baru (berbasis occurrenceKey/jam, bukan index).
     public static void resolveAndScheduleForBoot(Context context, String scheduleId, MedicationSchedules schedules) {
         resolveNamaObatThenSchedule(context, scheduleId, schedules);
     }
@@ -454,7 +426,6 @@ public class AlarmSchedulerHelper {
         alarmManager.cancel(PendingIntent.getBroadcast(context, preRequestCode, preIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
 
-        // cek "terlewat" sekarang punya kode per tanggal -> batalkan untuk kemarin s/d 8 hari ke depan
         Intent missedIntent = new Intent(context, MedicationMissedNotifReceiver.class);
         long day = 24L * 60 * 60 * 1000;
         for (int i = -1; i <= 8; i++) {
@@ -462,17 +433,10 @@ public class AlarmSchedulerHelper {
             alarmManager.cancel(PendingIntent.getBroadcast(context, missedRequestCode(scheduleId, occurrenceKey, d), missedIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
         }
-        // kode lama (sebelum perbaikan) juga dibatalkan supaya tidak ada sisa alarm
         alarmManager.cancel(PendingIntent.getBroadcast(context, (scheduleId + "_missed_" + occurrenceKey).hashCode(), missedIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
     }
 
-    // pengganti rescheduleNextDay lama yang berbasis occurrenceIndex.
-    // Dipanggil MedicationAlarmReceiver setelah alarm utama berbunyi, supaya
-    // alarm untuk jam yang sama terpasang lagi besok. Sengaja mengambil ULANG
-    // data schedule dari Firestore (bukan percaya ke data lama yang dititipkan
-    // di intent alarm), supaya kalau user baru mengedit/menonaktifkan jadwal,
-    // reschedule ini otomatis ikut yang terbaru.
     public static void rescheduleNextDay(Context context, String scheduleId, String namaObat, long previousTriggerMillis) {
         if (AlarmOwner.currentUid() == null) return;
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -480,7 +444,6 @@ public class AlarmSchedulerHelper {
                 .addOnSuccessListener(doc -> {
                     MedicationSchedules schedule = doc.toObject(MedicationSchedules.class);
                     if (schedule == null) return;
-                    // jadwal akun lain (HP dipakai bergantian): jangan dipasang lagi untuk besok
                     if (!AlarmOwner.isCurrentUser(schedule.getUsers_id())) return;
                     if (schedule.getIs_active() == null || !schedule.getIs_active()) {
                         Log.d("ALARM", "rescheduleNextDay dilewati, jadwal sudah tidak aktif. scheduleId=" + scheduleId);

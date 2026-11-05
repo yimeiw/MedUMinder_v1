@@ -74,13 +74,12 @@ public class CaregiverHomeFragment extends Fragment {
     TextView tvGreeting, tvtitleCard, tvTime, tvDay, tvStokNext, tvAdherenceDesc,
             tvTotalDikonsumsi, tvTotalTerlewat, tvTotalAkanDatang, emptyTodaySchedule, btnLihatSemua,
             labelListConsumer;
-    TextView tvNotifBadge;                       // angka notif belum dibaca (per consumer)
-    private ListenerRegistration unreadListener; // realtime jumlah notif
+    TextView tvNotifBadge;
+    private ListenerRegistration unreadListener;
     DrawerLayout drawerLayout;
     ImageButton btnSideNav, btnNotif;
     LinearLayout haveSchedule, noSchedule,  groupGeneralMenu, navRiwayat, navStatistik;
     RecyclerView rvTodaySchedule, rvDrawerConsumer;
-    // spinner hanya saat muatan pertama halaman ini
     private com.example.meduminderv1.Util.SectionLoader nextLoader, todayLoader;
     DrawerConsumerAdapter drawerConsumerAdapter;
     MaterialButton btnRemindConsumer;
@@ -101,7 +100,8 @@ public class CaregiverHomeFragment extends Fragment {
     private ListenerRegistration nextScheduleListener;
     private ListenerRegistration appointmentsListener;
     private com.google.firebase.firestore.QuerySnapshot lastAppointments;
-    private ListenerRegistration invitationListener; // popup undangan realtime
+    private ListenerRegistration invitationListener;
+    private ListenerRegistration scheduleChangeListener;
     private Timestamp nextScheduleScheduledAt;
     String targetUid;
     private TodayScheduleLoader todayScheduleLoader;
@@ -118,7 +118,6 @@ public class CaregiverHomeFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_caregiver_home, container, false);
 
         tvGreeting = view.findViewById(R.id.greeting);
@@ -177,7 +176,6 @@ public class CaregiverHomeFragment extends Fragment {
                 view.findViewById(R.id.nextLoading), haveSchedule, noSchedule);
         todayLoader = new com.example.meduminderv1.Util.SectionLoader(
                 view.findViewById(R.id.todayLoading), rvTodaySchedule, emptyTodaySchedule, btnLihatSemua);
-        // data baru dimuat setelah daftar consumer siap -> spinner dari awal
         nextLoader.startFirstLoad(this::showNextError);
         todayLoader.startFirstLoad(this::showTodayError);
         btnLihatSemua.setOnClickListener(v -> {
@@ -193,7 +191,6 @@ public class CaregiverHomeFragment extends Fragment {
         consumerPicker = new ConsumerPickerHelper( pickerRoot, requireContext(), uid -> {
             if (uid == null){
                 pickerRoot.setOnClickListener(v ->  NavHostFragment.findNavController(this).navigate(R.id.invitationFragment));
-                // belum punya consumer: tidak ada yang dimuat -> tampilkan keadaan kosong biasa
                 listenNextAppointment(null);
                 todayLoader.done();
                 showTodayEmpty();
@@ -222,7 +219,7 @@ public class CaregiverHomeFragment extends Fragment {
         } listenNextAppointment(uid);
         loadTodaySchedule(uid);
         loadAdherenceAndStats(uid);
-        checkUnreadNotif();   // ganti consumer -> angka notif ikut ganti
+        checkUnreadNotif();
     }
 
     private void loadDrawerConsumerList() {
@@ -313,13 +310,10 @@ public class CaregiverHomeFragment extends Fragment {
             btnRemindConsumer.setOnClickListener(null);
             return;
         } Timestamp now = Timestamp.now();
-        // ambil juga jadwal yang lewat sedikit (maks 6 jam) karena bisa jd lg di-snooze
         Timestamp windowStart = new Timestamp(new Date(now.toDate().getTime() - 6 * 60 * 60 * 1000L));
         nextScheduleListener = db.collection("medication_logs").whereEqualTo("users_id", consumerUid)
                 .whereGreaterThanOrEqualTo("scheduled_at", windowStart).orderBy("scheduled_at").addSnapshotListener((query, error) -> {
-                    //fragment sdh tdk attached
                     if (!isAdded()) return;
-                    //query error
                     if (error != null){
                         Log.e("NEXT_SCHEDULE", "Gagal mengambil jadwal berikutnya", error);
                         if (nextLoader.isLoading()) {
@@ -337,7 +331,6 @@ public class CaregiverHomeFragment extends Fragment {
                         return;
                     } nextLoader.done();
                     MedicationLog targetLog = null;
-                    //cari schedule future pertama yg bnr bnr akan datang
                     long nowMs = System.currentTimeMillis();
                     for (DocumentSnapshot doc : query.getDocuments()){
                         MedicationLog log = doc.toObject(MedicationLog.class);
@@ -357,7 +350,7 @@ public class CaregiverHomeFragment extends Fragment {
                             || appointment.getDisplayTime().compareTo(targetLog.getEffectiveTime()) <= 0)) {
                         showNextAppointment(appointment);
                         return;
-                    } if (targetLog == null){ //tidak ada schedule yang valid
+                    } if (targetLog == null){
                         if (!isAdded()) return;
                         haveSchedule.setVisibility(View.GONE);
                         noSchedule.setVisibility(View.VISIBLE);
@@ -366,7 +359,7 @@ public class CaregiverHomeFragment extends Fragment {
                         nextScheduleMedName = null;
                         btnRemindConsumer.setOnClickListener(null);
                         return;
-                    } Timestamp scheduledAt = targetLog.getScheduled_at(); //pastikan scheduled_at tidak null
+                    } Timestamp scheduledAt = targetLog.getScheduled_at();
                     if (scheduledAt == null){
                         if (!isAdded()) return;
                         haveSchedule.setVisibility(View.GONE);
@@ -387,7 +380,6 @@ public class CaregiverHomeFragment extends Fragment {
                     tvDay.setText(formatDayLabel(scheduleDate));
                     tvTime.setText(com.example.meduminderv1.Util.UserTimeZone.withDeviceZone(sdf.format(scheduleDate)));
 
-                    //pastikan id schedule tdk null
                     if (nextScheduleId == null || nextScheduleId.isEmpty()){
                         tvtitleCard.setText("-");
                         tvStokNext.setText(getString(R.string.sisa_stok, 0));
@@ -396,7 +388,7 @@ public class CaregiverHomeFragment extends Fragment {
                     } resolveMedName(nextScheduleId, (medName, stock, medType)-> {
                         if (!isAdded()) return;
                         nextScheduleMedName = medName;
-                        if (medName == null) { // jadwal sudah dihapus: jangan tampilkan lagi
+                        if (medName == null) {
                             haveSchedule.setVisibility(View.GONE);
                             noSchedule.setVisibility(View.VISIBLE);
                             btnRemindConsumer.setOnClickListener(null);
@@ -462,7 +454,7 @@ public class CaregiverHomeFragment extends Fragment {
                 confirmation.setReference_id(nextScheduleId);
                 confirmation.setIs_new_schedule(true);
                 confirmation.setTarget_role(UserRole.Caregiver.name());
-                confirmation.setConsumer_uid(consumerUid);   // notif ini tentang consumer mana
+                confirmation.setConsumer_uid(consumerUid);
                 NotificationText.apply(confirmation, "pengingat_terkirim_title",
                         "pesan_pengingat_terkirim_consumer_obat_msg", medName);
                 confirmation.setIs_read(false);
@@ -491,7 +483,6 @@ public class CaregiverHomeFragment extends Fragment {
         db.collection("medication_schedules").document(schedulesId).get()
                 .addOnSuccessListener(scheduleSnap -> {
                     MedicationSchedules schedule = scheduleSnap.toObject(MedicationSchedules.class);
-                    // jadwal yang sudah dihapus tidak ditampilkan lagi
                     if (schedule != null && schedule.getDeleted_at() != null) { callback.onResolved(null, 0, null); return; }
                     String medId = schedule != null ? schedule.getMedication_id() : null;
                     if (medId == null || medId.isEmpty()) { callback.onResolved(null, 0, null); return; }
@@ -526,7 +517,6 @@ public class CaregiverHomeFragment extends Fragment {
                 .addOnFailureListener(e -> callback.onResolved(null, 0, null));
     }
 
-    // context aplikasi yang tetap aman dipakai walau fragment sudah ditutup
     private Context appCtx;
     private Context appContext() {
         Context c = getContext();
@@ -556,7 +546,6 @@ public class CaregiverHomeFragment extends Fragment {
     private void showToday(List<LogItem> combined){
         if (!isAdded() || getContext() == null) return;
         todayLoader.done();
-        // sama seperti Home: 3 jadwal, yang akan datang lebih dulu; sisanya lewat "Lihat semua"
         List<LogItem> displayList = TodayScheduleLoader.pickForHome(combined, 3);
         TodayScheduleAdapter adapter = new TodayScheduleAdapter(displayList, requireContext());
         adapter.setOnItemClickListener(this::navigateToReminder);
@@ -588,7 +577,6 @@ public class CaregiverHomeFragment extends Fragment {
 
     private void showNextError() {
         if (!isAdded()) return;
-        // kartu tidak menampilkan "belum ada jadwal" (bisa salah); pesan error ada di bagian Jadwal Hari Ini
         haveSchedule.setVisibility(View.GONE);
         noSchedule.setVisibility(View.GONE);
     }
@@ -607,10 +595,9 @@ public class CaregiverHomeFragment extends Fragment {
         statistikRepo.getOverallAdherence(consumerUid, new StatistikRepo.OverallStatsCallback() {
             @Override
             public void onResult(int totalSeharusnya, int totalDikonsumsi, int percent) {
-                if (!isAdded() || getView() == null) return; // halaman sudah ditutup
+                if (!isAdded() || getView() == null) return;
                 adherenceRing.setProgress(percent);
                 adherenceRing.setProgressColor(MaterialColors.getColor(adherenceRing, com.google.android.material.R.attr.colorPrimaryVariant));
-                // belum ada jadwal: "belum ada data", bukan "kepatuhan sangat rendah"
                 tvAdherenceDesc.setText(totalSeharusnya == 0 ? getString(R.string.noConsumptionData) : adherenceDesc(percent));
                 tvAdherenceDesc.setTypeface(fontRegular());
             }
@@ -653,6 +640,9 @@ public class CaregiverHomeFragment extends Fragment {
         InvitationPopupHelper.checkAndShow(this, authManager);
         if (invitationListener != null) invitationListener.remove();
         invitationListener = InvitationPopupHelper.listen(this, authManager);
+        com.google.firebase.auth.FirebaseUser me = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+        if (scheduleChangeListener != null) scheduleChangeListener.remove();
+        scheduleChangeListener = me != null ? ScheduleChangePopup.listen(this, me.getUid(), UserRole.Caregiver) : null;
         checkUnreadNotif();
         loadDrawerConsumerList();
         if (consumerPicker != null){
@@ -664,12 +654,12 @@ public class CaregiverHomeFragment extends Fragment {
     public void onPause() {
         super.onPause();
         if (invitationListener != null) { invitationListener.remove(); invitationListener = null; }
+        if (scheduleChangeListener != null) { scheduleChangeListener.remove(); scheduleChangeListener = null; }
         if (unreadListener != null) { unreadListener.remove(); unreadListener = null; }
         if (todayScheduleLoader != null) todayScheduleLoader.stop();
     }
 
     private void checkUnreadNotif() {
-        // realtime & per consumer: hanya menghitung notif consumer yang sedang dipilih
         if (unreadListener != null) unreadListener.remove();
         User caregiver = sessionManager.getUser();
         if (caregiver == null) { showNotifBadge(0); return; }

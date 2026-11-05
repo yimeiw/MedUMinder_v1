@@ -58,8 +58,6 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
 
     BottomNavigationView bottomNav;
     private UserRole pendingOpenNotifRole = null;
-    // navbar HANYA tampil di tab utama; halaman lain (termasuk halaman baru nanti) otomatis tanpa navbar.
-    // Profil sengaja tidak di sini: punya panah kembali sendiri.
     private static final java.util.Set<Integer> SHOW_BOTTOM_NAV = new java.util.HashSet<>(java.util.Arrays.asList(
             R.id.homeFragment,
             R.id.caregiverHomeFragment,
@@ -86,7 +84,6 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
             @Override
             public void onFragmentViewCreated(@NonNull FragmentManager fm, @NonNull Fragment f, @NonNull View v, @Nullable Bundle savedInstanceState) {
                 PressFeedback.applyTree(v);
-                // panah kembali: area tekan minimal 48x48dp (tampilan tetap)
                 com.example.meduminderv1.Util.TouchTarget.ensureMin(v.findViewById(R.id.btnBack));
             }
         }, true);
@@ -136,13 +133,10 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
             }
         }
         if (user != null) {
-            // sisa alarm akun lain yang pernah login di HP ini dibatalkan
             com.example.meduminderv1.Reminder.Alarm.AlarmOwner.cancelOtherUsers(getApplicationContext(), user.getUid());
             UserTimeZone.syncOwn(user.getUid());
             new LogGenerator().generateForAllActiveSchedules(user.getUid());
             StockChecker.checkAllForUser(getApplicationContext(), user.getUid(), null);
-            // pasang ulang semua alarm tiap app dibuka (jadwal bisa ditambah caregiver dari HP lain),
-            // lalu pantau perubahan jadwal selama app terbuka
             AlarmSchedulerHelper.rescheduleAllActiveForUser(getApplicationContext(), user.getUid());
             stopScheduleSync = ScheduleSyncListener.start(this, user.getUid());
             stopPushListener = PushNotifier.listen(this, user.getUid());
@@ -195,7 +189,6 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
                         insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars()).bottom,
                         insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.ime()).bottom);
             }
-            // atas: jangan tergambar di bawah jam/baterai (Android 15+ selalu edge-to-edge)
             int top = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars()).top;
             v.setPadding(v.getPaddingLeft(), top, v.getPaddingRight(), bottom);
             return insets;
@@ -209,7 +202,7 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
         nextMidnight.set(Calendar.MINUTE, 0);
         nextMidnight.set(Calendar.SECOND, 0);
         nextMidnight.set(Calendar.MILLISECOND, 0);
-        nextMidnight.add(Calendar.DAY_OF_YEAR, 1); //besok jam 00.00
+        nextMidnight.add(Calendar.DAY_OF_YEAR, 1);
         return nextMidnight.getTimeInMillis() - now.getTimeInMillis();
     }
 
@@ -233,7 +226,7 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
     protected void onResume() {
         super.onResume();
         checkAndRescheduleIfPermissionNewlyGranted();
-        com.example.meduminderv1.Util.UpdateGate.check(this); // versi terlalu lama -> minta update
+        com.example.meduminderv1.Util.UpdateGate.check(this);
     }
 
     private void checkAndRescheduleIfPermissionNewlyGranted() {
@@ -295,7 +288,7 @@ public class MainActivity extends AppCompatActivity implements ReminderEventBus.
             bundle.putLong("scheduled_at", intent.getLongExtra("scheduled_at", 0L));
             bundle.putString("status", intent.getStringExtra("status"));
             bundle.putString("type", intent.getStringExtra("type"));
-            bundle.putString("source", "schedule");   // <-- baris baru
+            bundle.putString("source", "schedule");
 
             navHostFragment.getNavController().navigate(R.id.reminderFragment, bundle);
         } else if ("notification".equals(navigateTo)) {

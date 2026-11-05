@@ -40,7 +40,7 @@ public final class Toast {
         Activity a = ActivityTracker.current();
         ViewGroup root = (a == null || a.isFinishing() || a.isDestroyed())
                 ? null : a.findViewById(android.R.id.content);
-        if (root == null) {   // tidak ada layar aktif (mis. dari receiver)
+        if (root == null) {
             android.widget.Toast.makeText(context.getApplicationContext(), text, duration).show();
             return;
         }

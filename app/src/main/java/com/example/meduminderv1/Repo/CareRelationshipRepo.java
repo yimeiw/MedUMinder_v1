@@ -56,7 +56,6 @@ public class CareRelationshipRepo {
 
     public void deleteRelationship(String relationshipId, RepoCallback<Void> callback){
         db.collection("care_relationships").document(relationshipId).get().addOnCompleteListener(read -> {
-            // hapus juga care_links-nya (kalau relasinya terbaca)
             if (read.isSuccessful() && read.getResult() != null && read.getResult().exists()) {
                 String consumerUid = read.getResult().getString("consumer_uid");
                 String caregiverUid = read.getResult().getString("caregiver_uid");

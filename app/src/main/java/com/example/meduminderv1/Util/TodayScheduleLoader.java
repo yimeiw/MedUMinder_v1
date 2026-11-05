@@ -80,7 +80,6 @@ public class TodayScheduleLoader {
                     if (q == null) return;
                     medDocs = q.getDocuments(); medReady = true; rebuild();
                 });
-        // stok / nama obat berubah (mis. diminum lewat notifikasi, atau diedit) -> baca ulang, bukan angka lama
         final boolean[] firstMeds = {true};
         medsReg = db.collection("medications").whereEqualTo("users_id", uid)
                 .addSnapshotListener((q, e) -> {
@@ -133,14 +132,14 @@ public class TodayScheduleLoader {
         }
         Log.d(TAG, "rebuild: log=" + logs.size() + " jadwal=" + ids.size() + " appt=" + appts.size());
 
-        if (cache.keySet().containsAll(ids)) deliver(my, appts, logs, sdf);   // tampil langsung dari cache
+        if (cache.keySet().containsAll(ids)) deliver(my, appts, logs, sdf);
         if (ids.isEmpty()) return;
 
         final AtomicInteger left = new AtomicInteger(ids.size());
         for (String id : ids) {
             fetch(id, info -> {
                 synchronized (cache) { cache.put(id, info); }
-                if (left.decrementAndGet() == 0) deliver(my, appts, logs, sdf);   // segarkan stok/nama
+                if (left.decrementAndGet() == 0) deliver(my, appts, logs, sdf);
             });
         }
     }
@@ -176,7 +175,7 @@ public class TodayScheduleLoader {
         db.collection("medication_schedules").document(scheduleId).get().addOnCompleteListener(st -> {
             if (!st.isSuccessful() || st.getResult() == null) {
                 Log.e(TAG, "gagal baca jadwal " + scheduleId, st.getException());
-                cb.done(fallback); return;   // tetap tampil, jangan hilang
+                cb.done(fallback); return;
             }
             DocumentSnapshot s = st.getResult();
             if (!s.exists() || s.get("deleted_at") != null) {
@@ -196,7 +195,7 @@ public class TodayScheduleLoader {
                 DocumentSnapshot m = mt.getResult();
                 Info i = new Info();
                 i.type = m.getString("med_type");
-                Object so = m.get("stock.stok_obat");          // sama seperti StockChecker
+                Object so = m.get("stock.stok_obat");
                 i.stock = so instanceof Number ? ((Number) so).intValue() : 0;
                 Log.d(TAG, "obat " + medId + " tipe=" + i.type + " stok=" + so);
 
@@ -233,9 +232,9 @@ public class TodayScheduleLoader {
         Collections.sort(rest, byTime);
         Collections.sort(taken, Collections.reverseOrder(byTime));
 
-        List<LogItem> result = new ArrayList<>(upcoming); //prioritas yang statusnya upcoming
-        result.addAll(rest); //sisanya sesuai urutan jam
-        result.addAll(taken); //yang sudah diminum: terbaru dulu
+        List<LogItem> result = new ArrayList<>(upcoming);
+        result.addAll(rest);
+        result.addAll(taken);
         return new ArrayList<>(result.subList(0, Math.min(max, result.size())));
     }
 }

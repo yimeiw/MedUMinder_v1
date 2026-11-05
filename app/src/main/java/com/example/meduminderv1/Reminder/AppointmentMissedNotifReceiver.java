@@ -18,7 +18,6 @@ public class AppointmentMissedNotifReceiver extends BroadcastReceiver {
         String appointmentId = intent.getStringExtra("appointment_id");
         if (appointmentId == null || appointmentId.isEmpty()) return;
 
-        // waktu menjawab habis: bunyi berhenti di sini, juga kalau sudah ditandai terlewat duluan / sedang offline
         AlarmRingingService.stopFor(context, appointmentId);
 
         final PendingResult pendingResult = goAsync();
@@ -41,7 +40,6 @@ public class AppointmentMissedNotifReceiver extends BroadcastReceiver {
                 pendingResult.finish();
                 return;
             }
-            // appointment hanya bunyi sekali: tidak ikut Repeat Until Confirmed, langsung terlewat
             MissedNotifier.claimAppointment(context, appointmentId, pendingResult::finish);
         }).addOnFailureListener(e -> pendingResult.finish());
     }

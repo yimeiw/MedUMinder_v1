@@ -32,7 +32,6 @@ public final class ScheduleSyncListener {
         Context app = context.getApplicationContext();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // jam minum terakhir yang diketahui per jadwal, supaya alarm jam lama bisa dibatalkan
         Map<String, List<String>> knownTimes = new HashMap<>();
         boolean[] medFirst = {true};
         ListenerRegistration medReg = db.collection("medication_schedules")
@@ -52,7 +51,6 @@ public final class ScheduleSyncListener {
                         } else {
                             knownTimes.put(id, newTimes);
                         }
-                        // data awal: alarm sudah dipasang ulang saat app dibuka
                         if (first || doc.getMetadata().hasPendingWrites()) continue;
 
                         if (oldTimes != null) {
@@ -61,7 +59,6 @@ public final class ScheduleSyncListener {
                         if (change.getType() == DocumentChange.Type.REMOVED) continue;
                         MedicationSchedules schedule = doc.toObject(MedicationSchedules.class);
                         if (schedule != null && doc.get("deleted_at") == null) {
-                            // scheduleAll sendiri sudah mengecek is_active & end_date
                             AlarmSchedulerHelper.resolveAndScheduleForBoot(app, id, schedule);
                         }
                     }
@@ -78,7 +75,6 @@ public final class ScheduleSyncListener {
                     for (DocumentChange change : snap.getDocumentChanges()) {
                         DocumentSnapshot doc = change.getDocument();
                         if (doc.getMetadata().hasPendingWrites()) continue;
-                        // yang sedang ditunda diurus oleh alarm tundanya sendiri
                         if (change.getType() != DocumentChange.Type.REMOVED && doc.get("snoozed_until") != null) continue;
 
                         String id = doc.getId();

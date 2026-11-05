@@ -29,13 +29,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 public class RelationListFragment extends Fragment {
-    public static final String ARG_MODE = "mode"; //mode caregiver atau consumer
+    public static final String ARG_MODE = "mode";
     ImageButton btnBack, btnAddRelation;
     TextView tvHeader, emptyState;
     RecyclerView rvRelation;
     SessionManager sessionManager;
     CareRelationshipRepo relationshipRepo;
-    boolean showingCaregivers; // kalau true berarti list caregiver yang muncul
+    boolean showingCaregivers;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -70,8 +70,6 @@ public class RelationListFragment extends Fragment {
                 ? getString(R.string.belum_ada_caregiver_klik_undang)
                 : getString(R.string.belum_ada_consumer_klik_undang));
         emptyState.setVisibility(View.VISIBLE);
-        // Sama seperti ConsumerPickerHelper: saat list kosong, empty state
-        // jadi ajakan yang bisa langsung diklik untuk mengundang.
         emptyState.setOnClickListener(v ->
                 NavHostFragment.findNavController(RelationListFragment.this).navigate(R.id.invitationFragment));
         btnAddRelation.setVisibility(View.GONE);

@@ -60,16 +60,11 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
                 authManager.formatNotificationTime(notification.getCreated_at())
         );
 
-        // pakai app_font, lalu pilih tebal/normal (bukan font bawaan HP)
         android.graphics.Typeface baseFont = ResourcesCompat.getFont(holder.itemView.getContext(), R.font.app_font);
         int style = notification.isIs_read() ? Typeface.NORMAL : Typeface.BOLD;
         holder.titleNotif.setTypeface(baseFont, style);
         holder.messageNotif.setTypeface(baseFont, style);
         holder.timeNotif.setTypeface(baseFont, style);
-
-//        holder.titleNotif.b(null, notification.isIs_read() ? Typeface.NORMAL : Typeface.BOLD);
-//        holder.messageNotif.setTypeface(null, notification.isIs_read() ? Typeface.NORMAL : Typeface.BOLD);
-//        holder.timeNotif.setTypeface(null, notification.isIs_read() ? Typeface.NORMAL : Typeface.BOLD);
 
         int padH = holder.cardNotif.getPaddingLeft();
         int padV = holder.cardNotif.getPaddingTop();

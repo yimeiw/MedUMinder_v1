@@ -13,7 +13,6 @@ import java.util.Locale;
 public final class MedicineName {
     private MedicineName() {}
 
-    // karakter spasi yang dianggap sama (persis sama dengan WHITESPACE di tools/firestore/medicine-name.js)
     private static final String WHITESPACE = "[ \\t\\n\\u000B\\f\\r\\u00A0]+";
 
     public static String key(String name) {
@@ -29,7 +28,7 @@ public final class MedicineName {
             for (byte b : hash) sb.append(String.format(Locale.ROOT, "%02x", b));
             return sb.toString();
         } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e); // SHA-1 selalu ada di Android
+            throw new IllegalStateException(e);
         }
     }
 }

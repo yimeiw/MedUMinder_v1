@@ -25,7 +25,6 @@ public class InvitationRepo {
                 }).addOnFailureListener(callback::onFailure);
     }
 
-    //cek apakah orang yang mau diundang ternyata SUDAH mengundang kita (undangan masih pending)
     public void hasPendingInvitationFrom(String otherUid, String myUid, RepoCallback<Boolean> callback){
         if (otherUid == null || myUid == null){
             callback.onSuccess(false);
@@ -106,7 +105,7 @@ public class InvitationRepo {
                     com.google.firebase.firestore.WriteBatch batch = db.batch();
                     int count = 0;
                     for (com.google.firebase.firestore.DocumentSnapshot doc : query.getDocuments()) {
-                        if (doc.getString("receiver_uid") != null) continue; // sudah terhubung
+                        if (doc.getString("receiver_uid") != null) continue;
                         Map<String, Object> update = new HashMap<>();
                         update.put("receiver_uid", uid);
                         update.put("updated_at", Timestamp.now());

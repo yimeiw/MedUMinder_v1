@@ -35,7 +35,6 @@ final class AccountCleanup {
         queries.add(db.collection("invitations").whereEqualTo("receiver_uid", uid).get());
         queries.add(db.collection("care_relationships").whereEqualTo("consumer_uid", uid).get());
         queries.add(db.collection("care_relationships").whereEqualTo("caregiver_uid", uid).get());
-        // obat pribadi (menghapus dokumen users/{uid} TIDAK ikut menghapus isinya) + salinan relasi
         queries.add(db.collection("users").document(uid).collection("customMedicines").get());
         queries.add(db.collection("care_links").whereEqualTo("consumer_uid", uid).get());
         queries.add(db.collection("care_links").whereEqualTo("caregiver_uid", uid).get());
@@ -50,7 +49,6 @@ final class AccountCleanup {
                 }
             }
 
-            // satu per satu (bukan batch): kalau satu dokumen ditolak, sisanya tetap terhapus
             List<Task<Void>> deletes = new ArrayList<>();
             for (DocumentSnapshot doc : docs) deletes.add(doc.getReference().delete());
 

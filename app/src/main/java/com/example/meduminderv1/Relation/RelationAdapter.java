@@ -40,7 +40,7 @@ public class RelationAdapter extends RecyclerView.Adapter<RelationAdapter.ViewHo
 
     private final List<CareRelationship> relations;
     private final Context context;
-    private final boolean isViewingCaregiver; // true: item = caregiver, false: item = consumer
+    private final boolean isViewingCaregiver;
     private final RelationClickListener listener;
     private final UserRepository userRepository;
     private final CareRelationshipRepo relationshipRepo;
@@ -152,7 +152,6 @@ public class RelationAdapter extends RecyclerView.Adapter<RelationAdapter.ViewHo
             @Override public void onFailure(Exception e) { }
         };
 
-        // ke diri sendiri
         Notification self = new Notification();
         self.setReceiver_uid(me.getAuth_uid());
         self.setSender_uid(me.getAuth_uid());
@@ -164,7 +163,6 @@ public class RelationAdapter extends RecyclerView.Adapter<RelationAdapter.ViewHo
         self.setIs_read(false);
         repo.createNotification(self, ignore);
 
-        // ke pihak lain
         Notification other = new Notification();
         other.setReceiver_uid(partnerUid);
         other.setSender_uid(me.getAuth_uid());

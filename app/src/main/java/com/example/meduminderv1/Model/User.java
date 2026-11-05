@@ -15,7 +15,6 @@ public class User {
     private Timestamp created_at;
     private Timestamp updated_at;
     private Timestamp deleted_at;
-    // berapa hari sebelum obat habis user diingatkan untuk isi ulang (null = default)
     private Integer refill_reminder_days;
 
     public Integer getRefill_reminder_days() {
@@ -25,7 +24,7 @@ public class User {
     public void setRefill_reminder_days(Integer refill_reminder_days) {
         this.refill_reminder_days = refill_reminder_days;
     }
-    public boolean google_email_password_capable; //true kalau akun sudah link google tp tetap bisa login pake email
+    public boolean google_email_password_capable;
     public String getAuth_uid() {
         return auth_uid;
     }
@@ -112,7 +111,6 @@ public class User {
     }
     @Exclude
     public UserRole getCurrentRole(){
-        // data rusak/kosong jangan bikin app crash saat login: anggap Consumer
         if (current_role != null) {
             try {
                 return UserRole.valueOf(current_role);

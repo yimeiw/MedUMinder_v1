@@ -129,8 +129,6 @@ public final class StockChecker {
         int perDay = freqL != null && freqL > 0 ? freqL.intValue() : 1;
         long remainingDoses = remainingDoses(sched, perDay);
 
-        // transaksi: baca stok terbaru & tandai sekali saja, supaya 2 HP (consumer & caregiver)
-        // yang mengecek bersamaan tidak mengirim notif dobel
         db.runTransaction(tx -> {
             DocumentSnapshot snap = tx.get(medRef);
             Number stockN = (Number) snap.get("stock.stok_obat");
@@ -138,7 +136,7 @@ public final class StockChecker {
             String current = snap.getString(ALERT_FIELD);
 
             String state;
-            if (remainingDoses <= 0 || stock >= remainingDoses) state = null;   // jadwal selesai / stok cukup sampai akhir
+            if (remainingDoses <= 0 || stock >= remainingDoses) state = null;
             else if (stock <= 0) state = OUT;
             else if (stock <= (long) perDay * refillDays) state = LOW;
             else state = null;
@@ -172,7 +170,6 @@ public final class StockChecker {
         Calendar endDay = startOfDay(end.toDate().getTime());
         if (endDay.before(today)) return 0;
 
-        // dosis hari ini yang belum lewat
         int nowMinutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
         int today_left = 0;
         Object timesObj = sched.get("times_of_day");

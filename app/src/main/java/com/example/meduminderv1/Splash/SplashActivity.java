@@ -40,7 +40,6 @@ public class SplashActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        //menerapkan last mode user
         SharedPreferences prefs = getSharedPreferences("themes", MODE_PRIVATE);
         boolean isDark = prefs.getBoolean("dark_mode", false);
         int targetMode = isDark ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO;
@@ -69,8 +68,6 @@ public class SplashActivity extends AppCompatActivity {
         TextView minder = findViewById(R.id.minder);
 
         View circle = findViewById(R.id.circle);
-        // lingkaran = 90% lebar layar, jadi di semua HP tetap BULAT dan utuh.
-        // (Kalau lebih lebar dari layar, RelativeLayout memotong lebarnya saja -> jadi oval.)
         if (circle != null) {
             int size = Math.round(getResources().getDisplayMetrics().widthPixels * 0.9f);
             android.view.ViewGroup.LayoutParams lp = circle.getLayoutParams();
@@ -92,8 +89,6 @@ public class SplashActivity extends AppCompatActivity {
 
             float minderTranslation = (uWidth + minderWidth) / 2f;
 
-            // "Minder" lebih lebar dari "Med", jadi kalau U di tengah layar, seluruh kata
-            // "MedUMinder" bergeser ke kanan. Geser semuanya supaya KATA-nya yang di tengah.
             float groupShift = (medWidth - minderWidth) / 2f;
             letterU.setTranslationX(groupShift);
 
@@ -108,8 +103,6 @@ public class SplashActivity extends AppCompatActivity {
 
             Path path = new Path();
 
-            // lintasan pil dihitung relatif ke posisi U (bukan angka pixel tetap),
-            // jadi bentuk lengkungnya sama di semua ukuran & kepadatan layar
             path.moveTo(-pill.getWidth(), targetY * 0.13f);
 
             path.quadTo(targetX * 0.22f, targetY * 0.22f, targetX * 0.41f, targetY * 0.37f);
@@ -161,8 +154,6 @@ public class SplashActivity extends AppCompatActivity {
 
             bounce.setDuration(180);
 
-            // menampilkan U
-
             ObjectAnimator fadeU =
                     ObjectAnimator.ofFloat(
                             letterU,
@@ -193,8 +184,6 @@ public class SplashActivity extends AppCompatActivity {
 
             uAnim.setDuration(250);
 
-            // MED keluar dari U
-
             ObjectAnimator medFade =
                     ObjectAnimator.ofFloat(
                             med,
@@ -210,8 +199,6 @@ public class SplashActivity extends AppCompatActivity {
             medAnim.playTogether(medFade, medSlide);
 
             medAnim.setDuration(350);
-
-            // MINDER keluar dari U
 
             ObjectAnimator minderFade =
                     ObjectAnimator.ofFloat(
@@ -229,7 +216,6 @@ public class SplashActivity extends AppCompatActivity {
 
             minderAnim.setDuration(350);
 
-            //pause sedetik di logo
             ValueAnimator pause = ValueAnimator.ofInt(0, 1);
 
             pause.setDuration(1000);
@@ -310,12 +296,10 @@ public class SplashActivity extends AppCompatActivity {
         if (isSkip) return;
         isSkip = true;
 
-        //stop animasi yg lg jalan
         if (currentAnimator != null){
             currentAnimator.cancel();
         }
 
-        //lgsng ke login
         openNextScreen();
     }
 
@@ -377,8 +361,6 @@ public class SplashActivity extends AppCompatActivity {
                 askExactAlarmPermission();
             });
 
-    // halaman pengaturan dibuka lewat launcher: lanjut ke Login/Home SETELAH user kembali.
-    // (dulu dibuka bersamaan dengan Login -> tertutup Login, tidak pernah terlihat, dan tidak ditanya lagi)
     private final ActivityResultLauncher<Intent> exactAlarmLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), r -> checkSessionAndNavigate());
 
@@ -404,7 +386,6 @@ public class SplashActivity extends AppCompatActivity {
                         .create();
                 dialog.show();
                 if (dialog.getWindow() != null) dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
-                // warna tombol seperti dialog lain di app (warna bawaan tema = sama dengan latar -> tidak terlihat)
                 dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setTextColor(
                         com.google.android.material.color.MaterialColors.getColor(this, com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
                 dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE).setTextColor(
@@ -412,7 +393,6 @@ public class SplashActivity extends AppCompatActivity {
                 return;
             }
         }
-        // (izin "Jangan Ganggu" tidak diminta lagi: tidak dipakai di mana pun; alarm sudah tetap bunyi saat Jangan Ganggu)
         checkSessionAndNavigate();
     }
 

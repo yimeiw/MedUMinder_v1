@@ -24,7 +24,6 @@ public class MedUMinderApp extends Application {
     private void applyDefaultLanguage() {
         SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         if (prefs.getBoolean(KEY_INITIALIZED, false)) {
-            // setiap app dibuka: kembalikan ke bahasa yang didukung (en/id/zh), cadangan Inggris
             AppLanguage.ensureApplied(this);
             return;
         }

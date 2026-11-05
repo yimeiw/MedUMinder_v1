@@ -45,7 +45,6 @@ public final class FullEmail {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(MaterialColors.getColor(c, com.google.android.material.R.attr.colorTertiaryFixed, android.graphics.Color.BLACK));
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(MaterialColors.getColor(c, com.google.android.material.R.attr.colorTertiaryFixedDim, android.graphics.Color.BLACK));
         }
-        // email di dialog bisa dipilih manual juga
         TextView message = dialog.findViewById(android.R.id.message);
         if (message != null) message.setTextIsSelectable(true);
     }
@@ -55,7 +54,6 @@ public final class FullEmail {
         ClipboardManager cm = (ClipboardManager) c.getSystemService(Context.CLIPBOARD_SERVICE);
         if (cm == null) return;
         cm.setPrimaryClip(ClipData.newPlainText("email", email.trim()));
-        // Android 13+ sudah menampilkan pemberitahuan sendiri; jangan dobel
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             Toast.makeText(c, c.getString(R.string.email_disalin), Toast.LENGTH_SHORT).show();
         }

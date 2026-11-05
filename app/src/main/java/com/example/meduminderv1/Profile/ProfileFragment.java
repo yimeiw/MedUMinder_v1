@@ -67,7 +67,6 @@ public class ProfileFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
         btnBack = view.findViewById(R.id.btnBack);
@@ -89,7 +88,7 @@ public class ProfileFragment extends Fragment {
         curr_role = view.findViewById(R.id.curr_role);
         name_input = view.findViewById(R.id.name_input);
         email_input = view.findViewById(R.id.email_input);
-        com.example.meduminderv1.Util.FullEmail.attach(email_input); // email panjang: tekan untuk lihat lengkap
+        com.example.meduminderv1.Util.FullEmail.attach(email_input);
         btnAktivasi = view.findViewById(R.id.btnAktivasi);
         imgAktivasi = view.findViewById(R.id.imgAktivasi);
         txtAktivasi = view.findViewById(R.id.txtAktivasi);
@@ -110,7 +109,6 @@ public class ProfileFragment extends Fragment {
 
         btnSwitchRole.setOnClickListener(v -> {
             if (user == null) return;
-            //selectrole sdh mengatasi role yg sm, caregvier blm aktif, dan dialog konfirmasi
             selectRole(user.getCurrentRole() == UserRole.Consumer ? UserRole.Caregiver : UserRole.Consumer);
         });
 
@@ -174,7 +172,6 @@ public class ProfileFragment extends Fragment {
         adherenceDesc = view.findViewById(R.id.adherenceDesc);
         adherencePercent = view.findViewById(R.id.adherencePercent);
         adherenceRing = view.findViewById(R.id.adherenceRing);
-        // kartu Profile berwarna gelap: warna teks bawaan ring tidak terlihat di sini
         adherenceRing.setTextColor(com.google.android.material.color.MaterialColors.getColor(
                 adherenceRing, com.google.android.material.R.attr.colorPrimaryFixed));
 
@@ -213,7 +210,6 @@ public class ProfileFragment extends Fragment {
 
                         adherencePercent.setText(percent + "%");
                         adherenceRing.setProgress(percent);
-                        // belum ada jadwal minggu ini: bukan "kepatuhan sangat rendah", tapi "belum ada data"
                         adherenceDesc.setText(totalSeharusnya == 0
                                 ? getString(R.string.noConsumptionData) : getAdherenceDescription(percent));
                     }
@@ -286,7 +282,6 @@ public class ProfileFragment extends Fragment {
         }
         iconToggle.setLayoutParams(params);
     }
-// switch role
     private void showRoleDialog() {
         String[] roles ={"Consumer","Caregiver"};
 
@@ -299,7 +294,6 @@ public class ProfileFragment extends Fragment {
         });
         AlertDialog dialog = builder.create();
         dialog.show();
-        // dialog daftar ini tidak punya tombol OK/Batal: getButton() = null -> dulu app crash di sini
         if (dialog.getWindow() != null){
             dialog.getWindow().setBackgroundDrawableResource(R.drawable.border);
         }
@@ -307,10 +301,9 @@ public class ProfileFragment extends Fragment {
 
     private void selectRole(UserRole targetRole) {
         if (user == null) return;
-        //kalau role yg dipilh sama
         if (targetRole == user.getCurrentRole()){
             return;
-        } if (targetRole == UserRole.Caregiver && !user.isCaregiver_enabled()){ //kalau caregiver belum aktif
+        } if (targetRole == UserRole.Caregiver && !user.isCaregiver_enabled()){
             showEnableCaregiver(true);
             return;
         } showSwitchRole(targetRole);
@@ -341,7 +334,6 @@ public class ProfileFragment extends Fragment {
             @Override
             public void onSuccess(User result) {
                 LoadingOverlay.hide(ProfileFragment.this);
-                // pesan pakai context aplikasi: MainActivity langsung pindah ke Home role baru
                 Toast.makeText(appContext, appContext.getString(R.string.role_berhasil_diganti, formatRole(targetRole)), Toast.LENGTH_SHORT).show();
                 if (!isAdded()) return;
                 bindUser(result);

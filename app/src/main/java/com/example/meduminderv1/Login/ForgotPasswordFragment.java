@@ -34,7 +34,6 @@ public class ForgotPasswordFragment extends Fragment {
     ImageButton btnBack;
     MaterialButton btnKirim;
     private static final long RESEND_WAIT_MS = 60_000L;
-    // static: tetap berlaku walau layar dibuat ulang (mis. diputar), supaya tidak bisa kirim beruntun
     private static long resendAllowedAt = 0L;
     private final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
     private final Runnable tick = this::updateSendButton;
@@ -42,7 +41,6 @@ public class ForgotPasswordFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_forgot_password, container, false);
 
         authManager = AuthManager.getInstance(requireContext());
@@ -77,7 +75,7 @@ public class ForgotPasswordFragment extends Fragment {
             emailInput.setError(getString(R.string.format_email_tidak_valid));
             emailInput.requestFocus();
             return;
-        } if (System.currentTimeMillis() < resendAllowedAt) return; // masih menunggu
+        } if (System.currentTimeMillis() < resendAllowedAt) return;
         btnKirim.setEnabled(false);
 
         LoadingOverlay.show(ForgotPasswordFragment.this);

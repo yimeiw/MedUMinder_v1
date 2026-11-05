@@ -79,8 +79,6 @@ public final class AlarmOwner {
         return uid != null && uid.equals(usersId);
     }
 
-    // ===== daftar alarm per pemilik =====
-
     public static void rememberMedicine(Context context, String scheduleId, List<String> times) {
         String uid = currentUid();
         if (uid == null || scheduleId == null) return;

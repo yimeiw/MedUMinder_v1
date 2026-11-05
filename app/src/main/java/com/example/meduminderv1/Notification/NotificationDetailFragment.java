@@ -160,8 +160,6 @@ public class NotificationDetailFragment extends Fragment {
         configureAction();
     }
 
-    // ================= TAMPILAN =================
-
     /** Baris detail muncul sendiri begitu teksnya diisi, dan kartu detail hanya tampil
      *  kalau ada minimal satu baris yang terlihat. */
     private void setupDetailRows() {
@@ -343,7 +341,6 @@ public class NotificationDetailFragment extends Fragment {
                 : (isAppointment ? getString(R.string.default_appointment_label) : getString(R.string.default_jadwal_label))));
     }
 
-    // notif informasi saja (mis. hubungan dihapus): tampilkan judul & pesan, tanpa tombol
     private void showSystemInfo() {
         if (!isAdded()) return;
         notifDetail.setVisibility(View.VISIBLE);
@@ -393,11 +390,6 @@ public class NotificationDetailFragment extends Fragment {
                 String key = notification.getMessage_key();
                 String receiverUid = notification.getReceiver_uid();
 
-                // Jenis notif ditentukan dari notif itu sendiri, bukan dari status undangan sekarang,
-                // supaya isi detail tetap sama dengan yang tampil di daftar setelah undangan direspon.
-                // - salinan "undangan terkirim": pengirim = penerima notif
-                // - hasil (diterima/ditolak): dikirim ke pengundang oleh yang merespon
-                // - undangan asli: dikirim ke orang yang diundang
                 boolean isOwnSentCopy = receiverUid != null && receiverUid.equals(notification.getSender_uid());
                 boolean isResult = "undangan_diterima".equals(key) || "undangan_ditolak".equals(key)
                         || (!isOwnSentCopy && receiverUid != null && receiverUid.equals(invitation.getSender_uid()));
@@ -408,7 +400,6 @@ public class NotificationDetailFragment extends Fragment {
                 }
 
                 if (isResult) {
-                    // hasil respon: pakai status yang tersimpan di notif, fallback ke status undangan
                     boolean resultAccepted = key != null ? "undangan_diterima".equals(key) : accepted;
                     titleNotif.setText(resultAccepted ? getString(R.string.undangan_diterima_title) : getString(R.string.undangan_ditolak_title));
                     String responderUid = notification.getSender_uid() != null
@@ -426,7 +417,6 @@ public class NotificationDetailFragment extends Fragment {
                     return;
                 }
 
-                // undangan asli untuk orang yang diundang
                 if (isPending) {
                     tvScheduleName.setVisibility(View.GONE);
                     layoutButton.setVisibility(View.VISIBLE);
@@ -520,7 +510,6 @@ public class NotificationDetailFragment extends Fragment {
         });
     }
 
-    // ================= MEDICINE =================
     private void showMedicine() {
         android.util.Log.d("NOTIF_DETAIL",
                 "is_new_schedule = " + notification.isIs_new_schedule()
@@ -528,7 +517,6 @@ public class NotificationDetailFragment extends Fragment {
 
         showMissedActionIfCaregiver();
         if (notification.getScheduled_at() != null) {
-            // tombol "Sudah diminum" & "Tunda" hanya muncul kalau obat BELUM ditandai dikonsumsi
             checkLogThenShowReminderButtons();
             loadReminderActionDetail();
         } else if (isCaregiverReminderForConsumer() && notification.getReference_id() != null) {
@@ -652,9 +640,6 @@ public class NotificationDetailFragment extends Fragment {
         db.collection("medication_logs").document(logId).get().addOnSuccessListener(logDoc -> {
             if (!isAdded()) return;
             if (!logDoc.exists()){
-                // beberapa notifikasi (mis. "Pengingat terkirim" milik caregiver) menyimpan
-                // ID JADWAL di reference_id, bukan ID log. Cek dulu apakah itu ID jadwal,
-                // baru anggap "riwayat obat sudah tidak ada" kalau memang tidak ketemu.
                 db.collection("medication_schedules").document(logId).get().addOnSuccessListener(schedSnap -> {
                     if (!isAdded()) return;
                     if (schedSnap.exists()) {
@@ -742,8 +727,6 @@ public class NotificationDetailFragment extends Fragment {
         btnAction.setVisibility(View.GONE);
         if (!isCaregiverMissedAlert) return;
         if (NO_REMIND_TITLE_KEYS.contains(notification.getTitle_key())) return;
-        // cek status terbaru dulu: tidak perlu mengingatkan kalau obat sudah diminum,
-        // appointment sudah dihadiri, atau appointment sudah terlewat/dibatalkan
         checkCanRemind(canRemind -> {
             if (!isAdded() || !canRemind) return;
             btnAction.setVisibility(View.VISIBLE);
@@ -760,7 +743,7 @@ public class NotificationDetailFragment extends Fragment {
     private void checkCanRemind(java.util.function.Consumer<Boolean> result) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         String ref = notification.getReference_id();
-        if (ref == null) { result.accept(true); return; }   // tidak ada data jadwal -> perilaku lama
+        if (ref == null) { result.accept(true); return; }
 
         if (notification.getType() == NotificationType.Appointment) {
             db.collection("appointments").document(ref).get()
@@ -768,14 +751,12 @@ public class NotificationDetailFragment extends Fragment {
                         Appointment appt = doc.exists() ? doc.toObject(Appointment.class) : null;
                         if (appt == null || appt.getDeleted_at() != null
                                 || "dibatalkan".equals(appt.getStatus())) { result.accept(false); return; }
-                        // dihadiri / terlewat -> tidak perlu diingatkan lagi
                         result.accept(appt.getStatusBasedOnDate() == LogStatus.AKAN_DATANG);
                     })
                     .addOnFailureListener(e -> result.accept(false));
             return;
         }
 
-        // obat: reference_id bisa id log, atau id jadwal + scheduled_at
         if (notification.getScheduled_at() != null) {
             com.example.meduminderv1.Model.LogLookup.findLogId(ref,
                     notification.getScheduled_at().toDate().getTime(),
@@ -788,9 +769,8 @@ public class NotificationDetailFragment extends Fragment {
     private void checkLogCanRemind(FirebaseFirestore db, String logId, java.util.function.Consumer<Boolean> result) {
         db.collection("medication_logs").document(logId).get()
                 .addOnSuccessListener(doc -> {
-                    if (!doc.exists()) { result.accept(true); return; }   // mis. id jadwal tanpa waktu
+                    if (!doc.exists()) { result.accept(true); return; }
                     MedicationLog log = doc.toObject(MedicationLog.class);
-                    // sudah diminum -> sembunyikan; akan datang / terlewat -> masih boleh diingatkan
                     result.accept(log == null || log.getStatusEnum() != LogStatus.DIKONSUMSI);
                 })
                 .addOnFailureListener(e -> result.accept(false));
@@ -829,8 +809,6 @@ public class NotificationDetailFragment extends Fragment {
             public void onSuccess(Void result) {
                 LoadingOverlay.hide(NotificationDetailFragment.this);
 
-                // konfirmasi ke diri sendiri (caregiver) bahwa reminder sudah dikirim
-                // (tetap dibuat walau halaman sudah ditutup)
                 Notification confirmation = new Notification();
                 confirmation.setReceiver_uid(caregiver.getAuth_uid());
                 confirmation.setSender_uid(caregiver.getAuth_uid());
@@ -838,7 +816,7 @@ public class NotificationDetailFragment extends Fragment {
                 NotificationText.apply(confirmation, "pengingat_terkirim_title",
                         "pesan_pengingat_terkirim_consumer");
                 confirmation.setTarget_role(UserRole.Caregiver.name());
-                confirmation.setConsumer_uid(consumerUid);   // notif ini tentang consumer mana
+                confirmation.setConsumer_uid(consumerUid);
                 confirmation.setIs_read(false);
                 notificationRepo.createNotification(confirmation, new RepoCallback<Void>() {
                     @Override public void onSuccess(Void result) { }
@@ -924,6 +902,7 @@ public class NotificationDetailFragment extends Fragment {
                 Object stockObj = med.getStock().get("stok_obat");
                 if (stockObj instanceof  Number) stock = ((Number) ((Number) stockObj)).intValue();
             } int finalStock = stock;
+            stockStillLow = med.getStock() == null || med.getStock().get("refill_alert") != null;
 
             notifDetail.setVisibility(View.VISIBLE);
             tvScheduleDayTime.setVisibility(View.GONE);
@@ -952,8 +931,17 @@ public class NotificationDetailFragment extends Fragment {
         });
     }
 
+    private boolean stockStillLow = true;
+
     private void setupRefillButton(String medicationId) {
         if (!isAdded()) return;
+        if (isCaregiverViewing()) {
+            boolean canRemind = stockStillLow && !isBlank(medicationId) && !isBlank(notification.getConsumer_uid());
+            btnAction.setVisibility(canRemind ? View.VISIBLE : View.GONE);
+            btnAction.setText(getString(R.string.ingatkan_isi_ulang));
+            btnAction.setOnClickListener(v -> remindConsumerToRefill());
+            return;
+        }
         btnAction.setVisibility(View.VISIBLE);
         btnAction.setText(getString(R.string.isiUlangObat));
 
@@ -969,6 +957,41 @@ public class NotificationDetailFragment extends Fragment {
             bundle.putBoolean("refill_mode", true);
             NavHostFragment.findNavController(NotificationDetailFragment.this)
                     .navigate(R.id.editMedicineFragment, bundle);
+        });
+    }
+
+    private void remindConsumerToRefill() {
+        User caregiver = authManager.getCurrentUser();
+        if (caregiver == null) return;
+        java.util.List<String> args = notification.getMessage_args();
+        String medName = args != null && !args.isEmpty() ? args.get(0) : getString(R.string.obat_default);
+
+        Notification reminder = new Notification();
+        reminder.setReceiver_uid(notification.getConsumer_uid());
+        reminder.setSender_uid(caregiver.getAuth_uid());
+        reminder.setType(NotificationType.Stock);
+        reminder.setReference_id(notification.getReference_id());
+        NotificationText.apply(reminder, "pengingat_isi_ulang_title", "caregiver_mengingatkan_isi_ulang_msg",
+                caregiver.getName() != null ? caregiver.getName() : "", medName);
+        reminder.setTarget_role(UserRole.Consumer.name());
+        reminder.setIs_read(false);
+        btnAction.setEnabled(false);
+        LoadingOverlay.show(NotificationDetailFragment.this);
+        notificationRepo.createNotification(reminder, new RepoCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                LoadingOverlay.hide(NotificationDetailFragment.this);
+                if (!isAdded()) return;
+                Toast.makeText(requireContext(), getString(R.string.pengingat_terkirim), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                LoadingOverlay.hide(NotificationDetailFragment.this);
+                if (!isAdded()) return;
+                btnAction.setEnabled(true);
+                Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
@@ -1127,7 +1150,6 @@ public class NotificationDetailFragment extends Fragment {
         String medName = pendingMedName != null ? pendingMedName : "";
         layoutButton.setVisibility(View.GONE);
 
-        // pakai SnoozeHelper -> waktu snooze tersimpan + notif ke consumer & caregiver
         int snoozeMinutes = com.example.meduminderv1.Reminder.SnoozeHelper.snooze(
                 requireContext(), scheduleId, medName, scheduledAtMillis, false, null);
 

@@ -46,12 +46,11 @@ public class EditProfileFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_edit_profile, container, false);
 
         userName = view.findViewById(R.id.userName);
         emailUser = view.findViewById(R.id.emailUser);
-        com.example.meduminderv1.Util.FullEmail.attach(emailUser); // email panjang: tekan untuk lihat lengkap
+        com.example.meduminderv1.Util.FullEmail.attach(emailUser);
         btnGoogle = view.findViewById(R.id.googleLinked);
         btnBack = view.findViewById(R.id.btnBack);
         deleteAcc = view.findViewById(R.id.deleteAcc);
@@ -66,7 +65,6 @@ public class EditProfileFragment extends Fragment {
 
         loadProfile();
         setupName();
-        // tombol Simpan hanya aktif kalau ada yang berubah dari data tersimpan
         userName.addTextChangedListener(new android.text.TextWatcher() {
             @Override public void beforeTextChanged(CharSequence c, int a, int b, int d) { }
             @Override public void onTextChanged(CharSequence c, int a, int b, int d) { }
@@ -96,7 +94,6 @@ public class EditProfileFragment extends Fragment {
             }
         });
 
-        // dulu popBackStack() milik Activity -> tidak ada efek (halaman dikelola NavController)
         btnBack.setOnClickListener(v -> leavePage());
 
 
@@ -106,7 +103,6 @@ public class EditProfileFragment extends Fragment {
     @Override
     public void onViewCreated(@androidx.annotation.NonNull View view, @androidx.annotation.Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        // tombol kembali HP: sama seperti panah kembali (tanya dulu kalau ada perubahan)
         requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(),
                 new androidx.activity.OnBackPressedCallback(true) {
                     @Override
@@ -133,14 +129,12 @@ public class EditProfileFragment extends Fragment {
     }
 
     private void deleteGoogleAccount() {
-        if (isDeleting) return; // cegah tekan dua kali
+        if (isDeleting) return;
         isDeleting = true;
         final android.content.Context appContext = requireContext().getApplicationContext();
-        // pesan jelas (bukan "Memuat"): dulu terlihat seperti sedang masuk, padahal sedang menghapus
         LoadingOverlay.show(EditProfileFragment.this, getString(R.string.konfirmasi_identitas_title));
         final String deletingText = getString(R.string.menghapus_akun_loading);
         authManager.deleteAccount(requireActivity(), null, () -> {
-            // identitas sudah dipastikan -> sekarang benar-benar menghapus
             if (getActivity() != null) LoadingOverlay.show(getActivity(), deletingText);
         }, new AuthCallback<Void>() {
             @Override
@@ -189,7 +183,7 @@ public class EditProfileFragment extends Fragment {
                 if (!isAdded()) return;
                 currentUser = result;
                 refreshProfile();
-                updateSaveButton(); // nama baru = "asli" yang baru -> Simpan nonaktif lagi
+                updateSaveButton();
                 userName.clearFocus();
                 Toast.makeText(requireContext(), getString(R.string.nama_berhasil_diperbarui), Toast.LENGTH_SHORT).show();
             }
@@ -200,7 +194,6 @@ public class EditProfileFragment extends Fragment {
                 updateSaveButton();
                 LoadingOverlay.hide(EditProfileFragment.this);
                 if (!isAdded()) return;
-                // teks yang diketik tidak dihapus, supaya bisa langsung dicoba lagi
                 Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
             }
         });
@@ -215,7 +208,7 @@ public class EditProfileFragment extends Fragment {
     /** Kembali: tidak pernah menyimpan. Ada perubahan -> tanya dulu buang atau lanjut mengedit. */
     private void leavePage() {
         hideKeyboard();
-        if (isUpdatingName) return; // sedang menyimpan: tunggu selesai
+        if (isUpdatingName) return;
         if (!hasUnsavedName()) {
             NavHostFragment.findNavController(this).navigateUp();
             return;
@@ -224,7 +217,6 @@ public class EditProfileFragment extends Fragment {
         builder.setTitle(getString(R.string.buang_perubahan_title))
                 .setMessage(getString(R.string.buang_perubahan_msg))
                 .setPositiveButton(getString(R.string.buang_btn), (d, w) -> {
-                    // ketikan hanya ada di kolom ini; cukup keluar tanpa menyimpan apa pun
                     if (isAdded()) NavHostFragment.findNavController(EditProfileFragment.this).navigateUp();
                 })
                 .setNegativeButton(getString(R.string.lanjut_edit_btn), null);
@@ -245,7 +237,6 @@ public class EditProfileFragment extends Fragment {
 
     private void setupName() {
         userName.setOnEditorActionListener((v, actionId, event) -> {
-            // Selesai di keyboard hanya menutup keyboard; menyimpan hanya lewat tombol Simpan
             if (actionId == EditorInfo.IME_ACTION_DONE){
                 hideKeyboard();
                 userName.clearFocus();
@@ -314,7 +305,6 @@ public class EditProfileFragment extends Fragment {
     }
 
     private void updateGoogle() {
-        // pakai btnGoogle (bukan requireView()): method ini juga dipanggil dari onCreateView, saat view fragment belum ada
         int merah = MaterialColors.getColor(btnGoogle, com.google.android.material.R.attr.colorTertiaryFixedDim);
         int ijo = MaterialColors.getColor(btnGoogle, com.google.android.material.R.attr.colorTertiaryFixed);
         if (authManager.hasGoogleProvider()){
@@ -329,7 +319,6 @@ public class EditProfileFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // jangan timpa nama yang sedang diketik
         if (!hasUnsavedName()) loadProfile();
     }
 }

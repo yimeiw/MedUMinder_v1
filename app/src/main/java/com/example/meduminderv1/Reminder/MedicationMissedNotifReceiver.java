@@ -40,7 +40,6 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
                 return;
             }
 
-            // sedang di-snooze dan belum sampai jam snooze-nya
             Timestamp snoozedUntil = doc.getTimestamp("snoozed_until");
             if (snoozedUntil != null && System.currentTimeMillis()
                     < snoozedUntil.toDate().getTime() + AlarmSchedulerHelper.MED_MISSED_DELAY_MS - 60_000L) {
@@ -49,7 +48,6 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
             }
 
             String consumerUid = doc.getString("users_id");
-            // jadwal milik akun lain di HP ini: jangan diproses
             if (consumerUid == null || !AlarmOwner.isCurrentUser(consumerUid)) { pendingResult.finish(); return; }
 
             SharedPreferences pref = context.getSharedPreferences("notification_settings", Context.MODE_PRIVATE);
@@ -64,7 +62,6 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
                         "repeat_notified", true,
                         "updated_at", Timestamp.now()
                 ).addOnSuccessListener(unused -> {
-                    // caregiver cukup diberi tahu sekali per dosis, bukan di setiap pengulangan
                     if (firstRepeat) SnoozeHelper.notifyCaregiversNoResponse(consumerUid, scheduleId, namaObat);
                     AlarmSchedulerHelper.scheduleRepeatAlarm(context, scheduleId, namaObat,
                             scheduledAtMillis, nextTriggerMillis);
@@ -76,8 +73,6 @@ public class MedicationMissedNotifReceiver extends BroadcastReceiver {
                 return;
             }
 
-            // tandai terlewat + kirim notifikasi lewat MissedNotifier (sama seperti appointment & HP caregiver):
-            // satu transaksi, jadi notifikasi tidak terkirim dua kali walau HP caregiver juga memeriksa
             AlarmRingingService.stopFor(context, scheduleId);
             MissedNotifier.claimAndNotify(context, logId, pendingResult::finish);
         }).addOnFailureListener(e -> {

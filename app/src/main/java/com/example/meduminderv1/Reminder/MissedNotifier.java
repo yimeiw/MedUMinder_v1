@@ -28,7 +28,6 @@ public final class MissedNotifier {
     private MissedNotifier() {}
     public interface Done { void run(); }
 
-    // Obat: hanya satu perangkat yang berhasil mengklaim log ini.
     public static void claimAndNotify(Context context, String logId, Done onFinish) {
         final Context app = context.getApplicationContext();
         final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -54,7 +53,6 @@ public final class MissedNotifier {
         }).addOnFailureListener(e -> { Log.e(TAG, "klaim obat gagal " + logId, e); onFinish.run(); });
     }
 
-    // Appointment: pola yang sama.
     public static void claimAppointment(Context context, String id, Done onFinish) {
         final Context app = context.getApplicationContext();
         final FirebaseFirestore db = FirebaseFirestore.getInstance();

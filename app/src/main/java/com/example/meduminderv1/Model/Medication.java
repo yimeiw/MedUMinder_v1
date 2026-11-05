@@ -10,7 +10,6 @@ public class Medication {
     private String users_id;
     private String catalog_id;
     private String custom_medicine_name;
-    // id obat pribadi di users/{users_id}/customMedicines (null = obat dari katalog resmi)
     private String custom_medicine_id;
     private Boolean is_active;
     private Map<String, Object> stock;

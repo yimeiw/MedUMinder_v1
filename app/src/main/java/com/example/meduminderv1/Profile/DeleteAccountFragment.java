@@ -36,7 +36,6 @@ public class DeleteAccountFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_delete_account, container, false);
 
         authManager = AuthManager.getInstance(requireContext());
@@ -70,7 +69,7 @@ public class DeleteAccountFragment extends Fragment {
         });
 
         btnDeleteAcc.setOnClickListener(v -> {
-            if (!btnDeleteAcc.isEnabled()) return; // cegah tekan dua kali
+            if (!btnDeleteAcc.isEnabled()) return;
             String password = etPassword.getText().toString().trim();
             if (password.isEmpty()) {
                 etPassword.setError(getString(R.string.password_tidak_boleh_kosong));
@@ -79,11 +78,9 @@ public class DeleteAccountFragment extends Fragment {
             }
             final android.content.Context appContext = requireContext().getApplicationContext();
             setBusy(true);
-            // pesan jelas (bukan "Memuat"): dulu terlihat seperti sedang masuk, padahal sedang menghapus
             LoadingOverlay.show(DeleteAccountFragment.this, getString(R.string.konfirmasi_identitas_title));
             final String deletingText = getString(R.string.menghapus_akun_loading);
             authManager.deleteAccount(requireActivity(), password, () -> {
-                // identitas sudah dipastikan -> sekarang benar-benar menghapus
                 if (getActivity() != null) LoadingOverlay.show(getActivity(), deletingText);
             }, new AuthCallback<Void>() {
                 @Override

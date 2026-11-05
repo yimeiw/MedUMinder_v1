@@ -59,7 +59,6 @@ public class NotificationFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_notification, container, false);
 
         authManager = AuthManager.getInstance(getContext());
@@ -103,7 +102,6 @@ public class NotificationFragment extends Fragment {
             });
         }
 
-        // semua jenis notifikasi (termasuk stok) membuka halaman detail yang sama
         if (notification.getNotification_id() == null) return;
         Bundle bundle = new Bundle();
         bundle.putString("notification_id", notification.getNotification_id());
@@ -116,7 +114,7 @@ public class NotificationFragment extends Fragment {
             private final Paint deletePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             private final Drawable readIcon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_mail);
             private final Drawable deleteIcon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_delete_bw);
-            private final float cornerRadius = dpToPx(14f); // samakan dengan radius background card kamu
+            private final float cornerRadius = dpToPx(14f);
 
             {
                 readPaint.setColor(ContextCompat.getColor(requireContext(), R.color.green));
@@ -129,8 +127,6 @@ public class NotificationFragment extends Fragment {
             }
             @Override
             public int getSwipeDirs(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder){
-                // undangan yang belum direspon (tanpa dokumen notifikasi) tidak bisa di-swipe:
-                // harus diterima/ditolak dari halaman detail
                 int pos = viewHolder.getAdapterPosition();
                 if (pos != RecyclerView.NO_POSITION) {
                     String id = adapter.getNotificationAt(pos).getNotification_id();
@@ -145,8 +141,6 @@ public class NotificationFragment extends Fragment {
 
                 View itemView = viewHolder.itemView;
 
-                // ambil card asli (child pertama), bukan itemView-nya langsung,
-                // supaya top/bottom ikut margin vertikal si card
                 View card = (itemView instanceof ViewGroup && ((ViewGroup) itemView).getChildCount() > 0)
                         ? ((ViewGroup) itemView).getChildAt(0)
                         : itemView;
@@ -158,7 +152,7 @@ public class NotificationFragment extends Fragment {
 
                 RectF rect = new RectF();
 
-                if (dX > 0) { // swipe kanan -> mark as read
+                if (dX > 0) {
                     rect.set(itemView.getLeft(), top, itemView.getLeft() + dX, bottom);
                     c.drawRoundRect(rect, cornerRadius, cornerRadius, readPaint);
 
@@ -167,7 +161,7 @@ public class NotificationFragment extends Fragment {
                             itemView.getLeft() + iconMargin + readIcon.getIntrinsicWidth(), bottom - iconMargin);
                     readIcon.draw(c);
 
-                } else if (dX < 0) { // swipe kiri -> delete
+                } else if (dX < 0) {
                     rect.set(itemView.getRight() + dX, top, itemView.getRight(), bottom);
                     c.drawRoundRect(rect, cornerRadius, cornerRadius, deletePaint);
 
@@ -205,12 +199,10 @@ public class NotificationFragment extends Fragment {
         target.setIs_read(false);
         adapter.notifyItemChanged(position);
 
-        // update ke Firestore
         db.collection("notifications").document(target.getNotification_id())
                 .update("is_read", false, "updated_at", Timestamp.now())
                 .addOnFailureListener(e -> {
                     if (!isAdded()) return;
-                    // rollback UI kalau gagal
                     target.setIs_read(true);
                     adapter.notifyItemChanged(position);
                     Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -286,7 +278,6 @@ public class NotificationFragment extends Fragment {
         User user = authManager.getCurrentUser();
         if (user == null) return;
         if (notifListener != null) notifListener.remove();
-        // caregiver: hanya notif consumer yang sedang dipilih. consumer: tidak disaring.
         String consumerFilter = user.getCurrentRole() == UserRole.Caregiver
                 ? SessionManager.getInstance().getActiveConsumerUid()
                 : null;

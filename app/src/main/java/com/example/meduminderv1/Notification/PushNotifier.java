@@ -43,6 +43,7 @@ public final class PushNotifier {
             "consumer_melewatkan_jadwal_title",
             "consumer_belum_merespon_title",
             "pengingat_dari_caregiver_title",
+            "pengingat_isi_ulang_title",
             "isi_ulang_obat_x_title",
             "stok_habis_title",
             "invitation_role_title",
@@ -180,7 +181,7 @@ public final class PushNotifier {
     }
     public static void postLocal(Context context, String id, String titleKey, String messageKey, List<String> args) {
         Context app = context.getApplicationContext();
-        markStart(app);   // pastikan "since" tidak lebih baru dari created_at
+        markStart(app);
         Notification n = new Notification();
         n.setNotification_id(id);
         n.setTitle_key(titleKey);

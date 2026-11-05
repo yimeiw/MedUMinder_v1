@@ -40,7 +40,7 @@ public class SessionManager {
     public String getTargetUid(){
         if (currentUser == null) return null;
         if (currentUser.getCurrentRole() == UserRole.Caregiver){
-            return activeConsumerUid; //bisa null kalau caregiver belum pilih consumer;
+            return activeConsumerUid;
         } return currentUser.getAuth_uid();
     }
 }

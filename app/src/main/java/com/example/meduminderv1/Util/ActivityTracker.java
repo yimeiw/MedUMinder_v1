@@ -28,7 +28,7 @@ public final class ActivityTracker implements Application.ActivityLifecycleCallb
         Intent i = a.getIntent();
         if (i != null && i.hasExtra(EXTRA_TOAST)) {
             final int res = i.getIntExtra(EXTRA_TOAST, 0);
-            i.removeExtra(EXTRA_TOAST);   // tidak muncul lagi saat recreate/rotasi
+            i.removeExtra(EXTRA_TOAST);
             if (res != 0) {
                 a.getWindow().getDecorView().postDelayed(
                         () -> Toast.makeText(a, res, Toast.LENGTH_LONG).show(), 400);

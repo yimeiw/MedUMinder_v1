@@ -43,12 +43,10 @@ public final class NotificationText {
         return MINUTES_PREFIX + minutes;
     }
 
-    // jumlah hari yang ikut diterjemahkan, contoh "3 hari" / "3 days"
     public static String daysArg(int days) {
         return DAYS_PREFIX + days;
     }
 
-    // argumen yang ikut diterjemahkan saat ditampilkan, contoh nama role
     public static String stringArg(String key) {
         return STRING_PREFIX + key;
     }
@@ -64,7 +62,6 @@ public final class NotificationText {
 
     public static String title(Context c, Notification n) {
         int id = resId(c, n.getTitle_key());
-        // notifikasi lama belum punya judul: tetap tampil "Undangan Diterima/Ditolak", bukan "Undangan"
         if (id == 0 && "undangan_diterima".equals(n.getMessage_key())) id = resId(c, "undangan_diterima_title");
         if (id == 0 && "undangan_ditolak".equals(n.getMessage_key())) id = resId(c, "undangan_ditolak_title");
         if (id == 0) return n.getTitle();

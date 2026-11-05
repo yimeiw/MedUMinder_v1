@@ -18,11 +18,8 @@ import com.google.android.material.color.MaterialColors;
 public final class DisabledField {
     private DisabledField() {}
 
-    // 0.7: masih jelas "terkunci", kontras teks tetap baik (± 6:1 terang, ± 7:1 gelap)
     public static final float ALPHA = 0.7f;
-    // lapisan abu-abu tipis di atas isi kolom (8% warna teks), supaya kolom terkunci jelas berbeda dari kolom aktif
     private static final float GREY_OVERLAY = 0.08f;
-    // semua latar kolom (border, input_border, border_hugcontent_nopadding) bersudut 20dp
     private static final float CORNER_DP = 20f;
 
     /** Kunci kolom beserta isinya. Pudar hanya di kolom luar, supaya teks di dalamnya tidak pudar dua kali. */
@@ -35,7 +32,6 @@ public final class DisabledField {
                 Math.round(255 * GREY_OVERLAY));
         if (field instanceof MaterialCardView) {
             MaterialCardView card = (MaterialCardView) field;
-            // tanpa bayangan: dulu bayangan kartu tembus saat dipudarkan dan membuat warnanya beda sendiri
             card.setCardElevation(0f);
             card.setCardForegroundColor(ColorStateList.valueOf(grey));
         } else {

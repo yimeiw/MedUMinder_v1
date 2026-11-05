@@ -29,7 +29,6 @@ public class AlarmActionReceiver extends BroadcastReceiver {
             Log.e(TAG, "Intent null");
             return;
         }
-        // alarm milik akun lain (atau belum ada yang login) di HP ini: abaikan dan hentikan bunyinya
         if (!AlarmOwner.allows(intent)) {
             context.stopService(new Intent(context, AlarmRingingService.class));
             return;
@@ -52,7 +51,6 @@ public class AlarmActionReceiver extends BroadcastReceiver {
          */
         if ("ACTION_TAKEN".equals(action)) {
             PendingResult pendingResult = goAsync();
-            // Batalkan snooze yang masih terjadwal.
             AlarmSchedulerHelper.cancelSnooze(context, scheduleId);
             AlarmSchedulerHelper.onDoseTaken(context, scheduleId, namaObat, scheduledAtMillis);
             markAsTaken(context, scheduleId, scheduledAtMillis, pendingResult);
@@ -64,8 +62,6 @@ public class AlarmActionReceiver extends BroadcastReceiver {
              */
         } else if ("ACTION_SNOOZE".equals(action)) {
             PendingResult pendingResult = goAsync();
-            // pakai SnoozeHelper supaya sama dengan snooze dari dalam aplikasi:
-            // durasi ikut Pengaturan Notifikasi, waktu snooze tersimpan, notif pakai bahasa aplikasi
             boolean isAppointment = "appointment".equals(intent.getStringExtra("type"));
             SnoozeHelper.snooze(context, scheduleId, namaObat, scheduledAtMillis, isAppointment,
                     pendingResult::finish);
@@ -156,7 +152,7 @@ public class AlarmActionReceiver extends BroadcastReceiver {
     }
 
     private void stopAlarmService(Context context, String scheduleId, PendingResult pendingResult) {
-        AlarmRingingService.stopFor(context, scheduleId);   // jadwal lain di jam yang sama tetap berbunyi
+        AlarmRingingService.stopFor(context, scheduleId);
         pendingResult.finish();
     }
 

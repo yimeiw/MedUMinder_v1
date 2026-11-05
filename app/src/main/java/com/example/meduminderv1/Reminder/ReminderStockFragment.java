@@ -37,18 +37,15 @@ public class ReminderStockFragment extends Fragment {
         btnBack = view.findViewById(R.id.btnBack);
         btnRefillStock = view.findViewById(R.id.btnRefillStock);
 
-        // Ambil medication_id dari notification
         if (getArguments() != null) {
             medicationId = getArguments().getString("medication_id");
             notificationId = getArguments().getString("notification_id");
         }
 
-        // Tombol kembali
         btnBack.setOnClickListener(v ->
                 NavHostFragment.findNavController(ReminderStockFragment.this).navigateUp()
         );
 
-        // Tombol isi ulang obat
         btnRefillStock.setOnClickListener(v -> {
             if (medicationId == null || medicationId.isEmpty()) {
                 Toast.makeText(requireContext(), "Data obat tidak ditemukan", Toast.LENGTH_SHORT).show();

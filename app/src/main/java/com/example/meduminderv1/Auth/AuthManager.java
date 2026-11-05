@@ -72,7 +72,6 @@ public class AuthManager {
     private final InvitationRepo invitationRepo;
     private final NotificationRepo notificationRepo;
     private final CareRelationshipRepo relationshipRepo;
-    // dipanggil sekali saat hapus akun benar-benar mulai (setelah identitas dipastikan)
     private Runnable pendingDeleteStarted;
 
     public AuthManager(Context context){
@@ -92,7 +91,6 @@ public class AuthManager {
         } return instance;
     }
 
-//    provider
     public boolean hasGoogleProvider(){
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) return false;
@@ -111,7 +109,6 @@ public class AuthManager {
         } return user.getAuthProvider();
     }
 
-//    EMAIl
     public void registerWithEmail(User user, String password, AuthCallback<User> callback){
         if (user == null){
             callback.onFailure(context.getString(R.string.data_user_tidak_boleh_kosong));
@@ -166,9 +163,6 @@ public class AuthManager {
             return;
         } final String cleanEmail = email.trim().toLowerCase(java.util.Locale.ROOT);
 
-        // cek status email lewat koleksi "user_emails" (bisa dibaca walau belum login).
-        // Sebelumnya query ke "users" gagal karena belum login, lalu Firebase
-        // (email enumeration protection) selalu balas "password salah".
         checkEmailStatus(cleanEmail, status -> {
             switch (status){
                 case NOT_REGISTERED:
@@ -180,14 +174,13 @@ public class AuthManager {
                 case EMAIL:
                     performEmailSignIn(cleanEmail, password, true, callback);
                     break;
-                default: // UNKNOWN
+                default:
                     performEmailSignIn(cleanEmail, password, false, callback);
                     break;
             }
         });
     }
 
-    // ===== Cek status email (terdaftar / belum / akun Google) =====
     public enum EmailStatus { NOT_REGISTERED, EMAIL, GOOGLE_ONLY, UNKNOWN }
     public interface EmailStatusCallback { void onResult(EmailStatus status); }
 
@@ -209,8 +202,6 @@ public class AuthManager {
                         }
                         return;
                     }
-                    // dokumen tidak ada -> coba cek ke "users" dulu
-                    // (untuk akun lama yang belum punya data di user_emails)
                     checkEmailFromUsers(clean, cb, true);
                 })
                 .addOnFailureListener(e -> checkEmailFromUsers(clean, cb, false));
@@ -231,14 +222,11 @@ public class AuthManager {
 
             @Override
             public void onFailure(Exception e) {
-                // "users" tidak bisa dibaca sebelum login.
-                // Kalau user_emails berhasil dibaca & dokumennya tidak ada -> anggap belum terdaftar.
                 cb.onResult(lookupDocMissing ? EmailStatus.NOT_REGISTERED : EmailStatus.UNKNOWN);
             }
         });
     }
 
-    // Simpan / perbarui data email publik supaya login & lupa password bisa cek email tanpa login.
     public void syncEmailLookup(User user){
         if (user == null || user.getEmail() == null) return;
         Map<String, Object> data = new HashMap<>();
@@ -267,7 +255,7 @@ public class AuthManager {
                     public void onSuccess(User result) {
                         if (rejectIfDeleted(result, callback)) return;
                         sessionManager.saveUser(result);
-                        syncEmailLookup(result); // isi data untuk akun lama
+                        syncEmailLookup(result);
                         callback.onSuccess(result);
                     }
 
@@ -275,7 +263,6 @@ public class AuthManager {
                     public void onFailure(Exception e) {
                         mAuth.signOut();
                         sessionManager.clearSession();
-                        // login masih ada tapi profil sudah tidak ada = akun sudah dihapus
                         callback.onFailure(e instanceof FirebaseFirestoreException
                                 ? friendlyError(e)
                                 : context.getString(R.string.akun_sudah_dihapus));
@@ -289,8 +276,6 @@ public class AuthManager {
             if (e instanceof FirebaseAuthInvalidUserException){
                 callback.onFailure(context.getString(R.string.email_belum_terdaftar));
             } else if (e instanceof  FirebaseAuthInvalidCredentialsException) {
-                // kalau email pasti terdaftar -> password salah;
-                // kalau tidak bisa dipastikan -> pesan umum "email atau password salah"
                 callback.onFailure(context.getString(emailKnown ? R.string.password_salah : R.string.email_atau_password_salah));
             } else {
                 callback.onFailure(friendlyError(e));
@@ -308,7 +293,6 @@ public class AuthManager {
         }
         final String cleanEmail = email.trim().toLowerCase(java.util.Locale.ROOT);
 
-        // kalau email blm terdaftar, email resetnya nya ga dikirim
         checkEmailStatus(cleanEmail, status -> {
             if (status == EmailStatus.NOT_REGISTERED){
                 callback.onFailure(context.getString(R.string.email_belum_terdaftar));
@@ -331,7 +315,6 @@ public class AuthManager {
                 });
     }
 
-    //    GOOGLE
     public void loginWithGoogle(Activity activity, AuthCallback<User> callback){
         startGoogleSignIn(activity, callback);
     }
@@ -423,14 +406,12 @@ public class AuthManager {
 
             @Override
             public void onFailure(Exception e) {
-                // gagal baca karena koneksi/izin: JANGAN buat profil baru (bisa menimpa profil lama)
                 if (e instanceof FirebaseFirestoreException) {
                     mAuth.signOut();
                     sessionManager.clearSession();
                     callback.onFailure(friendlyError(e));
                     return;
                 }
-                // User Google baru, belum ada datanya di database — buat profil baru
                 User user = new User();
                 user.setAuth_uid(firebaseUser.getUid());
                 user.setName(firebaseUser.getDisplayName());
@@ -444,14 +425,12 @@ public class AuthManager {
                 user.setUpdated_at(Timestamp.now());
                 user.setDeleted_at(null);
 
-                // Simpan langsung ke database, TANPA proses verifikasi email & sign-out,
-                // karena akun Google sudah pasti terverifikasi.
                 userRepository.saveUser(user, new RepoCallback<Void>() {
                     @Override
                     public void onSuccess(Void result) {
                         sessionManager.saveUser(user);
-                        syncEmailLookup(user); // supaya login email/password tahu ini akun Google
-                        callback.onSuccess(user); // <-- ini yang bikin langsung pindah ke Home
+                        syncEmailLookup(user);
+                        callback.onSuccess(user);
                     }
 
                     @Override
@@ -541,7 +520,6 @@ public class AuthManager {
         }).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 
-    //    ACCOUNT
     public void restoreSession(AuthCallback<User> callback){
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null){
@@ -554,13 +532,12 @@ public class AuthManager {
             public void onSuccess(User result) {
                 if (rejectIfDeleted(result, callback)) return;
                 sessionManager.saveUser(result);
-                syncEmailLookup(result); // isi data untuk akun lama yang auto-login
+                syncEmailLookup(result);
                 callback.onSuccess(result);
             }
 
             @Override
             public void onFailure(Exception e) {
-                // profil sudah tidak ada (akun dihapus): keluarkan sesi lama supaya tidak "setengah login"
                 if (!(e instanceof FirebaseFirestoreException)) {
                     mAuth.signOut();
                     sessionManager.clearSession();
@@ -593,7 +570,6 @@ public class AuthManager {
             }
         });
     }
-//   general method
     private void saveUserProfile(User user, AuthCallback<User> callback) {
         userRepository.saveUser(user, new RepoCallback<Void>() {
             @Override
@@ -603,8 +579,6 @@ public class AuthManager {
                     callback.onFailure(context.getString(R.string.user_tidak_ditemukan));
                     return;
                 }
-                // tunggu data user_emails tersimpan dulu SEBELUM signOut
-                // (kalau sudah signOut duluan, penulisan bisa ditolak rules)
                 Map<String, Object> lookup = new HashMap<>();
                 lookup.put("exists", true);
                 lookup.put("provider", user.getAuthProvider() != null ? user.getAuthProvider().name() : AuthProviderType.EMAIL.name());
@@ -680,8 +654,6 @@ public class AuthManager {
     public void logout(Context context, AuthCallback<Void> callback){
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         String uid = firebaseUser != null ? firebaseUser.getUid() : null;
-        // batalkan semua alarm milik akun ini dulu (selagi masih login), supaya
-        // tidak bunyi untuk akun lain yang nanti login di HP ini
         AlarmOwner.cancelAllForUser(this.context, uid, () -> {
             mAuth.signOut();
             sessionManager.clearSession();
@@ -705,7 +677,6 @@ public class AuthManager {
         });
     }
 
-    // role
     public void switchRole(UserRole role, AuthCallback<User> callback) {
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null){
@@ -715,9 +686,7 @@ public class AuthManager {
         userRepository.updateRole(firebaseUser.getUid(), role, new RepoCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                // consumer tidak memantau orang lain; caregiver memilih consumer lagi di home-nya
                 if (role == UserRole.Consumer) sessionManager.setActiveConsumerUid(null);
-                // langsung perbarui sesi, supaya semua halaman yang membaca sesi ikut role baru
                 User current = sessionManager.getUser();
                 if (current != null) current.setCurrent_role(role.name());
                 loadUserProfile(firebaseUser.getUid(), callback);
@@ -748,7 +717,6 @@ public class AuthManager {
         });
     }
 
-//    tambahan untuk editprofile
     public User getCurrentUser(){
         return sessionManager.getUser();
     }
@@ -894,7 +862,6 @@ public class AuthManager {
         User user = sessionManager.getUser();
         String email = user != null && user.getEmail() != null ? user.getEmail() : firebaseUser.getEmail();
 
-        // 1) alarm di HP ini, 2) semua data akun, 3) profil, 4) akun login, 5) sesi di HP
         AlarmOwner.cancelAllForUser(context, uid, () -> AccountCleanup.deleteAllUserData(uid, () -> {
             if (email != null){
                 FirebaseFirestore.getInstance().collection("user_emails")
@@ -908,8 +875,6 @@ public class AuthManager {
                         sessionManager.clearSession();
                         clearCredentialState(callback);
                     }).addOnFailureListener(e -> {
-                        // profil sudah terhapus -> akun ini tetap tidak bisa dipakai login lagi;
-                        // keluarkan sesi supaya tidak "setengah login"
                         Log.e("DELETE_ACCOUNT", "Gagal hapus akun login", e);
                         mAuth.signOut();
                         sessionManager.clearSession();
@@ -926,7 +891,6 @@ public class AuthManager {
         }));
     }
 
-    //invitation & notification
     public void sendInvitation(String receiverEmail, UserRole relationshipRole, InvitationCallback callback){
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser == null){
@@ -971,8 +935,6 @@ public class AuthManager {
                                     callback.onFailure(context.getString(R.string.invitation_pending));
                                     return;
                                 }
-                                // FIX: kalau dia sudah lebih dulu mengundang kita (masih pending),
-                                // jangan buat undangan kebalikan -> suruh cek notifikasi
                                 invitationRepo.hasPendingInvitationFrom(receiver.getAuth_uid(), sender.getAuth_uid(), new RepoCallback<Boolean>() {
                                     @Override
                                     public void onSuccess(Boolean reversePending) {
@@ -1032,11 +994,10 @@ public class AuthManager {
             @Override
             public void onSuccess(Void result) {
                 notifySenderInvitationSent(sender, invitation.getInvitation_id(), receiverEmail, relationshipRole);
-                //user belum terdaftar
                 if (receiver == null) {
                     callback.onSuccess(false);
                     return;
-                } //user sudah terdaftar
+                }
                 createNotification(invitation, receiver.getAuth_uid(), new AuthCallback<Void>() {
                     @Override
                     public void onSuccess(Void result) {
@@ -1057,7 +1018,6 @@ public class AuthManager {
         });
     }
 
-    // pengundang punya role kebalikan dari role yang diundang
     private static UserRole otherRole(UserRole role) {
         return role == UserRole.Caregiver ? UserRole.Consumer : UserRole.Caregiver;
     }
@@ -1091,7 +1051,6 @@ public class AuthManager {
             callback.onFailure(context.getString(R.string.user_belum_login));
             return;
         }
-        // hubungkan dulu undangan yang dikirim sebelum akun ini dibuat (receiver_uid masih null)
         invitationRepo.claimInvitationsByEmail(user.getAuth_uid(), user.getEmail(), () ->
             invitationRepo.getPendingInvitationForUser(user.getAuth_uid(), user.getEmail(), new RepoCallback<Invitation>() {
                 @Override
@@ -1120,7 +1079,7 @@ public class AuthManager {
                             if (invitation.getInvite_role() == UserRole.Caregiver && mAuth.getCurrentUser() != null){
                                 revertCaregiverIfNoConsumers(mAuth.getCurrentUser().getUid(), () -> callback.onSuccess(null));
                             } else {
-                                callback.onSuccess(null); //tidak ada perpindahan role
+                                callback.onSuccess(null);
                             }
                         }
                     }
@@ -1150,7 +1109,6 @@ public class AuthManager {
             @Override
             public void onSuccess(Boolean result) {
                 if (Boolean.TRUE.equals(result)){
-                    //relationship sdh ada, tdk perlu create lg
                     notifySender(invitation, true);
                     if (invitation.getInvite_role() == UserRole.Caregiver){
                         sessionManager.setActiveConsumerUid(consumerUid);
@@ -1166,8 +1124,7 @@ public class AuthManager {
                     public void onSuccess(Void result) {
                         notifySender(invitation, true);
                         if (invitation.getInvite_role() == UserRole.Caregiver){
-                            sessionManager.setActiveConsumerUid(consumerUid); //cmn state
-                            //auto enable role caregiver + switch role ke caregiver dan diarahkan ke home caregiver
+                            sessionManager.setActiveConsumerUid(consumerUid);
                             userRepository.enableCaregiver(receiverUid, new RepoCallback<Void>() {
                                 @Override
                                 public void onSuccess(Void result) {
@@ -1180,7 +1137,7 @@ public class AuthManager {
                                 }
                             });
                         } else {
-                            switchRole(UserRole.Consumer, callback); //tetap dirole sekarang
+                            switchRole(UserRole.Consumer, callback);
                         }
                     }
 
@@ -1206,7 +1163,7 @@ public class AuthManager {
         relationshipRepo.getConsumerForCaregiver(caregiverUid, new RepoCallback<List<CareRelationship>>() {
             @Override
             public void onSuccess(List<CareRelationship> result) {
-                if (result != null && !result.isEmpty()){ // masih punya consumer -> tetap caregiver
+                if (result != null && !result.isEmpty()){
                     if (onDone != null) onDone.run();
                     return;
                 }

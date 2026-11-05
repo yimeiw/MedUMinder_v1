@@ -30,11 +30,11 @@ import java.util.List;
 public class ConsumerPickerHelper {
 
     public interface OnConsumerChanged {
-        void onChanged(String consumerUid); // null kalau caregiver belum punya consumer
+        void onChanged(String consumerUid);
     }
 
     private final Context context;
-    private final View root; // root dari <include>, id: consumerPickerContainer
+    private final View root;
     private final TextView namaConsumer;
     private final ImageView imgArrow;
     private final SessionManager sessionManager;
@@ -61,13 +61,11 @@ public class ConsumerPickerHelper {
         if (user == null) return;
 
         if (user.getCurrentRole() != UserRole.Caregiver) {
-            // Role Consumer: dropdown disembunyikan, data = user sendiri
             root.setVisibility(View.GONE);
             listener.onChanged(user.getAuth_uid());
             return;
         }
 
-        // Role Caregiver: dropdown ditampilkan, data = consumer terpilih
         root.setVisibility(View.VISIBLE);
         loadConsumers();
     }
@@ -81,7 +79,7 @@ public class ConsumerPickerHelper {
                 LinkedHashSet<String> seenUid = new LinkedHashSet<>();
                 for (CareRelationship relationship : result){
                     if (relationship.getConsumer_uid() == null) continue;
-                    if (seenUid.add(relationship.getConsumer_uid())){ //true jika blm prnh ada
+                    if (seenUid.add(relationship.getConsumer_uid())){
                         relations.add(relationship);
                     }
                 }
@@ -102,7 +100,6 @@ public class ConsumerPickerHelper {
                 if (stillValid) {
                     toSelect = preselected;
                 } else {
-                    // default: consumer dengan relationship paling baru
                     CareRelationship newest = Collections.max(result,
                             Comparator.comparing(CareRelationship::getCreated_at));
                     toSelect = newest.getConsumer_uid();

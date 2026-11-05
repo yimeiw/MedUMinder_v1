@@ -127,7 +127,6 @@ public class NotificationSettingsFragment extends Fragment {
         );
     }
 
-    // untuk preview ringtone
     private void playRingtonePreview(Uri uri) {
         stopRingtonePreview();
 
@@ -141,7 +140,6 @@ public class NotificationSettingsFragment extends Fragment {
         }
     }
 
-    // untuk stop preview ringtone
     private void stopRingtonePreview() {
         if (previewRingtone != null && previewRingtone.isPlaying()) {
             previewRingtone.stop();
@@ -149,7 +147,6 @@ public class NotificationSettingsFragment extends Fragment {
         }
     }
 
-    // ketika keluar page, auto stop preview ringtone
     @Override
     public void onDestroyView() {
         stopRingtonePreview();
@@ -196,7 +193,6 @@ public class NotificationSettingsFragment extends Fragment {
         };
     }
 
-    //  ringtone
     private void setupRingtoneDropdown() {
         List<String> ringtoneNames = new ArrayList<>();
         List<String> ringtoneUris = new ArrayList<>();
@@ -301,7 +297,6 @@ public class NotificationSettingsFragment extends Fragment {
                         KEY_RINGTONE_URI, selectedUri
                 ).apply();
 
-                // preview ringtone yang dipilih oleh user
         playRingtonePreview(Uri.parse(selectedUri));
         dropdownRingtone.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
             });
@@ -317,7 +312,7 @@ public class NotificationSettingsFragment extends Fragment {
 
     private void setupAlarmVolume() {
         int p = AlarmVolume.percent(requireContext());
-        p = Math.max(10, Math.min(100, Math.round(p / 5f) * 5));   // pastikan kelipatan step
+        p = Math.max(10, Math.min(100, Math.round(p / 5f) * 5));
         sliderVolume.setValue(p);
         tvVolumeValue.setText(p + "%");
 
@@ -332,12 +327,11 @@ public class NotificationSettingsFragment extends Fragment {
             @Override public void onStopTrackingTouch(@NonNull Slider s) {
                 int v = (int) s.getValue();
                 AlarmVolume.save(requireContext(), v);
-                AlarmVolume.preview(requireContext(), v);   // dengarkan hasilnya
+                AlarmVolume.preview(requireContext(), v);
             }
         });
     }
 
-        // reminder message
         private void setupReminderMessageDropdown() {
             int[] options = com.example.meduminderv1.Reminder.ReminderMessage.OPTIONS;
             String[] reminderMessages = new String[options.length];
@@ -379,7 +373,6 @@ public class NotificationSettingsFragment extends Fragment {
             });
         }
 
-        // snooze duration
         private void setupSnoozeDuration() {
             String[] snoozeOptions = {
                     getString(R.string.fiveMin),
@@ -417,7 +410,6 @@ public class NotificationSettingsFragment extends Fragment {
                                 .putInt("snooze_minutes", snoozeMinutes[position])
                                 .apply();
 
-//                        pref.edit().putString(KEY_SNOOZE_DURATION, selected).apply();
                         dropdownSnoozeDuration.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
                     }
             );
@@ -429,7 +421,6 @@ public class NotificationSettingsFragment extends Fragment {
             });
         }
 
-        // appointment reminder
         private void setupAppointmentDropdown() {
             String[] appointmentOptions = {
                     getString(R.string.thirtyMin),
@@ -466,7 +457,6 @@ public class NotificationSettingsFragment extends Fragment {
                                 .putInt("appointment_minutes", apptMinutes[position])
                                 .apply();
 
-//                        pref.edit().putString(KEY_APPOINTMENT_REMINDER, selected).apply();
                         dropdownAppointmentReminder.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_down, 0);
                     }
             );
@@ -478,7 +468,6 @@ public class NotificationSettingsFragment extends Fragment {
             });
         }
 
-        // refill reminder: berapa hari sebelum obat habis
         private String daysLabel(int days) {
             return getResources().getQuantityString(R.plurals.jumlah_hari, days, days);
         }
@@ -514,8 +503,6 @@ public class NotificationSettingsFragment extends Fragment {
             });
         }
 
-        // disimpan di HP & di data user (Firestore), supaya pengecekan dari HP caregiver
-        // juga pakai pilihan consumer. Setelah diubah, semua obat langsung dicek ulang.
         private void saveRefillDays(int days) {
             pref.edit().putInt(StockChecker.KEY_REFILL_DAYS, days).apply();
             User user = AuthManager.getInstance(requireContext()).getCurrentUser();
@@ -528,7 +515,6 @@ public class NotificationSettingsFragment extends Fragment {
                     .addOnSuccessListener(unused -> StockChecker.checkAllForUser(appContext, uid, null));
         }
 
-        // repeat reminder
         private void setupRepeatReminder() {
             switchRepeatReminder.setOnCheckedChangeListener(
                     (buttonView, isChecked) -> {
@@ -540,9 +526,7 @@ public class NotificationSettingsFragment extends Fragment {
             );
         }
 
-        // load saved notification settings
         private void loadSavedSettings() {
-            // ringtone
             String savedRingtoneName = pref.getString(KEY_RINGTONE_NAME, null);
 
             if(savedRingtoneName != null){
@@ -551,7 +535,6 @@ public class NotificationSettingsFragment extends Fragment {
                 );
             }
 
-            // reminder message
             String savedReminderMessage = getString(com.example.meduminderv1.Reminder.ReminderMessage.OPTIONS[
                     com.example.meduminderv1.Reminder.ReminderMessage.selectedIndex(requireContext())]);
 
@@ -559,8 +542,6 @@ public class NotificationSettingsFragment extends Fragment {
                     savedReminderMessage, false
             );
 
-            // snooze duration
-            // label dari angka yang tersimpan (bukan teks lama), supaya ikut bahasa & ejaan terbaru
             int snoozeMin = com.example.meduminderv1.Reminder.SnoozeHelper.getSnoozeMinutes(requireContext());
             String savedSnooze = getString(snoozeMin == 30 ? R.string.thirtyMin
                     : snoozeMin == 10 ? R.string.tenMin : R.string.fiveMin);
@@ -569,7 +550,6 @@ public class NotificationSettingsFragment extends Fragment {
                     savedSnooze, false
             );
 
-            // appointment reminder
             int apptMin = com.example.meduminderv1.Reminder.AppointmentAlertScheduler.getPreReminderOffsetMinutes(requireContext());
             String savedAppointment = getString(apptMin == 120 ? R.string.twoHour
                     : apptMin == 60 ? R.string.oneHour : R.string.thirtyMin);
@@ -578,13 +558,11 @@ public class NotificationSettingsFragment extends Fragment {
                     savedAppointment, false
             );
 
-            // refill reminder: pilihan di data user dulu, kalau belum ada pakai yang di HP
             User me = AuthManager.getInstance(requireContext()).getCurrentUser();
             int refillDays = me != null && me.getRefill_reminder_days() != null
                     ? me.getRefill_reminder_days() : StockChecker.localRefillDays(requireContext());
             dropdownRefillReminder.setText(daysLabel(refillDays), false);
 
-            // repeat reminder
             boolean repeatReminder = pref.getBoolean(
                     KEY_REPEAT_REMINDER, true
             );

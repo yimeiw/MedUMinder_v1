@@ -27,8 +27,6 @@ public class TodayScheduleAdapter extends RecyclerView.Adapter<TodayScheduleAdap
     private final List<LogItem> items = new ArrayList<>();
     private final Context context;
 
-    // Listener klik item, supaya fragment (Home/CaregiverHome/Schedule) bisa
-    // dikabari saat sebuah jadwal di list ini diklik, lalu membuka ReminderFragment.
     public interface OnItemClickListener {
         void onItemClick(LogItem item);
     }

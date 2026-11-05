@@ -22,8 +22,11 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class InvitationPopupHelper {
 
-    // supaya popup tidak muncul dobel (dari onResume + dari listener realtime)
     private static AlertDialog currentDialog;
+
+    public static boolean isShowing() {
+        return currentDialog != null && currentDialog.isShowing();
+    }
 
     public static void checkAndShow(Fragment fragment, AuthManager authManager) {
         authManager.getPendingInvitation(new AuthCallback<Invitation>() {
@@ -50,13 +53,12 @@ public class InvitationPopupHelper {
                         Invitation inv = change.getDocument().toObject(Invitation.class);
                         if (inv.getInvitation_id() == null) inv.setInvitation_id(change.getDocument().getId());
                         showPopup(fragment, authManager, inv);
-                        break; // cukup satu popup
+                        break;
                     }
                 });
     }
 
     private static void showPopup(Fragment fragment, AuthManager authManager, Invitation invitation) {
-        // jangan tampilkan popup kalau halaman (fragment) sudah tidak aktif
         if (!fragment.isAdded() || fragment.getView() == null || fragment.getActivity() == null) return;
         if (currentDialog != null && currentDialog.isShowing()) return;
 
@@ -94,11 +96,10 @@ public class InvitationPopupHelper {
         User me = authManager.getCurrentUser();
         UserRole target = invitation.getInvite_role();
 
-        //role sudah sesuai, langsung buka notif
         if (me == null || target == null || me.getCurrentRole() == target){
             openNotificationPage(activity);
             return;
-        } //kalau dari consumer mau ke caregiver tapi caregivernya belum aktif, aktifkan dlu
+        }
         if (target == UserRole.Caregiver && !me.isCaregiver_enabled()){
             showActivateCaregvierDialog(activity, authManager);
             return;

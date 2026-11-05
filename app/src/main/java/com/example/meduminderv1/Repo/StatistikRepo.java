@@ -13,7 +13,10 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class StatistikRepo {
     private final FirebaseFirestore db;
@@ -25,11 +28,24 @@ public class StatistikRepo {
     public static class DayStat {
         public String label;
         public int seharusnya, dikonsumsi, diabaikan, snooze, persentase;
+        public int apptDue, apptAttended;
+
+        public int due() {
+            return seharusnya + apptDue;
+        }
+
+        public int done() {
+            return dikonsumsi + apptAttended;
+        }
     }
 
     public interface StatsCallback {
         void onResult(List<DayStat> stats);
         void onFailure(Exception e);
+    }
+
+    public interface TakenMedicinesCallback {
+        void onResult(Map<String, Integer> countByName);
     }
 
     public interface OverallStatsCallback {
@@ -54,7 +70,6 @@ public class StatistikRepo {
                         MedicationLog log = doc.toObject(MedicationLog.class);
                         if (log == null || log.getScheduled_at() == null) continue;
                         if (inactive.contains(log.getMedication_schedules_id())) continue;
-                        // skip yang belum due (masih akan datang)
                         if (log.getScheduled_at().toDate().getTime()
                                 + AlarmSchedulerHelper.MED_MISSED_DELAY_MS > System.currentTimeMillis()) {
                             continue;
@@ -73,41 +88,20 @@ public class StatistikRepo {
     }
 
     public void getAdherence(String uid, String period, StatsCallback callback) {
+        getAdherence(uid, period, System.currentTimeMillis(), callback);
+    }
+
+    /** @param anchorMillis waktu di dalam periode yang diminta datanya (mis. bulan/tahun yang dipilih untuk laporan) */
+    public void getAdherence(String uid, String period, long anchorMillis, StatsCallback callback) {
         if (uid == null) {
             callback.onResult(new ArrayList<>());
             return;
         }
 
-        Calendar start = Calendar.getInstance();
-
-        start.set(Calendar.HOUR_OF_DAY, 0);
-        start.set(Calendar.MINUTE, 0);
-        start.set(Calendar.SECOND, 0);
-        start.set(Calendar.MILLISECOND, 0);
-
-        Calendar end = (Calendar) start.clone();
-
-        int numberOfPeriods;
-        if ("weekly".equals(period)) {
-            int dayOfWeek = start.get(Calendar.DAY_OF_WEEK);
-            int diffToMonday = (dayOfWeek == Calendar.SUNDAY) ? -6 : Calendar.MONDAY - dayOfWeek;
-
-            start.add(Calendar.DAY_OF_YEAR, diffToMonday);
-            end = (Calendar) start.clone();
-            end.add(Calendar.DAY_OF_YEAR, 7);
-            numberOfPeriods = 7;
-        } else if ("monthly".equals(period)) {
-            start.set(Calendar.DAY_OF_MONTH, 1);
-            end = (Calendar) start.clone();
-            end.add(Calendar.MONTH, 1);
-            numberOfPeriods = start.getActualMaximum(Calendar.DAY_OF_MONTH);
-        } else {
-            start.set(Calendar.MONTH, Calendar.JANUARY);
-            start.set(Calendar.DAY_OF_MONTH, 1);
-            end = (Calendar) start.clone();
-            end.add(Calendar.YEAR, 1);
-            numberOfPeriods = 12;
-        }
+        Calendar[] range = periodRange(period, anchorMillis);
+        Calendar start = range[0];
+        Calendar end = range[1];
+        int numberOfPeriods = periodCount(period, start);
 
         Timestamp startTimestamp = new Timestamp(start.getTime());
         Timestamp endTimestamp = new Timestamp(end.getTime());
@@ -145,7 +139,6 @@ public class StatistikRepo {
                         if (log == null || log.getScheduled_at() == null) {
                             continue;
                         }
-                        //skip kalau belum due (masih akan datang)
                         if (log.getScheduled_at().toDate().getTime() + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS > System.currentTimeMillis()){
                             continue;
                         }
@@ -153,15 +146,7 @@ public class StatistikRepo {
                         Calendar logDate = Calendar.getInstance();
                         logDate.setTime(log.getScheduled_at().toDate());
 
-                        int index;
-                        if ("weekly".equals(period)) {
-                            int day = logDate.get(Calendar.DAY_OF_WEEK);
-                            index = (day == Calendar.SUNDAY) ? 6 : day - 2;
-                        } else if ("monthly".equals(period)) {
-                            index = logDate.get(Calendar.DAY_OF_MONTH) - 1;
-                        } else {
-                            index = logDate.get(Calendar.MONTH);
-                        }
+                        int index = bucket(period, logDate);
 
                         if (index < 0 || index >= numberOfPeriods) {
                             continue;
@@ -173,7 +158,6 @@ public class StatistikRepo {
                                 && log.getScheduled_at().toDate().before(new Date())) {
                             ignored[index]++;
                         }
-                        //snooze count (null-safe, treat null sebagai 0)
                         if (log.getSnooze_count() != null && log.getSnooze_count() > 0){
                             snoozed[index]++;
                         }
@@ -228,6 +212,132 @@ public class StatistikRepo {
                     callback.onResult(result);
 
                 }).addOnFailureListener(callback::onFailure);
+    }
+
+    public void getAdherenceWithAppointments(String uid, String period, long anchorMillis, StatsCallback callback) {
+        getAdherence(uid, period, anchorMillis, new StatsCallback() {
+            @Override
+            public void onResult(List<DayStat> stats) {
+                if (uid == null) {
+                    callback.onResult(stats);
+                    return;
+                }
+                db.collection("appointments").whereEqualTo("users_id", uid).get()
+                        .addOnSuccessListener(query -> {
+                            Calendar[] range = periodRange(period, anchorMillis);
+                            long now = System.currentTimeMillis();
+                            for (DocumentSnapshot doc : query) {
+                                Timestamp at = doc.getTimestamp("appointment_at");
+                                String status = doc.getString("status");
+                                if (at == null || doc.get("deleted_at") != null || "dibatalkan".equals(status)) continue;
+                                long time = at.toDate().getTime();
+                                if (time < range[0].getTimeInMillis() || time >= range[1].getTimeInMillis()) continue;
+                                boolean attended = "dihadiri".equals(status);
+                                if (!attended && time + AlarmSchedulerHelper.MISSED_CHECK_DELAY_MS > now) continue;
+
+                                Calendar date = Calendar.getInstance();
+                                date.setTimeInMillis(time);
+                                int index = bucket(period, date);
+                                if (index < 0 || index >= stats.size()) continue;
+                                stats.get(index).apptDue++;
+                                if (attended) stats.get(index).apptAttended++;
+                            }
+                            callback.onResult(stats);
+                        })
+                        .addOnFailureListener(callback::onFailure);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e);
+            }
+        });
+    }
+
+    public void getTakenMedicines(String uid, String period, long anchorMillis, TakenMedicinesCallback callback) {
+        Calendar[] range = periodRange(period, anchorMillis);
+        db.collection("medication_logs")
+                .whereEqualTo("users_id", uid)
+                .whereGreaterThanOrEqualTo("scheduled_at", new Timestamp(range[0].getTime()))
+                .whereLessThan("scheduled_at", new Timestamp(range[1].getTime()))
+                .get()
+                .addOnSuccessListener(query -> {
+                    Map<String, Integer> perSchedule = new HashMap<>();
+                    for (DocumentSnapshot doc : query) {
+                        String scheduleId = doc.getString("medication_schedules_id");
+                        if (scheduleId == null || doc.getTimestamp("taken_at") == null) continue;
+                        perSchedule.merge(scheduleId, 1, Integer::sum);
+                    }
+                    if (perSchedule.isEmpty()) {
+                        callback.onResult(new LinkedHashMap<>());
+                        return;
+                    }
+                    Map<String, Integer> perName = new HashMap<>();
+                    int[] left = {perSchedule.size()};
+                    MedicationRepo medicationRepo = new MedicationRepo(context);
+                    for (Map.Entry<String, Integer> entry : perSchedule.entrySet()) {
+                        db.collection("medication_schedules").document(entry.getKey()).get()
+                                .addOnCompleteListener(task -> {
+                                    String medicationId = task.isSuccessful() && task.getResult() != null
+                                            ? task.getResult().getString("medication_id") : null;
+                                    medicationRepo.resolveMedicationName(medicationId, name -> {
+                                        String shown = "Obat".equals(name) ? context.getString(R.string.obat_default) : name;
+                                        perName.merge(shown, entry.getValue(), Integer::sum);
+                                        if (--left[0] == 0) callback.onResult(sortedByCount(perName));
+                                    });
+                                });
+                    }
+                })
+                .addOnFailureListener(e -> callback.onResult(null));
+    }
+
+    private static Map<String, Integer> sortedByCount(Map<String, Integer> counts) {
+        List<Map.Entry<String, Integer>> entries = new ArrayList<>(counts.entrySet());
+        entries.sort((a, b) -> b.getValue() - a.getValue());
+        Map<String, Integer> sorted = new LinkedHashMap<>();
+        for (Map.Entry<String, Integer> entry : entries) sorted.put(entry.getKey(), entry.getValue());
+        return sorted;
+    }
+
+    private static Calendar[] periodRange(String period, long anchorMillis) {
+        Calendar start = Calendar.getInstance();
+        start.setTimeInMillis(anchorMillis);
+        start.set(Calendar.HOUR_OF_DAY, 0);
+        start.set(Calendar.MINUTE, 0);
+        start.set(Calendar.SECOND, 0);
+        start.set(Calendar.MILLISECOND, 0);
+
+        Calendar end;
+        if ("weekly".equals(period)) {
+            int dayOfWeek = start.get(Calendar.DAY_OF_WEEK);
+            int diffToMonday = (dayOfWeek == Calendar.SUNDAY) ? -6 : Calendar.MONDAY - dayOfWeek;
+            start.add(Calendar.DAY_OF_YEAR, diffToMonday);
+            end = (Calendar) start.clone();
+            end.add(Calendar.DAY_OF_YEAR, 7);
+        } else if ("monthly".equals(period)) {
+            start.set(Calendar.DAY_OF_MONTH, 1);
+            end = (Calendar) start.clone();
+            end.add(Calendar.MONTH, 1);
+        } else {
+            start.set(Calendar.MONTH, Calendar.JANUARY);
+            start.set(Calendar.DAY_OF_MONTH, 1);
+            end = (Calendar) start.clone();
+            end.add(Calendar.YEAR, 1);
+        }
+        return new Calendar[]{start, end};
+    }
+
+    private static int periodCount(String period, Calendar start) {
+        if ("weekly".equals(period)) return 7;
+        return "monthly".equals(period) ? start.getActualMaximum(Calendar.DAY_OF_MONTH) : 12;
+    }
+
+    private static int bucket(String period, Calendar date) {
+        if ("weekly".equals(period)) {
+            int day = date.get(Calendar.DAY_OF_WEEK);
+            return (day == Calendar.SUNDAY) ? 6 : day - 2;
+        }
+        return "monthly".equals(period) ? date.get(Calendar.DAY_OF_MONTH) - 1 : date.get(Calendar.MONTH);
     }
 
     public void getWeeklyAdherence(String uid, StatsCallback callback) {

@@ -94,26 +94,24 @@ public class AppointmentLogAdapter extends RecyclerView.Adapter<AppointmentLogAd
     private void applyStatusColor(AppointmentLogAdapter.ViewHolder holder, LogStatus status) {
         int colorAttr;
 
-        //tentukan attr theme(warna) berdasarkan status
         if (status == null) {
-            colorAttr = com.google.android.material.R.attr.colorPrimaryFixed; //putih
+            colorAttr = com.google.android.material.R.attr.colorPrimaryFixed;
         } else {
             switch (status) {
                 case DIKONSUMSI:
-                    colorAttr = com.google.android.material.R.attr.colorTertiaryFixed; //hijau
+                    colorAttr = com.google.android.material.R.attr.colorTertiaryFixed;
                     break;
                 case TERLEWATKAN:
-                    colorAttr = com.google.android.material.R.attr.colorTertiaryFixedDim; //merah
+                    colorAttr = com.google.android.material.R.attr.colorTertiaryFixedDim;
                     break;
                 case AKAN_DATANG:
-                    colorAttr = com.google.android.material.R.attr.colorSecondaryFixed; //abu
+                    colorAttr = com.google.android.material.R.attr.colorSecondaryFixed;
                     break;
                 default:
-                    colorAttr = com.google.android.material.R.attr.colorPrimaryFixed; //putih
+                    colorAttr = com.google.android.material.R.attr.colorPrimaryFixed;
                     break;
             }
         }
-        //ambil warna asli dari attr theme
         int color = getColorFromAttr(context, colorAttr);
 
         holder.namaAppointment.setTextColor(getColorFromAttr(context, com.google.android.material.R.attr.colorOnSurface));
@@ -121,10 +119,8 @@ public class AppointmentLogAdapter extends RecyclerView.Adapter<AppointmentLogAd
         holder.timeAppointment.setTextColor(getColorFromAttr(context, com.google.android.material.R.attr.colorOnSurface));
         holder.timeIcon.setColorFilter(getColorFromAttr(context, com.google.android.material.R.attr.colorOnSurface));
 
-        //warnai chip
         holder.currStatus.setBackgroundTintList(ColorStateList.valueOf(color));
 
-        //apply warna ke layerdrawable (bg_lef_offset)
         Drawable bg = holder.capsuleAppointLog.getBackground();
         if (bg != null){
             Drawable mutatedBg = bg.mutate();

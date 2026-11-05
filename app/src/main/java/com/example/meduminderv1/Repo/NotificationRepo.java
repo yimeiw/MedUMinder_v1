@@ -114,7 +114,7 @@ public class NotificationRepo {
         NotificationText.apply(n, "undangan_baru_title", "sender_mengundang_anda_msg",
                 inv.getSender_name() != null ? inv.getSender_name() : "", NotificationText.roleArg(inv.getInvite_role()));
         n.setCreated_at(inv.getCreated_at());
-        n.setIs_read(inv.getStatus() != InvitationStatus.Pending); // anggap "read" begitu direspon
+        n.setIs_read(inv.getStatus() != InvitationStatus.Pending);
         n.setTarget_role(inv.getInvite_role() != null ? inv.getInvite_role().name() : null);
         return n;
     }
@@ -151,7 +151,7 @@ public class NotificationRepo {
     }
     public void markAsRead(String notificationId, RepoCallback<Void> callback) {
         if (notificationId == null || notificationId.startsWith(INVITE_PREFIX)) {
-            callback.onSuccess(null);   // undangan tanpa dokumen notifikasi: tidak ada yang perlu ditandai
+            callback.onSuccess(null);
             return;
         }
         db.collection("notifications").document(notificationId)
@@ -318,8 +318,6 @@ public class NotificationRepo {
 
         Runnable merge = () -> {
             List<Notification> combined = new ArrayList<>(fromNotif);
-            // undangan yang SUDAH punya notifikasi asli ("Undangan Caregiver/Consumer") jangan
-            // ditampilkan lagi sebagai item buatan "Undangan Baru" -> tidak dobel
             java.util.Set<String> invitedWithNotif = new java.util.HashSet<>();
             for (Notification n : fromNotif) {
                 if (n.getInvitation_id() != null) invitedWithNotif.add(n.getInvitation_id());
@@ -330,7 +328,7 @@ public class NotificationRepo {
             Collections.sort(combined, (a, b) -> {
                 Timestamp ta = a.getCreated_at(), tb = b.getCreated_at();
                 if (ta == null || tb == null) return 0;
-                return tb.compareTo(ta); // terbaru dulu
+                return tb.compareTo(ta);
             });
             callback.onChanged(combined);
         };
@@ -381,7 +379,6 @@ public class NotificationRepo {
     public ListenerRegistration listenUnreadCount(String uid, UserRole role, @Nullable String consumerFilter,
                                                   UnreadCountListener callback) {
         final int[] fromNotif = {0};
-        // undangan pending (yang cocok dengan role) & undangan yang sudah punya notifikasi asli
         final java.util.Set<String> pendingInviteIds = new java.util.HashSet<>();
         final java.util.Set<String> invitedWithNotif = new java.util.HashSet<>();
         Runnable publish = () -> {
@@ -408,7 +405,6 @@ public class NotificationRepo {
                     publish.run();
                 });
 
-        // semua notifikasi undangan milik user (dibaca/belum) -> dipakai supaya tidak dihitung dobel
         ListenerRegistration regInviteNotif = db.collection("notifications")
                 .whereEqualTo("receiver_uid", uid)
                 .whereEqualTo("type", NotificationType.Invitation.name())
