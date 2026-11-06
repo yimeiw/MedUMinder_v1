@@ -10,6 +10,7 @@ import android.provider.Settings;
 import android.util.Log;
 
 import com.example.meduminderv1.Model.Medication;
+import com.example.meduminderv1.Model.LogLookup;
 import com.example.meduminderv1.Model.MedicationSchedules;
 import com.example.meduminderv1.Model.MedicineCatalog;
 import com.example.meduminderv1.Reminder.AppointmentAlertScheduler;
@@ -49,7 +50,7 @@ public class AlarmSchedulerHelper {
             return;
         }
 
-        scheduleAllInternal(context, scheduleId, namaObat, timesOfDay, endMillis);
+        scheduleAllInternal(context, scheduleId, namaObat, timesOfDay, endMillis, schedule.getSkipped_occurrences());
     }
 
     public static void scheduleAll(Context context, String scheduleId, String namaObat,
@@ -60,7 +61,13 @@ public class AlarmSchedulerHelper {
             Log.d("ALARM", "scheduleAll dilewati, jadwal sudah expired. scheduleId=" + scheduleId);
             return;
         }
-        scheduleAllInternal(context, scheduleId, namaObat, timesOfDay, endMillis);
+        FirebaseFirestore.getInstance().collection("medication_schedules").document(scheduleId).get()
+                .addOnCompleteListener(task -> {
+                    MedicationSchedules schedule = task.isSuccessful() && task.getResult() != null
+                            ? task.getResult().toObject(MedicationSchedules.class) : null;
+                    scheduleAllInternal(context, scheduleId, namaObat, timesOfDay, endMillis,
+                            schedule != null ? schedule.getSkipped_occurrences() : null);
+                });
     }
 
     private static long resolveEndMillis(long endDateMillis) {
@@ -84,13 +91,16 @@ public class AlarmSchedulerHelper {
     }
 
     private static void scheduleAllInternal(Context context, String scheduleId, String namaObat,
-                                            List<String> timesOfDay, long endMillis) {
+                                            List<String> timesOfDay, long endMillis, List<String> skipped) {
         AlarmOwner.rememberMedicine(context, scheduleId, timesOfDay);
         SimpleDateFormat timeFormat = new SimpleDateFormat(TIME_FORMAT, Locale.getDefault());
 
         for (String timeStr : timesOfDay) {
             long triggerMillis = nextTriggerMillisForTime(timeStr, timeFormat);
             if (triggerMillis == -1) continue;
+            while (skipped != null && skipped.contains(LogLookup.deviceLogId(scheduleId, triggerMillis))) {
+                triggerMillis += 24 * 60 * 60 * 1000L;
+            }
             if (triggerMillis > endMillis) continue;
 
             String occurrenceKey = timeStr;

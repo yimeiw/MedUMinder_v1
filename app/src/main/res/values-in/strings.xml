@@ -696,6 +696,9 @@
     <string name="stok_menipis_msg">%1$s tinggal %2$s butir, cukup untuk sekitar %3$s. Segera isi ulang!</string>
     <string name="stok_menipis_hari_ini_msg">%1$s tinggal %2$s butir, tidak cukup untuk sehari. Isi ulang hari ini!</string>
     <string name="stok_habis_title">Stok Habis (%1$s)</string>
+    <string name="stok_habis_hint">Stok habis</string>
+    <string name="tombol_isi_ulang">Isi Ulang</string>
+    <string name="stok_nol_prompt_msg">Stok tercatat 0. Sudah beli obat lagi?</string>
     <string name="stok_habis_msg">%1$s sudah habis. Isi ulang agar tidak ada dosis yang terlewat.</string>
     <string name="stok_menipis_cg_msg">%1$s milik %4$s tinggal %2$s butir, cukup untuk sekitar %3$s.</string>
     <string name="stok_menipis_hari_ini_cg_msg">%1$s milik %4$s tinggal %2$s butir, tidak cukup untuk sehari.</string>

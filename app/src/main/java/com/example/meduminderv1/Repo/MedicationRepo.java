@@ -116,6 +116,17 @@ public class MedicationRepo {
                 }).addOnFailureListener(callback::onFailure);
     }
 
+    public void isOutOfStock(String medicationId, java.util.function.Consumer<Boolean> callback) {
+        if (medicationId == null || medicationId.isEmpty()) { callback.accept(false); return; }
+        db.collection("medications").document(medicationId).get()
+                .addOnSuccessListener(snap -> {
+                    Object stock = snap.get("stock.stok_obat");
+                    callback.accept("PIL".equals(snap.getString("med_type"))
+                            && stock instanceof Number && ((Number) stock).intValue() <= 0);
+                })
+                .addOnFailureListener(e -> callback.accept(false));
+    }
+
     public void markTakenAndDecrement(String logId, String medId, RepoCallback<Void> callback){
         markLogAsTaken(logId, new RepoCallback<Void>() {
             @Override
@@ -132,9 +143,12 @@ public class MedicationRepo {
             }
         });
     }
-    public void deleteSingleLog(String logId, RepoCallback<Void> callback){
-        db.collection("medication_logs").document(logId).delete()
-                .addOnSuccessListener(unused -> callback.onSuccess(null))
+    public void deleteSingleLog(String scheduleId, String logId, RepoCallback<Void> callback){
+        db.collection("medication_schedules").document(scheduleId)
+                .update("skipped_occurrences", com.google.firebase.firestore.FieldValue.arrayUnion(logId))
+                .addOnSuccessListener(skipped -> db.collection("medication_logs").document(logId).delete()
+                        .addOnSuccessListener(unused -> callback.onSuccess(null))
+                        .addOnFailureListener(callback::onFailure))
                 .addOnFailureListener(callback::onFailure);
     }
 }

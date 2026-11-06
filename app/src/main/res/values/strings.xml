@@ -494,7 +494,7 @@
     <string name="default_appointment_label">this appointment</string>
     <string name="default_jadwal_label">this schedule</string>
     <string name="konfirmasi_hapus_semua_jadwal_msg">Are you sure you want to delete all schedules for %1$s? All alarms for this schedule will be stopped.</string>
-    <string name="konfirmasi_hapus_satu_entri_msg">Yakin mau menghapus jadwal %1$s pada waktu ini saja? Jadwal lain dan alarm berikutnya tetap berjalan.</string>
+    <string name="konfirmasi_hapus_satu_entri_msg">Delete %1$s for this time only? Other schedules and upcoming alarms will keep running.</string>
     <string name="hapus_appointment_title">Delete Appointment</string>
     <string name="hapus_jadwal_obat_title">Delete Medication Schedule</string>
     <string name="jadwal_appointment_dihapus_title">Appointment Schedule Deleted</string>
@@ -689,6 +689,9 @@
     <string name="stok_menipis_msg">Only %2$s pills of %1$s left, enough for about %3$s. Refill soon!</string>
     <string name="stok_menipis_hari_ini_msg">Only %2$s pills of %1$s left, not enough for a full day. Refill today!</string>
     <string name="stok_habis_title">Out of Stock (%1$s)</string>
+    <string name="stok_habis_hint">Out of stock</string>
+    <string name="tombol_isi_ulang">Refill</string>
+    <string name="stok_nol_prompt_msg">Stock is recorded as 0. Have you bought more?</string>
     <string name="stok_habis_msg">%1$s is out of stock. Refill it so you don\'t miss a dose.</string>
     <string name="stok_menipis_cg_msg">%4$s has only %2$s pills of %1$s left, enough for about %3$s.</string>
     <string name="stok_menipis_hari_ini_cg_msg">%4$s has only %2$s pills of %1$s left, not enough for a full day.</string>

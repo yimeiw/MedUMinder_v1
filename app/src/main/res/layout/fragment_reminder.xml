@@ -293,6 +293,29 @@
                 />
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/tvOutOfStock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/stok_habis_hint"
+            android:textSize="12sp"
+            android:textColor="@color/merah"
+            android:visibility="gone" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRefillReminder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/button_border"
+            app:backgroundTint="@null"
+            android:text="@string/tombol_isi_ulang"
+            android:textColor="?attr/colorOnSurface"
+            android:textAllCaps="false"
+            android:layout_marginVertical="10dp"
+            android:textFontWeight="600"
+            android:visibility="gone" />
+
 
     </LinearLayout>
     </ScrollView>

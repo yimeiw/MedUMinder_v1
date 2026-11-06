@@ -1114,7 +1114,9 @@ public class NotificationDetailFragment extends Fragment {
             LoadingOverlay.hide(NotificationDetailFragment.this);
             return;
         }
-        new com.example.meduminderv1.Repo.MedicationRepo(requireContext().getApplicationContext())
+        com.example.meduminderv1.Repo.MedicationRepo repo =
+                new com.example.meduminderv1.Repo.MedicationRepo(requireContext().getApplicationContext());
+        repo.isOutOfStock(pendingMedicationId, wasOutOfStock -> repo
                 .markTakenAndDecrement(logId, pendingMedicationId, new RepoCallback<Void>() {
                     @Override public void onSuccess(Void result) {
                         LoadingOverlay.hide(NotificationDetailFragment.this);
@@ -1125,7 +1127,9 @@ public class NotificationDetailFragment extends Fragment {
                         new NotificationRepo(requireContext().getApplicationContext())
                                 .notifyCaregiversMedicineTaken(consumerUid, logId, pendingMedName, null);
                         Toast.makeText(requireContext(), getString(R.string.obat_ditandai_dikonsumsi), Toast.LENGTH_SHORT).show();
+                        androidx.fragment.app.FragmentActivity activity = requireActivity();
                         NavHostFragment.findNavController(NotificationDetailFragment.this).navigateUp();
+                        if (wasOutOfStock) com.example.meduminderv1.Util.RefillPrompt.showAfterTaken(activity, pendingMedicationId);
                     }
                     @Override public void onFailure(Exception e) {
                         LoadingOverlay.hide(NotificationDetailFragment.this);
@@ -1133,7 +1137,7 @@ public class NotificationDetailFragment extends Fragment {
                         layoutButton.setVisibility(View.VISIBLE);
                         Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                     }
-                });
+                }));
     }
 
     private void snoozeMedicineFromNotif() {

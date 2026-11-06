@@ -72,7 +72,7 @@ public class LogGenerator {
                                 Timestamp start = doc.getTimestamp("start_date");
                                 if (start == null) start = doc.getTimestamp("created_at");
                                 if (start == null) start = Timestamp.now();
-                                loadExistingAndWrite(userId, doc.getId(), times, start, end, zone, horizon);
+                                loadExistingAndWrite(userId, doc.getId(), times, start, end, zone, horizon, readSkipped(doc));
                             }
                         })
                         .addOnFailureListener(e -> Log.e(TAG, "Gagal load jadwal", e)));
@@ -83,7 +83,7 @@ public class LogGenerator {
         if (timesOfDay == null || timesOfDay.isEmpty()) return;
         final Timestamp start = startDate != null ? startDate : Timestamp.now();
         UserTimeZone.resolve(userId, zone ->
-                loadExistingAndWrite(userId, scheduleId, timesOfDay, start, endDate, zone, null));
+                loadExistingAndWrite(userId, scheduleId, timesOfDay, start, endDate, zone, null, new HashSet<>()));
     }
 
     public void replaceFutureLogs(String userId, String scheduleId, ArrayList<String> timesOfDay,
@@ -91,18 +91,22 @@ public class LogGenerator {
         if (scheduleId == null || timesOfDay == null || timesOfDay.isEmpty()) return;
         final Timestamp start = startDate != null ? startDate : Timestamp.now();
         UserTimeZone.resolve(userId, zone ->
-                db.collection("medication_logs").whereEqualTo("medication_schedules_id", scheduleId).get()
-                        .addOnSuccessListener(snap -> syncLogs(userId, scheduleId, timesOfDay, start, endDate,
-                                snap.getDocuments(), zone))
-                        .addOnFailureListener(e -> Log.e(TAG, "Gagal ambil log", e)));
+                db.collection("medication_schedules").document(scheduleId).get()
+                        .addOnSuccessListener(schedule ->
+                                db.collection("medication_logs").whereEqualTo("medication_schedules_id", scheduleId).get()
+                                        .addOnSuccessListener(snap -> syncLogs(userId, scheduleId, timesOfDay, start, endDate,
+                                                snap.getDocuments(), zone, readSkipped(schedule)))
+                                        .addOnFailureListener(e -> Log.e(TAG, "Gagal ambil log", e)))
+                        .addOnFailureListener(e -> Log.e(TAG, "Gagal ambil jadwal", e)));
     }
     private void loadExistingAndWrite(String userId, String scheduleId, List<String> times,
-                                      Timestamp startDate, Timestamp endDate, ZoneId zone, LocalDate horizon) {
+                                      Timestamp startDate, Timestamp endDate, ZoneId zone, LocalDate horizon,
+                                      Set<String> skipped) {
         db.collection("medication_logs").whereEqualTo("medication_schedules_id", scheduleId).get()
                 .addOnSuccessListener(snap -> {
                     Map<String, DocumentSnapshot> existing = new HashMap<>();
                     for (DocumentSnapshot d : snap.getDocuments()) existing.put(d.getId(), d);
-                    Map<String, Timestamp> desired = desiredLogs(scheduleId, times, startDate, endDate, zone, horizon);
+                    Map<String, Timestamp> desired = desiredLogs(scheduleId, times, startDate, endDate, zone, horizon, skipped);
                     long now = System.currentTimeMillis();
 
                     WriteBatch batch = db.batch();
@@ -129,8 +133,8 @@ public class LogGenerator {
     }
 
     private void syncLogs(String userId, String scheduleId, List<String> times, Timestamp startDate,
-                          Timestamp endDate, List<DocumentSnapshot> existing, ZoneId zone) {
-        Map<String, Timestamp> desired = desiredLogs(scheduleId, times, startDate, endDate, zone, null);
+                          Timestamp endDate, List<DocumentSnapshot> existing, ZoneId zone, Set<String> skipped) {
+        Map<String, Timestamp> desired = desiredLogs(scheduleId, times, startDate, endDate, zone, null, skipped);
         long now = System.currentTimeMillis();
 
         List<DocumentReference> toDelete = new ArrayList<>();
@@ -166,7 +170,8 @@ public class LogGenerator {
     }
 
     private Map<String, Timestamp> desiredLogs(String scheduleId, List<String> times, Timestamp startDate,
-                                               Timestamp endDate, ZoneId zone, LocalDate horizon) {
+                                               Timestamp endDate, ZoneId zone, LocalDate horizon,
+                                               Set<String> skipped) {
         LocalDate today = LocalDate.now(zone);
         LocalDate start = toLocalDate(startDate, zone);
         if (start.isBefore(today)) start = today;
@@ -183,7 +188,8 @@ public class LogGenerator {
                 String t = norm(raw);
                 if (t == null) continue;
                 Timestamp ts = toTimestamp(d, t, zone);
-                if (ts != null) out.put(buildLogId(scheduleId, d, t), ts);
+                String logId = buildLogId(scheduleId, d, t);
+                if (ts != null && !skipped.contains(logId)) out.put(logId, ts);
             }
         }
         return out;
@@ -199,6 +205,13 @@ public class LogGenerator {
         if (past) log.put("missed_notified", true);
         log.put("created_at", Timestamp.now());
         return log;
+    }
+
+    private Set<String> readSkipped(DocumentSnapshot doc) {
+        Set<String> out = new HashSet<>();
+        Object o = doc.get("skipped_occurrences");
+        if (o instanceof List) for (Object x : (List<?>) o) if (x instanceof String) out.add((String) x);
+        return out;
     }
 
     private List<String> readTimes(DocumentSnapshot doc) {

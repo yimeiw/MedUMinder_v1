@@ -344,6 +344,21 @@
                         android:textColor="?attr/colorOnSurface"
                         android:paddingHorizontal="12dp"
                         android:layout_margin="10dp"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/btnRefillNext"
+                        android:text="@string/tombol_isi_ulang"
+                        android:background="@drawable/border_wp"
+                        app:backgroundTint="@null"
+                        android:textAllCaps="false"
+                        android:textSize="14sp"
+                        android:textColor="?attr/colorOnSurface"
+                        android:paddingHorizontal="12dp"
+                        android:layout_marginHorizontal="10dp"
+                        android:layout_marginBottom="10dp"
+                        android:visibility="gone"/>
                 </LinearLayout>
 
                 <!--                belum ada jadwal-->

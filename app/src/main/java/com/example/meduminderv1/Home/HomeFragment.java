@@ -40,6 +40,7 @@ import com.example.meduminderv1.Model.LogItem;
 import com.example.meduminderv1.Model.Appointment;
 import com.example.meduminderv1.Model.LogStatus;
 import com.example.meduminderv1.Model.UserRole;
+import com.example.meduminderv1.Util.RefillPrompt;
 import com.example.meduminderv1.Model.Medication;
 import com.example.meduminderv1.Model.MedicationLog;
 import com.example.meduminderv1.Model.MedicationSchedules;
@@ -86,7 +87,7 @@ public class HomeFragment extends Fragment {
     TextView tvNotifBadge;
     private ListenerRegistration unreadListener;
     ImageButton btnProfile;
-    MaterialButton addNoSchedule, btnKonfirmasi;
+    MaterialButton addNoSchedule, btnKonfirmasi, btnRefillNext;
     RecyclerView rvTodaySchedule;
     LinearLayout addMed, addAppoint, viewLog, haveSchedule, noSchedule;
     SharedPreferences prefs;
@@ -95,6 +96,7 @@ public class HomeFragment extends Fragment {
     MedicationRepo medicationRepo;
     private String nextLogId;
     private String nextMedId;
+    private boolean nextOutOfStock;
     private String nextScheduleIdForAlarm;
     private long nextScheduledAtMillis = -1;
     LineChart lineChart;
@@ -141,6 +143,7 @@ public class HomeFragment extends Fragment {
         noSchedule = view.findViewById(R.id.noSchedule);
         addNoSchedule = view.findViewById(R.id.addNoSchedule);
         btnKonfirmasi = view.findViewById(R.id.btnKonfirmasi);
+        btnRefillNext = view.findViewById(R.id.btnRefillNext);
         btnLihatSemua = view.findViewById(R.id.viewAll);
         rvTodaySchedule = view.findViewById(R.id.rvTodaySchedule);
         emptyTodaySchedule = view.findViewById(R.id.emptyTodaySchedule);
@@ -321,6 +324,8 @@ public class HomeFragment extends Fragment {
         }
         if (index >= candidates.size()){
             nextLoader.done();
+            nextOutOfStock = false;
+            btnRefillNext.setVisibility(View.GONE);
             haveSchedule.setVisibility(View.GONE);
             noSchedule.setVisibility(View.VISIBLE);
             nextLogId = null;
@@ -359,6 +364,10 @@ public class HomeFragment extends Fragment {
                 tvTotalStok.setVisibility(View.VISIBLE);
                 tvTotalStok.setText(String.valueOf(stock));
             }
+            nextOutOfStock = "PIL".equals(medType) && stock <= 0;
+            if (nextOutOfStock) tvTotalStok.setText(stock + " • " + getString(R.string.stok_habis_hint));
+            btnRefillNext.setVisibility(nextOutOfStock ? View.VISIBLE : View.GONE);
+            btnRefillNext.setOnClickListener(v -> RefillPrompt.open(requireActivity(), medId));
             btnKonfirmasi.setOnClickListener(v -> confirmTaken());
         });
     }
@@ -366,6 +375,8 @@ public class HomeFragment extends Fragment {
     private void showNextAppointment(Appointment appointment) {
         nextLoader.done();
         nextLogId = null;
+        nextOutOfStock = false;
+        btnRefillNext.setVisibility(View.GONE);
         Date time = appointment.getDisplayTime().toDate();
         haveSchedule.setVisibility(View.VISIBLE);
         noSchedule.setVisibility(View.GONE);
@@ -451,6 +462,8 @@ public class HomeFragment extends Fragment {
         if (nextLogId == null) return;
         if (!btnKonfirmasi.isEnabled()) return;
         btnKonfirmasi.setEnabled(false);
+        final boolean wasOutOfStock = nextOutOfStock;
+        final String takenMedId = nextMedId;
 
         LoadingOverlay.show(HomeFragment.this);
         db.collection("medication_logs").document(nextLogId).get()
@@ -486,6 +499,7 @@ public class HomeFragment extends Fragment {
                                     public void onSuccess(Void result) {
                                         if (!isAdded() || getContext() == null) return;
                                         Toast.makeText(requireContext(), getString(R.string.berhasil_dicatat), Toast.LENGTH_SHORT).show();
+                                        if (wasOutOfStock) RefillPrompt.showAfterTaken(requireActivity(), takenMedId);
                                     }
                                     @Override
                                     public void onFailure(Exception e) {

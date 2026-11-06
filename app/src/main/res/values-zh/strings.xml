@@ -692,6 +692,9 @@
     <string name="stok_menipis_msg">%1$s 只剩 %2$s 粒，大约够用 %3$s。请尽快补充！</string>
     <string name="stok_menipis_hari_ini_msg">%1$s 只剩 %2$s 粒，不够一天。请今天补充！</string>
     <string name="stok_habis_title">药品已用完（%1$s）</string>
+    <string name="stok_habis_hint">库存已用完</string>
+    <string name="tombol_isi_ulang">补充</string>
+    <string name="stok_nol_prompt_msg">库存记录为 0。您已经买了新的药吗？</string>
     <string name="stok_habis_msg">%1$s 已用完。请补充，以免错过服药。</string>
     <string name="stok_menipis_cg_msg">%4$s 的 %1$s 只剩 %2$s 粒，大约够用 %3$s。</string>
     <string name="stok_menipis_hari_ini_cg_msg">%4$s 的 %1$s 只剩 %2$s 粒，不够一天。</string>

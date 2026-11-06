@@ -18,6 +18,7 @@ public class MedicationSchedules {
     private Timestamp updated_at;
     private String updated_by;
     private Timestamp deleted_at;
+    private List<String> skipped_occurrences;
 
     public MedicationSchedules(){}
 
@@ -72,5 +73,11 @@ public class MedicationSchedules {
     }
     public Timestamp getDeleted_at() {
         return deleted_at;
+    }
+    public List<String> getSkipped_occurrences() {
+        return skipped_occurrences;
+    }
+    public void setSkipped_occurrences(List<String> skipped_occurrences) {
+        this.skipped_occurrences = skipped_occurrences;
     }
 }

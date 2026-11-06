@@ -2,6 +2,7 @@ package com.example.meduminderv1.Reminder;
 
 import com.example.meduminderv1.Reminder.Alarm.AlarmRingingService;
 import com.example.meduminderv1.Reminder.Alarm.AlarmSchedulerHelper;
+import com.example.meduminderv1.Util.RefillPrompt;
 import com.example.meduminderv1.Util.LoadingOverlay;
 
 import android.graphics.drawable.Drawable;
@@ -94,6 +95,10 @@ public class ReminderFragment extends Fragment {
     private boolean isAppointment;
     private FirebaseFirestore db;
     private boolean isCaregiverViewing = false;
+    private View tvOutOfStock, btnRefillReminder;
+    private String stockMedId;
+    private boolean outOfStock = false;
+    private boolean doseDone = false;
     private String targetConsumerUid;
     private String source = "";
     private ListenerRegistration scheduleReg, logReg, apptReg;
@@ -129,6 +134,11 @@ public class ReminderFragment extends Fragment {
         statusReminder = view.findViewById(R.id.statusReminder);
         btnIsTaken = view.findViewById(R.id.btnIsTaken);
         btnTundaReminder = view.findViewById(R.id.btnTundaReminder);
+        tvOutOfStock = view.findViewById(R.id.tvOutOfStock);
+        btnRefillReminder = view.findViewById(R.id.btnRefillReminder);
+        btnRefillReminder.setOnClickListener(v -> {
+            if (stockMedId != null) RefillPrompt.open(requireActivity(), stockMedId);
+        });
         buttonSpacer = view.findViewById(R.id.buttonSpacer);
         circleNamaObat = view.findViewById(R.id.circleNamaObat);
         iconReminderType = view.findViewById(R.id.iconReminderType);
@@ -284,7 +294,7 @@ public class ReminderFragment extends Fragment {
                     String consumerUid = scheduleDoc.exists() ? scheduleDoc.getString("users_id") : null;
 
                     new com.example.meduminderv1.Repo.MedicationRepo(appContext)
-                            .deleteSingleLog(logId, new RepoCallback<Void>() {
+                            .deleteSingleLog(scheduleId, logId, new RepoCallback<Void>() {
                                 @Override
                                 public void onSuccess(Void result) {
                                     LoadingOverlay.hide(ReminderFragment.this);
@@ -668,6 +678,7 @@ public class ReminderFragment extends Fragment {
                                 if (!isAdded()) return;
                                 updateStatusUIFromRaw("dikonsumsi");
                                 Toast.makeText(requireContext(), getString(R.string.obat_ditandai_dikonsumsi), Toast.LENGTH_SHORT).show();
+                                if (outOfStock && stockMedId != null) RefillPrompt.showAfterTaken(requireActivity(), stockMedId);
                                 notifyCaregiverMedicineTaken(logId);
 
                                 db.collection("medication_schedules").document(scheduleId).get()
@@ -854,6 +865,8 @@ public class ReminderFragment extends Fragment {
         applyCircleStatusColor(circleNamaObat, logStatus);
 
         boolean alreadyDone = logStatus == LogStatus.DIKONSUMSI;
+        doseDone = alreadyDone;
+        updateRefillButton();
 
         if (isCaregiverViewing) {
             btnIsTaken.setText(getString(R.string.remind_consumer));
@@ -868,6 +881,12 @@ public class ReminderFragment extends Fragment {
             btnTundaReminder.setVisibility(canSnooze ? View.VISIBLE : View.GONE);
             buttonSpacer.setVisibility(canSnooze ? View.VISIBLE : View.GONE);
         }
+    }
+
+    private void updateRefillButton() {
+        int visibility = outOfStock && !doseDone && !isCaregiverViewing && !isAppointment ? View.VISIBLE : View.GONE;
+        tvOutOfStock.setVisibility(visibility);
+        btnRefillReminder.setVisibility(visibility);
     }
 
     private void updateStatusUIFromRaw(String rawStatus) {
@@ -929,6 +948,12 @@ public class ReminderFragment extends Fragment {
                         if (!snap.exists() || snap.get("deleted_at") != null) { closeBecauseDeleted(); return; }
                         String medId = snap.getString("medication_id");
                         if (medId != null) {
+                            stockMedId = medId;
+                            new com.example.meduminderv1.Repo.MedicationRepo(requireContext()).isOutOfStock(medId, out -> {
+                                if (!alive()) return;
+                                outOfStock = out;
+                                updateRefillButton();
+                            });
                             new com.example.meduminderv1.Repo.MedicationRepo(requireContext())
                                     .resolveMedicationName(medId, name -> {
                                         if (!alive() || name == null) return;
