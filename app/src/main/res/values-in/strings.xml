@@ -545,7 +545,7 @@
     <string name="caregiver_mengingatkan_periksa_jadwal_msg">%1$s mengingatkan Anda untuk segera memeriksa jadwal Anda.</string>
 
     <string name="bagikan_link_aplikasi_msg">Bagikan link aplikasi agar pengguna dapat mendaftar menggunakan email tersebut.</string>
-    <string name="share_invitation_message">Saya mengundang Anda bergabung di MedUMinder.\n\nSilahkan download aplikasi MedUMinder menggunakan link berikut:\n\n\nDaftar menggunakan email atau google dengan email: %1$s\n\nSetelah login menggunakan email tersebut, Invitation akan otomatis muncul pada menu Notification.</string>
+    <string name="share_invitation_message">Saya mengundang Anda bergabung di MedUMinder.\n\nSilahkan download aplikasi MedUMinder menggunakan link berikut:\n<a href="https://binusianorg-my.sharepoint.com/personal/yimei_winata_binus_ac_id/_layouts/15/guestaccess.aspx?share=IQCrdGqcxKevSrDF0FDw2Wq3Ae_lnCf0VWFgoROthcob4Sg&e=L0YbWK"/>\n\nDaftar menggunakan email atau google dengan email: %1$s\n\nSetelah login menggunakan email tersebut, Invitation akan otomatis muncul pada menu Notification.</string>
     <string name="bagikan_melalui_title">Bagikan melalui</string>
 
     <string name="gagal_mengambil_statistik">Gagal mengambil statistik</string>

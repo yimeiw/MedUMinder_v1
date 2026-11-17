@@ -162,6 +162,7 @@ public class ProfileFragment extends Fragment {
         });
 
         btnNotificationSetting.setOnClickListener(v -> {
+            if (user == null || user.getCurrentRole() != UserRole.Consumer) return;
             NavHostFragment.findNavController(this)
                     .navigate(R.id.notificationSettingsFragment);
         });
@@ -410,6 +411,7 @@ public class ProfileFragment extends Fragment {
         setUpCaregiverButton();
 
         boolean isConsumer = user.getCurrentRole() == UserRole.Consumer;
+        btnNotificationSetting.setVisibility(isConsumer ? View.VISIBLE : View.GONE);
         tvSwitchRole.setText(getString(R.string.ganti_ke_role, formatRole(isConsumer ? UserRole.Caregiver : UserRole.Consumer)));
         txtListRelation.setText(
                 isConsumer ? getString(R.string.caregiverList) : getString(R.string.consumerList)
