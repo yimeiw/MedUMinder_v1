@@ -1,7 +1,7 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="asset/readme/logo-teks-dark.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="asset/dark-teks-logo.svg">
   <img src="asset/logo-teks.svg" alt="MedUMinder" width="300">
 </picture>
 
