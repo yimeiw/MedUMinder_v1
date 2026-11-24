@@ -543,7 +543,7 @@
     <string name="caregiver_mengingatkan_periksa_jadwal_msg">%1$s 提醒您立即检查您的安排。</string>
 
     <string name="bagikan_link_aplikasi_msg">分享应用链接，让对方使用该邮箱注册。</string>
-    <string name="share_invitation_message">我邀请您加入 MedUMinder。\n\n请通过以下链接下载 MedUMinder 应用：\nhttps://binusianorg-my.sharepoint.com/personal/yimei_winata_binus_ac_id/_layouts/15/guestaccess.aspx?share=IQCrdGqcxKevSrDF0FDw2Wq3Ae_lnCf0VWFgoROthcob4Sg&amp;e=L0YbWK"\n\n请使用此邮箱通过邮箱或 Google 注册：%1$s\n\n使用该邮箱登录后，邀请将自动显示在通知菜单中。</string>
+    <string name="share_invitation_message">我邀请您加入 MedUMinder。\n\n请通过以下链接下载 MedUMinder 应用：\nhttps://github.com/Clatan/MedUMinder/releases/latest/download/MedUMinder.apk\n\n请使用此邮箱通过邮箱或 Google 注册：%1$s\n\n使用该邮箱登录后，邀请将自动显示在通知菜单中。</string>
     <string name="bagikan_melalui_title">分享方式</string>
 
     <string name="gagal_mengambil_statistik">获取统计数据失败</string>
